@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  exercises Exercise[]
+  workouts  Workout[]
+}
+
+model Exercise {
+  id          String   @id @default(uuid())
+  name        String
+  muscleGroup String
+  equipment   String?
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workoutExercises WorkoutExercise[]
+
+  @@unique([userId, name])
+  @@index([userId, isArchived])
+}
+
+model Workout {
+  id          String   @id @default(uuid())
+  name        String
+  performedAt DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workoutExercises WorkoutExercise[]
+
+  @@index([userId, performedAt(sort: Desc)])
+}
+
+model WorkoutExercise {
+  id       String  @id @default(uuid())
+  position Int
+  notes    String?
+
+  workoutId String
+  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  sets WorkoutSet[]
+
+  @@unique([workoutId, exerciseId])
+  @@unique([workoutId, position])
+  @@index([exerciseId])
+}
+
+model WorkoutSet {
+  id              String   @id @default(uuid())
+  setNumber       Int
+  reps            Int?
+  weight          Decimal? @db.Decimal(8, 2)
+  durationSeconds Int?
+
+  workoutExerciseId String
+  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutExerciseId, setNumber])
+}
