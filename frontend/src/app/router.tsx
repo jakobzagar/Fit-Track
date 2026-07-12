@@ -1,4 +1,4 @@
-import {BrowserRouter, Navigate, Route, Routes} from "react-router";
+import {BrowserRouter, Route, Routes} from "react-router";
 import {AppLayout} from "../components/layout/AppLayout";
 import {ProtectedRoute} from "../features/auth/components/ProtectedRoute";
 import {LoginPage} from "../features/auth/pages/LogInPage";
@@ -7,12 +7,13 @@ import {ExercisesPage} from "../features/exercises/pages/ExercisesPage";
 import {WorkoutsPage} from "../features/workouts/pages/WorkoutsPage";
 import {WorkoutDetailPage} from "../features/workouts/pages/WorkoutDetailPage";
 import {WorkoutSessionPage} from "../features/workouts/pages/WorkoutSessionPage";
+import {LandingPage} from "../features/landing/pages/LandingPage";
 
 export function AppRouter() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<Navigate to="/workouts" replace />} />
+                <Route path="/" element={<LandingPage />} />
 
                 <Route path="/login" element={<LoginPage />} />
 
