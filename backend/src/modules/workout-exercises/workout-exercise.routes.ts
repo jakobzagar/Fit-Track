@@ -19,7 +19,7 @@ import {
     workoutIdSchema,
     workoutSetIdParamsSchema,
     workoutSetParamsSchema,
-} from "./workout-exercise.schema.js";
+} from "@fit-track/shared";
 
 const router = Router();
 

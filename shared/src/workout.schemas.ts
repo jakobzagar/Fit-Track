@@ -119,4 +119,3 @@ export type PreviousPerformance = z.infer<typeof previousPerformanceSchema>;
 export type PreviousPerformancesResponse = z.infer<typeof previousPerformancesResponseSchema>;
 export type CreateWorkoutResponse = z.infer<typeof createWorkoutResponseSchema>;
 export type WorkoutsResponse = z.infer<typeof workoutsResponseSchema>;
-export type DeleteWorkoutResponse = z.infer<typeof deleteWorkoutResponseSchema>;
