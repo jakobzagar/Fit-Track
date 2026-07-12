@@ -285,6 +285,93 @@ form label + p {
     font-variant-numeric: tabular-nums;
 }
 
+.confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.76);
+    backdrop-filter: blur(8px);
+    animation: confirm-fade-in 160ms ease-out;
+}
+
+.confirm-dialog {
+    position: relative;
+    width: min(440px, 100%);
+    overflow: hidden;
+    border: 1px solid #343434;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #181818, #0e0e0e);
+    padding: 30px;
+    box-shadow: 0 30px 100px rgba(0, 0, 0, 0.7);
+    animation: confirm-rise-in 180ms ease-out;
+}
+
+.confirm-dialog::before {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 2px;
+    background: linear-gradient(90deg, #ff641a, transparent 70%);
+    content: "";
+}
+
+.confirm-dialog-mark {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 22px;
+    place-items: center;
+    border: 1px solid rgba(255, 100, 26, 0.35);
+    border-radius: 11px;
+    background: rgba(255, 100, 26, 0.1);
+    color: #ff641a;
+    font-size: 1.2rem;
+    font-weight: 950;
+}
+
+.confirm-dialog-mark.is-danger {
+    border-color: rgba(241, 91, 91, 0.35);
+    background: rgba(241, 91, 91, 0.1);
+    color: #f15b5b;
+}
+
+.confirm-dialog h2 {
+    margin: 12px 0 0;
+    color: #f4f1eb;
+    font-size: 1.65rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+.confirm-dialog-message {
+    margin: 12px 0 0;
+    color: #969696;
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+
+.confirm-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 28px;
+}
+
+@keyframes confirm-fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes confirm-rise-in {
+    from {
+        transform: translateY(10px) scale(0.98);
+        opacity: 0;
+    }
+}
+
 .landing-shell {
     min-height: 100vh;
     overflow: hidden;

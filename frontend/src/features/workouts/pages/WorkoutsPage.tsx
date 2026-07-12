@@ -9,8 +9,10 @@ import {Card} from "../../../components/ui/Card.tsx";
 import {Feedback} from "../../../components/ui/Feedback.tsx";
 import {PageHeader} from "../../../components/ui/PageHeader.tsx";
 import {SkeletonGrid} from "../../../components/ui/SkeletonGrid.tsx";
+import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
 
 export function WorkoutsPage() {
+    const confirm = useConfirmDialog();
     const [workouts, setWorkouts] = useState<WorkoutSummary[]>([]);
     const [editingWorkout, setEditingWorkout] = useState<WorkoutSummary | null>(null);
     const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | null>(null);
@@ -59,7 +61,14 @@ export function WorkoutsPage() {
 
     async function handleDeleteWorkout(workoutId: string) {
         const workout = workouts.find((item) => item.id === workoutId);
-        if (!window.confirm(`Delete ${workout?.name ?? "this workout"} and all of its sets?`))
+        if (
+            !(await confirm({
+                title: "Delete workout?",
+                message: `${workout?.name ?? "This workout"} and all of its sets will be permanently deleted. This cannot be undone.`,
+                confirmLabel: "Delete workout",
+                variant: "danger",
+            }))
+        )
             return;
 
         setMutationError("");

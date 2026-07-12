@@ -16,5 +16,5 @@ export function BrandMark({linked = true}: BrandMarkProps) {
         </span>
     );
 
-    return linked ? <Link to="/workouts">{mark}</Link> : mark;
+    return linked ? <Link to="/">{mark}</Link> : mark;
 }

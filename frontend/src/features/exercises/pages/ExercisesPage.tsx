@@ -15,8 +15,10 @@ import {Card} from "../../../components/ui/Card.tsx";
 import {Feedback} from "../../../components/ui/Feedback.tsx";
 import {PageHeader} from "../../../components/ui/PageHeader.tsx";
 import {SkeletonGrid} from "../../../components/ui/SkeletonGrid.tsx";
+import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
 
 export function ExercisesPage() {
+    const confirm = useConfirmDialog();
     const [view, setView] = useState<"active" | "archived">("active");
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
@@ -69,7 +71,14 @@ export function ExercisesPage() {
 
     async function handleArchiveExercise(exerciseId: string) {
         const exercise = exercises.find((item) => item.id === exerciseId);
-        if (!window.confirm(`Archive ${exercise?.name ?? "this exercise"}?`)) return;
+        if (
+            !(await confirm({
+                title: "Archive exercise?",
+                message: `${exercise?.name ?? "This exercise"} will move to your archive and can be restored later.`,
+                confirmLabel: "Archive",
+            }))
+        )
+            return;
 
         setMutationError("");
         setSuccessMessage("");
@@ -91,7 +100,14 @@ export function ExercisesPage() {
 
     async function handleRestoreExercise(exerciseId: string) {
         const exercise = exercises.find((item) => item.id === exerciseId);
-        if (!window.confirm(`Restore ${exercise?.name ?? "this exercise"}?`)) return;
+        if (
+            !(await confirm({
+                title: "Restore exercise?",
+                message: `${exercise?.name ?? "This exercise"} will return to your active exercise library.`,
+                confirmLabel: "Restore",
+            }))
+        )
+            return;
 
         setMutationError("");
         setSuccessMessage("");

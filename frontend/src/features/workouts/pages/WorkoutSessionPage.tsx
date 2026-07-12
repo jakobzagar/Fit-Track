@@ -27,8 +27,10 @@ import {Button} from "../../../components/ui/Button.tsx";
 import {Card} from "../../../components/ui/Card.tsx";
 import {Feedback} from "../../../components/ui/Feedback.tsx";
 import {LoadingState} from "../../../components/ui/LoadingState.tsx";
+import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
 
 export function WorkoutSessionPage() {
+    const confirm = useConfirmDialog();
     const {workoutId} = useParams();
     const navigate = useNavigate();
     const [workout, setWorkout] = useState<Workout | null>(null);
@@ -255,13 +257,15 @@ export function WorkoutSessionPage() {
                     className="text-xs font-bold tracking-[0.08em] text-dim uppercase hover:text-cream"
                     to={`/workouts/${workout.id}`}
                     onClick={(event) => {
-                        if (
-                            !window.confirm(
-                                "Leave this active workout? Your saved sets will remain.",
-                            )
-                        ) {
-                            event.preventDefault();
-                        }
+                        event.preventDefault();
+                        void confirm({
+                            title: "Leave active workout?",
+                            message:
+                                "Your saved sets will remain and you can continue this session later.",
+                            confirmLabel: "Leave session",
+                        }).then((confirmed) => {
+                            if (confirmed) navigate(`/workouts/${workout.id}`);
+                        });
                     }}
                 >
                     Exit session →

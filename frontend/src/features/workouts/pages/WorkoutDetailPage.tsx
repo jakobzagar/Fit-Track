@@ -30,8 +30,10 @@ import {Card} from "../../../components/ui/Card.tsx";
 import {Link} from "react-router";
 import {Button} from "../../../components/ui/Button.tsx";
 import {Icon} from "../../../components/ui/Icon.tsx";
+import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
 
 export function WorkoutDetailPage() {
+    const confirm = useConfirmDialog();
     const {workoutId} = useParams();
 
     const [workout, setWorkout] = useState<Workout | null>(null);
@@ -210,7 +212,15 @@ export function WorkoutDetailPage() {
             return;
         }
 
-        if (!window.confirm("Remove this exercise and all of its sets from the workout?")) return;
+        if (
+            !(await confirm({
+                title: "Remove exercise?",
+                message: "This exercise and all of its sets will be removed from the workout.",
+                confirmLabel: "Remove exercise",
+                variant: "danger",
+            }))
+        )
+            return;
 
         setMutationError("");
         setDeletingWorkoutExerciseId(workoutExerciseId);
@@ -288,7 +298,15 @@ export function WorkoutDetailPage() {
             return;
         }
 
-        if (!window.confirm("Delete this set?")) return;
+        if (
+            !(await confirm({
+                title: "Delete set?",
+                message: "This set will be permanently removed from the workout.",
+                confirmLabel: "Delete set",
+                variant: "danger",
+            }))
+        )
+            return;
 
         setMutationError("");
         setDeletingWorkoutSetId(setId);
