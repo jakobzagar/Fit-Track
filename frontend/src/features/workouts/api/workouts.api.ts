@@ -42,8 +42,8 @@ export function deleteWorkout(workoutId: string): Promise<DeleteWorkoutResponse>
 export function updateWorkout(
     workoutId: string,
     data: UpdateWorkoutInput,
-): Promise<WorkoutResponse> {
-    return apiRequest(`/workouts/${workoutId}`, workoutResponseSchema, {
+): Promise<CreateWorkoutResponse> {
+    return apiRequest(`/workouts/${workoutId}`, createWorkoutResponseSchema, {
         method: "PATCH",
         body: data,
     });
