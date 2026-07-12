@@ -63,11 +63,7 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
     }
 
     return (
-        <form
-            className="form-grid mt-5 border-t border-line pt-5"
-            onSubmit={handleSubmit}
-            noValidate
-        >
+        <form className="form-grid" onSubmit={handleSubmit} noValidate>
             <label>
                 Reps
                 <input

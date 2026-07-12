@@ -44,10 +44,10 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
 
     return (
         <form
-            className="grid grid-cols-3 items-end gap-2 rounded-[11px] border border-dashed border-line bg-panel-raised/40 p-3 md:grid-cols-[32px_1fr_1fr_1fr_auto]"
+            className="grid grid-cols-3 items-end gap-3 rounded-[11px] border border-dashed border-line bg-panel-raised/40 p-3 md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_148px]"
             onSubmit={handleSubmit}
         >
-            <span className="hidden pb-3 text-center text-xs font-black text-dim md:block">
+            <span className="hidden pb-4 text-center text-xs font-black text-dim md:block">
                 {setNumber}
             </span>
             <label>
@@ -82,7 +82,7 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
                 />
             </label>
             <Button
-                className="col-span-full mt-1 md:col-span-1 md:mt-0"
+                className="col-span-full w-full md:col-span-1"
                 variant="secondary"
                 size="sm"
                 type="submit"

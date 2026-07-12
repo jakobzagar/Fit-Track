@@ -2,6 +2,7 @@ import {useState} from "react";
 import type {WorkoutSet} from "../../workouts/workout.types.ts";
 import type {UpdateWorkoutSetInput} from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
+import {Icon} from "../../../components/ui/Icon.tsx";
 
 interface WorkoutSetInlineRowProps {
     workoutSet: WorkoutSet;
@@ -72,8 +73,8 @@ export function WorkoutSetInlineRow({
         <div
             className={`rounded-[11px] border p-3 transition ${isCompleted ? "border-positive/40 bg-positive/8" : "border-line bg-ink"}`}
         >
-            <div className="grid grid-cols-3 items-end gap-2 md:grid-cols-[32px_1fr_1fr_1fr_auto]">
-                <span className="hidden pb-3 text-center text-xs font-black text-dim md:block">
+            <div className="grid grid-cols-3 items-end gap-3 md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_148px]">
+                <span className="hidden pb-4 text-center text-xs font-black text-dim md:block">
                     {workoutSet.setNumber}
                 </span>
                 <label>
@@ -110,28 +111,32 @@ export function WorkoutSetInlineRow({
                         onChange={(event) => setDurationSeconds(event.target.value)}
                     />
                 </label>
-                <Button
-                    className="col-span-full mt-1 md:col-span-1 md:mt-0"
-                    variant={isCompleted ? "secondary" : "primary"}
-                    size="sm"
-                    type="button"
-                    disabled={disabled || isSaving}
-                    onClick={() => void run((data) => onToggleCompletion(!isCompleted, data))}
-                >
-                    {isCompleted ? "Undo set" : "Complete ✓"}
-                </Button>
+                <div className="col-span-full grid grid-cols-2 gap-2 md:col-span-1 md:grid-cols-1">
+                    <Button
+                        className="w-full"
+                        variant={isCompleted ? "secondary" : "primary"}
+                        size="sm"
+                        type="button"
+                        disabled={disabled || isSaving}
+                        onClick={() => void run((data) => onToggleCompletion(!isCompleted, data))}
+                    >
+                        {!isCompleted && <Icon name="check" size={14} />}
+                        {isCompleted ? "Undo set" : "Complete"}
+                    </Button>
+                    {!isCompleted && (
+                        <Button
+                            className="w-full"
+                            variant="ghost"
+                            size="sm"
+                            type="button"
+                            disabled={disabled || isSaving}
+                            onClick={() => void run(onSave)}
+                        >
+                            {isSaving ? "Saving..." : "Save changes"}
+                        </Button>
+                    )}
+                </div>
             </div>
-
-            {!isCompleted && (
-                <button
-                    className="mt-2 text-[11px] font-bold tracking-[0.08em] text-dim uppercase hover:text-flame"
-                    type="button"
-                    disabled={disabled || isSaving}
-                    onClick={() => void run(onSave)}
-                >
-                    {isSaving ? "Saving..." : "Save changes"}
-                </button>
-            )}
             {error && <p className="mt-2 text-xs text-negative">{error}</p>}
         </div>
     );

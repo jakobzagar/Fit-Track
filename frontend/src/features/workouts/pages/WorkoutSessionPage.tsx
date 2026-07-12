@@ -299,7 +299,7 @@ export function WorkoutSessionPage() {
                 const previous = previousByExerciseId.get(workoutExercise.exerciseId);
                 const lastSet = workoutExercise.sets.at(-1);
                 return (
-                    <Card as="article" className="space-y-5" key={workoutExercise.id}>
+                    <Card as="article" className="space-y-6" key={workoutExercise.id}>
                         <div className="flex items-start justify-between gap-4">
                             <div>
                                 <p className="text-[10px] font-extrabold tracking-[0.14em] text-flame uppercase">
@@ -312,7 +312,7 @@ export function WorkoutSessionPage() {
                                     {workoutExercise.exercise.muscleGroup}
                                 </p>
                             </div>
-                            <span className="rounded-full border border-line px-3 py-1 text-[10px] font-bold text-dim uppercase">
+                            <span className="shrink-0 rounded-full border border-line bg-white/[0.03] px-3 py-1.5 text-[10px] font-extrabold tracking-[0.08em] text-dim uppercase">
                                 {
                                     workoutExercise.sets.filter((set) => set.completedAt !== null)
                                         .length
@@ -339,7 +339,14 @@ export function WorkoutSessionPage() {
                                 No previous performance — set the baseline today.
                             </p>
                         )}
-                        <div className="space-y-2">
+                        <div className="space-y-3 border-t border-line pt-5">
+                            <div className="hidden grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_148px] gap-3 px-3 text-[10px] font-extrabold tracking-[0.12em] text-dim uppercase md:grid">
+                                <span className="text-center">Set</span>
+                                <span>Weight</span>
+                                <span>Reps</span>
+                                <span>Duration</span>
+                                <span className="text-center">Actions</span>
+                            </div>
                             {workoutExercise.sets.map((set) => (
                                 <WorkoutSetInlineRow
                                     key={set.id}
@@ -353,23 +360,27 @@ export function WorkoutSessionPage() {
                                     }
                                 />
                             ))}
+                            <NewWorkoutSetInlineRow
+                                setNumber={workoutExercise.sets.length + 1}
+                                onSubmit={(data) => handleAddSet(workoutExercise.id, data)}
+                            />
                         </div>
-                        <NewWorkoutSetInlineRow
-                            setNumber={workoutExercise.sets.length + 1}
-                            onSubmit={(data) => handleAddSet(workoutExercise.id, data)}
-                        />
                         {lastSet && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                type="button"
-                                disabled={copyingExerciseId === workoutExercise.id}
-                                onClick={() => void handleCopyLastSet(workoutExercise.id, lastSet)}
-                            >
-                                {copyingExerciseId === workoutExercise.id
-                                    ? "Copying..."
-                                    : "Copy last set"}
-                            </Button>
+                            <div className="flex justify-end border-t border-line pt-4">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    type="button"
+                                    disabled={copyingExerciseId === workoutExercise.id}
+                                    onClick={() =>
+                                        void handleCopyLastSet(workoutExercise.id, lastSet)
+                                    }
+                                >
+                                    {copyingExerciseId === workoutExercise.id
+                                        ? "Copying..."
+                                        : "Copy last set"}
+                                </Button>
+                            </div>
                         )}
                     </Card>
                 );

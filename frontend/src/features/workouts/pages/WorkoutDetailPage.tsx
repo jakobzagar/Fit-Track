@@ -28,6 +28,8 @@ import {LoadingState} from "../../../components/ui/LoadingState.tsx";
 import {PageHeader} from "../../../components/ui/PageHeader.tsx";
 import {Card} from "../../../components/ui/Card.tsx";
 import {Link} from "react-router";
+import {Button} from "../../../components/ui/Button.tsx";
+import {Icon} from "../../../components/ui/Icon.tsx";
 
 export function WorkoutDetailPage() {
     const {workoutId} = useParams();
@@ -385,19 +387,61 @@ export function WorkoutDetailPage() {
             ) : (
                 <section className="grid gap-4">
                     {workout.workoutExercises.map((workoutExercise) => (
-                        <Card as="article" key={workoutExercise.id}>
-                            <p className="text-[10px] font-bold tracking-[0.12em] text-flame uppercase">
-                                Exercise {workoutExercise.position}
-                            </p>
-                            <h3 className="mt-2 text-xl font-black text-cream">
-                                {workoutExercise.exercise.name}
-                            </h3>
+                        <Card as="article" className="space-y-6" key={workoutExercise.id}>
+                            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                                <div>
+                                    <p className="text-[10px] font-extrabold tracking-[0.14em] text-flame uppercase">
+                                        Exercise {workoutExercise.position}
+                                    </p>
+                                    <h3 className="mt-1 text-2xl font-black tracking-[-0.04em] text-cream">
+                                        {workoutExercise.exercise.name}
+                                    </h3>
+                                    <p className="mt-1 text-xs font-semibold tracking-[0.08em] text-dim uppercase">
+                                        {workoutExercise.exercise.muscleGroup}
+                                    </p>
+                                </div>
 
-                            <p className="mt-1 text-sm text-dim">
-                                {workoutExercise.exercise.muscleGroup}
-                            </p>
+                                {editingWorkoutExercise?.id !== workoutExercise.id && (
+                                    <div className="flex shrink-0 flex-wrap gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            type="button"
+                                            disabled={
+                                                deletingWorkoutExerciseId === workoutExercise.id
+                                            }
+                                            onClick={() =>
+                                                setEditingWorkoutExercise(workoutExercise)
+                                            }
+                                        >
+                                            <Icon name="edit" size={14} />
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            variant="danger"
+                                            size="sm"
+                                            type="button"
+                                            disabled={
+                                                deletingWorkoutExerciseId === workoutExercise.id
+                                            }
+                                            onClick={() =>
+                                                handleDeleteWorkoutExercise(workoutExercise.id)
+                                            }
+                                        >
+                                            <Icon name="trash" size={14} />
+                                            {deletingWorkoutExerciseId === workoutExercise.id
+                                                ? "Deleting..."
+                                                : "Delete"}
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
 
-                            {workoutExercise.notes && <p>{workoutExercise.notes}</p>}
+                            {workoutExercise.notes && (
+                                <p className="rounded-[10px] border border-line bg-white/[0.025] px-4 py-3 text-sm leading-6 text-dim">
+                                    {workoutExercise.notes}
+                                </p>
+                            )}
 
                             {editingWorkoutExercise?.id === workoutExercise.id ? (
                                 <UpdateWorkoutExerciseForm
@@ -405,88 +449,112 @@ export function WorkoutDetailPage() {
                                     onSubmit={handleUpdateWorkoutExercise}
                                     onCancel={() => setEditingWorkoutExercise(null)}
                                 />
-                            ) : (
-                                <>
-                                    <button
-                                        type="button"
-                                        disabled={deletingWorkoutExerciseId === workoutExercise.id}
-                                        onClick={() => setEditingWorkoutExercise(workoutExercise)}
-                                    >
-                                        Edit exercise
-                                    </button>
-                                    <button
-                                        type="button"
-                                        disabled={deletingWorkoutExerciseId === workoutExercise.id}
-                                        onClick={() =>
-                                            handleDeleteWorkoutExercise(workoutExercise.id)
-                                        }
-                                    >
-                                        {deletingWorkoutExerciseId === workoutExercise.id
-                                            ? "Deleting..."
-                                            : "Delete exercise"}
-                                    </button>
-                                </>
-                            )}
+                            ) : null}
 
                             {workoutExercise.sets.length === 0 ? (
-                                <p className="my-5 text-sm text-dim">No sets added yet</p>
+                                <p className="rounded-[10px] border border-dashed border-line py-6 text-center text-sm text-dim">
+                                    No sets added yet
+                                </p>
                             ) : (
-                                <ul className="my-5 grid gap-2">
-                                    {workoutExercise.sets.map((set) => (
-                                        <li
-                                            className="rounded-[10px] border border-line bg-ink p-3"
-                                            key={set.id}
-                                        >
-                                            {editingWorkoutSet?.id === set.id ? (
-                                                <UpdateWorkoutSetForm
-                                                    workoutSet={editingWorkoutSet}
-                                                    onSubmit={handleUpdateWorkoutSet}
-                                                    onCancel={() => setEditingWorkoutSet(null)}
-                                                />
-                                            ) : (
-                                                <>
-                                                    Set {set.setNumber}:{" "}
-                                                    {set.reps !== null && `${set.reps} reps`}
-                                                    {set.reps !== null &&
-                                                        set.weight !== null &&
-                                                        ", "}
-                                                    {set.weight !== null && `${set.weight} kg`}
-                                                    {(set.reps !== null || set.weight !== null) &&
-                                                        set.durationSeconds !== null &&
-                                                        ", "}
-                                                    {set.durationSeconds !== null &&
-                                                        `${set.durationSeconds} seconds`}
-                                                    <button
-                                                        type="button"
-                                                        disabled={deletingWorkoutSetId === set.id}
-                                                        onClick={() => setEditingWorkoutSet(set)}
-                                                    >
-                                                        Edit set
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        disabled={deletingWorkoutSetId === set.id}
-                                                        onClick={() =>
-                                                            handleDeleteWorkoutSet(
-                                                                workoutExercise.id,
-                                                                set.id,
-                                                            )
-                                                        }
-                                                    >
-                                                        {deletingWorkoutSetId === set.id
-                                                            ? "Deleting..."
-                                                            : "Delete set"}
-                                                    </button>
-                                                </>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="space-y-3 border-t border-line pt-5">
+                                    <div className="flex items-end justify-between gap-4">
+                                        <div>
+                                            <p className="eyebrow">Performance</p>
+                                            <h4 className="mt-1 text-base font-extrabold text-cream">
+                                                Logged sets
+                                            </h4>
+                                        </div>
+                                        <span className="text-xs font-bold tracking-[0.08em] text-dim uppercase">
+                                            {workoutExercise.sets.length} total
+                                        </span>
+                                    </div>
+                                    <ul className="grid gap-2">
+                                        {workoutExercise.sets.map((set) => (
+                                            <li
+                                                className="rounded-[11px] border border-line bg-ink p-3"
+                                                key={set.id}
+                                            >
+                                                {editingWorkoutSet?.id === set.id ? (
+                                                    <UpdateWorkoutSetForm
+                                                        workoutSet={editingWorkoutSet}
+                                                        onSubmit={handleUpdateWorkoutSet}
+                                                        onCancel={() => setEditingWorkoutSet(null)}
+                                                    />
+                                                ) : (
+                                                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                                                        <div className="flex items-center gap-4">
+                                                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-xs font-black text-cream">
+                                                                {set.setNumber}
+                                                            </span>
+                                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                                                {set.weight !== null && (
+                                                                    <span className="text-sm font-bold text-cream">
+                                                                        {set.weight} kg
+                                                                    </span>
+                                                                )}
+                                                                {set.reps !== null && (
+                                                                    <span className="text-sm font-bold text-cream">
+                                                                        {set.reps} reps
+                                                                    </span>
+                                                                )}
+                                                                {set.durationSeconds !== null && (
+                                                                    <span className="text-sm font-bold text-cream">
+                                                                        {set.durationSeconds} sec
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex shrink-0 gap-2">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                type="button"
+                                                                disabled={
+                                                                    deletingWorkoutSetId === set.id
+                                                                }
+                                                                onClick={() =>
+                                                                    setEditingWorkoutSet(set)
+                                                                }
+                                                            >
+                                                                <Icon name="edit" size={14} />
+                                                                Edit set
+                                                            </Button>
+                                                            <Button
+                                                                variant="danger"
+                                                                size="sm"
+                                                                type="button"
+                                                                disabled={
+                                                                    deletingWorkoutSetId === set.id
+                                                                }
+                                                                onClick={() =>
+                                                                    handleDeleteWorkoutSet(
+                                                                        workoutExercise.id,
+                                                                        set.id,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Icon name="trash" size={14} />
+                                                                {deletingWorkoutSetId === set.id
+                                                                    ? "Deleting..."
+                                                                    : "Delete"}
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             )}
 
-                            <AddWorkoutSetForm
-                                onSubmit={(data) => handleAddSet(workoutExercise.id, data)}
-                            />
+                            <div className="border-t border-line pt-5">
+                                <p className="mb-4 text-xs font-extrabold tracking-[0.1em] text-dim uppercase">
+                                    Add another set
+                                </p>
+                                <AddWorkoutSetForm
+                                    onSubmit={(data) => handleAddSet(workoutExercise.id, data)}
+                                />
+                            </div>
                         </Card>
                     ))}
                 </section>
