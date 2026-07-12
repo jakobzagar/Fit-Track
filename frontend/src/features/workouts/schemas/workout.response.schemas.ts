@@ -5,4 +5,5 @@ export {
     workoutResponseSchema,
     workoutsResponseSchema,
     workoutSetSchema,
+    previousPerformancesResponseSchema,
 } from "@fit-track/shared/workouts";

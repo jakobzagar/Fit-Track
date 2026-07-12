@@ -6,6 +6,7 @@ import {RegisterPage} from "../features/auth/pages/RegisterPage";
 import {ExercisesPage} from "../features/exercises/pages/ExercisesPage";
 import {WorkoutsPage} from "../features/workouts/pages/WorkoutsPage";
 import {WorkoutDetailPage} from "../features/workouts/pages/WorkoutDetailPage";
+import {WorkoutSessionPage} from "../features/workouts/pages/WorkoutSessionPage";
 
 export function AppRouter() {
     return (
@@ -24,6 +25,11 @@ export function AppRouter() {
                         <Route path="/workouts" element={<WorkoutsPage />} />
 
                         <Route path="/workouts/:workoutId" element={<WorkoutDetailPage />} />
+
+                        <Route
+                            path="/workouts/:workoutId/session"
+                            element={<WorkoutSessionPage />}
+                        />
                     </Route>
                 </Route>
 

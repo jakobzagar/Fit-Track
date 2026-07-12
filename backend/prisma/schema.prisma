@@ -7,6 +7,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum WorkoutStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+}
+
 model User {
   id           String   @id @default(uuid())
   name         String
@@ -38,12 +44,15 @@ model Exercise {
 }
 
 model Workout {
-  id          String   @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
-  performedAt DateTime @default(now())
+  status      WorkoutStatus @default(DRAFT)
+  startedAt   DateTime?
+  completedAt DateTime?
+  performedAt DateTime      @default(now())
   notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -72,11 +81,12 @@ model WorkoutExercise {
 }
 
 model WorkoutSet {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   setNumber       Int
   reps            Int?
-  weight          Decimal? @db.Decimal(8, 2)
+  weight          Decimal?  @db.Decimal(8, 2)
   durationSeconds Int?
+  completedAt     DateTime?
 
   workoutExerciseId String
   workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)

@@ -21,6 +21,12 @@ export function WorkoutItem({workout, onDelete, onEdit, isDeleting}: WorkoutItem
 
             <Link to={`/workouts/${workout.id}`}>Open workout</Link>
 
+            {workout.status !== "COMPLETED" && (
+                <Link to={`/workouts/${workout.id}/session`}>
+                    {workout.status === "ACTIVE" ? "Continue workout" : "Start workout"}
+                </Link>
+            )}
+
             <button type="button" disabled={isDeleting} onClick={() => onDelete(workout.id)}>
                 {isDeleting ? "Deleting..." : "Delete"}
             </button>

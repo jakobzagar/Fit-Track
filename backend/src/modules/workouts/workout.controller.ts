@@ -5,6 +5,9 @@ import {
     createWorkoutService,
     deleteWorkoutByIdService,
     updateWorkoutByIdService,
+    startWorkoutService,
+    finishWorkoutService,
+    getPreviousPerformancesService,
 } from "./workout.service.js";
 import type {CreateWorkoutInput, UpdateWorkoutInput, WorkoutIdParams} from "./workout.schema.js";
 
@@ -23,6 +26,19 @@ export async function getWorkoutById(_req: Request, res: Response) {
 
     res.status(200).json({
         workout,
+    });
+}
+
+export async function getPreviousPerformances(_req: Request, res: Response) {
+    const params = res.locals.params as WorkoutIdParams;
+
+    const previousPerformances = await getPreviousPerformancesService(
+        res.locals.userId,
+        params.workoutId,
+    );
+
+    res.status(200).json({
+        previousPerformances,
     });
 }
 
@@ -51,6 +67,26 @@ export async function updateWorkout(_req: Request, res: Response) {
     const body = res.locals.body as UpdateWorkoutInput;
 
     const workout = await updateWorkoutByIdService(res.locals.userId, params.workoutId, body);
+
+    res.status(200).json({
+        workout,
+    });
+}
+
+export async function startWorkout(_req: Request, res: Response) {
+    const params = res.locals.params as WorkoutIdParams;
+
+    const workout = await startWorkoutService(res.locals.userId, params.workoutId);
+
+    res.status(200).json({
+        workout,
+    });
+}
+
+export async function finishWorkout(_req: Request, res: Response) {
+    const params = res.locals.params as WorkoutIdParams;
+
+    const workout = await finishWorkoutService(res.locals.userId, params.workoutId);
 
     res.status(200).json({
         workout,

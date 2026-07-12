@@ -8,4 +8,6 @@ export type {
     WorkoutsResponse,
     WorkoutSet,
     WorkoutSummary,
+    PreviousPerformance,
+    PreviousPerformancesResponse,
 } from "@fit-track/shared/workouts";

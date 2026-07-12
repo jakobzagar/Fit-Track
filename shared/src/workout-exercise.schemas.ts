@@ -64,6 +64,10 @@ export const updateWorkoutSetSchema = z
         message: "At least one field is required",
     });
 
+export const setWorkoutSetCompletionSchema = z.object({
+    completed: z.boolean(),
+});
+
 export const workoutSetParamsSchema = z.object({
     workoutId: z.uuid("Invalid workout ID"),
     workoutExerciseId: z.uuid("Invalid workout exercise ID"),
@@ -101,6 +105,7 @@ export type AddExerciseToWorkoutInput = z.infer<typeof addExerciseToWorkoutSchem
 export type CreateWorkoutSetInput = z.infer<typeof createWorkoutSetSchema>;
 export type UpdateWorkoutExerciseInput = z.infer<typeof updateWorkoutExerciseSchema>;
 export type UpdateWorkoutSetInput = z.infer<typeof updateWorkoutSetSchema>;
+export type SetWorkoutSetCompletionInput = z.infer<typeof setWorkoutSetCompletionSchema>;
 export type WorkoutSetParams = z.infer<typeof workoutSetParamsSchema>;
 export type WorkoutSetIdParams = z.infer<typeof workoutSetIdParamsSchema>;
 export type AddExerciseToWorkoutResponse = z.infer<typeof addExerciseToWorkoutResponseSchema>;

@@ -8,12 +8,14 @@ import {
     deleteWorkoutSet,
     updateWorkoutExercise,
     updateWorkoutSet,
+    setWorkoutSetCompletion,
 } from "./workout-exercise.controller.js";
 import {
     addExerciseToWorkoutSchema,
     createWorkoutSetSchema,
     updateWorkoutExerciseSchema,
     updateWorkoutSetSchema,
+    setWorkoutSetCompletionSchema,
     workoutIdSchema,
     workoutSetIdParamsSchema,
     workoutSetParamsSchema,
@@ -54,6 +56,13 @@ router.patch(
     validate(workoutSetIdParamsSchema, "params"),
     validate(updateWorkoutSetSchema),
     updateWorkoutSet,
+);
+
+router.patch(
+    "/:workoutId/exercises/:workoutExerciseId/sets/:setId/completion",
+    validate(workoutSetIdParamsSchema, "params"),
+    validate(setWorkoutSetCompletionSchema),
+    setWorkoutSetCompletion,
 );
 
 router.delete(

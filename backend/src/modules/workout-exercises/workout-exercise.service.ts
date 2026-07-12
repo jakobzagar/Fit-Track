@@ -5,6 +5,7 @@ import type {
     CreateWorkoutSetInput,
     UpdateWorkoutExerciseInput,
     UpdateWorkoutSetInput,
+    SetWorkoutSetCompletionInput,
 } from "./workout-exercise.schema.js";
 
 export async function addExerciseToWorkoutService(
@@ -392,5 +393,63 @@ export async function deleteWorkoutSetService(
                 },
             });
         }
+    });
+}
+
+export async function setWorkoutSetCompletionService(
+    userId: string,
+    workoutId: string,
+    workoutExerciseId: string,
+    setId: string,
+    data: SetWorkoutSetCompletionInput,
+) {
+    return runSerializableTransaction(async (tx) => {
+        const workoutSet = await tx.workoutSet.findFirst({
+            where: {
+                id: setId,
+                workoutExerciseId,
+                workoutExercise: {
+                    workoutId,
+                    workout: {
+                        userId,
+                    },
+                },
+            },
+            include: {
+                workoutExercise: {
+                    select: {
+                        workout: {
+                            select: {
+                                status: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!workoutSet) {
+            throw new AppError("Workout set not found", 404);
+        }
+
+        if (workoutSet.workoutExercise.workout.status !== "ACTIVE") {
+            throw new AppError("Sets can only be completed during an active workout", 409);
+        }
+
+        const isCompleted = workoutSet.completedAt !== null;
+
+        if (isCompleted === data.completed) {
+            const {workoutExercise: _workoutExercise, ...unchangedWorkoutSet} = workoutSet;
+            return unchangedWorkoutSet;
+        }
+
+        return tx.workoutSet.update({
+            where: {
+                id: setId,
+            },
+            data: {
+                completedAt: data.completed ? new Date() : null,
+            },
+        });
     });
 }

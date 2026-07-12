@@ -1,11 +1,17 @@
 import {apiRequest} from "../../../lib/api.client.ts";
-import type {CreateWorkoutResponse, WorkoutResponse, WorkoutsResponse} from "../workout.types.ts";
+import type {
+    CreateWorkoutResponse,
+    PreviousPerformancesResponse,
+    WorkoutResponse,
+    WorkoutsResponse,
+} from "../workout.types.ts";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
 import {
     createWorkoutResponseSchema,
     deleteWorkoutResponseSchema,
     workoutResponseSchema,
     workoutsResponseSchema,
+    previousPerformancesResponseSchema,
 } from "../schemas/workout.response.schemas.ts";
 
 interface DeleteWorkoutResponse {
@@ -41,4 +47,23 @@ export function updateWorkout(
         method: "PATCH",
         body: data,
     });
+}
+
+export function startWorkout(workoutId: string): Promise<CreateWorkoutResponse> {
+    return apiRequest(`/workouts/${workoutId}/start`, createWorkoutResponseSchema, {
+        method: "POST",
+    });
+}
+
+export function finishWorkout(workoutId: string): Promise<CreateWorkoutResponse> {
+    return apiRequest(`/workouts/${workoutId}/finish`, createWorkoutResponseSchema, {
+        method: "POST",
+    });
+}
+
+export function getPreviousPerformances(workoutId: string): Promise<PreviousPerformancesResponse> {
+    return apiRequest(
+        `/workouts/${workoutId}/previous-performances`,
+        previousPerformancesResponseSchema,
+    );
 }

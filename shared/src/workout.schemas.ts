@@ -25,12 +25,15 @@ export const workoutIdSchema = z.object({
     workoutId: z.uuid("Invalid workout ID"),
 });
 
+export const workoutStatusSchema = z.enum(["DRAFT", "ACTIVE", "COMPLETED"]);
+
 export const workoutSetSchema = z.object({
     id: z.uuid(),
     setNumber: z.number().int().positive(),
     reps: z.number().int().positive().nullable(),
     weight: z.coerce.number().nonnegative().nullable(),
     durationSeconds: z.number().int().positive().nullable(),
+    completedAt: z.iso.datetime().nullable(),
     workoutExerciseId: z.uuid(),
 });
 
@@ -54,6 +57,9 @@ export const workoutExerciseSchema = z.object({
 export const workoutBaseSchema = z.object({
     id: z.uuid(),
     name: z.string(),
+    status: workoutStatusSchema,
+    startedAt: z.iso.datetime().nullable(),
+    completedAt: z.iso.datetime().nullable(),
     performedAt: z.iso.datetime(),
     notes: z.string().nullable(),
     createdAt: z.iso.datetime(),
@@ -79,6 +85,17 @@ export const workoutResponseSchema = z.object({
     workout: workoutSchema,
 });
 
+export const previousPerformanceSchema = z.object({
+    exerciseId: z.uuid(),
+    workoutId: z.uuid(),
+    performedAt: z.iso.datetime(),
+    sets: z.array(workoutSetSchema),
+});
+
+export const previousPerformancesResponseSchema = z.object({
+    previousPerformances: z.array(previousPerformanceSchema),
+});
+
 export const createWorkoutResponseSchema = z.object({
     workout: workoutBaseSchema,
 });
@@ -90,6 +107,7 @@ export const deleteWorkoutResponseSchema = z.object({
 export type CreateWorkoutInput = z.infer<typeof createWorkoutSchema>;
 export type UpdateWorkoutInput = z.infer<typeof updateWorkoutSchema>;
 export type WorkoutIdParams = z.infer<typeof workoutIdSchema>;
+export type WorkoutStatus = z.infer<typeof workoutStatusSchema>;
 export type WorkoutSet = z.infer<typeof workoutSetSchema>;
 export type WorkoutExerciseDetails = z.infer<typeof workoutExerciseDetailsSchema>;
 export type WorkoutExercise = z.infer<typeof workoutExerciseSchema>;
@@ -97,6 +115,8 @@ export type WorkoutBase = z.infer<typeof workoutBaseSchema>;
 export type WorkoutSummary = z.infer<typeof workoutSummarySchema>;
 export type Workout = z.infer<typeof workoutSchema>;
 export type WorkoutResponse = z.infer<typeof workoutResponseSchema>;
+export type PreviousPerformance = z.infer<typeof previousPerformanceSchema>;
+export type PreviousPerformancesResponse = z.infer<typeof previousPerformancesResponseSchema>;
 export type CreateWorkoutResponse = z.infer<typeof createWorkoutResponseSchema>;
 export type WorkoutsResponse = z.infer<typeof workoutsResponseSchema>;
 export type DeleteWorkoutResponse = z.infer<typeof deleteWorkoutResponseSchema>;

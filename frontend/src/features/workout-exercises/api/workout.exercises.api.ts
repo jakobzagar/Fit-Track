@@ -20,6 +20,7 @@ import type {
     CreateWorkoutSetInput,
     UpdateWorkoutExerciseInput,
     UpdateWorkoutSetInput,
+    SetWorkoutSetCompletionInput,
 } from "../schemas/workout.exercises.schemas.ts";
 
 export function addExerciseToWorkout(
@@ -101,6 +102,22 @@ export function deleteWorkoutSet(
         deleteWorkoutSetResponseSchema,
         {
             method: "DELETE",
+        },
+    );
+}
+
+export function setWorkoutSetCompletion(
+    workoutId: string,
+    workoutExerciseId: string,
+    setId: string,
+    data: SetWorkoutSetCompletionInput,
+): Promise<WorkoutSetResponse> {
+    return apiRequest(
+        `/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${setId}/completion`,
+        workoutSetResponseSchema,
+        {
+            method: "PATCH",
+            body: data,
         },
     );
 }

@@ -6,12 +6,14 @@ import {
     deleteWorkoutSetService,
     updateWorkoutExerciseService,
     updateWorkoutSetService,
+    setWorkoutSetCompletionService,
 } from "./workout-exercise.service.js";
 import type {
     AddExerciseToWorkoutInput,
     CreateWorkoutSetInput,
     UpdateWorkoutExerciseInput,
     UpdateWorkoutSetInput,
+    SetWorkoutSetCompletionInput,
     WorkoutIdParams,
     WorkoutSetIdParams,
     WorkoutSetParams,
@@ -107,5 +109,22 @@ export async function deleteWorkoutSet(_req: Request, res: Response) {
 
     res.status(200).json({
         message: "Workout set deleted successfully",
+    });
+}
+
+export async function setWorkoutSetCompletion(_req: Request, res: Response) {
+    const params = res.locals.params as WorkoutSetIdParams;
+    const body = res.locals.body as SetWorkoutSetCompletionInput;
+
+    const workoutExerciseSet = await setWorkoutSetCompletionService(
+        res.locals.userId,
+        params.workoutId,
+        params.workoutExerciseId,
+        params.setId,
+        body,
+    );
+
+    res.status(200).json({
+        workoutExerciseSet,
     });
 }
