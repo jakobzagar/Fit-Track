@@ -26,18 +26,13 @@ export function ExerciseItem({
             className="group relative overflow-hidden transition hover:-translate-y-0.5 hover:border-flame/40"
         >
             <span className="absolute inset-y-0 left-0 w-1 bg-flame opacity-0 transition group-hover:opacity-100" />
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <p className="text-[10px] font-extrabold tracking-[0.15em] text-flame uppercase">
-                        {exercise.muscleGroup}
-                    </p>
-                    <h2 className="mt-2 text-xl font-black tracking-[-0.03em] text-cream">
-                        {exercise.name}
-                    </h2>
-                </div>
-                <span className="grid size-10 place-items-center rounded-full border border-line bg-ink text-xs font-black text-dim">
-                    {exercise.name.charAt(0).toUpperCase()}
-                </span>
+            <div>
+                <p className="text-[10px] font-extrabold tracking-[0.15em] text-flame uppercase">
+                    {exercise.muscleGroup}
+                </p>
+                <h2 className="mt-2 text-xl font-black tracking-[-0.03em] text-cream">
+                    {exercise.name}
+                </h2>
             </div>
 
             <div className="mt-6 flex items-center justify-between border-t border-line pt-4 text-xs text-dim">

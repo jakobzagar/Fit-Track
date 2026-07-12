@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {NavLink, useNavigate} from "react-router";
 import {useAuth} from "../../features/auth/hooks/useAuth";
 import {BrandMark} from "../ui/BrandMark";
@@ -21,6 +21,14 @@ export function Navbar() {
     const {user, signOut} = useAuth();
     const [error, setError] = useState("");
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [theme, setTheme] = useState<"dark" | "light">(() =>
+        document.documentElement.dataset.theme === "light" ? "light" : "dark",
+    );
+
+    useEffect(() => {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem("fittrack-theme", theme);
+    }, [theme]);
 
     async function handleLogout() {
         setError("");
@@ -58,6 +66,17 @@ export function Navbar() {
                     </nav>
 
                     <div className="flex items-center gap-3">
+                        <button
+                            className="theme-toggle"
+                            type="button"
+                            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+                            title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+                            onClick={() =>
+                                setTheme((current) => (current === "dark" ? "light" : "dark"))
+                            }
+                        >
+                            <Icon name={theme === "dark" ? "sun" : "moon"} size={17} />
+                        </button>
                         <div className="hidden text-right sm:block">
                             <p className="text-xs font-bold text-cream">{user?.name}</p>
                             <p className="text-[10px] tracking-[0.1em] text-dim uppercase">
