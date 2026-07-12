@@ -6,6 +6,8 @@ interface ExerciseListProps {
     onArchive: (exerciseId: string) => void;
     onEdit: (exercise: Exercise) => void;
     archivingExerciseId: string | null;
+    isArchivedView?: boolean;
+    onRestore?: (exerciseId: string) => void;
 }
 
 export function ExerciseList({
@@ -13,6 +15,8 @@ export function ExerciseList({
     onArchive,
     onEdit,
     archivingExerciseId,
+    isArchivedView = false,
+    onRestore,
 }: ExerciseListProps) {
     return (
         <section className="card-grid">
@@ -23,6 +27,8 @@ export function ExerciseList({
                     onArchive={onArchive}
                     onEdit={onEdit}
                     isArchiving={archivingExerciseId === exercise.id}
+                    isArchivedView={isArchivedView}
+                    onRestore={onRestore}
                 />
             ))}
         </section>

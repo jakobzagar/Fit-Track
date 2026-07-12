@@ -3,8 +3,8 @@ import {apiRequest} from "../../../lib/api.client.ts";
 import type {ExerciseResponse, ExercisesResponse} from "../exercise.types.ts";
 import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas.ts";
 
-export function getExercises(): Promise<ExercisesResponse> {
-    return apiRequest("/exercises", exercisesResponseSchema);
+export function getExercises(status: "active" | "archived" = "active"): Promise<ExercisesResponse> {
+    return apiRequest(`/exercises?status=${status}`, exercisesResponseSchema);
 }
 
 export function createExercise(data: CreateExerciseInput): Promise<ExerciseResponse> {
@@ -17,6 +17,12 @@ export function createExercise(data: CreateExerciseInput): Promise<ExerciseRespo
 export function archiveExercise(exerciseId: string): Promise<ExerciseResponse> {
     return apiRequest(`/exercises/${exerciseId}`, exerciseResponseSchema, {
         method: "DELETE",
+    });
+}
+
+export function restoreExercise(exerciseId: string): Promise<ExerciseResponse> {
+    return apiRequest(`/exercises/${exerciseId}/restore`, exerciseResponseSchema, {
+        method: "PATCH",
     });
 }
 

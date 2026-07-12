@@ -8,9 +8,18 @@ interface ExerciseItemProps {
     onArchive: (exerciseId: string) => void;
     onEdit: (exercise: Exercise) => void;
     isArchiving: boolean;
+    isArchivedView?: boolean;
+    onRestore?: (exerciseId: string) => void;
 }
 
-export function ExerciseItem({exercise, onArchive, onEdit, isArchiving}: ExerciseItemProps) {
+export function ExerciseItem({
+    exercise,
+    onArchive,
+    onEdit,
+    isArchiving,
+    isArchivedView = false,
+    onRestore,
+}: ExerciseItemProps) {
     return (
         <Card
             as="article"
@@ -37,26 +46,41 @@ export function ExerciseItem({exercise, onArchive, onEdit, isArchiving}: Exercis
             </div>
 
             <div className="button-row mt-4">
-                <Button
-                    size="sm"
-                    variant="secondary"
-                    type="button"
-                    disabled={isArchiving}
-                    onClick={() => onEdit(exercise)}
-                >
-                    <Icon name="edit" size={14} />
-                    Edit
-                </Button>
-                <Button
-                    size="sm"
-                    variant="danger"
-                    type="button"
-                    disabled={isArchiving}
-                    onClick={() => onArchive(exercise.id)}
-                >
-                    <Icon name="trash" size={14} />
-                    {isArchiving ? "Archiving..." : "Archive"}
-                </Button>
+                {isArchivedView ? (
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        type="button"
+                        disabled={isArchiving}
+                        onClick={() => onRestore?.(exercise.id)}
+                    >
+                        <Icon name="arrow" size={14} />
+                        {isArchiving ? "Restoring..." : "Restore"}
+                    </Button>
+                ) : (
+                    <>
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            type="button"
+                            disabled={isArchiving}
+                            onClick={() => onEdit(exercise)}
+                        >
+                            <Icon name="edit" size={14} />
+                            Edit
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="danger"
+                            type="button"
+                            disabled={isArchiving}
+                            onClick={() => onArchive(exercise.id)}
+                        >
+                            <Icon name="trash" size={14} />
+                            {isArchiving ? "Archiving..." : "Archive"}
+                        </Button>
+                    </>
+                )}
             </div>
         </Card>
     );
