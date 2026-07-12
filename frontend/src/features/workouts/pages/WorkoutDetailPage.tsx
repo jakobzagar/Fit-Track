@@ -23,6 +23,11 @@ import type {
     UpdateWorkoutExerciseInput,
     UpdateWorkoutSetInput,
 } from "../../workout-exercises/schemas/workout.exercises.schemas.ts";
+import {Feedback} from "../../../components/ui/Feedback.tsx";
+import {LoadingState} from "../../../components/ui/LoadingState.tsx";
+import {PageHeader} from "../../../components/ui/PageHeader.tsx";
+import {Card} from "../../../components/ui/Card.tsx";
+import {Link} from "react-router";
 
 export function WorkoutDetailPage() {
     const {workoutId} = useParams();
@@ -203,6 +208,8 @@ export function WorkoutDetailPage() {
             return;
         }
 
+        if (!window.confirm("Remove this exercise and all of its sets from the workout?")) return;
+
         setMutationError("");
         setDeletingWorkoutExerciseId(workoutExerciseId);
 
@@ -279,6 +286,8 @@ export function WorkoutDetailPage() {
             return;
         }
 
+        if (!window.confirm("Delete this set?")) return;
+
         setMutationError("");
         setDeletingWorkoutSetId(setId);
 
@@ -317,48 +326,76 @@ export function WorkoutDetailPage() {
     }
 
     if (isLoading) {
-        return <p>Loading workout...</p>;
+        return <LoadingState label="Loading workout" />;
     }
 
     if (loadError) {
-        return <p>{loadError}</p>;
+        return <Feedback>{loadError}</Feedback>;
     }
 
     if (!workout) {
-        return <p>Workout not found</p>;
+        return <Feedback>Workout not found</Feedback>;
     }
 
     return (
-        <section>
-            <h1>{workout.name}</h1>
-
-            <p>Date: {new Date(workout.performedAt).toLocaleDateString()}</p>
-
-            {workout.notes && <p>{workout.notes}</p>}
-
-            {mutationError && <p>{mutationError}</p>}
-
-            <AddExerciseToWorkoutForm
-                exercises={exercises.filter(
-                    (exercise) =>
-                        !workout.workoutExercises.some(
-                            (workoutExercise) => workoutExercise.exerciseId === exercise.id,
-                        ),
-                )}
-                onSubmit={handleAddExercise}
+        <section className="page-stack">
+            <PageHeader
+                eyebrow={workout.status === "COMPLETED" ? "Completed session" : "Workout plan"}
+                title={workout.name}
+                description={`${new Date(workout.performedAt).toLocaleDateString(undefined, {day: "2-digit", month: "long", year: "numeric"})}${workout.notes ? ` · ${workout.notes}` : ""}`}
+                action={
+                    workout.status !== "COMPLETED" ? (
+                        <Link
+                            className="inline-flex min-h-11 items-center rounded-[10px] bg-flame px-4 text-xs font-extrabold tracking-[0.07em] text-ink uppercase"
+                            to={`/workouts/${workout.id}/session`}
+                        >
+                            {workout.status === "ACTIVE" ? "Continue session" : "Start workout"}
+                        </Link>
+                    ) : undefined
+                }
             />
 
-            <h2>Exercises</h2>
+            {mutationError && <Feedback>{mutationError}</Feedback>}
+
+            <Card>
+                <div className="mb-5">
+                    <p className="eyebrow">Workout builder</p>
+                    <h2 className="section-title mt-2">Add exercise</h2>
+                </div>
+                <AddExerciseToWorkoutForm
+                    exercises={exercises.filter(
+                        (exercise) =>
+                            !workout.workoutExercises.some(
+                                (workoutExercise) => workoutExercise.exerciseId === exercise.id,
+                            ),
+                    )}
+                    onSubmit={handleAddExercise}
+                />
+            </Card>
+
+            <div>
+                <h2 className="section-title">Exercises</h2>
+                <p className="section-caption">
+                    {workout.workoutExercises.length} movements in this workout
+                </p>
+            </div>
 
             {workout.workoutExercises.length === 0 ? (
-                <p>No exercises added yet</p>
+                <Card className="py-12 text-center text-sm text-dim">No exercises added yet.</Card>
             ) : (
-                <section>
+                <section className="grid gap-4">
                     {workout.workoutExercises.map((workoutExercise) => (
-                        <article key={workoutExercise.id}>
-                            <h3>{workoutExercise.exercise.name}</h3>
+                        <Card as="article" key={workoutExercise.id}>
+                            <p className="text-[10px] font-bold tracking-[0.12em] text-flame uppercase">
+                                Exercise {workoutExercise.position}
+                            </p>
+                            <h3 className="mt-2 text-xl font-black text-cream">
+                                {workoutExercise.exercise.name}
+                            </h3>
 
-                            <p>{workoutExercise.exercise.muscleGroup}</p>
+                            <p className="mt-1 text-sm text-dim">
+                                {workoutExercise.exercise.muscleGroup}
+                            </p>
 
                             {workoutExercise.notes && <p>{workoutExercise.notes}</p>}
 
@@ -392,11 +429,14 @@ export function WorkoutDetailPage() {
                             )}
 
                             {workoutExercise.sets.length === 0 ? (
-                                <p>No sets added yet</p>
+                                <p className="my-5 text-sm text-dim">No sets added yet</p>
                             ) : (
-                                <ul>
+                                <ul className="my-5 grid gap-2">
                                     {workoutExercise.sets.map((set) => (
-                                        <li key={set.id}>
+                                        <li
+                                            className="rounded-[10px] border border-line bg-ink p-3"
+                                            key={set.id}
+                                        >
                                             {editingWorkoutSet?.id === set.id ? (
                                                 <UpdateWorkoutSetForm
                                                     workoutSet={editingWorkoutSet}
@@ -447,7 +487,7 @@ export function WorkoutDetailPage() {
                             <AddWorkoutSetForm
                                 onSubmit={(data) => handleAddSet(workoutExercise.id, data)}
                             />
-                        </article>
+                        </Card>
                     ))}
                 </section>
             )}

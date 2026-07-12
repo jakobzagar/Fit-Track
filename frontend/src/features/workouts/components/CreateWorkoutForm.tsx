@@ -1,6 +1,7 @@
 import {useState, type SubmitEvent} from "react";
 import {z} from "zod";
 import {createWorkoutSchema, type CreateWorkoutInput} from "../schemas/workout.schemas.ts";
+import {Button} from "../../../components/ui/Button.tsx";
 
 interface CreateWorkoutFormProps {
     onSubmit: (data: CreateWorkoutInput) => Promise<void>;
@@ -58,7 +59,7 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
+        <form className="form-stack" onSubmit={handleSubmit} noValidate>
             <label>
                 Name
                 <input
@@ -67,7 +68,6 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
                     onChange={(event) => setName(event.target.value)}
                 />
             </label>
-
             {errors.name && <p>{errors.name}</p>}
 
             <label>
@@ -79,7 +79,6 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
                     onChange={(event) => setPerformedAt(event.target.value)}
                 />
             </label>
-
             {errors.performedAt && <p>{errors.performedAt}</p>}
 
             <label>
@@ -90,12 +89,11 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
                     onChange={(event) => setNotes(event.target.value)}
                 />
             </label>
-
             {errors.notes && <p>{errors.notes}</p>}
 
-            <button type="submit" disabled={isSubmitting}>
+            <Button type="submit" size="lg" fullWidth disabled={isSubmitting}>
                 {isSubmitting ? "Creating..." : "Create workout"}
-            </button>
+            </Button>
         </form>
     );
 }

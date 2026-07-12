@@ -1,5 +1,6 @@
 import {useState, type SubmitEvent} from "react";
 import type {CreateWorkoutSetInput} from "../schemas/workout.exercises.schemas.ts";
+import {Button} from "../../../components/ui/Button.tsx";
 
 interface NewWorkoutSetInlineRowProps {
     setNumber: number;
@@ -43,14 +44,15 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
 
     return (
         <form
-            className="grid grid-cols-[auto_1fr_1fr_1fr_auto] items-end gap-2"
+            className="grid grid-cols-3 items-end gap-2 rounded-[11px] border border-dashed border-line bg-panel-raised/40 p-3 md:grid-cols-[32px_1fr_1fr_1fr_auto]"
             onSubmit={handleSubmit}
         >
-            <span className="pb-2 font-medium">{setNumber}</span>
-            <label className="text-sm">
-                Weight
+            <span className="hidden pb-3 text-center text-xs font-black text-dim md:block">
+                {setNumber}
+            </span>
+            <label>
+                Kg
                 <input
-                    className="block w-full rounded border p-2"
                     type="number"
                     min="0"
                     step="0.01"
@@ -59,10 +61,9 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
                     onChange={(event) => setWeight(event.target.value)}
                 />
             </label>
-            <label className="text-sm">
+            <label>
                 Reps
                 <input
-                    className="block w-full rounded border p-2"
                     type="number"
                     min="1"
                     value={reps}
@@ -70,10 +71,9 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
                     onChange={(event) => setReps(event.target.value)}
                 />
             </label>
-            <label className="text-sm">
-                Seconds
+            <label>
+                Sec
                 <input
-                    className="block w-full rounded border p-2"
                     type="number"
                     min="1"
                     value={durationSeconds}
@@ -81,10 +81,16 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
                     onChange={(event) => setDurationSeconds(event.target.value)}
                 />
             </label>
-            <button className="rounded border px-3 py-2" type="submit" disabled={isSubmitting}>
+            <Button
+                className="col-span-full mt-1 md:col-span-1 md:mt-0"
+                variant="secondary"
+                size="sm"
+                type="submit"
+                disabled={isSubmitting}
+            >
                 {isSubmitting ? "..." : "Add"}
-            </button>
-            {error && <p className="col-span-full text-sm text-red-700">{error}</p>}
+            </Button>
+            {error && <p className="col-span-full text-xs text-negative">{error}</p>}
         </form>
     );
 }

@@ -1,4 +1,7 @@
+import {Button} from "../../../components/ui/Button";
+import {Card} from "../../../components/ui/Card";
 import type {Exercise} from "../exercise.types.ts";
+import {Icon} from "../../../components/ui/Icon";
 
 interface ExerciseItemProps {
     exercise: Exercise;
@@ -9,22 +12,52 @@ interface ExerciseItemProps {
 
 export function ExerciseItem({exercise, onArchive, onEdit, isArchiving}: ExerciseItemProps) {
     return (
-        <article>
-            <h2>{exercise.name}</h2>
+        <Card
+            as="article"
+            className="group relative overflow-hidden transition hover:-translate-y-0.5 hover:border-flame/40"
+        >
+            <span className="absolute inset-y-0 left-0 w-1 bg-flame opacity-0 transition group-hover:opacity-100" />
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <p className="text-[10px] font-extrabold tracking-[0.15em] text-flame uppercase">
+                        {exercise.muscleGroup}
+                    </p>
+                    <h2 className="mt-2 text-xl font-black tracking-[-0.03em] text-cream">
+                        {exercise.name}
+                    </h2>
+                </div>
+                <span className="grid size-10 place-items-center rounded-full border border-line bg-ink text-xs font-black text-dim">
+                    {exercise.name.charAt(0).toUpperCase()}
+                </span>
+            </div>
 
-            <p>Muscle group: {exercise.muscleGroup}</p>
+            <div className="mt-6 flex items-center justify-between border-t border-line pt-4 text-xs text-dim">
+                <span>{exercise.equipment ?? "Bodyweight"}</span>
+                <span>{new Date(exercise.createdAt).toLocaleDateString()}</span>
+            </div>
 
-            <p>Equipment: {exercise.equipment ?? "No equipment"}</p>
-
-            <p>Created: {new Date(exercise.createdAt).toLocaleDateString()}</p>
-
-            <button type="button" disabled={isArchiving} onClick={() => onArchive(exercise.id)}>
-                {isArchiving ? "Archiving..." : "Archive"}
-            </button>
-
-            <button type="button" disabled={isArchiving} onClick={() => onEdit(exercise)}>
-                Edit
-            </button>
-        </article>
+            <div className="button-row mt-4">
+                <Button
+                    size="sm"
+                    variant="secondary"
+                    type="button"
+                    disabled={isArchiving}
+                    onClick={() => onEdit(exercise)}
+                >
+                    <Icon name="edit" size={14} />
+                    Edit
+                </Button>
+                <Button
+                    size="sm"
+                    variant="danger"
+                    type="button"
+                    disabled={isArchiving}
+                    onClick={() => onArchive(exercise.id)}
+                >
+                    <Icon name="trash" size={14} />
+                    {isArchiving ? "Archiving..." : "Archive"}
+                </Button>
+            </div>
+        </Card>
     );
 }

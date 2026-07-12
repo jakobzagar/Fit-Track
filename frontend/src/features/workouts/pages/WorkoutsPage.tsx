@@ -5,6 +5,10 @@ import {UpdateWorkoutForm} from "../components/UpdateWorkoutForm.tsx";
 import {WorkoutList} from "../components/WorkoutList.tsx";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
 import type {WorkoutSummary, WorkoutsResponse} from "../workout.types.ts";
+import {Card} from "../../../components/ui/Card.tsx";
+import {Feedback} from "../../../components/ui/Feedback.tsx";
+import {PageHeader} from "../../../components/ui/PageHeader.tsx";
+import {SkeletonGrid} from "../../../components/ui/SkeletonGrid.tsx";
 
 export function WorkoutsPage() {
     const [workouts, setWorkouts] = useState<WorkoutSummary[]>([]);
@@ -13,6 +17,7 @@ export function WorkoutsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
     const [mutationError, setMutationError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     useEffect(() => {
         async function loadWorkouts() {
@@ -31,6 +36,7 @@ export function WorkoutsPage() {
 
     async function handleCreateWorkout(data: CreateWorkoutInput) {
         setMutationError("");
+        setSuccessMessage("");
 
         try {
             const response = await createWorkout(data);
@@ -44,6 +50,7 @@ export function WorkoutsPage() {
                 },
                 ...currentWorkouts,
             ]);
+            setSuccessMessage("Workout created successfully.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to create workout");
             throw error;
@@ -51,7 +58,12 @@ export function WorkoutsPage() {
     }
 
     async function handleDeleteWorkout(workoutId: string) {
+        const workout = workouts.find((item) => item.id === workoutId);
+        if (!window.confirm(`Delete ${workout?.name ?? "this workout"} and all of its sets?`))
+            return;
+
         setMutationError("");
+        setSuccessMessage("");
         setDeletingWorkoutId(workoutId);
 
         try {
@@ -60,6 +72,7 @@ export function WorkoutsPage() {
             setWorkouts((currentWorkouts) =>
                 currentWorkouts.filter((workout) => workout.id !== workoutId),
             );
+            setSuccessMessage("Workout deleted.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to delete workout");
         } finally {
@@ -81,6 +94,7 @@ export function WorkoutsPage() {
         }
 
         setMutationError("");
+        setSuccessMessage("");
 
         try {
             const response = await updateWorkout(editingWorkout.id, data);
@@ -100,6 +114,7 @@ export function WorkoutsPage() {
             );
 
             setEditingWorkout(null);
+            setSuccessMessage("Workout updated successfully.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to update workout");
             throw error;
@@ -107,39 +122,70 @@ export function WorkoutsPage() {
     }
 
     if (isLoading) {
-        return <p>Loading workouts...</p>;
+        return <SkeletonGrid />;
     }
 
     if (loadError) {
-        return <p>{loadError}</p>;
+        return <Feedback>{loadError}</Feedback>;
     }
 
     return (
-        <section>
-            <h1>Workouts</h1>
+        <section className="page-stack">
+            <PageHeader
+                eyebrow="Training log"
+                title="Workouts"
+                description="Plan the session, log the work and leave with a record you can build on next time."
+            />
+            {mutationError && <Feedback>{mutationError}</Feedback>}
+            {successMessage && <Feedback tone="success">{successMessage}</Feedback>}
 
-            {mutationError && <p>{mutationError}</p>}
-
-            {editingWorkout ? (
-                <UpdateWorkoutForm
-                    workout={editingWorkout}
-                    onSubmit={handleUpdateWorkout}
-                    onCancel={handleCancelEditWorkout}
-                />
-            ) : (
-                <CreateWorkoutForm onSubmit={handleCreateWorkout} />
-            )}
-
-            {workouts.length === 0 ? (
-                <p>No workouts found</p>
-            ) : (
-                <WorkoutList
-                    workouts={workouts}
-                    onDelete={handleDeleteWorkout}
-                    onEdit={handleEditWorkout}
-                    deletingWorkoutId={deletingWorkoutId}
-                />
-            )}
+            <div className="content-grid">
+                <div>
+                    <div className="mb-4 flex items-end justify-between">
+                        <div>
+                            <h2 className="section-title">Recent sessions</h2>
+                            <p className="section-caption">
+                                {workouts.length} workouts in your log
+                            </p>
+                        </div>
+                    </div>
+                    {workouts.length === 0 ? (
+                        <Card className="py-14 text-center">
+                            <p className="font-bold text-cream">No sessions logged yet.</p>
+                            <p className="mt-2 text-sm text-dim">
+                                Create a workout and start your first session.
+                            </p>
+                        </Card>
+                    ) : (
+                        <WorkoutList
+                            workouts={workouts}
+                            onDelete={handleDeleteWorkout}
+                            onEdit={handleEditWorkout}
+                            deletingWorkoutId={deletingWorkoutId}
+                        />
+                    )}
+                </div>
+                <Card as="aside" className="sticky top-24">
+                    {editingWorkout ? (
+                        <UpdateWorkoutForm
+                            workout={editingWorkout}
+                            onSubmit={handleUpdateWorkout}
+                            onCancel={handleCancelEditWorkout}
+                        />
+                    ) : (
+                        <>
+                            <div className="mb-6">
+                                <p className="eyebrow">Next session</p>
+                                <h2 className="section-title mt-2">Create workout</h2>
+                                <p className="section-caption">
+                                    Give it a clear name. You can add exercises after creating it.
+                                </p>
+                            </div>
+                            <CreateWorkoutForm onSubmit={handleCreateWorkout} />
+                        </>
+                    )}
+                </Card>
+            </div>
         </section>
     );
 }

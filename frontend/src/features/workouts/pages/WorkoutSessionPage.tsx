@@ -8,9 +8,6 @@ import {
     setWorkoutSetCompletion,
     updateWorkoutSet,
 } from "../../workout-exercises/api/workout.exercises.api.ts";
-import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/AddExerciseToWorkoutForm.tsx";
-import {NewWorkoutSetInlineRow} from "../../workout-exercises/components/NewWorkoutSetInlineRow.tsx";
-import {WorkoutSetInlineRow} from "../../workout-exercises/components/WorkoutSetInlineRow.tsx";
 import type {
     AddExerciseToWorkoutInput,
     CreateWorkoutSetInput,
@@ -23,6 +20,13 @@ import {
     startWorkout,
 } from "../api/workouts.api.ts";
 import type {PreviousPerformance, Workout, WorkoutSet} from "../workout.types.ts";
+import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/AddExerciseToWorkoutForm.tsx";
+import {NewWorkoutSetInlineRow} from "../../workout-exercises/components/NewWorkoutSetInlineRow.tsx";
+import {WorkoutSetInlineRow} from "../../workout-exercises/components/WorkoutSetInlineRow.tsx";
+import {Button} from "../../../components/ui/Button.tsx";
+import {Card} from "../../../components/ui/Card.tsx";
+import {Feedback} from "../../../components/ui/Feedback.tsx";
+import {LoadingState} from "../../../components/ui/LoadingState.tsx";
 
 export function WorkoutSessionPage() {
     const {workoutId} = useParams();
@@ -77,6 +81,17 @@ export function WorkoutSessionPage() {
 
         void loadSession();
     }, [navigate, workoutId]);
+
+    useEffect(() => {
+        function warnBeforeLeaving(event: BeforeUnloadEvent) {
+            if (workout?.status === "ACTIVE" && !isFinishing) {
+                event.preventDefault();
+            }
+        }
+
+        window.addEventListener("beforeunload", warnBeforeLeaving);
+        return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+    }, [isFinishing, workout?.status]);
 
     const previousByExerciseId = useMemo(
         () =>
@@ -212,8 +227,8 @@ export function WorkoutSessionPage() {
         }
     }
 
-    if (isLoading) return <p>Starting workout...</p>;
-    if (error && !workout) return <p>{error}</p>;
+    if (isLoading) return <LoadingState label="Starting workout" />;
+    if (error && !workout) return <Feedback>{error}</Feedback>;
     if (!workout) return null;
 
     const completedSetCount = workout.workoutExercises.reduce(
@@ -224,87 +239,129 @@ export function WorkoutSessionPage() {
     );
 
     return (
-        <section className="mx-auto max-w-4xl space-y-6 p-4">
-            <header className="flex items-center justify-between gap-4">
+        <section className="mx-auto max-w-4xl space-y-6">
+            <header className="flex flex-col justify-between gap-5 border-b border-line pb-7 sm:flex-row sm:items-end">
                 <div>
-                    <p className="text-sm text-gray-600">Active workout</p>
-                    <h1 className="text-2xl font-bold">{workout.name}</h1>
+                    <p className="eyebrow">Live session</p>
+                    <h1 className="mt-3 text-4xl font-black tracking-[-0.055em] text-cream sm:text-5xl">
+                        {workout.name}
+                    </h1>
+                    <p className="mt-3 flex items-center gap-2 text-xs font-bold tracking-[0.1em] text-positive uppercase">
+                        <span className="size-2 animate-pulse rounded-full bg-positive" />
+                        Workout in progress
+                    </p>
                 </div>
-                <Link className="underline" to={`/workouts/${workout.id}`}>
-                    Exit session
+                <Link
+                    className="text-xs font-bold tracking-[0.08em] text-dim uppercase hover:text-cream"
+                    to={`/workouts/${workout.id}`}
+                    onClick={(event) => {
+                        if (
+                            !window.confirm(
+                                "Leave this active workout? Your saved sets will remain.",
+                            )
+                        ) {
+                            event.preventDefault();
+                        }
+                    }}
+                >
+                    Exit session →
                 </Link>
             </header>
 
-            {error && <p className="rounded bg-red-100 p-3 text-red-800">{error}</p>}
+            {error && <Feedback>{error}</Feedback>}
 
-            <AddExerciseToWorkoutForm
-                exercises={exercises.filter(
-                    (exercise) =>
-                        !workout.workoutExercises.some(
-                            (workoutExercise) => workoutExercise.exerciseId === exercise.id,
-                        ),
-                )}
-                onSubmit={handleAddExercise}
-            />
+            <Card>
+                <div className="mb-5">
+                    <p className="eyebrow">Build session</p>
+                    <h2 className="section-title mt-2">Add an exercise</h2>
+                </div>
+                <AddExerciseToWorkoutForm
+                    exercises={exercises.filter(
+                        (exercise) =>
+                            !workout.workoutExercises.some(
+                                (workoutExercise) => workoutExercise.exerciseId === exercise.id,
+                            ),
+                    )}
+                    onSubmit={handleAddExercise}
+                />
+            </Card>
+
+            {workout.workoutExercises.length === 0 && (
+                <Card className="py-12 text-center">
+                    <p className="font-bold text-cream">This session needs a movement.</p>
+                    <p className="mt-2 text-sm text-dim">
+                        Add an exercise above, then log your first set.
+                    </p>
+                </Card>
+            )}
 
             {workout.workoutExercises.map((workoutExercise) => {
                 const previous = previousByExerciseId.get(workoutExercise.exerciseId);
                 const lastSet = workoutExercise.sets.at(-1);
-
                 return (
-                    <article className="space-y-3 rounded-xl border p-4" key={workoutExercise.id}>
-                        <div>
-                            <h2 className="text-xl font-semibold">
-                                {workoutExercise.exercise.name}
-                            </h2>
-                            <p className="text-sm text-gray-600">
-                                {workoutExercise.exercise.muscleGroup}
-                            </p>
+                    <Card as="article" className="space-y-5" key={workoutExercise.id}>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-[10px] font-extrabold tracking-[0.14em] text-flame uppercase">
+                                    Exercise {workoutExercise.position}
+                                </p>
+                                <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-cream">
+                                    {workoutExercise.exercise.name}
+                                </h2>
+                                <p className="mt-1 text-xs font-semibold tracking-[0.08em] text-dim uppercase">
+                                    {workoutExercise.exercise.muscleGroup}
+                                </p>
+                            </div>
+                            <span className="rounded-full border border-line px-3 py-1 text-[10px] font-bold text-dim uppercase">
+                                {
+                                    workoutExercise.sets.filter((set) => set.completedAt !== null)
+                                        .length
+                                }
+                                /{workoutExercise.sets.length} done
+                            </span>
                         </div>
-
                         {previous ? (
-                            <div className="rounded bg-gray-100 p-3 text-sm">
-                                <strong>
+                            <div className="border-l-2 border-flame bg-flame/6 px-4 py-3 text-sm text-dim">
+                                <strong className="text-cream">
                                     Previous ({new Date(previous.performedAt).toLocaleDateString()}
                                     ):
                                 </strong>{" "}
                                 {previous.sets
-                                    .map((set) => `${set.weight ?? "–"} kg × ${set.reps ?? "–"}`)
+                                    .map((set) =>
+                                        set.durationSeconds !== null
+                                            ? `${set.durationSeconds} sec`
+                                            : `${set.weight ?? "–"} kg × ${set.reps ?? "–"}`,
+                                    )
                                     .join(" · ")}
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-500">No previous performance</p>
+                            <p className="text-sm text-dim">
+                                No previous performance — set the baseline today.
+                            </p>
                         )}
-
                         <div className="space-y-2">
-                            {workoutExercise.sets.map((workoutSet) => (
+                            {workoutExercise.sets.map((set) => (
                                 <WorkoutSetInlineRow
-                                    key={workoutSet.id}
-                                    workoutSet={workoutSet}
+                                    key={set.id}
+                                    workoutSet={set}
                                     disabled={workout.status !== "ACTIVE"}
                                     onSave={(data) =>
-                                        handleSaveSet(workoutExercise.id, workoutSet.id, data)
+                                        handleSaveSet(workoutExercise.id, set.id, data)
                                     }
                                     onToggleCompletion={(completed, data) =>
-                                        handleToggleSet(
-                                            workoutExercise.id,
-                                            workoutSet.id,
-                                            completed,
-                                            data,
-                                        )
+                                        handleToggleSet(workoutExercise.id, set.id, completed, data)
                                     }
                                 />
                             ))}
                         </div>
-
                         <NewWorkoutSetInlineRow
                             setNumber={workoutExercise.sets.length + 1}
                             onSubmit={(data) => handleAddSet(workoutExercise.id, data)}
                         />
-
                         {lastSet && (
-                            <button
-                                className="rounded border px-3 py-2 text-sm"
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 type="button"
                                 disabled={copyingExerciseId === workoutExercise.id}
                                 onClick={() => void handleCopyLastSet(workoutExercise.id, lastSet)}
@@ -312,22 +369,30 @@ export function WorkoutSessionPage() {
                                 {copyingExerciseId === workoutExercise.id
                                     ? "Copying..."
                                     : "Copy last set"}
-                            </button>
+                            </Button>
                         )}
-                    </article>
+                    </Card>
                 );
             })}
 
-            <footer className="sticky bottom-0 flex items-center justify-between rounded-xl border bg-white p-4 shadow">
-                <span>{completedSetCount} completed sets</span>
-                <button
-                    className="rounded bg-black px-5 py-3 text-white disabled:opacity-50"
+            <footer className="sticky bottom-22 z-30 flex flex-col items-stretch justify-between gap-3 rounded-[14px] border border-line bg-panel/95 p-4 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center md:bottom-6">
+                <div>
+                    <span className="metric-number text-xl font-black text-cream">
+                        {completedSetCount}
+                    </span>
+                    <span className="ml-2 text-xs font-bold tracking-[0.08em] text-dim uppercase">
+                        completed sets
+                    </span>
+                </div>
+                <Button
+                    className="w-full sm:w-auto"
+                    size="lg"
                     type="button"
                     disabled={isFinishing || completedSetCount === 0}
                     onClick={() => void handleFinish()}
                 >
                     {isFinishing ? "Finishing..." : "Finish workout"}
-                </button>
+                </Button>
             </footer>
         </section>
     );

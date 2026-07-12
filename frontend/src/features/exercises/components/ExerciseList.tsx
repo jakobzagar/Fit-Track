@@ -15,7 +15,7 @@ export function ExerciseList({
     archivingExerciseId,
 }: ExerciseListProps) {
     return (
-        <section>
+        <section className="card-grid">
             {exercises.map((exercise) => (
                 <ExerciseItem
                     key={exercise.id}

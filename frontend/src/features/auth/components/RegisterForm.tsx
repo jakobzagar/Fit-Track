@@ -1,6 +1,7 @@
 import {z} from "zod";
 import {useState, type SubmitEvent} from "react";
 import {registerSchema, type RegisterInput} from "../schemas/auth.schemas";
+import {Button} from "../../../components/ui/Button";
 
 interface RegisterFormProps {
     onSubmit: (data: RegisterInput) => Promise<void>;
@@ -54,10 +55,11 @@ export function RegisterForm({onSubmit}: RegisterFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
+        <form className="form-stack" onSubmit={handleSubmit} noValidate>
             <label>
                 Name
                 <input
+                    autoComplete="name"
                     value={name}
                     disabled={isSubmitting}
                     onChange={(event) => setName(event.target.value)}
@@ -69,6 +71,7 @@ export function RegisterForm({onSubmit}: RegisterFormProps) {
                 Email
                 <input
                     type="email"
+                    autoComplete="email"
                     value={email}
                     disabled={isSubmitting}
                     onChange={(event) => setEmail(event.target.value)}
@@ -80,6 +83,7 @@ export function RegisterForm({onSubmit}: RegisterFormProps) {
                 Password
                 <input
                     type="password"
+                    autoComplete="new-password"
                     value={password}
                     disabled={isSubmitting}
                     onChange={(event) => setPassword(event.target.value)}
@@ -87,9 +91,9 @@ export function RegisterForm({onSubmit}: RegisterFormProps) {
             </label>
             {errors.password && <p>{errors.password}</p>}
 
-            <button type="submit" disabled={isSubmitting}>
+            <Button type="submit" size="lg" fullWidth disabled={isSubmitting}>
                 {isSubmitting ? "Registering..." : "Register"}
-            </button>
+            </Button>
         </form>
     );
 }

@@ -2,6 +2,7 @@ import {useState, type SubmitEvent} from "react";
 import {z} from "zod";
 import {updateWorkoutSchema, type UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
 import type {WorkoutSummary} from "../workout.types.ts";
+import {Button} from "../../../components/ui/Button.tsx";
 
 interface UpdateWorkoutFormProps {
     workout: WorkoutSummary;
@@ -59,8 +60,11 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
-            <h2>Edit workout</h2>
+        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+            <div>
+                <p className="eyebrow">Editing</p>
+                <h2 className="section-title mt-2">{workout.name}</h2>
+            </div>
 
             <label>
                 Name
@@ -93,13 +97,14 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
             </label>
             {errors.notes && <p>{errors.notes}</p>}
 
-            <button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save changes"}
-            </button>
-
-            <button type="button" disabled={isSubmitting} onClick={onCancel}>
-                Cancel
-            </button>
+            <div className="button-row">
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Saving..." : "Save changes"}
+                </Button>
+                <Button type="button" variant="ghost" disabled={isSubmitting} onClick={onCancel}>
+                    Cancel
+                </Button>
+            </div>
         </form>
     );
 }

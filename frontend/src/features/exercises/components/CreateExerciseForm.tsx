@@ -1,6 +1,7 @@
 import {z} from "zod";
 import {useState, type SubmitEvent} from "react";
 import {createExerciseSchema, type CreateExerciseInput} from "../schemas/exercise.schemas";
+import {Button} from "../../../components/ui/Button";
 
 interface CreateExerciseFormProps {
     onSubmit: (data: CreateExerciseInput) => Promise<void>;
@@ -58,7 +59,7 @@ export function CreateExerciseForm({onSubmit}: CreateExerciseFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
+        <form className="form-stack" onSubmit={handleSubmit} noValidate>
             <label>
                 Name
                 <input
@@ -89,9 +90,9 @@ export function CreateExerciseForm({onSubmit}: CreateExerciseFormProps) {
             </label>
             {errors.equipment && <p>{errors.equipment}</p>}
 
-            <button type="submit" disabled={isSubmitting}>
+            <Button type="submit" size="lg" fullWidth disabled={isSubmitting}>
                 {isSubmitting ? "Creating..." : "Create exercise"}
-            </button>
+            </Button>
         </form>
     );
 }

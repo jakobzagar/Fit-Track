@@ -12,7 +12,7 @@ export function AppRouter() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<Navigate to="/exercises" replace />} />
+                <Route path="/" element={<Navigate to="/workouts" replace />} />
 
                 <Route path="/login" element={<LoginPage />} />
 
@@ -33,7 +33,22 @@ export function AppRouter() {
                     </Route>
                 </Route>
 
-                <Route path="*" element={<p>Page not found</p>} />
+                <Route
+                    path="*"
+                    element={
+                        <main className="grid min-h-screen place-items-center bg-ink p-6 text-center">
+                            <div>
+                                <p className="eyebrow justify-center">404</p>
+                                <h1 className="mt-4 text-5xl font-black tracking-[-0.05em] text-cream">
+                                    Page not found
+                                </h1>
+                                <p className="mt-4 text-dim">
+                                    This route is off the training plan.
+                                </p>
+                            </div>
+                        </main>
+                    }
+                />
             </Routes>
         </BrowserRouter>
     );

@@ -1,6 +1,7 @@
 import {z} from "zod";
 import {useState, type SubmitEvent} from "react";
 import {loginSchema, type LoginInput} from "../schemas/auth.schemas.ts";
+import {Button} from "../../../components/ui/Button";
 
 interface LoginFormProps {
     onSubmit: (data: LoginInput) => Promise<void>;
@@ -50,11 +51,12 @@ export function LoginForm({onSubmit}: LoginFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
+        <form className="form-stack" onSubmit={handleSubmit} noValidate>
             <label>
                 Email
                 <input
                     type="email"
+                    autoComplete="email"
                     value={email}
                     disabled={isSubmitting}
                     onChange={(e) => setEmail(e.target.value)}
@@ -66,6 +68,7 @@ export function LoginForm({onSubmit}: LoginFormProps) {
                 Password
                 <input
                     type="password"
+                    autoComplete="current-password"
                     value={password}
                     disabled={isSubmitting}
                     onChange={(e) => setPassword(e.target.value)}
@@ -73,9 +76,9 @@ export function LoginForm({onSubmit}: LoginFormProps) {
             </label>
             {errors.password && <p>{errors.password}</p>}
 
-            <button type="submit" disabled={isSubmitting}>
+            <Button type="submit" size="lg" fullWidth disabled={isSubmitting}>
                 {isSubmitting ? "Logging in..." : "Log In"}
-            </button>
+            </Button>
         </form>
     );
 }

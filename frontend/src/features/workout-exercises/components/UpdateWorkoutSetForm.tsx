@@ -5,6 +5,7 @@ import {
     updateWorkoutSetSchema,
     type UpdateWorkoutSetInput,
 } from "../schemas/workout.exercises.schemas.ts";
+import {Button} from "../../../components/ui/Button.tsx";
 
 interface UpdateWorkoutSetFormProps {
     workoutSet: WorkoutSet;
@@ -70,7 +71,11 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
+        <form
+            className="form-grid rounded-[12px] border border-line bg-ink p-4"
+            onSubmit={handleSubmit}
+            noValidate
+        >
             <label>
                 Reps
                 <input
@@ -110,12 +115,20 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
             {errors.durationSeconds && <p>{errors.durationSeconds}</p>}
             {errors.form && <p>{errors.form}</p>}
 
-            <button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save set"}
-            </button>
-            <button type="button" disabled={isSubmitting} onClick={onCancel}>
-                Cancel
-            </button>
+            <div className="button-row col-span-full">
+                <Button type="submit" size="sm" disabled={isSubmitting}>
+                    {isSubmitting ? "Saving..." : "Save set"}
+                </Button>
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={isSubmitting}
+                    onClick={onCancel}
+                >
+                    Cancel
+                </Button>
+            </div>
         </form>
     );
 }

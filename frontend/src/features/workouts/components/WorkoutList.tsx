@@ -10,7 +10,7 @@ interface WorkoutListProps {
 
 export function WorkoutList({workouts, onDelete, onEdit, deletingWorkoutId}: WorkoutListProps) {
     return (
-        <section>
+        <section className="card-grid">
             {workouts.map((workout) => (
                 <WorkoutItem
                     key={workout.id}

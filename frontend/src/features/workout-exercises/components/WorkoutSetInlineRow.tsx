@@ -1,6 +1,7 @@
 import {useState} from "react";
 import type {WorkoutSet} from "../../workouts/workout.types.ts";
 import type {UpdateWorkoutSetInput} from "../schemas/workout.exercises.schemas.ts";
+import {Button} from "../../../components/ui/Button.tsx";
 
 interface WorkoutSetInlineRowProps {
     workoutSet: WorkoutSet;
@@ -69,14 +70,15 @@ export function WorkoutSetInlineRow({
 
     return (
         <div
-            className={`rounded-lg border p-3 ${isCompleted ? "border-green-500 bg-green-50" : ""}`}
+            className={`rounded-[11px] border p-3 transition ${isCompleted ? "border-positive/40 bg-positive/8" : "border-line bg-ink"}`}
         >
-            <div className="grid grid-cols-[auto_1fr_1fr_1fr_auto] items-end gap-2">
-                <span className="pb-2 font-medium">{workoutSet.setNumber}</span>
-                <label className="text-sm">
-                    Weight
+            <div className="grid grid-cols-3 items-end gap-2 md:grid-cols-[32px_1fr_1fr_1fr_auto]">
+                <span className="hidden pb-3 text-center text-xs font-black text-dim md:block">
+                    {workoutSet.setNumber}
+                </span>
+                <label>
+                    Kg
                     <input
-                        className="block w-full rounded border p-2"
                         type="number"
                         min="0"
                         step="0.01"
@@ -86,10 +88,9 @@ export function WorkoutSetInlineRow({
                         onChange={(event) => setWeight(event.target.value)}
                     />
                 </label>
-                <label className="text-sm">
+                <label>
                     Reps
                     <input
-                        className="block w-full rounded border p-2"
                         type="number"
                         min="1"
                         inputMode="numeric"
@@ -98,10 +99,9 @@ export function WorkoutSetInlineRow({
                         onChange={(event) => setReps(event.target.value)}
                     />
                 </label>
-                <label className="text-sm">
-                    Seconds
+                <label>
+                    Sec
                     <input
-                        className="block w-full rounded border p-2"
                         type="number"
                         min="1"
                         inputMode="numeric"
@@ -110,19 +110,21 @@ export function WorkoutSetInlineRow({
                         onChange={(event) => setDurationSeconds(event.target.value)}
                     />
                 </label>
-                <button
-                    className="rounded border px-3 py-2"
+                <Button
+                    className="col-span-full mt-1 md:col-span-1 md:mt-0"
+                    variant={isCompleted ? "secondary" : "primary"}
+                    size="sm"
                     type="button"
                     disabled={disabled || isSaving}
                     onClick={() => void run((data) => onToggleCompletion(!isCompleted, data))}
                 >
-                    {isCompleted ? "Undo" : "✓"}
-                </button>
+                    {isCompleted ? "Undo set" : "Complete ✓"}
+                </Button>
             </div>
 
             {!isCompleted && (
                 <button
-                    className="mt-2 text-sm underline"
+                    className="mt-2 text-[11px] font-bold tracking-[0.08em] text-dim uppercase hover:text-flame"
                     type="button"
                     disabled={disabled || isSaving}
                     onClick={() => void run(onSave)}
@@ -130,7 +132,7 @@ export function WorkoutSetInlineRow({
                     {isSaving ? "Saving..." : "Save changes"}
                 </button>
             )}
-            {error && <p className="mt-1 text-sm text-red-700">{error}</p>}
+            {error && <p className="mt-2 text-xs text-negative">{error}</p>}
         </div>
     );
 }

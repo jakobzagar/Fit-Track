@@ -10,6 +10,10 @@ import type {ExercisesResponse, Exercise, ExerciseResponse} from "../exercise.ty
 import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas.ts";
 import {CreateExerciseForm} from "../components/CreateExerciseForm.tsx";
 import {UpdateExerciseForm} from "../components/UpdateExerciseForm.tsx";
+import {Card} from "../../../components/ui/Card.tsx";
+import {Feedback} from "../../../components/ui/Feedback.tsx";
+import {PageHeader} from "../../../components/ui/PageHeader.tsx";
+import {SkeletonGrid} from "../../../components/ui/SkeletonGrid.tsx";
 
 export function ExercisesPage() {
     const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -19,6 +23,7 @@ export function ExercisesPage() {
 
     const [loadError, setLoadError] = useState("");
     const [mutationError, setMutationError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     useEffect((): void => {
         async function loadExercises() {
@@ -37,10 +42,12 @@ export function ExercisesPage() {
 
     async function handleCreateExercise(data: CreateExerciseInput) {
         setMutationError("");
+        setSuccessMessage("");
 
         try {
             const response: ExerciseResponse = await createExercise(data);
             setExercises((currentExercises) => [...currentExercises, response.exercise]);
+            setSuccessMessage("Exercise created successfully.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to create exercise");
             throw error;
@@ -48,7 +55,11 @@ export function ExercisesPage() {
     }
 
     async function handleArchiveExercise(exerciseId: string) {
+        const exercise = exercises.find((item) => item.id === exerciseId);
+        if (!window.confirm(`Archive ${exercise?.name ?? "this exercise"}?`)) return;
+
         setMutationError("");
+        setSuccessMessage("");
         setArchivingExerciseId(exerciseId);
 
         try {
@@ -57,6 +68,7 @@ export function ExercisesPage() {
             setExercises((currentExercises) =>
                 currentExercises.filter((exercise) => exercise.id !== exerciseId),
             );
+            setSuccessMessage("Exercise archived.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to archive exercise");
         } finally {
@@ -78,6 +90,7 @@ export function ExercisesPage() {
         }
 
         setMutationError("");
+        setSuccessMessage("");
 
         try {
             const response = await updateExercise(editingExercise.id, data);
@@ -89,6 +102,7 @@ export function ExercisesPage() {
             );
 
             setEditingExercise(null);
+            setSuccessMessage("Exercise updated successfully.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to update exercise");
             throw error;
@@ -96,40 +110,69 @@ export function ExercisesPage() {
     }
 
     if (isLoading) {
-        return <p>Loading exercises...</p>;
+        return <SkeletonGrid />;
     }
 
     if (loadError) {
-        return <p>{loadError}</p>;
+        return <Feedback>{loadError}</Feedback>;
     }
 
     return (
-        <section>
-            <h1>Exercises</h1>
+        <section className="page-stack">
+            <PageHeader
+                eyebrow="Exercise library"
+                title="Movements"
+                description="Build a clean library of the movements you train. Keep names consistent so your history stays useful."
+            />
+            {mutationError && <Feedback>{mutationError}</Feedback>}
+            {successMessage && <Feedback tone="success">{successMessage}</Feedback>}
 
-            {mutationError && <p>{mutationError}</p>}
-
-            {exercises.length === 0 ? (
-                <p>No exercises found</p>
-            ) : (
-                <ExerciseList
-                    exercises={exercises}
-                    onArchive={handleArchiveExercise}
-                    onEdit={handleEditExercise}
-                    archivingExerciseId={archivingExerciseId}
-                />
-            )}
-
-            {editingExercise ? (
-                <UpdateExerciseForm
-                    key={editingExercise.id}
-                    exercise={editingExercise}
-                    onSubmit={handleUpdateExercise}
-                    onCancel={handleCancelExercise}
-                />
-            ) : (
-                <CreateExerciseForm onSubmit={handleCreateExercise} />
-            )}
+            <div className="content-grid">
+                <div>
+                    <div className="mb-4 flex items-end justify-between">
+                        <div>
+                            <h2 className="section-title">Your exercises</h2>
+                            <p className="section-caption">{exercises.length} active movements</p>
+                        </div>
+                    </div>
+                    {exercises.length === 0 ? (
+                        <Card className="py-14 text-center">
+                            <p className="font-bold text-cream">Your library is empty.</p>
+                            <p className="mt-2 text-sm text-dim">
+                                Add your first movement to start building workouts.
+                            </p>
+                        </Card>
+                    ) : (
+                        <ExerciseList
+                            exercises={exercises}
+                            onArchive={handleArchiveExercise}
+                            onEdit={handleEditExercise}
+                            archivingExerciseId={archivingExerciseId}
+                        />
+                    )}
+                </div>
+                <Card as="aside" className="sticky top-24">
+                    {editingExercise ? (
+                        <UpdateExerciseForm
+                            key={editingExercise.id}
+                            exercise={editingExercise}
+                            onSubmit={handleUpdateExercise}
+                            onCancel={handleCancelExercise}
+                        />
+                    ) : (
+                        <>
+                            <div className="mb-6">
+                                <p className="eyebrow">New movement</p>
+                                <h2 className="section-title mt-2">Add exercise</h2>
+                                <p className="section-caption">
+                                    Use a clear, familiar name you will recognize mid-workout.
+                                </p>
+                            </div>
+                            <CreateExerciseForm onSubmit={handleCreateExercise} />
+                        </>
+                    )}
+                </Card>
+            </div>
         </section>
     );
 }

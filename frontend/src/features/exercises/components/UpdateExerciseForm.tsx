@@ -2,6 +2,7 @@ import {z} from "zod";
 import {useState, type SubmitEvent} from "react";
 import {updateExerciseSchema, type UpdateExerciseInput} from "../schemas/exercise.schemas";
 import type {Exercise} from "../exercise.types.ts";
+import {Button} from "../../../components/ui/Button";
 
 interface UpdateExerciseFormProps {
     exercise: Exercise;
@@ -56,8 +57,11 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
-            <h2>Edit exercise</h2>
+        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+            <div>
+                <p className="eyebrow">Editing</p>
+                <h2 className="section-title mt-2">{exercise.name}</h2>
+            </div>
 
             <label>
                 Name
@@ -89,13 +93,14 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
             </label>
             {errors.equipment && <p>{errors.equipment}</p>}
 
-            <button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save changes"}
-            </button>
-
-            <button type="button" disabled={isSubmitting} onClick={onCancel}>
-                Cancel
-            </button>
+            <div className="button-row">
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Saving..." : "Save changes"}
+                </Button>
+                <Button type="button" variant="ghost" disabled={isSubmitting} onClick={onCancel}>
+                    Cancel
+                </Button>
+            </div>
         </form>
     );
 };

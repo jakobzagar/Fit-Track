@@ -4,6 +4,7 @@ import {
     createWorkoutSetSchema,
     type CreateWorkoutSetInput,
 } from "../schemas/workout.exercises.schemas.ts";
+import {Button} from "../../../components/ui/Button.tsx";
 
 interface AddWorkoutSetFormProps {
     onSubmit: (data: CreateWorkoutSetInput) => Promise<void>;
@@ -62,7 +63,11 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
+        <form
+            className="form-grid mt-5 border-t border-line pt-5"
+            onSubmit={handleSubmit}
+            noValidate
+        >
             <label>
                 Reps
                 <input
@@ -104,9 +109,9 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
             {errors.durationSeconds && <p>{errors.durationSeconds}</p>}
             {errors.form && <p>{errors.form}</p>}
 
-            <button type="submit" disabled={isSubmitting}>
+            <Button className="self-end" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Adding..." : "Add set"}
-            </button>
+            </Button>
         </form>
     );
 }

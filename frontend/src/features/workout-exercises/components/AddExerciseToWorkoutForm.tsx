@@ -5,6 +5,7 @@ import {
     addExerciseToWorkoutSchema,
     type AddExerciseToWorkoutInput,
 } from "../schemas/workout.exercises.schemas.ts";
+import {Button} from "../../../components/ui/Button.tsx";
 
 interface AddExerciseToWorkoutFormProps {
     exercises: Exercise[];
@@ -57,11 +58,13 @@ export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWor
     }
 
     if (exercises.length === 0) {
-        return <p>No available exercises</p>;
+        return (
+            <p className="text-sm text-dim">Every available exercise is already in this workout.</p>
+        );
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate>
+        <form className="form-grid" onSubmit={handleSubmit} noValidate>
             <label>
                 Exercise
                 <select
@@ -77,7 +80,6 @@ export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWor
                     ))}
                 </select>
             </label>
-
             {errors.exerciseId && <p>{errors.exerciseId}</p>}
 
             <label>
@@ -88,12 +90,11 @@ export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWor
                     onChange={(event) => setNotes(event.target.value)}
                 />
             </label>
-
             {errors.notes && <p>{errors.notes}</p>}
 
-            <button type="submit" disabled={isSubmitting}>
+            <Button className="self-end" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Adding..." : "Add exercise"}
-            </button>
+            </Button>
         </form>
     );
 }
