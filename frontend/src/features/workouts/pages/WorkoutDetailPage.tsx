@@ -499,30 +499,48 @@ export function WorkoutDetailPage() {
                                                         onCancel={() => setEditingWorkoutSet(null)}
                                                     />
                                                 ) : (
-                                                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                                                        <div className="flex items-center gap-4">
+                                                    <div className="grid gap-3 sm:grid-cols-[36px_minmax(0,1fr)_auto] sm:items-center">
+                                                        <div className="flex items-center gap-3 sm:contents">
                                                             <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-xs font-black text-cream">
                                                                 {set.setNumber}
                                                             </span>
-                                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                                                                {set.weight !== null && (
-                                                                    <span className="text-sm font-bold text-cream">
-                                                                        {set.weight} kg
+                                                            <div className="grid flex-1 grid-cols-3 gap-2">
+                                                                <div className="rounded-[8px] border border-line bg-panel px-3 py-2">
+                                                                    <span className="block text-[9px] font-extrabold tracking-[0.12em] text-dim uppercase">
+                                                                        Weight
                                                                     </span>
-                                                                )}
-                                                                {set.reps !== null && (
-                                                                    <span className="text-sm font-bold text-cream">
-                                                                        {set.reps} reps
+                                                                    <strong className="metric-number mt-1 block text-sm text-cream">
+                                                                        {set.weight ?? "—"}
+                                                                        <small className="ml-1 text-[10px] font-bold text-dim">
+                                                                            kg
+                                                                        </small>
+                                                                    </strong>
+                                                                </div>
+                                                                <div className="rounded-[8px] border border-line bg-panel px-3 py-2">
+                                                                    <span className="block text-[9px] font-extrabold tracking-[0.12em] text-dim uppercase">
+                                                                        Reps
                                                                     </span>
-                                                                )}
-                                                                {set.durationSeconds !== null && (
-                                                                    <span className="text-sm font-bold text-cream">
-                                                                        {set.durationSeconds} sec
+                                                                    <strong className="metric-number mt-1 block text-sm text-cream">
+                                                                        {set.reps ?? "—"}
+                                                                        <small className="ml-1 text-[10px] font-bold text-dim">
+                                                                            reps
+                                                                        </small>
+                                                                    </strong>
+                                                                </div>
+                                                                <div className="rounded-[8px] border border-line bg-panel px-3 py-2">
+                                                                    <span className="block text-[9px] font-extrabold tracking-[0.12em] text-dim uppercase">
+                                                                        Duration
                                                                     </span>
-                                                                )}
+                                                                    <strong className="metric-number mt-1 block text-sm text-cream">
+                                                                        {set.durationSeconds ?? "—"}
+                                                                        <small className="ml-1 text-[10px] font-bold text-dim">
+                                                                            sec
+                                                                        </small>
+                                                                    </strong>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div className="flex shrink-0 gap-2">
+                                                        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"

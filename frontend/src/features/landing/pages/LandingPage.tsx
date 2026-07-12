@@ -2,22 +2,20 @@ import {Link} from "react-router";
 import {BrandMark} from "../../../components/ui/BrandMark";
 import {Icon} from "../../../components/ui/Icon";
 import {useAuth} from "../../auth/hooks/useAuth";
+import {Footer} from "../../../components/layout/Footer";
 
 const features = [
     {
-        number: "01",
         title: "Build your workouts",
         description: "Create focused training plans and keep every exercise in one clear place.",
         icon: "workout" as const,
     },
     {
-        number: "02",
         title: "Track every set",
         description: "Log reps and weight while you train, without interrupting your momentum.",
         icon: "exercise" as const,
     },
     {
-        number: "03",
         title: "Keep progressing",
         description: "Return to your workout history and make every next session count.",
         icon: "arrow" as const,
@@ -30,7 +28,7 @@ export function LandingPage() {
     const primaryLabel = user ? "Open dashboard" : "Start training";
 
     return (
-        <main className="landing-shell">
+        <main id="top" className="landing-shell">
             <header className="landing-nav">
                 <BrandMark linked={false} />
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -68,74 +66,44 @@ export function LandingPage() {
                             </Link>
                         )}
                     </div>
-                    <p className="landing-note">
-                        <span /> No noise. Just your next rep.
-                    </p>
                 </div>
 
                 <div className="landing-preview" aria-label="FitTrack workout preview">
                     <div className="landing-preview-glow" />
                     <div className="landing-dashboard-card">
-                        <div className="landing-card-topline">
+                        <span className="absolute inset-y-0 left-0 w-1 bg-flame" />
+                        <div className="flex items-start justify-between gap-4">
                             <div>
-                                <p>Today&apos;s workout</p>
-                                <h2>Upper body</h2>
-                            </div>
-                            <span className="landing-live-dot">Ready</span>
-                        </div>
-                        <div className="landing-progress">
-                            <span style={{width: "68%"}} />
-                        </div>
-                        <div className="landing-stat-row">
-                            <div>
-                                <strong>6</strong>
-                                <span>Exercises</span>
-                            </div>
-                            <div>
-                                <strong>24</strong>
-                                <span>Sets</span>
-                            </div>
-                            <div>
-                                <strong>
-                                    52<span>m</span>
-                                </strong>
-                                <span>Duration</span>
-                            </div>
-                        </div>
-                        <div className="landing-exercise-list">
-                            <div>
-                                <span className="landing-exercise-icon">
-                                    <Icon name="exercise" />
+                                <span className="inline-flex rounded-full border border-flame/40 bg-flame/10 px-2.5 py-1 text-[10px] font-extrabold tracking-[0.12em] text-flame uppercase">
+                                    Active
                                 </span>
-                                <p>
-                                    <strong>Bench press</strong>
-                                    <small>4 sets · 8 reps</small>
-                                </p>
-                                <b>80 kg</b>
+                                <h2 className="mt-4 text-2xl font-black tracking-[-0.04em] text-cream">
+                                    Upper body
+                                </h2>
                             </div>
-                            <div>
-                                <span className="landing-exercise-icon">
-                                    <Icon name="exercise" />
-                                </span>
-                                <p>
-                                    <strong>Shoulder press</strong>
-                                    <small>3 sets · 10 reps</small>
+                            <div className="text-right">
+                                <p className="metric-number text-2xl font-black text-flame">6</p>
+                                <p className="text-[10px] tracking-[0.1em] text-dim uppercase">
+                                    Exercises
                                 </p>
-                                <b>24 kg</b>
-                            </div>
-                            <div>
-                                <span className="landing-exercise-icon">
-                                    <Icon name="exercise" />
-                                </span>
-                                <p>
-                                    <strong>Lat pulldown</strong>
-                                    <small>4 sets · 10 reps</small>
-                                </p>
-                                <b>65 kg</b>
                             </div>
                         </div>
-                        <div className="landing-session-button">
-                            <Icon name="play" size={17} /> Start session
+                        <p className="mt-3 text-xs font-semibold tracking-[0.05em] text-dim uppercase">
+                            12 Jul 2026
+                        </p>
+                        <p className="mt-4 text-sm leading-6 text-dim">
+                            Chest, shoulders and back with controlled working sets.
+                        </p>
+                        <div className="mt-6 grid grid-cols-3 gap-2 border-t border-line pt-4">
+                            <span className="inline-flex min-h-10 items-center justify-center gap-1 rounded-[9px] border border-flame bg-flame px-2 text-center text-xs font-extrabold tracking-[0.04em] text-ink uppercase">
+                                <Icon name="arrow" size={15} /> Continue workout
+                            </span>
+                            <span className="inline-flex min-h-10 items-center justify-center gap-1 rounded-[9px] px-2 text-xs font-extrabold tracking-[0.04em] text-dim uppercase">
+                                <Icon name="edit" size={14} /> Edit
+                            </span>
+                            <span className="inline-flex min-h-10 items-center justify-center gap-1 rounded-[9px] border border-negative/20 bg-negative/8 px-2 text-xs font-extrabold tracking-[0.04em] text-negative uppercase">
+                                <Icon name="trash" size={16} /> Delete
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -148,12 +116,11 @@ export function LandingPage() {
                 </div>
                 <div className="landing-feature-grid">
                     {features.map((feature) => (
-                        <article key={feature.number} className="landing-feature-card">
+                        <article key={feature.title} className="landing-feature-card">
                             <div className="landing-feature-meta">
                                 <span>
                                     <Icon name={feature.icon} size={21} />
                                 </span>
-                                <small>{feature.number}</small>
                             </div>
                             <h3>{feature.title}</h3>
                             <p>{feature.description}</p>
@@ -171,10 +138,7 @@ export function LandingPage() {
                 </Link>
             </section>
 
-            <footer className="landing-footer">
-                <BrandMark linked={false} />
-                <p>Built for better training.</p>
-            </footer>
+            <Footer variant="landing" />
         </main>
     );
 }

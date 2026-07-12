@@ -33,9 +33,6 @@ export function LoginPage() {
                     <h1 className="mt-5 max-w-xl text-[clamp(3rem,8vw,7rem)] font-black tracking-[-0.07em] text-cream uppercase leading-[0.8]">
                         Show up. <span className="text-flame">Log it.</span> Get stronger.
                     </h1>
-                    <p className="mt-7 max-w-md text-sm leading-7 text-dim">
-                        A focused training log for lifters who care about the next rep, not noise.
-                    </p>
                 </div>
                 <p className="relative z-10 text-[10px] font-bold tracking-[0.2em] text-dim uppercase">
                     No feeds. No hype. Just progress.

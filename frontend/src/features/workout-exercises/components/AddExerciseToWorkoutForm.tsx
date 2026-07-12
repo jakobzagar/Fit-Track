@@ -65,36 +65,41 @@ export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWor
 
     return (
         <form className="form-grid" onSubmit={handleSubmit} noValidate>
-            <label>
-                Exercise
-                <select
-                    value={exerciseId}
-                    disabled={isSubmitting}
-                    onChange={(event) => setExerciseId(event.target.value)}
-                >
-                    <option value="">Select exercise</option>
-                    {exercises.map((exercise) => (
-                        <option key={exercise.id} value={exercise.id}>
-                            {exercise.name}
-                        </option>
-                    ))}
-                </select>
-            </label>
-            {errors.exerciseId && <p>{errors.exerciseId}</p>}
+            <div className="grid content-start gap-3">
+                <label>
+                    Exercise
+                    <select
+                        value={exerciseId}
+                        disabled={isSubmitting}
+                        onChange={(event) => setExerciseId(event.target.value)}
+                    >
+                        <option value="">Select exercise</option>
+                        {exercises.map((exercise) => (
+                            <option key={exercise.id} value={exercise.id}>
+                                {exercise.name}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+                {errors.exerciseId && <p className="field-error">{errors.exerciseId}</p>}
 
-            <label>
-                Notes
-                <textarea
-                    value={notes}
-                    disabled={isSubmitting}
-                    onChange={(event) => setNotes(event.target.value)}
-                />
-            </label>
-            {errors.notes && <p>{errors.notes}</p>}
+                <Button fullWidth type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Adding..." : "Add exercise"}
+                </Button>
+            </div>
 
-            <Button className="self-end" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Adding..." : "Add exercise"}
-            </Button>
+            <div className="grid h-full gap-2">
+                <label className="grid h-full grid-rows-[auto_1fr]">
+                    Notes
+                    <textarea
+                        className="h-full min-h-0"
+                        value={notes}
+                        disabled={isSubmitting}
+                        onChange={(event) => setNotes(event.target.value)}
+                    />
+                </label>
+                {errors.notes && <p className="field-error">{errors.notes}</p>}
+            </div>
         </form>
     );
 }

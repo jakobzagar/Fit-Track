@@ -33,10 +33,6 @@ export function RegisterPage() {
                     <h1 className="mt-5 max-w-xl text-[clamp(3rem,8vw,7rem)] font-black tracking-[-0.07em] text-cream uppercase leading-[0.8]">
                         Every set <span className="text-flame">counts.</span>
                     </h1>
-                    <p className="mt-7 max-w-md text-sm leading-7 text-dim">
-                        Your strongest training block starts with a clean record of the work you
-                        actually do.
-                    </p>
                 </div>
                 <p className="relative z-10 text-[10px] font-bold tracking-[0.2em] text-dim uppercase">
                     Simple by design. Serious in practice.
