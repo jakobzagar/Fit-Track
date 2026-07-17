@@ -24,6 +24,11 @@ export function WorkoutSetInlineRow({
     );
     const [error, setError] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const [savedValues, setSavedValues] = useState({
+        reps: workoutSet.reps?.toString() ?? "",
+        weight: workoutSet.weight?.toString() ?? "",
+        durationSeconds: workoutSet.durationSeconds?.toString() ?? "",
+    });
 
     function getData(): UpdateWorkoutSetInput | null {
         if (reps === "" && durationSeconds === "") {
@@ -67,18 +72,37 @@ export function WorkoutSetInlineRow({
         }
     }
 
+    async function saveChanges() {
+        const data = getData();
+        if (!data) return;
+
+        setIsSaving(true);
+        try {
+            await onSave(data);
+            setSavedValues({reps, weight, durationSeconds});
+        } catch (caughtError) {
+            setError(caughtError instanceof Error ? caughtError.message : "Failed to save set");
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
     const isCompleted = workoutSet.completedAt !== null;
+    const isDirty =
+        reps !== savedValues.reps ||
+        weight !== savedValues.weight ||
+        durationSeconds !== savedValues.durationSeconds;
 
     return (
         <div
             className={`rounded-[11px] border p-3 transition ${isCompleted ? "border-positive/40 bg-positive/8" : "border-line bg-ink"}`}
         >
-            <div className="grid grid-cols-3 items-end gap-3 md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_148px]">
-                <span className="hidden pb-4 text-center text-xs font-black text-dim md:block">
+            <div className="grid grid-cols-3 items-center gap-3 md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_148px]">
+                <span className="hidden text-center text-xs font-black text-dim md:block">
                     {workoutSet.setNumber}
                 </span>
                 <label>
-                    Kg
+                    <span className="md:sr-only">Weight (kg)</span>
                     <input
                         type="number"
                         min="0"
@@ -90,7 +114,7 @@ export function WorkoutSetInlineRow({
                     />
                 </label>
                 <label>
-                    Reps
+                    <span className="md:sr-only">Reps</span>
                     <input
                         type="number"
                         min="1"
@@ -101,7 +125,7 @@ export function WorkoutSetInlineRow({
                     />
                 </label>
                 <label>
-                    Sec
+                    <span className="md:sr-only">Duration (seconds)</span>
                     <input
                         type="number"
                         min="1"
@@ -111,28 +135,31 @@ export function WorkoutSetInlineRow({
                         onChange={(event) => setDurationSeconds(event.target.value)}
                     />
                 </label>
-                <div className="col-span-full grid grid-cols-2 gap-2 md:col-span-1 md:grid-cols-1">
-                    <Button
-                        className="w-full"
-                        variant={isCompleted ? "secondary" : "primary"}
-                        size="sm"
-                        type="button"
-                        disabled={disabled || isSaving}
-                        onClick={() => void run((data) => onToggleCompletion(!isCompleted, data))}
-                    >
-                        {!isCompleted && <Icon name="check" size={14} />}
-                        {isCompleted ? "Undo set" : "Complete"}
-                    </Button>
-                    {!isCompleted && (
+                <div className="col-span-full md:col-span-1">
+                    {!isCompleted && isDirty ? (
                         <Button
                             className="w-full"
                             variant="ghost"
                             size="sm"
                             type="button"
                             disabled={disabled || isSaving}
-                            onClick={() => void run(onSave)}
+                            onClick={() => void saveChanges()}
                         >
                             {isSaving ? "Saving..." : "Save changes"}
+                        </Button>
+                    ) : (
+                        <Button
+                            className="w-full"
+                            variant={isCompleted ? "secondary" : "primary"}
+                            size="sm"
+                            type="button"
+                            disabled={disabled || isSaving}
+                            onClick={() =>
+                                void run((data) => onToggleCompletion(!isCompleted, data))
+                            }
+                        >
+                            {!isCompleted && <Icon name="check" size={14} />}
+                            {isCompleted ? "Undo set" : "Complete"}
                         </Button>
                     )}
                 </div>

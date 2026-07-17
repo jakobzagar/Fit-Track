@@ -436,9 +436,21 @@ export async function setWorkoutSetCompletionService(
             throw new AppError("Sets can only be completed during an active workout", 409);
         }
 
-        const isCompleted = workoutSet.completedAt !== null;
+        const reps = data.reps !== undefined ? data.reps : workoutSet.reps;
+        const durationSeconds =
+            data.durationSeconds !== undefined ? data.durationSeconds : workoutSet.durationSeconds;
 
-        if (isCompleted === data.completed) {
+        if (reps === null && durationSeconds === null) {
+            throw new AppError("Either reps or durationSeconds is required", 400);
+        }
+
+        const isCompleted = workoutSet.completedAt !== null;
+        const hasValueChanges =
+            data.reps !== undefined ||
+            data.weight !== undefined ||
+            data.durationSeconds !== undefined;
+
+        if (isCompleted === data.completed && !hasValueChanges) {
             const {workoutExercise: _workoutExercise, ...unchangedWorkoutSet} = workoutSet;
             return unchangedWorkoutSet;
         }
@@ -448,6 +460,11 @@ export async function setWorkoutSetCompletionService(
                 id: setId,
             },
             data: {
+                ...(data.reps !== undefined && {reps: data.reps}),
+                ...(data.weight !== undefined && {weight: data.weight}),
+                ...(data.durationSeconds !== undefined && {
+                    durationSeconds: data.durationSeconds,
+                }),
                 completedAt: data.completed ? new Date() : null,
             },
         });

@@ -201,14 +201,11 @@ export function WorkoutSessionPage() {
     ) {
         if (!workoutId) return;
 
-        const updateResponse = await updateWorkoutSet(workoutId, workoutExerciseId, setId, data);
-        replaceSet(workoutExerciseId, updateResponse.workoutExerciseSet);
-
         const completionResponse = await setWorkoutSetCompletion(
             workoutId,
             workoutExerciseId,
             setId,
-            {completed},
+            {...data, completed},
         );
         replaceSet(workoutExerciseId, completionResponse.workoutExerciseSet);
     }

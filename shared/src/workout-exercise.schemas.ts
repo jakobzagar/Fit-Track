@@ -38,33 +38,34 @@ export const updateWorkoutExerciseSchema = z
         message: "At least one field is required",
     });
 
-export const updateWorkoutSetSchema = z
-    .object({
-        reps: z
-            .number()
-            .int("Reps must be an integer")
-            .positive("Reps must be greater than zero")
-            .nullable()
-            .optional(),
-        weight: z
-            .number()
-            .nonnegative("Weight cannot be negative")
-            .max(999999.99, "Weight is too large")
-            .multipleOf(0.01, "Weight can have at most two decimal places")
-            .nullable()
-            .optional(),
-        durationSeconds: z
-            .number()
-            .int("Duration must be an integer")
-            .positive("Duration must be greater than zero")
-            .nullable()
-            .optional(),
-    })
+const workoutSetValuesSchema = z.object({
+    reps: z
+        .number()
+        .int("Reps must be an integer")
+        .positive("Reps must be greater than zero")
+        .nullable()
+        .optional(),
+    weight: z
+        .number()
+        .nonnegative("Weight cannot be negative")
+        .max(999999.99, "Weight is too large")
+        .multipleOf(0.01, "Weight can have at most two decimal places")
+        .nullable()
+        .optional(),
+    durationSeconds: z
+        .number()
+        .int("Duration must be an integer")
+        .positive("Duration must be greater than zero")
+        .nullable()
+        .optional(),
+});
+
+export const updateWorkoutSetSchema = workoutSetValuesSchema
     .refine((data) => Object.keys(data).length > 0, {
         message: "At least one field is required",
     });
 
-export const setWorkoutSetCompletionSchema = z.object({
+export const setWorkoutSetCompletionSchema = workoutSetValuesSchema.extend({
     completed: z.boolean(),
 });
 
