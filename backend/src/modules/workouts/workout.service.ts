@@ -217,13 +217,14 @@ export async function startWorkoutService(userId: string, workoutId: string) {
             throw new AppError("Workout not found", 404);
         }
 
-        if (workout.status !== "DRAFT") {
-            throw new AppError(
-                workout.status === "ACTIVE"
-                    ? "Workout is already active"
-                    : "Completed workout cannot be started",
-                409,
-            );
+        // Starting a workout is idempotent. The session page can request this
+        // more than once while mounting (for example in React Strict Mode).
+        if (workout.status === "ACTIVE") {
+            return workout;
+        }
+
+        if (workout.status === "COMPLETED") {
+            throw new AppError("Completed workout cannot be started", 409);
         }
 
         const activeWorkout = await tx.workout.findFirst({
