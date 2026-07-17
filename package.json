@@ -1,0 +1,26 @@
+{
+    "name": "fit-track",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "shared",
+        "backend",
+        "frontend"
+    ],
+    "scripts": {
+        "build": "npm run build:shared && npm run build --workspace @fit-track/backend && npm run build --workspace @fit-track/frontend",
+        "build:shared": "npm run build --workspace @fit-track/shared",
+        "build:backend": "npm run build:shared && npm run build --workspace @fit-track/backend",
+        "build:frontend": "npm run build:shared && npm run build --workspace @fit-track/frontend",
+        "dev:backend": "npm run build:shared && npm run dev --workspace @fit-track/backend",
+        "dev:frontend": "npm run build:shared && npm run dev --workspace @fit-track/frontend",
+        "lint": "npm run lint --workspace @fit-track/frontend",
+        "typecheck": "npm run build:shared && npm run typecheck --workspace @fit-track/shared && npm run typecheck --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/frontend",
+        "format": "npm run format --workspaces --if-present",
+        "format:check": "npm run format:check --workspaces --if-present"
+    },
+    "engines": {
+        "node": ">=24"
+    },
+    "packageManager": "npm@11.12.1"
+}

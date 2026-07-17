@@ -1,21 +1,19 @@
 {
-    "name": "frontend",
+    "name": "@fit-track/frontend",
     "private": true,
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "predev": "npm --prefix ../shared run build",
         "dev": "vite",
-        "prebuild": "npm --prefix ../shared run build",
         "build": "tsc -b && vite build",
-        "prelint": "npm --prefix ../shared run build",
         "lint": "eslint .",
+        "typecheck": "tsc -b",
         "format": "prettier --config ../.prettierrc.json --ignore-path ../.prettierignore --write .",
         "format:check": "prettier --config ../.prettierrc.json --ignore-path ../.prettierignore --check .",
         "preview": "vite preview"
     },
     "dependencies": {
-        "@fit-track/shared": "file:../shared",
+        "@fit-track/shared": "*",
         "@tailwindcss/vite": "^4.3.2",
         "react": "^19.2.7",
         "react-dom": "^19.2.7",
