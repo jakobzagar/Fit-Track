@@ -71,7 +71,7 @@ export function ExerciseItem({
                             disabled={isArchiving}
                             onClick={() => onArchive(exercise.id)}
                         >
-                            <Icon name="trash" size={14} />
+                            <Icon name="trash" size={16} />
                             {isArchiving ? "Archiving..." : "Archive"}
                         </Button>
                     </>

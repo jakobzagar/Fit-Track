@@ -44,14 +44,14 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
 
     return (
         <form
-            className="grid grid-cols-3 items-end gap-3 rounded-[11px] border border-dashed border-line bg-panel-raised/40 p-3 md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_148px]"
+            className="grid grid-cols-3 items-center gap-3 rounded-[11px] border border-dashed border-line bg-panel-raised/40 p-3 md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_148px]"
             onSubmit={handleSubmit}
         >
-            <span className="hidden pb-4 text-center text-xs font-black text-dim md:block">
+            <span className="hidden text-center text-xs font-black text-dim md:block">
                 {setNumber}
             </span>
             <label>
-                Kg
+                <span className="md:sr-only">Weight (kg)</span>
                 <input
                     type="number"
                     min="0"
@@ -62,7 +62,7 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
                 />
             </label>
             <label>
-                Reps
+                <span className="md:sr-only">Reps</span>
                 <input
                     type="number"
                     min="1"
@@ -72,7 +72,7 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
                 />
             </label>
             <label>
-                Sec
+                <span className="md:sr-only">Duration (seconds)</span>
                 <input
                     type="number"
                     min="1"

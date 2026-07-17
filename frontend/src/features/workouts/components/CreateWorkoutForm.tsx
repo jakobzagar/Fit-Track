@@ -73,7 +73,7 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
             <label>
                 Performed at
                 <input
-                    type="datetime-local"
+                    type="date"
                     value={performedAt}
                     disabled={isSubmitting}
                     onChange={(event) => setPerformedAt(event.target.value)}

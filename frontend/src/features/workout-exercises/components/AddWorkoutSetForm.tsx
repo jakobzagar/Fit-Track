@@ -63,7 +63,11 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
     }
 
     return (
-        <form className="form-grid" onSubmit={handleSubmit} noValidate>
+        <form
+            className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]"
+            onSubmit={handleSubmit}
+            noValidate
+        >
             <label>
                 Reps
                 <input
@@ -74,8 +78,6 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
                     onChange={(event) => setReps(event.target.value)}
                 />
             </label>
-
-            {errors.reps && <p>{errors.reps}</p>}
 
             <label>
                 Weight
@@ -89,8 +91,6 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
                 />
             </label>
 
-            {errors.weight && <p>{errors.weight}</p>}
-
             <label>
                 Duration in seconds
                 <input
@@ -102,12 +102,14 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
                 />
             </label>
 
-            {errors.durationSeconds && <p>{errors.durationSeconds}</p>}
-            {errors.form && <p>{errors.form}</p>}
-
-            <Button className="self-end" type="submit" disabled={isSubmitting}>
+            <Button className="h-12 self-end" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Adding..." : "Add set"}
             </Button>
+            {(errors.reps || errors.weight || errors.durationSeconds || errors.form) && (
+                <p className="col-span-full text-xs text-negative">
+                    {errors.reps || errors.weight || errors.durationSeconds || errors.form}
+                </p>
+            )}
         </form>
     );
 }

@@ -446,7 +446,7 @@ export function WorkoutDetailPage() {
                                                 handleDeleteWorkoutExercise(workoutExercise.id)
                                             }
                                         >
-                                            <Icon name="trash" size={14} />
+                                            <Icon name="trash" size={16} />
                                             {deletingWorkoutExerciseId === workoutExercise.id
                                                 ? "Deleting..."
                                                 : "Delete"}
@@ -569,7 +569,7 @@ export function WorkoutDetailPage() {
                                                                     )
                                                                 }
                                                             >
-                                                                <Icon name="trash" size={14} />
+                                                                <Icon name="trash" size={16} />
                                                                 {deletingWorkoutSetId === set.id
                                                                     ? "Deleting..."
                                                                     : "Delete"}

@@ -18,9 +18,14 @@ interface UpdateWorkoutErrors {
 
 export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFormProps) {
     const [name, setName] = useState(workout.name);
-    const [performedAt, setPerformedAt] = useState(
-        new Date(workout.performedAt).toISOString().slice(0, 16),
-    );
+    const [performedAt, setPerformedAt] = useState(() => {
+        const date = new Date(workout.performedAt);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    });
     const [notes, setNotes] = useState(workout.notes ?? "");
 
     const [errors, setErrors] = useState<UpdateWorkoutErrors>({});
@@ -79,7 +84,7 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
             <label>
                 Performed at
                 <input
-                    type="datetime-local"
+                    type="date"
                     value={performedAt}
                     disabled={isSubmitting}
                     onChange={(event) => setPerformedAt(event.target.value)}
