@@ -33,9 +33,9 @@ app.use(
 app.use(cookieParser());
 app.use(verifyCsrfOrigin);
 
-app.use("/auth", authRoutes);
-app.use("/exercises", exerciseRoutes);
-app.use("/workouts", workoutRoutes);
-app.use("/workouts", workoutExerciseRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/exercises", exerciseRoutes);
+app.use("/api/workouts", workoutRoutes);
+app.use("/api/workouts", workoutExerciseRoutes);
 
 app.use(errorMiddleware);
