@@ -1,8 +1,29 @@
+# Version control
 .git
 .gitignore
+
+# Dependencies and build output
 **/node_modules
 **/dist
+**/build
+**/coverage
+backend/generated
+**/*.tsbuildinfo
+
+# Environment files and secrets
 **/.env
 **/.env.*
-npm-debug.log*
+**/env.docker
+**/env.docker.*
+
+# Logs
+**/*.log
+
+# IDE and operating-system files
+.idea
+.vscode
+**/.DS_Store
+
+# Files not required by application images
 README.md
+logo
