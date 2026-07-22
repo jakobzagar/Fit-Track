@@ -1,18 +1,27 @@
-FROM node:24.13.0-alpine3.23 AS build
+FROM node:24.13.0-alpine3.23 AS base
 
 WORKDIR /user/src/app
 
+
+FROM base AS dependencies
+
 COPY package.json package-lock.json ./
 COPY backend/package.json ./backend/package.json
-COPY frontend/package.json ./frontend/package.json
 COPY shared/package.json ./shared/package.json
 
-RUN npm ci
+RUN npm ci \
+    --workspace @fit-track/backend \
+    --workspace @fit-track/shared \
+    --include-workspace-root
+
+
+FROM dependencies AS build
 
 COPY shared ./shared
 COPY backend ./backend
 
-RUN DATABASE_URL=postgresql://unused:unused@localhost:5432/unused npm run build:backend
+RUN DATABASE_URL=postgresql://unused:unused@localhost:5432/unused \
+    npm run build:backend
 
 
 FROM build AS migration
@@ -21,17 +30,37 @@ WORKDIR /user/src/app/backend
 
 USER node
 
-CMD ["npx", "prisma", "migrate", "deploy"]
+CMD ["npm", "exec", "--", "prisma", "migrate", "deploy"]
 
 
-FROM build AS production-dependencies
+FROM base AS production-dependencies
 
-RUN npm prune --omit=dev
+COPY package.json package-lock.json ./
+COPY backend/package.json ./backend/package.json
+COPY shared/package.json ./shared/package.json
+
+RUN npm ci --omit=dev --omit=optional \
+    --workspace @fit-track/backend \
+    --workspace @fit-track/shared \
+    --include-workspace-root
 
 
-FROM node:24.13.0-alpine3.23 AS runtime
+FROM dependencies AS development
 
-WORKDIR /user/src/app
+COPY shared ./shared
+
+RUN npm run build:shared
+
+COPY --chown=node:node backend ./backend
+
+EXPOSE 3001
+
+USER node
+
+CMD ["npm", "run", "dev", "--workspace", "@fit-track/backend"]
+
+
+FROM base AS runtime
 
 ENV NODE_ENV=production
 
