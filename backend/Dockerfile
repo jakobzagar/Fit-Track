@@ -60,7 +60,7 @@ USER node
 CMD ["npm", "run", "dev", "--workspace", "@fit-track/backend"]
 
 
-FROM base AS runtime
+FROM base AS production
 
 ENV NODE_ENV=production
 
