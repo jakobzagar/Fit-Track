@@ -43,6 +43,8 @@ RUN npm run build:frontend
 
 FROM nginxinc/nginx-unprivileged:alpine AS production
 
+LABEL org.opencontainers.image.source="https://github.com/jakobzagar/Fit-Track"
+
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /user/src/app/frontend/dist /usr/share/nginx/html
 

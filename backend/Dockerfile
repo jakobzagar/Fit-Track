@@ -62,6 +62,8 @@ CMD ["npm", "run", "dev", "--workspace", "@fit-track/backend"]
 
 FROM base AS production
 
+LABEL org.opencontainers.image.source="https://github.com/jakobzagar/Fit-Track"
+
 ENV NODE_ENV=production
 
 COPY --from=production-dependencies /user/src/app/package.json ./package.json
