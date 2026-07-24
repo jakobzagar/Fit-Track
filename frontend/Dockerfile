@@ -21,6 +21,8 @@ RUN npm run build:shared
 
 COPY --chown=node:node frontend ./frontend
 
+RUN chown node:node ./frontend
+
 WORKDIR /user/src/app/frontend
 
 EXPOSE 5173

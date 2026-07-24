@@ -53,6 +53,10 @@ RUN npm run build:shared
 
 COPY --chown=node:node backend ./backend
 
+RUN DATABASE_URL=postgresql://unused:unused@localhost:5432/unused \
+    npm run generate --workspace @fit-track/backend \
+    && chown -R node:node ./backend/generated
+
 EXPOSE 3001
 
 USER node
