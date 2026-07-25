@@ -10,7 +10,9 @@ services:
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
     volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
+      - type: volume
+        source: postgres_dev_data
+        target: /var/lib/postgresql/data
     networks:
       - development
     healthcheck:
@@ -29,7 +31,9 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
     volumes:
-      - ./backend/prisma:/user/src/app/backend/prisma
+      - type: bind
+        source: ./backend/prisma
+        target: /user/src/app/backend/prisma
     networks:
       - development
     depends_on:
@@ -52,7 +56,10 @@ services:
     ports:
       - "127.0.0.1:${BACKEND_PORT:-3001}:3001"
     volumes:
-      - ./backend/src:/user/src/app/backend/src
+      - type: bind
+        source: ./backend/src
+        target: /user/src/app/backend/src
+        read_only: true
     networks:
       - development
     depends_on:
@@ -83,8 +90,14 @@ services:
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
     volumes:
-      - ./frontend/src:/user/src/app/frontend/src
-      - ./frontend/public:/user/src/app/frontend/public
+      - type: bind
+        source: ./frontend/src
+        target: /user/src/app/frontend/src
+        read_only: true
+      - type: bind
+        source: ./frontend/public
+        target: /user/src/app/frontend/public
+        read_only: true
     networks:
       - development
     depends_on:
@@ -102,7 +115,9 @@ services:
     ports:
       - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
     volumes:
-      - pgadmin_dev_data:/var/lib/pgadmin
+      - type: volume
+        source: pgadmin_dev_data
+        target: /var/lib/pgadmin
     networks:
       - development
     depends_on:
