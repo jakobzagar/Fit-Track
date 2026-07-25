@@ -36,7 +36,7 @@ export function Navbar() {
 
         try {
             await signOut();
-            navigate("/login", {replace: true});
+            void navigate("/login", {replace: true});
         } catch (caughtError) {
             setError(caughtError instanceof Error ? caughtError.message : "Logout failed");
         } finally {

@@ -17,7 +17,7 @@ export function RegisterPage() {
         try {
             const response = await register(data);
             setUser(response.user);
-            navigate("/workouts");
+            void navigate("/workouts");
         } catch (caughtError) {
             setError(caughtError instanceof Error ? caughtError.message : "Registration failed");
             throw caughtError;

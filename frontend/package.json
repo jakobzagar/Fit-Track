@@ -8,8 +8,6 @@
         "build": "tsc -b && vite build",
         "lint": "eslint .",
         "typecheck": "tsc -b",
-        "format": "prettier --config ../.prettierrc.json --ignore-path ../.prettierignore --write .",
-        "format:check": "prettier --config ../.prettierrc.json --ignore-path ../.prettierignore --check .",
         "preview": "vite preview"
     },
     "dependencies": {
@@ -31,7 +29,6 @@
         "eslint-plugin-react-hooks": "^7.1.1",
         "eslint-plugin-react-refresh": "^0.5.3",
         "globals": "^17.7.0",
-        "prettier": "^3.9.5",
         "typescript": "~6.0.2",
         "typescript-eslint": "^8.62.0",
         "vite": "^8.1.1"

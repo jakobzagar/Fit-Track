@@ -60,7 +60,7 @@ export function WorkoutSessionPage() {
                 let loadedWorkout = workoutResponse.workout;
 
                 if (loadedWorkout.status === "COMPLETED") {
-                    navigate(`/workouts/${workoutId}`, {replace: true});
+                    void navigate(`/workouts/${workoutId}`, {replace: true});
                     return;
                 }
 
@@ -217,7 +217,7 @@ export function WorkoutSessionPage() {
 
         try {
             await finishWorkout(workoutId);
-            navigate(`/workouts/${workoutId}`, {replace: true});
+            void navigate(`/workouts/${workoutId}`, {replace: true});
         } catch (caughtError) {
             setError(
                 caughtError instanceof Error ? caughtError.message : "Failed to finish workout",
@@ -261,7 +261,7 @@ export function WorkoutSessionPage() {
                                 "Your saved sets will remain and you can continue this session later.",
                             confirmLabel: "Leave session",
                         }).then((confirmed) => {
-                            if (confirmed) navigate(`/workouts/${workout.id}`);
+                            if (confirmed) void navigate(`/workouts/${workout.id}`);
                         });
                     }}
                 >

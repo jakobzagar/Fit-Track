@@ -9,9 +9,8 @@
         "build": "prisma generate && tsc",
         "generate": "prisma generate",
         "start": "node dist/src/server.js",
-        "typecheck": "tsc --noEmit",
-        "format": "prettier --config ../.prettierrc.json --ignore-path ../.prettierignore --write .",
-        "format:check": "prettier --config ../.prettierrc.json --ignore-path ../.prettierignore --check ."
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@fit-track/shared": "*",
@@ -29,15 +28,18 @@
         "zod": "^4.4.3"
     },
     "devDependencies": {
+        "@eslint/js": "^10.0.1",
         "@types/cookie-parser": "^1.4.10",
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^26.0.1",
         "@types/pg": "^8.20.0",
-        "prettier": "^3.9.5",
+        "eslint": "^10.6.0",
+        "globals": "^17.7.0",
         "prisma": "^7.8.0",
         "tsx": "^4.22.4",
-        "typescript": "^6.0.3"
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.62.0"
     }
 }

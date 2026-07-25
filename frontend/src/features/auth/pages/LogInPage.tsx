@@ -17,7 +17,7 @@ export function LoginPage() {
         try {
             const response = await login(data);
             setUser(response.user);
-            navigate("/workouts");
+            void navigate("/workouts");
         } catch (caughtError) {
             setError(caughtError instanceof Error ? caughtError.message : "Login failed");
             throw caughtError;

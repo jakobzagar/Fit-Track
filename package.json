@@ -14,10 +14,15 @@
         "build:frontend": "npm run build:shared && npm run build --workspace @fit-track/frontend",
         "dev:backend": "npm run build:shared && npm run dev --workspace @fit-track/backend",
         "dev:frontend": "npm run build:shared && npm run dev --workspace @fit-track/frontend",
-        "lint": "npm run lint --workspace @fit-track/frontend",
+        "lint": "npm run lint --workspace @fit-track/shared && npm run lint --workspace @fit-track/backend && npm run lint --workspace @fit-track/frontend",
         "typecheck": "npm run build:shared && npm run typecheck --workspace @fit-track/shared && npm run typecheck --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/frontend",
-        "format": "npm run format --workspaces --if-present",
-        "format:check": "npm run format:check --workspaces --if-present"
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "check": "npm run lint && npm run typecheck && npm run format:check",
+        "verify": "npm run check && npm run build"
+    },
+    "devDependencies": {
+        "prettier": "^3.9.5"
     },
     "engines": {
         "node": ">=24"

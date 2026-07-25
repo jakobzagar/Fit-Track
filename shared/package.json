@@ -32,16 +32,17 @@
     ],
     "scripts": {
         "build": "tsc",
-        "typecheck": "tsc --noEmit",
-        "format": "prettier --config ../.prettierrc.json --ignore-path ../.prettierignore --write .",
-        "format:check": "prettier --config ../.prettierrc.json --ignore-path ../.prettierignore --check ."
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
     },
     "peerDependencies": {
         "zod": "^4.4.3"
     },
     "devDependencies": {
-        "prettier": "^3.9.5",
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.6.0",
         "typescript": "^6.0.3",
+        "typescript-eslint": "^8.62.0",
         "zod": "^4.4.3"
     }
 }

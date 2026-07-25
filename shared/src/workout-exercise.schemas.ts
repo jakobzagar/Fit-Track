@@ -60,10 +60,12 @@ const workoutSetValuesSchema = z.object({
         .optional(),
 });
 
-export const updateWorkoutSetSchema = workoutSetValuesSchema
-    .refine((data) => Object.keys(data).length > 0, {
+export const updateWorkoutSetSchema = workoutSetValuesSchema.refine(
+    (data) => Object.keys(data).length > 0,
+    {
         message: "At least one field is required",
-    });
+    },
+);
 
 export const setWorkoutSetCompletionSchema = workoutSetValuesSchema.extend({
     completed: z.boolean(),

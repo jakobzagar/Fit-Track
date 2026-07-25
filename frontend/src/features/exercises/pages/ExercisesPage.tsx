@@ -128,7 +128,7 @@ export function ExercisesPage() {
         setEditingExercise(exercise);
     }
 
-    async function handleCancelExercise() {
+    function handleCancelExercise() {
         setEditingExercise(null);
     }
 
