@@ -1,0 +1,5 @@
+services:
+  backend:
+    command: ["npm", "run", "debug", "--workspace", "@fit-track/backend"]
+    ports:
+      - "127.0.0.1:9229:9229"
