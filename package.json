@@ -16,11 +16,15 @@
         "dev:frontend": "npm run build:shared && npm run dev --workspace @fit-track/frontend",
         "lint": "npm run build:shared && npm run lint --workspace @fit-track/shared && npm run lint --workspace @fit-track/backend && npm run lint --workspace @fit-track/frontend",
         "test": "npm run test --workspaces --if-present",
+        "test:integration": "npm run test:integration --workspace @fit-track/backend",
+        "test:docker": "docker compose -f compose.test.yaml up --build --remove-orphans --abort-on-container-exit --exit-code-from tests tests",
+        "test:docker:down": "docker compose -f compose.test.yaml down --volumes --remove-orphans",
         "typecheck": "npm run build:shared && npm run typecheck --workspace @fit-track/shared && npm run typecheck --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/frontend",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "check": "npm run lint && npm run typecheck && npm run format:check",
-        "verify": "npm run check && npm test && npm run build"
+        "verify": "npm run check && npm test && npm run build",
+        "verify:docker": "npm run verify && npm run test:integration"
     },
     "devDependencies": {
         "prettier": "^3.9.5"

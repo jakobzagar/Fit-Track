@@ -1,0 +1,45 @@
+name: fit-track-test
+
+services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: fit_track_test
+      POSTGRES_PASSWORD: fit_track_test_password
+      POSTGRES_DB: fit_track_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks:
+      - test
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 2s
+    restart: "no"
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://fit_track_test:fit_track_test_password@database:5432/fit_track_test
+      JWT_SECRET: fit-track-test-secret-that-is-at-least-32-characters
+      CLIENT_URL: http://localhost:5173
+    init: true
+    command:
+      - sh
+      - -c
+      - npm exec --workspace @fit-track/backend -- prisma migrate deploy && npm run verify:docker
+    networks:
+      - test
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: "no"
+
+networks:
+  test:
+    name: fit-track-test-network

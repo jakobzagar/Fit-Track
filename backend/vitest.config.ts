@@ -1,0 +1,13 @@
+import {defineConfig} from "vitest/config";
+
+export default defineConfig({
+    test: {
+        environment: "node",
+        setupFiles: ["./src/test/setup-env.ts"],
+        include: ["src/**/*.integration.test.ts"],
+        fileParallelism: false,
+        sequence: {
+            concurrent: false,
+        },
+    },
+});
