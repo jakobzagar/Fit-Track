@@ -149,7 +149,7 @@ Before opening a pull request, run:
 npm run verify
 ```
 
-Vitest covers the shared Zod schemas and API contracts. Backend authentication integration tests use Vitest and Supertest, with PostgreSQL migrations applied to an isolated, temporary database by Docker Compose.
+Vitest covers the shared Zod schemas and API contracts. Backend authentication and exercise integration tests use Vitest and Supertest, with PostgreSQL migrations applied to an isolated, temporary database by Docker Compose.
 
 Run the complete isolated verification stack with:
 
