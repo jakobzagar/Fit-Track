@@ -124,6 +124,7 @@ Run these commands from the repository root:
 | `npm run build`        | Build all workspaces                           |
 | `npm run lint`         | Lint all workspaces                            |
 | `npm test`             | Run automated workspace tests                  |
+| `npm run test:docker`  | Run verification in an isolated test stack     |
 | `npm run typecheck`    | Type-check all workspaces                      |
 | `npm run format`       | Format the repository with Prettier            |
 | `npm run check`        | Run lint, type-checking, and formatting checks |
@@ -145,7 +146,15 @@ Before opening a pull request, run:
 npm run verify
 ```
 
-Vitest currently covers the shared Zod schemas and API contracts. Backend integration tests and frontend component tests remain planned improvements.
+Vitest covers the shared Zod schemas and API contracts. The backend test infrastructure uses Vitest and Supertest, with PostgreSQL migrations applied to an isolated, temporary database by Docker Compose. Backend integration test cases remain a planned improvement.
+
+Run the complete isolated verification stack with:
+
+```bash
+npm run test:docker
+```
+
+The command builds a dedicated test image, starts a temporary PostgreSQL database, applies all migrations, runs the fast repository checks, and prepares Vitest for future backend integration test cases. Stop and remove the test stack afterward with `npm run test:docker:down`.
 
 ## Roadmap
 
