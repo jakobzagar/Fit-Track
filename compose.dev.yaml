@@ -34,6 +34,7 @@ services:
       - type: bind
         source: ./backend/prisma
         target: /user/src/app/backend/prisma
+        read_only: true
     networks:
       - development
     depends_on:
