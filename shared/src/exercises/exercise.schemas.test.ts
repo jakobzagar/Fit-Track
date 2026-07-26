@@ -1,6 +1,5 @@
 import {describe, expect, test} from "vitest";
 
-// Exercise contract behavior and boundary cases.
 import {
     createExerciseSchema,
     exerciseIdSchema,

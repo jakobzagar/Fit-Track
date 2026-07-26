@@ -1,6 +1,5 @@
 import {describe, expect, test} from "vitest";
 
-// Authentication contract behavior and boundary cases.
 import {authResponseSchema, loginSchema, registerSchema, userSchema} from "./auth.schemas.js";
 
 const validUser = {

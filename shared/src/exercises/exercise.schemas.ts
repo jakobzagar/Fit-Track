@@ -1,7 +1,5 @@
 import {z} from "zod";
 
-// Exercise library contracts shared by both applications.
-
 export const createExerciseSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     muscleGroup: z.string().trim().min(1, "Muscle group is required"),

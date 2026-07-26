@@ -1,6 +1,5 @@
 import {describe, expect, test} from "vitest";
 
-// Workout contract behavior and boundary cases.
 import {
     createWorkoutSchema,
     updateWorkoutSchema,
