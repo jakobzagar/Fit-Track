@@ -22,7 +22,7 @@ services:
   tests:
     build:
       context: .
-      dockerfile: Dockerfile.test
+      dockerfile: test.Dockerfile
     environment:
       NODE_ENV: test
       DATABASE_URL: postgresql://fit_track_test:fit_track_test_password@database:5432/fit_track_test
