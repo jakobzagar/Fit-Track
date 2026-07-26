@@ -149,7 +149,7 @@ Before opening a pull request, run:
 npm run verify
 ```
 
-Vitest covers the shared Zod schemas and API contracts. The backend test infrastructure uses Vitest and Supertest, with PostgreSQL migrations applied to an isolated, temporary database by Docker Compose. Backend integration test cases remain a planned improvement.
+Vitest covers the shared Zod schemas and API contracts. Backend authentication integration tests use Vitest and Supertest, with PostgreSQL migrations applied to an isolated, temporary database by Docker Compose.
 
 Run the complete isolated verification stack with:
 
@@ -157,11 +157,11 @@ Run the complete isolated verification stack with:
 npm run test:docker
 ```
 
-The command builds a dedicated test image, starts a temporary PostgreSQL database, applies all migrations, runs the fast repository checks, and prepares Vitest for future backend integration test cases. Stop and remove the test stack afterward with `npm run test:docker:down`.
+The command builds a dedicated test image, starts a temporary PostgreSQL database, applies all migrations, runs the fast repository checks, and executes the backend integration tests. Stop and remove the test stack afterward with `npm run test:docker:down`.
 
 ## Roadmap
 
-- Backend integration and frontend component tests
+- Integration coverage for the remaining API modules and frontend component tests
 - Continuous integration with GitHub Actions
 - Hosted demo environment
 - Training insights and progress visualizations

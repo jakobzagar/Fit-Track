@@ -10,7 +10,7 @@
         "generate": "prisma generate",
         "start": "node dist/src/server.js",
         "lint": "eslint .",
-        "test:integration": "vitest run --passWithNoTests",
+        "test:integration": "vitest run",
         "test:integration:watch": "vitest",
         "typecheck": "tsc --noEmit"
     },
