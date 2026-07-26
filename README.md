@@ -6,7 +6,7 @@ FitTrack is a full-stack workout planning and tracking application. It provides 
 
 This repository is a portfolio project built to demonstrate production-oriented full-stack development: a typed monorepo, shared validation contracts, authenticated REST APIs, relational data modelling, database migrations, containerized environments, and defensive backend defaults.
 
-> **Project status:** actively developed. The core workout workflow is functional; shared contract tests are in place, while application integration coverage and a hosted demo are planned.
+> **Project status:** actively developed. The core workout workflow is functional, with shared contract tests and isolated backend integration coverage in place. Frontend component and end-to-end tests, continuous integration, and a hosted demo are planned.
 
 ## Features
 
