@@ -1,5 +1,7 @@
 import {z} from "zod";
-import {workoutExerciseSchema, workoutSetSchema} from "./workout.schemas.js";
+import {workoutExerciseSchema, workoutSetSchema} from "../workouts/workout.schemas.js";
+
+// Workout exercise and set contracts shared by both applications.
 
 export const addExerciseToWorkoutSchema = z.object({
     exerciseId: z.uuid("Invalid exercise ID"),

@@ -1,5 +1,7 @@
 import {z} from "zod";
 
+// Authentication request and response contracts shared by both applications.
+
 const emailSchema = z.string().trim().toLowerCase().pipe(z.email("Invalid email address"));
 
 export const registerSchema = z.object({

@@ -1,5 +1,7 @@
 import {z} from "zod";
 
+// Workout lifecycle and response contracts shared by both applications.
+
 export const createWorkoutSchema = z.object({
     name: z.string().trim().min(1, "Workout name is required").max(100, "Workout name is too long"),
     performedAt: z.iso.datetime("Invalid workout date").optional(),

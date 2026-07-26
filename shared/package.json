@@ -11,28 +11,30 @@
             "import": "./dist/index.js"
         },
         "./auth": {
-            "types": "./dist/auth.schemas.d.ts",
-            "import": "./dist/auth.schemas.js"
+            "types": "./dist/auth/auth.schemas.d.ts",
+            "import": "./dist/auth/auth.schemas.js"
         },
         "./exercises": {
-            "types": "./dist/exercise.schemas.d.ts",
-            "import": "./dist/exercise.schemas.js"
+            "types": "./dist/exercises/exercise.schemas.d.ts",
+            "import": "./dist/exercises/exercise.schemas.js"
         },
         "./workouts": {
-            "types": "./dist/workout.schemas.d.ts",
-            "import": "./dist/workout.schemas.js"
+            "types": "./dist/workouts/workout.schemas.d.ts",
+            "import": "./dist/workouts/workout.schemas.js"
         },
         "./workout-exercises": {
-            "types": "./dist/workout-exercise.schemas.d.ts",
-            "import": "./dist/workout-exercise.schemas.js"
+            "types": "./dist/workout-exercises/workout-exercise.schemas.d.ts",
+            "import": "./dist/workout-exercises/workout-exercise.schemas.js"
         }
     },
     "files": [
         "dist"
     ],
     "scripts": {
-        "build": "tsc",
+        "build": "tsc --project tsconfig.build.json",
         "lint": "eslint .",
+        "test": "vitest run",
+        "test:watch": "vitest",
         "typecheck": "tsc --noEmit"
     },
     "peerDependencies": {

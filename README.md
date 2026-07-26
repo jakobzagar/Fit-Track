@@ -6,7 +6,7 @@ FitTrack is a full-stack workout planning and tracking application. It provides 
 
 This repository is a portfolio project built to demonstrate production-oriented full-stack development: a typed monorepo, shared validation contracts, authenticated REST APIs, relational data modelling, database migrations, containerized environments, and defensive backend defaults.
 
-> **Project status:** actively developed. The core workout workflow is functional; automated test coverage and a hosted demo are planned.
+> **Project status:** actively developed. The core workout workflow is functional; shared contract tests are in place, while application integration coverage and a hosted demo are planned.
 
 ## Features
 
@@ -20,13 +20,13 @@ This repository is a portfolio project built to demonstrate production-oriented 
 
 ## Tech stack
 
-| Area           | Technologies                                                |
-| -------------- | ----------------------------------------------------------- |
-| Frontend       | React 19, TypeScript, Vite, React Router, Tailwind CSS, Zod |
-| Backend        | Node.js 24, Express 5, TypeScript, Prisma ORM, Zod          |
-| Database       | PostgreSQL 17                                               |
-| Authentication | JWT in HTTP-only cookies, bcrypt password hashing           |
-| Tooling        | npm workspaces, ESLint, Prettier, Docker, Docker Compose    |
+| Area           | Technologies                                                     |
+| -------------- | ---------------------------------------------------------------- |
+| Frontend       | React 19, TypeScript, Vite, React Router, Tailwind CSS, Zod      |
+| Backend        | Node.js 24, Express 5, TypeScript, Prisma ORM, Zod               |
+| Database       | PostgreSQL 17                                                    |
+| Authentication | JWT in HTTP-only cookies, bcrypt password hashing                |
+| Tooling        | npm workspaces, Vitest, ESLint, Prettier, Docker, Docker Compose |
 
 ## Architecture
 
@@ -123,6 +123,7 @@ Run these commands from the repository root:
 | `npm run dev:frontend` | Start the Vite development server              |
 | `npm run build`        | Build all workspaces                           |
 | `npm run lint`         | Lint all workspaces                            |
+| `npm test`             | Run automated workspace tests                  |
 | `npm run typecheck`    | Type-check all workspaces                      |
 | `npm run format`       | Format the repository with Prettier            |
 | `npm run check`        | Run lint, type-checking, and formatting checks |
@@ -144,11 +145,11 @@ Before opening a pull request, run:
 npm run verify
 ```
 
-Automated application tests have not yet been added. This is a known project improvement area and is not hidden behind a misleading coverage claim.
+Vitest currently covers the shared Zod schemas and API contracts. Backend integration tests and frontend component tests remain planned improvements.
 
 ## Roadmap
 
-- Automated unit and integration tests
+- Backend integration and frontend component tests
 - Continuous integration with GitHub Actions
 - Hosted demo environment
 - Training insights and progress visualizations
