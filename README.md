@@ -117,18 +117,21 @@ npm run dev:frontend
 
 Run these commands from the repository root:
 
-| Command                | Purpose                                        |
-| ---------------------- | ---------------------------------------------- |
-| `npm run dev:backend`  | Start the API in watch mode                    |
-| `npm run dev:frontend` | Start the Vite development server              |
-| `npm run build`        | Build all workspaces                           |
-| `npm run lint`         | Lint all workspaces                            |
-| `npm test`             | Run automated workspace tests                  |
-| `npm run test:docker`  | Run verification in an isolated test stack     |
-| `npm run typecheck`    | Type-check all workspaces                      |
-| `npm run format`       | Format the repository with Prettier            |
-| `npm run check`        | Run lint, type-checking, and formatting checks |
-| `npm run verify`       | Run all checks and a production build          |
+| Command                    | Purpose                                        |
+| -------------------------- | ---------------------------------------------- |
+| `npm run dev:backend`      | Start the API in watch mode                    |
+| `npm run dev:frontend`     | Start the Vite development server              |
+| `npm run dev:docker`       | Start the complete development stack           |
+| `npm run dev:docker:debug` | Start development with backend debugging       |
+| `npm run dev:docker:down`  | Stop and remove the development stack          |
+| `npm run build`            | Build all workspaces                           |
+| `npm run lint`             | Lint all workspaces                            |
+| `npm test`                 | Run automated workspace tests                  |
+| `npm run test:docker`      | Run verification in an isolated test stack     |
+| `npm run typecheck`        | Type-check all workspaces                      |
+| `npm run format`           | Format the repository with Prettier            |
+| `npm run check`            | Run lint, type-checking, and formatting checks |
+| `npm run verify`           | Run all checks and a production build          |
 
 ## Security and production notes
 
