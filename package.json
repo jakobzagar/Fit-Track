@@ -33,7 +33,7 @@
         "prettier": "^3.9.5"
     },
     "engines": {
-        "node": ">=24"
+        "node": ">=24.15.0"
     },
     "packageManager": "npm@11.12.1"
 }
