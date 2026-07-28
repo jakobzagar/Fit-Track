@@ -27,7 +27,8 @@
         "format:check": "prettier --check .",
         "check": "npm run lint && npm run typecheck && npm run format:check",
         "verify": "npm run check && npm test && npm run build",
-        "verify:docker": "npm run verify && npm run test:integration"
+        "verify:integration": "npm run verify && npm run test:integration",
+
     },
     "devDependencies": {
         "prettier": "^3.9.5"

@@ -20,4 +20,4 @@ RUN DATABASE_URL=postgresql://unused:unused@localhost:5432/unused \
 
 USER node
 
-CMD ["npm", "run", "verify:docker"]
+CMD ["npm", "run", "verify:integration"]
