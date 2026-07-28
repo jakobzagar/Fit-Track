@@ -6,7 +6,28 @@ export default defineConfig({
     plugins: [react(), tailwindcss()],
 
     resolve: {
-        dedupe: ["zod"],
+        dedupe: ["react", "react-dom", "zod"],
+    },
+
+    build: {
+        rolldownOptions: {
+            output: {
+                codeSplitting: {
+                    groups: [
+                        {
+                            name: "react-vendor",
+                            test: /node_modules[\\/](react|react-dom|react-router)/,
+                            priority: 20,
+                        },
+                        {
+                            name: "validation-vendor",
+                            test: /node_modules[\\/]zod/,
+                            priority: 10,
+                        },
+                    ],
+                },
+            },
+        },
     },
 
     server: {
