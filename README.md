@@ -6,7 +6,7 @@ FitTrack is a full-stack workout planning and tracking application. It provides 
 
 This repository is a portfolio project built to demonstrate production-oriented full-stack development: a typed monorepo, shared validation contracts, authenticated REST APIs, relational data modelling, database migrations, containerized environments, and defensive backend defaults.
 
-> **Project status:** actively developed. The core workout workflow is functional, with shared contract tests and isolated backend integration coverage in place. Frontend component and end-to-end tests, continuous integration, and a hosted demo are planned.
+> **Project status:** actively developed. The core workout workflow is functional, with shared contract tests and isolated backend integration coverage in place.
 
 ## Features
 
@@ -158,14 +158,6 @@ npm run test:docker
 ```
 
 The command builds a dedicated test image, starts a temporary PostgreSQL database, applies all migrations, runs the fast repository checks, and executes the backend integration tests. Stop and remove the test stack afterward with `npm run test:docker:down`.
-
-## Roadmap
-
-- Frontend component tests
-- Continuous integration with GitHub Actions
-- Hosted demo environment
-- Training insights and progress visualizations
-- Improved observability and operational health checks
 
 ## Contributing
 
