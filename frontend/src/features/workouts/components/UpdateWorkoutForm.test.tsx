@@ -1,0 +1,54 @@
+import {render, screen} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import {describe, expect, test, vi} from "vitest";
+import type {WorkoutSummary} from "../workout.types";
+import {UpdateWorkoutForm} from "./UpdateWorkoutForm";
+
+const workout: WorkoutSummary = {
+    id: "123e4567-e89b-42d3-a456-426614174010",
+    userId: "123e4567-e89b-42d3-a456-426614174000",
+    name: "Push day",
+    status: "DRAFT",
+    performedAt: "2026-07-26T10:00:00.000Z",
+    startedAt: null,
+    completedAt: null,
+    notes: "Heavy session",
+    createdAt: "2026-07-26T10:00:00.000Z",
+    updatedAt: "2026-07-26T10:00:00.000Z",
+    _count: {workoutExercises: 1},
+};
+
+describe("UpdateWorkoutForm", () => {
+    test("prefills and submits normalized changes", async () => {
+        const user = userEvent.setup();
+        const onSubmit = vi.fn().mockResolvedValue(undefined);
+        render(<UpdateWorkoutForm workout={workout} onSubmit={onSubmit} onCancel={vi.fn()} />);
+
+        expect(screen.getByLabelText("Name")).toHaveValue("Push day");
+        await user.clear(screen.getByLabelText("Name"));
+        await user.type(screen.getByLabelText("Name"), "Upper body");
+        await user.clear(screen.getByLabelText("Notes"));
+        await user.click(screen.getByRole("button", {name: "Save changes"}));
+
+        expect(onSubmit).toHaveBeenCalledWith({
+            name: "Upper body",
+            performedAt: "2026-07-26T00:00:00.000Z",
+            notes: null,
+        });
+    });
+
+    test("prevents invalid submission and supports cancellation", async () => {
+        const user = userEvent.setup();
+        const onSubmit = vi.fn();
+        const onCancel = vi.fn();
+        render(<UpdateWorkoutForm workout={workout} onSubmit={onSubmit} onCancel={onCancel} />);
+
+        await user.clear(screen.getByLabelText("Name"));
+        await user.click(screen.getByRole("button", {name: "Save changes"}));
+        expect(screen.getByText("Workout name is required")).toBeInTheDocument();
+        expect(onSubmit).not.toHaveBeenCalled();
+
+        await user.click(screen.getByRole("button", {name: "Cancel"}));
+        expect(onCancel).toHaveBeenCalledOnce();
+    });
+});
