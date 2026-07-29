@@ -160,10 +160,6 @@ npm run test:docker
 
 The command builds a dedicated test image, starts a temporary PostgreSQL database, applies all migrations, and runs `npm run verify:integration`. Stop and remove the test stack afterward with `npm run test:docker:down`.
 
-## Contributing
-
-Issues and focused pull requests are welcome. Keep changes focused, follow the existing project structure, and run `npm run verify` before opening a pull request.
-
 ## Author
 
 Created by [Jakob Zagar](https://github.com/jakobzagar) as an independent portfolio project.
