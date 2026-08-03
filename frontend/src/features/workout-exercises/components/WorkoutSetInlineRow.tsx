@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useId, useRef, useState} from "react";
 import type {WorkoutSet} from "../../workouts/workout.types.ts";
 import type {UpdateWorkoutSetInput} from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
@@ -19,6 +19,8 @@ export function WorkoutSetInlineRow({
     onToggleCompletion,
     onDirtyChange,
 }: WorkoutSetInlineRowProps) {
+    const firstInputRef = useRef<HTMLInputElement>(null);
+    const id = useId();
     const [reps, setReps] = useState(workoutSet.reps?.toString() ?? "");
     const [weight, setWeight] = useState(workoutSet.weight?.toString() ?? "");
     const [durationSeconds, setDurationSeconds] = useState(
@@ -35,6 +37,7 @@ export function WorkoutSetInlineRow({
     function getData(): UpdateWorkoutSetInput | null {
         if (reps === "" && durationSeconds === "") {
             setError("Enter reps or duration");
+            queueMicrotask(() => firstInputRef.current?.focus());
             return null;
         }
 
@@ -49,6 +52,7 @@ export function WorkoutSetInlineRow({
                 (!Number.isInteger(nextDurationSeconds) || nextDurationSeconds <= 0))
         ) {
             setError("Check the entered values");
+            queueMicrotask(() => firstInputRef.current?.focus());
             return null;
         }
 
@@ -126,12 +130,15 @@ export function WorkoutSetInlineRow({
                 <label>
                     <span className="md:sr-only">Weight (kg)</span>
                     <input
+                        ref={firstInputRef}
                         type="number"
                         min="0"
                         step="0.01"
                         inputMode="decimal"
                         value={weight}
                         disabled={disabled || isSaving || isCompleted}
+                        aria-invalid={error ? true : undefined}
+                        aria-describedby={error ? `${id}-error` : undefined}
                         onChange={(event) => setWeight(event.target.value)}
                     />
                 </label>
@@ -143,6 +150,8 @@ export function WorkoutSetInlineRow({
                         inputMode="numeric"
                         value={reps}
                         disabled={disabled || isSaving || isCompleted}
+                        aria-invalid={error ? true : undefined}
+                        aria-describedby={error ? `${id}-error` : undefined}
                         onChange={(event) => setReps(event.target.value)}
                     />
                 </label>
@@ -154,6 +163,8 @@ export function WorkoutSetInlineRow({
                         inputMode="numeric"
                         value={durationSeconds}
                         disabled={disabled || isSaving || isCompleted}
+                        aria-invalid={error ? true : undefined}
+                        aria-describedby={error ? `${id}-error` : undefined}
                         onChange={(event) => setDurationSeconds(event.target.value)}
                     />
                 </label>
@@ -197,7 +208,11 @@ export function WorkoutSetInlineRow({
                     )}
                 </div>
             </div>
-            {error && <p className="mt-2 text-xs text-negative">{error}</p>}
+            {error && (
+                <p id={`${id}-error`} className="field-error mt-2">
+                    {error}
+                </p>
+            )}
         </div>
     );
 }

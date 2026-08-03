@@ -1,4 +1,4 @@
-import {useState, type SubmitEvent} from "react";
+import {useId, useRef, useState, type SubmitEvent} from "react";
 import {z} from "zod";
 import type {WorkoutExercise} from "../../workouts/workout.types.ts";
 import {
@@ -6,6 +6,11 @@ import {
     type UpdateWorkoutExerciseInput,
 } from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
+import {FieldError} from "../../../components/ui/FieldError.tsx";
+import {
+    focusFirstInvalidField,
+    invalidFieldProps,
+} from "../../../components/ui/formAccessibility.ts";
 
 interface UpdateWorkoutExerciseFormProps {
     workoutExercise: WorkoutExercise;
@@ -23,6 +28,8 @@ export function UpdateWorkoutExerciseForm({
     onSubmit,
     onCancel,
 }: UpdateWorkoutExerciseFormProps) {
+    const formRef = useRef<HTMLFormElement>(null);
+    const id = useId();
     const [position, setPosition] = useState(String(workoutExercise.position));
     const [notes, setNotes] = useState(workoutExercise.notes ?? "");
     const [errors, setErrors] = useState<UpdateWorkoutExerciseErrors>({});
@@ -43,6 +50,7 @@ export function UpdateWorkoutExerciseForm({
                 position: fieldErrors.position?.[0],
                 notes: fieldErrors.notes?.[0],
             });
+            focusFirstInvalidField(formRef);
             return;
         }
 
@@ -60,6 +68,7 @@ export function UpdateWorkoutExerciseForm({
 
     return (
         <form
+            ref={formRef}
             className="form-stack rounded-[12px] border border-line bg-ink p-4"
             onSubmit={handleSubmit}
             noValidate
@@ -71,20 +80,22 @@ export function UpdateWorkoutExerciseForm({
                     min="1"
                     value={position}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.position, `${id}-position-error`)}
                     onChange={(event) => setPosition(event.target.value)}
                 />
             </label>
-            {errors.position && <p>{errors.position}</p>}
+            <FieldError id={`${id}-position-error`}>{errors.position}</FieldError>
 
             <label>
                 Notes
                 <textarea
                     value={notes}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.notes, `${id}-notes-error`)}
                     onChange={(event) => setNotes(event.target.value)}
                 />
             </label>
-            {errors.notes && <p>{errors.notes}</p>}
+            <FieldError id={`${id}-notes-error`}>{errors.notes}</FieldError>
 
             <div className="button-row">
                 <Button type="submit" size="sm" disabled={isSubmitting}>

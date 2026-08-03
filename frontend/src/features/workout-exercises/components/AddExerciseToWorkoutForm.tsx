@@ -1,4 +1,4 @@
-import {useState, type SubmitEvent} from "react";
+import {useId, useRef, useState, type SubmitEvent} from "react";
 import {z} from "zod";
 import type {Exercise} from "../../exercises/exercise.types.ts";
 import {
@@ -6,6 +6,11 @@ import {
     type AddExerciseToWorkoutInput,
 } from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
+import {FieldError} from "../../../components/ui/FieldError.tsx";
+import {
+    focusFirstInvalidField,
+    invalidFieldProps,
+} from "../../../components/ui/formAccessibility.ts";
 
 interface AddExerciseToWorkoutFormProps {
     exercises: Exercise[];
@@ -18,6 +23,8 @@ interface AddExerciseToWorkoutErrors {
 }
 
 export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWorkoutFormProps) {
+    const formRef = useRef<HTMLFormElement>(null);
+    const id = useId();
     const [exerciseId, setExerciseId] = useState("");
     const [notes, setNotes] = useState("");
     const [errors, setErrors] = useState<AddExerciseToWorkoutErrors>({});
@@ -38,6 +45,7 @@ export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWor
                 exerciseId: fieldErrors.exerciseId?.[0],
                 notes: fieldErrors.notes?.[0],
             });
+            focusFirstInvalidField(formRef);
 
             return;
         }
@@ -64,13 +72,14 @@ export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWor
     }
 
     return (
-        <form className="form-grid" onSubmit={handleSubmit} noValidate>
+        <form ref={formRef} className="form-grid" onSubmit={handleSubmit} noValidate>
             <div className="grid content-start gap-3">
                 <label>
                     Exercise
                     <select
                         value={exerciseId}
                         disabled={isSubmitting}
+                        {...invalidFieldProps(errors.exerciseId, `${id}-exercise-error`)}
                         onChange={(event) => setExerciseId(event.target.value)}
                     >
                         <option value="">Select exercise</option>
@@ -81,7 +90,7 @@ export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWor
                         ))}
                     </select>
                 </label>
-                {errors.exerciseId && <p className="field-error">{errors.exerciseId}</p>}
+                <FieldError id={`${id}-exercise-error`}>{errors.exerciseId}</FieldError>
 
                 <Button fullWidth type="submit" disabled={isSubmitting}>
                     {isSubmitting ? "Adding..." : "Add exercise"}
@@ -95,10 +104,11 @@ export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWor
                         className="h-full min-h-0"
                         value={notes}
                         disabled={isSubmitting}
+                        {...invalidFieldProps(errors.notes, `${id}-notes-error`)}
                         onChange={(event) => setNotes(event.target.value)}
                     />
                 </label>
-                {errors.notes && <p className="field-error">{errors.notes}</p>}
+                <FieldError id={`${id}-notes-error`}>{errors.notes}</FieldError>
             </div>
         </form>
     );

@@ -1,7 +1,9 @@
 import {z} from "zod";
-import {useState, type SubmitEvent} from "react";
+import {useId, useRef, useState, type SubmitEvent} from "react";
 import {createExerciseSchema, type CreateExerciseInput} from "../schemas/exercise.schemas";
 import {Button} from "../../../components/ui/Button";
+import {FieldError} from "../../../components/ui/FieldError";
+import {focusFirstInvalidField, invalidFieldProps} from "../../../components/ui/formAccessibility";
 
 interface CreateExerciseFormProps {
     onSubmit: (data: CreateExerciseInput) => Promise<void>;
@@ -14,6 +16,8 @@ interface CreateExerciseErrors {
 }
 
 export function CreateExerciseForm({onSubmit}: CreateExerciseFormProps) {
+    const formRef = useRef<HTMLFormElement>(null);
+    const id = useId();
     const [name, setName] = useState("");
     const [muscleGroup, setMuscleGroup] = useState("");
     const [equipment, setEquipment] = useState("");
@@ -38,6 +42,7 @@ export function CreateExerciseForm({onSubmit}: CreateExerciseFormProps) {
                 muscleGroup: fieldErrors.muscleGroup?.[0],
                 equipment: fieldErrors.equipment?.[0],
             });
+            focusFirstInvalidField(formRef);
 
             return;
         }
@@ -59,36 +64,39 @@ export function CreateExerciseForm({onSubmit}: CreateExerciseFormProps) {
     }
 
     return (
-        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+        <form ref={formRef} className="form-stack" onSubmit={handleSubmit} noValidate>
             <label>
                 Name
                 <input
                     value={name}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.name, `${id}-name-error`)}
                     onChange={(event) => setName(event.target.value)}
                 />
             </label>
-            {errors.name && <p>{errors.name}</p>}
+            <FieldError id={`${id}-name-error`}>{errors.name}</FieldError>
 
             <label>
                 Muscle group
                 <input
                     value={muscleGroup}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.muscleGroup, `${id}-muscle-group-error`)}
                     onChange={(event) => setMuscleGroup(event.target.value)}
                 />
             </label>
-            {errors.muscleGroup && <p>{errors.muscleGroup}</p>}
+            <FieldError id={`${id}-muscle-group-error`}>{errors.muscleGroup}</FieldError>
 
             <label>
                 Equipment
                 <input
                     value={equipment}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.equipment, `${id}-equipment-error`)}
                     onChange={(event) => setEquipment(event.target.value)}
                 />
             </label>
-            {errors.equipment && <p>{errors.equipment}</p>}
+            <FieldError id={`${id}-equipment-error`}>{errors.equipment}</FieldError>
 
             <Button type="submit" size="lg" fullWidth disabled={isSubmitting}>
                 {isSubmitting ? "Creating..." : "Create exercise"}

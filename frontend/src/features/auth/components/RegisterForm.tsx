@@ -1,7 +1,9 @@
 import {z} from "zod";
-import {useState, type SubmitEvent} from "react";
+import {useId, useRef, useState, type SubmitEvent} from "react";
 import {registerSchema, type RegisterInput} from "../schemas/auth.schemas";
 import {Button} from "../../../components/ui/Button";
+import {FieldError} from "../../../components/ui/FieldError";
+import {focusFirstInvalidField, invalidFieldProps} from "../../../components/ui/formAccessibility";
 
 interface RegisterFormProps {
     onSubmit: (data: RegisterInput) => Promise<void>;
@@ -14,6 +16,8 @@ interface RegisterErrors {
 }
 
 export function RegisterForm({onSubmit}: RegisterFormProps) {
+    const formRef = useRef<HTMLFormElement>(null);
+    const id = useId();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -38,6 +42,7 @@ export function RegisterForm({onSubmit}: RegisterFormProps) {
                 email: fieldErrors.email?.[0],
                 password: fieldErrors.password?.[0],
             });
+            focusFirstInvalidField(formRef);
 
             return;
         }
@@ -55,17 +60,18 @@ export function RegisterForm({onSubmit}: RegisterFormProps) {
     }
 
     return (
-        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+        <form ref={formRef} className="form-stack" onSubmit={handleSubmit} noValidate>
             <label>
                 Name
                 <input
                     autoComplete="name"
                     value={name}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.name, `${id}-name-error`)}
                     onChange={(event) => setName(event.target.value)}
                 />
             </label>
-            {errors.name && <p>{errors.name}</p>}
+            <FieldError id={`${id}-name-error`}>{errors.name}</FieldError>
 
             <label>
                 Email
@@ -74,10 +80,11 @@ export function RegisterForm({onSubmit}: RegisterFormProps) {
                     autoComplete="email"
                     value={email}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.email, `${id}-email-error`)}
                     onChange={(event) => setEmail(event.target.value)}
                 />
             </label>
-            {errors.email && <p>{errors.email}</p>}
+            <FieldError id={`${id}-email-error`}>{errors.email}</FieldError>
 
             <label>
                 Password
@@ -86,10 +93,11 @@ export function RegisterForm({onSubmit}: RegisterFormProps) {
                     autoComplete="new-password"
                     value={password}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.password, `${id}-password-error`)}
                     onChange={(event) => setPassword(event.target.value)}
                 />
             </label>
-            {errors.password && <p>{errors.password}</p>}
+            <FieldError id={`${id}-password-error`}>{errors.password}</FieldError>
 
             <Button type="submit" size="lg" fullWidth disabled={isSubmitting}>
                 {isSubmitting ? "Registering..." : "Register"}

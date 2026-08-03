@@ -1,4 +1,4 @@
-import {useState, type SubmitEvent} from "react";
+import {useId, useRef, useState, type SubmitEvent} from "react";
 import type {CreateWorkoutSetInput} from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
 
@@ -8,6 +8,8 @@ interface NewWorkoutSetInlineRowProps {
 }
 
 export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlineRowProps) {
+    const formRef = useRef<HTMLFormElement>(null);
+    const id = useId();
     const [reps, setReps] = useState("");
     const [weight, setWeight] = useState("");
     const [durationSeconds, setDurationSeconds] = useState("");
@@ -19,6 +21,9 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
 
         if (reps === "" && durationSeconds === "") {
             setError("Enter reps or duration");
+            queueMicrotask(() =>
+                formRef.current?.querySelector<HTMLInputElement>("input")?.focus(),
+            );
             return;
         }
 
@@ -44,6 +49,7 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
 
     return (
         <form
+            ref={formRef}
             className="grid grid-cols-3 items-center gap-3 rounded-[11px] border border-dashed border-line bg-panel-raised/40 p-3 md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_148px]"
             onSubmit={handleSubmit}
         >
@@ -58,6 +64,8 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
                     step="0.01"
                     value={weight}
                     disabled={isSubmitting}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `${id}-error` : undefined}
                     onChange={(event) => setWeight(event.target.value)}
                 />
             </label>
@@ -68,6 +76,8 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
                     min="1"
                     value={reps}
                     disabled={isSubmitting}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `${id}-error` : undefined}
                     onChange={(event) => setReps(event.target.value)}
                 />
             </label>
@@ -78,6 +88,8 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
                     min="1"
                     value={durationSeconds}
                     disabled={isSubmitting}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `${id}-error` : undefined}
                     onChange={(event) => setDurationSeconds(event.target.value)}
                 />
             </label>
@@ -90,7 +102,11 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
             >
                 {isSubmitting ? "..." : "Add"}
             </Button>
-            {error && <p className="col-span-full text-xs text-negative">{error}</p>}
+            {error && (
+                <p id={`${id}-error`} className="field-error col-span-full">
+                    {error}
+                </p>
+            )}
         </form>
     );
 }

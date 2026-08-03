@@ -1,4 +1,4 @@
-import {render, screen} from "@testing-library/react";
+import {render, screen, waitFor} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
 import {LoginForm} from "./LogInForm";
@@ -12,8 +12,13 @@ describe("LoginForm", () => {
 
         await user.click(screen.getByRole("button", {name: "Log In"}));
 
-        expect(screen.getByText("Invalid email address")).toBeInTheDocument();
+        const email = screen.getByLabelText("Email");
+        const emailError = screen.getByText("Invalid email address");
+        expect(emailError).toBeInTheDocument();
         expect(screen.getByText("Password is required")).toBeInTheDocument();
+        expect(email).toHaveAttribute("aria-invalid", "true");
+        expect(email).toHaveAttribute("aria-describedby", emailError.id);
+        await waitFor(() => expect(email).toHaveFocus());
         expect(onSubmit).not.toHaveBeenCalled();
     });
 

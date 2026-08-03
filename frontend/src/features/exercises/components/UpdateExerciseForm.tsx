@@ -1,8 +1,10 @@
 import {z} from "zod";
-import {useState, type SubmitEvent} from "react";
+import {useId, useRef, useState, type SubmitEvent} from "react";
 import {updateExerciseSchema, type UpdateExerciseInput} from "../schemas/exercise.schemas";
 import type {Exercise} from "../exercise.types.ts";
 import {Button} from "../../../components/ui/Button";
+import {FieldError} from "../../../components/ui/FieldError";
+import {focusFirstInvalidField, invalidFieldProps} from "../../../components/ui/formAccessibility";
 
 interface UpdateExerciseFormProps {
     exercise: Exercise;
@@ -17,6 +19,8 @@ interface EditExerciseErrors {
 }
 
 export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExerciseFormProps) => {
+    const formRef = useRef<HTMLFormElement>(null);
+    const id = useId();
     const [name, setName] = useState(exercise.name);
     const [muscleGroup, setMuscleGroup] = useState(exercise.muscleGroup);
     const [equipment, setEquipment] = useState(exercise.equipment ?? "");
@@ -40,6 +44,7 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
                 muscleGroup: fieldErrors.muscleGroup?.[0],
                 equipment: fieldErrors.equipment?.[0],
             });
+            focusFirstInvalidField(formRef);
 
             return;
         }
@@ -57,7 +62,7 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
     }
 
     return (
-        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+        <form ref={formRef} className="form-stack" onSubmit={handleSubmit} noValidate>
             <div>
                 <p className="eyebrow">Editing</p>
                 <h2 className="section-title mt-2">{exercise.name}</h2>
@@ -68,30 +73,33 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
                 <input
                     value={name}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.name, `${id}-name-error`)}
                     onChange={(event) => setName(event.target.value)}
                 />
             </label>
-            {errors.name && <p>{errors.name}</p>}
+            <FieldError id={`${id}-name-error`}>{errors.name}</FieldError>
 
             <label>
                 Muscle group
                 <input
                     value={muscleGroup}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.muscleGroup, `${id}-muscle-group-error`)}
                     onChange={(event) => setMuscleGroup(event.target.value)}
                 />
             </label>
-            {errors.muscleGroup && <p>{errors.muscleGroup}</p>}
+            <FieldError id={`${id}-muscle-group-error`}>{errors.muscleGroup}</FieldError>
 
             <label>
                 Equipment
                 <input
                     value={equipment}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.equipment, `${id}-equipment-error`)}
                     onChange={(event) => setEquipment(event.target.value)}
                 />
             </label>
-            {errors.equipment && <p>{errors.equipment}</p>}
+            <FieldError id={`${id}-equipment-error`}>{errors.equipment}</FieldError>
 
             <div className="button-row">
                 <Button type="submit" disabled={isSubmitting}>

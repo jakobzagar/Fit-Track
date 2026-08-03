@@ -1,7 +1,9 @@
 import {z} from "zod";
-import {useState, type SubmitEvent} from "react";
+import {useId, useRef, useState, type SubmitEvent} from "react";
 import {loginSchema, type LoginInput} from "../schemas/auth.schemas.ts";
 import {Button} from "../../../components/ui/Button";
+import {FieldError} from "../../../components/ui/FieldError";
+import {focusFirstInvalidField, invalidFieldProps} from "../../../components/ui/formAccessibility";
 
 interface LoginFormProps {
     onSubmit: (data: LoginInput) => Promise<void>;
@@ -13,6 +15,8 @@ interface LoginErrors {
 }
 
 export function LoginForm({onSubmit}: LoginFormProps) {
+    const formRef = useRef<HTMLFormElement>(null);
+    const id = useId();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -34,6 +38,7 @@ export function LoginForm({onSubmit}: LoginFormProps) {
                 email: fieldErrors.email?.[0],
                 password: fieldErrors.password?.[0],
             });
+            focusFirstInvalidField(formRef);
 
             return;
         }
@@ -51,7 +56,7 @@ export function LoginForm({onSubmit}: LoginFormProps) {
     }
 
     return (
-        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+        <form ref={formRef} className="form-stack" onSubmit={handleSubmit} noValidate>
             <label>
                 Email
                 <input
@@ -59,10 +64,11 @@ export function LoginForm({onSubmit}: LoginFormProps) {
                     autoComplete="email"
                     value={email}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.email, `${id}-email-error`)}
                     onChange={(e) => setEmail(e.target.value)}
                 />
             </label>
-            {errors.email && <p>{errors.email}</p>}
+            <FieldError id={`${id}-email-error`}>{errors.email}</FieldError>
 
             <label>
                 Password
@@ -71,10 +77,11 @@ export function LoginForm({onSubmit}: LoginFormProps) {
                     autoComplete="current-password"
                     value={password}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.password, `${id}-password-error`)}
                     onChange={(e) => setPassword(e.target.value)}
                 />
             </label>
-            {errors.password && <p>{errors.password}</p>}
+            <FieldError id={`${id}-password-error`}>{errors.password}</FieldError>
 
             <Button type="submit" size="lg" fullWidth disabled={isSubmitting}>
                 {isSubmitting ? "Logging in..." : "Log In"}

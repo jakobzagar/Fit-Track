@@ -1,10 +1,15 @@
-import {useState, type SubmitEvent} from "react";
+import {useId, useRef, useState, type SubmitEvent} from "react";
 import {z} from "zod";
 import {
     createWorkoutSetSchema,
     type CreateWorkoutSetInput,
 } from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
+import {FieldError} from "../../../components/ui/FieldError.tsx";
+import {
+    focusFirstInvalidField,
+    invalidFieldProps,
+} from "../../../components/ui/formAccessibility.ts";
 
 interface AddWorkoutSetFormProps {
     onSubmit: (data: CreateWorkoutSetInput) => Promise<void>;
@@ -18,6 +23,8 @@ interface AddWorkoutSetErrors {
 }
 
 export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
+    const formRef = useRef<HTMLFormElement>(null);
+    const id = useId();
     const [reps, setReps] = useState("");
     const [weight, setWeight] = useState("");
     const [durationSeconds, setDurationSeconds] = useState("");
@@ -42,6 +49,7 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
                 durationSeconds: flattenedError.fieldErrors.durationSeconds?.[0],
                 form: flattenedError.formErrors[0],
             });
+            focusFirstInvalidField(formRef);
 
             return;
         }
@@ -64,6 +72,7 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
 
     return (
         <form
+            ref={formRef}
             className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]"
             onSubmit={handleSubmit}
             noValidate
@@ -75,6 +84,10 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
                     min="1"
                     value={reps}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(
+                        errors.reps ?? errors.form,
+                        `${id}-${errors.reps ? "reps" : "form"}-error`,
+                    )}
                     onChange={(event) => setReps(event.target.value)}
                 />
             </label>
@@ -87,6 +100,7 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
                     step="any"
                     value={weight}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.weight, `${id}-weight-error`)}
                     onChange={(event) => setWeight(event.target.value)}
                 />
             </label>
@@ -98,6 +112,10 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
                     min="1"
                     value={durationSeconds}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(
+                        errors.durationSeconds ?? errors.form,
+                        `${id}-${errors.durationSeconds ? "duration" : "form"}-error`,
+                    )}
                     onChange={(event) => setDurationSeconds(event.target.value)}
                 />
             </label>
@@ -105,11 +123,12 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
             <Button className="h-12 self-end" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Adding..." : "Add set"}
             </Button>
-            {(errors.reps || errors.weight || errors.durationSeconds || errors.form) && (
-                <p className="col-span-full text-xs text-negative">
-                    {errors.reps || errors.weight || errors.durationSeconds || errors.form}
-                </p>
-            )}
+            <div className="col-span-full">
+                <FieldError id={`${id}-reps-error`}>{errors.reps}</FieldError>
+                <FieldError id={`${id}-weight-error`}>{errors.weight}</FieldError>
+                <FieldError id={`${id}-duration-error`}>{errors.durationSeconds}</FieldError>
+                <FieldError id={`${id}-form-error`}>{errors.form}</FieldError>
+            </div>
         </form>
     );
 }

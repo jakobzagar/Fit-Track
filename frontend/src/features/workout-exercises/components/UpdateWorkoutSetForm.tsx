@@ -1,4 +1,4 @@
-import {useState, type SubmitEvent} from "react";
+import {useId, useRef, useState, type SubmitEvent} from "react";
 import {z} from "zod";
 import type {WorkoutSet} from "../../workouts/workout.types.ts";
 import {
@@ -6,6 +6,11 @@ import {
     type UpdateWorkoutSetInput,
 } from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
+import {FieldError} from "../../../components/ui/FieldError.tsx";
+import {
+    focusFirstInvalidField,
+    invalidFieldProps,
+} from "../../../components/ui/formAccessibility.ts";
 
 interface UpdateWorkoutSetFormProps {
     workoutSet: WorkoutSet;
@@ -21,6 +26,8 @@ interface UpdateWorkoutSetErrors {
 }
 
 export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWorkoutSetFormProps) {
+    const formRef = useRef<HTMLFormElement>(null);
+    const id = useId();
     const [reps, setReps] = useState(workoutSet.reps === null ? "" : String(workoutSet.reps));
     const [weight, setWeight] = useState(
         workoutSet.weight === null ? "" : String(workoutSet.weight),
@@ -38,6 +45,7 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
             setErrors({
                 form: "Either reps or durationSeconds is required",
             });
+            focusFirstInvalidField(formRef);
             return;
         }
 
@@ -55,6 +63,7 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
                 weight: fieldErrors.weight?.[0],
                 durationSeconds: fieldErrors.durationSeconds?.[0],
             });
+            focusFirstInvalidField(formRef);
             return;
         }
 
@@ -72,6 +81,7 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
 
     return (
         <form
+            ref={formRef}
             className="form-grid rounded-[12px] border border-line bg-ink p-4"
             onSubmit={handleSubmit}
             noValidate
@@ -83,10 +93,14 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
                     min="1"
                     value={reps}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(
+                        errors.reps ?? errors.form,
+                        `${id}-${errors.reps ? "reps" : "form"}-error`,
+                    )}
                     onChange={(event) => setReps(event.target.value)}
                 />
             </label>
-            {errors.reps && <p>{errors.reps}</p>}
+            <FieldError id={`${id}-reps-error`}>{errors.reps}</FieldError>
 
             <label>
                 Weight
@@ -97,10 +111,11 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
                     step="0.01"
                     value={weight}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(errors.weight, `${id}-weight-error`)}
                     onChange={(event) => setWeight(event.target.value)}
                 />
             </label>
-            {errors.weight && <p>{errors.weight}</p>}
+            <FieldError id={`${id}-weight-error`}>{errors.weight}</FieldError>
 
             <label>
                 Duration in seconds
@@ -109,11 +124,15 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
                     min="1"
                     value={durationSeconds}
                     disabled={isSubmitting}
+                    {...invalidFieldProps(
+                        errors.durationSeconds ?? errors.form,
+                        `${id}-${errors.durationSeconds ? "duration" : "form"}-error`,
+                    )}
                     onChange={(event) => setDurationSeconds(event.target.value)}
                 />
             </label>
-            {errors.durationSeconds && <p>{errors.durationSeconds}</p>}
-            {errors.form && <p>{errors.form}</p>}
+            <FieldError id={`${id}-duration-error`}>{errors.durationSeconds}</FieldError>
+            <FieldError id={`${id}-form-error`}>{errors.form}</FieldError>
 
             <div className="button-row col-span-full">
                 <Button type="submit" size="sm" disabled={isSubmitting}>
