@@ -57,7 +57,7 @@ describe("WorkoutDetailPage", () => {
         );
         renderPage();
 
-        expect(await screen.findByRole("status")).toHaveTextContent("Workout not found");
+        expect(await screen.findByRole("alert")).toHaveTextContent("Workout not found");
     });
 
     test("adds an available exercise", async () => {

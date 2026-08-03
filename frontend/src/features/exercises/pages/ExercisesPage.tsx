@@ -221,7 +221,11 @@ export function ExercisesPage() {
                 }
             />
             {mutationError && <Feedback>{mutationError}</Feedback>}
-            {successMessage && <Feedback tone="success">{successMessage}</Feedback>}
+            {successMessage && (
+                <Feedback tone="success" onDismiss={() => setSuccessMessage("")}>
+                    {successMessage}
+                </Feedback>
+            )}
 
             <div
                 className="inline-flex w-fit rounded-[11px] border border-line bg-panel p-1"
@@ -229,7 +233,7 @@ export function ExercisesPage() {
                 aria-label="Exercise status"
             >
                 <button
-                    className={`min-h-10 rounded-[8px] px-4 text-xs font-extrabold tracking-[0.08em] uppercase transition ${view === "active" ? "bg-flame text-ink" : "text-dim hover:text-cream"}`}
+                    className={`min-h-11 rounded-[8px] px-4 text-xs font-extrabold tracking-[0.08em] uppercase transition ${view === "active" ? "bg-flame text-ink" : "text-dim hover:text-cream"}`}
                     type="button"
                     role="tab"
                     aria-selected={view === "active"}
@@ -238,7 +242,7 @@ export function ExercisesPage() {
                     Active
                 </button>
                 <button
-                    className={`min-h-10 rounded-[8px] px-4 text-xs font-extrabold tracking-[0.08em] uppercase transition ${view === "archived" ? "bg-flame text-ink" : "text-dim hover:text-cream"}`}
+                    className={`min-h-11 rounded-[8px] px-4 text-xs font-extrabold tracking-[0.08em] uppercase transition ${view === "archived" ? "bg-flame text-ink" : "text-dim hover:text-cream"}`}
                     type="button"
                     role="tab"
                     aria-selected={view === "archived"}

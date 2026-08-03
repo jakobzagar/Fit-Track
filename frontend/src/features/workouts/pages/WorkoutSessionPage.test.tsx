@@ -143,7 +143,7 @@ describe("WorkoutSessionPage", () => {
         await user.type(repsInputs[1], "10");
         await user.click(screen.getByRole("button", {name: "Finish workout"}));
 
-        expect(screen.getByRole("status")).toHaveTextContent(
+        expect(screen.getByRole("alert")).toHaveTextContent(
             "Save or complete the edited set before finishing the workout.",
         );
         expect(finishRequest).not.toHaveBeenCalled();

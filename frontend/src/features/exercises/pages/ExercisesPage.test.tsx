@@ -44,7 +44,7 @@ describe("ExercisesPage", () => {
             ),
         );
         renderWithProviders(<ExercisesPage />);
-        expect(await screen.findByRole("status")).toHaveTextContent("Could not load exercises");
+        expect(await screen.findByRole("alert")).toHaveTextContent("Could not load exercises");
         expect(screen.getByRole("button", {name: "Try again"})).toBeInTheDocument();
     });
 

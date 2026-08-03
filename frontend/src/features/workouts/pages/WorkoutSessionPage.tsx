@@ -456,7 +456,7 @@ export function WorkoutSessionPage() {
                 );
             })}
 
-            <footer className="sticky bottom-22 z-30 flex flex-col items-stretch justify-between gap-3 rounded-[14px] border border-line bg-panel/95 p-4 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center md:bottom-6">
+            <footer className="session-action-bar sticky z-30 flex flex-col items-stretch justify-between gap-3 rounded-[14px] border border-line bg-panel/95 p-4 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center">
                 <div>
                     <span className="metric-number text-xl font-black text-cream">
                         {completedSetCount}

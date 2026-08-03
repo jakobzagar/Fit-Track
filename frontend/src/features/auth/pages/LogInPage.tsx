@@ -6,6 +6,7 @@ import {LoginForm} from "../components/LogInForm";
 import {login} from "../api/auth.api";
 import type {LoginInput} from "../schemas/auth.schemas";
 import {useAuth} from "../hooks/useAuth.ts";
+import {ThemeToggle} from "../../../components/ui/ThemeToggle";
 
 export function LoginPage() {
     const navigate = useNavigate();
@@ -40,6 +41,7 @@ export function LoginPage() {
             </section>
 
             <section className="auth-form-panel">
+                <ThemeToggle className="auth-theme-toggle" />
                 <div className="auth-form-wrap">
                     <p className="eyebrow">Welcome back</p>
                     <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-cream">

@@ -192,7 +192,11 @@ export function WorkoutsPage() {
                 }
             />
             {mutationError && <Feedback>{mutationError}</Feedback>}
-            {successMessage && <Feedback tone="success">{successMessage}</Feedback>}
+            {successMessage && (
+                <Feedback tone="success" onDismiss={() => setSuccessMessage("")}>
+                    {successMessage}
+                </Feedback>
+            )}
 
             <div>
                 <div className="mb-4 flex items-end justify-between">

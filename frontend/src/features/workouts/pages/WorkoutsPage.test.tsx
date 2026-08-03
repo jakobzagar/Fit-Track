@@ -49,7 +49,7 @@ describe("WorkoutsPage", () => {
             ),
         );
         renderWithProviders(<WorkoutsPage />);
-        expect(await screen.findByRole("status")).toHaveTextContent("Could not load workouts");
+        expect(await screen.findByRole("alert")).toHaveTextContent("Could not load workouts");
         expect(screen.getByRole("button", {name: "Try again"})).toBeInTheDocument();
     });
 

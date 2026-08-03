@@ -62,7 +62,7 @@ describe("LoginPage", () => {
         await user.type(screen.getByLabelText("Password"), "wrong-password");
         await user.click(screen.getByRole("button", {name: "Log In"}));
 
-        expect(await screen.findByRole("status")).toHaveTextContent("Invalid email or password");
+        expect(await screen.findByRole("alert")).toHaveTextContent("Invalid email or password");
         expect(screen.getByRole("heading", {name: "Sign in"})).toBeInTheDocument();
     });
 });
@@ -103,7 +103,7 @@ describe("RegisterPage", () => {
         await user.type(screen.getByLabelText("Password"), "password123");
         await user.click(screen.getByRole("button", {name: "Register"}));
 
-        expect(await screen.findByRole("status")).toHaveTextContent("Email is already registered");
+        expect(await screen.findByRole("alert")).toHaveTextContent("Email is already registered");
         expect(screen.getByRole("heading", {name: "Create account"})).toBeInTheDocument();
     });
 });

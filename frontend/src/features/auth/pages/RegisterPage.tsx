@@ -6,6 +6,7 @@ import {RegisterForm} from "../components/RegisterForm";
 import {register} from "../api/auth.api";
 import type {RegisterInput} from "../schemas/auth.schemas";
 import {useAuth} from "../hooks/useAuth.ts";
+import {ThemeToggle} from "../../../components/ui/ThemeToggle";
 
 export function RegisterPage() {
     const navigate = useNavigate();
@@ -40,6 +41,7 @@ export function RegisterPage() {
             </section>
 
             <section className="auth-form-panel">
+                <ThemeToggle className="auth-theme-toggle" />
                 <div className="auth-form-wrap">
                     <p className="eyebrow">Start training</p>
                     <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-cream">

@@ -3,6 +3,7 @@ import {BrandMark} from "../../../components/ui/BrandMark";
 import {Icon} from "../../../components/ui/Icon";
 import {useAuth} from "../../auth/hooks/useAuth";
 import {Footer} from "../../../components/layout/Footer";
+import {ThemeToggle} from "../../../components/ui/ThemeToggle";
 
 const features = [
     {
@@ -32,6 +33,7 @@ export function LandingPage() {
             <header className="landing-nav">
                 <BrandMark linked={false} />
                 <div className="flex items-center gap-2 sm:gap-3">
+                    <ThemeToggle />
                     {!user && (
                         <Link className="landing-link-muted" to="/login">
                             Log in
