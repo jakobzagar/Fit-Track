@@ -14,9 +14,6 @@ import {
     updateWorkoutSet,
 } from "../../workout-exercises/api/workout.exercises.api.ts";
 import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/AddExerciseToWorkoutForm.tsx";
-import {AddWorkoutSetForm} from "../../workout-exercises/components/AddWorkoutSetForm.tsx";
-import {UpdateWorkoutExerciseForm} from "../../workout-exercises/components/UpdateWorkoutExerciseForm.tsx";
-import {UpdateWorkoutSetForm} from "../../workout-exercises/components/UpdateWorkoutSetForm.tsx";
 import type {
     AddExerciseToWorkoutInput,
     CreateWorkoutSetInput,
@@ -29,8 +26,8 @@ import {PageHeader} from "../../../components/ui/PageHeader.tsx";
 import {Card} from "../../../components/ui/Card.tsx";
 import {Link} from "react-router";
 import {Button} from "../../../components/ui/Button.tsx";
-import {Icon} from "../../../components/ui/Icon.tsx";
 import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
+import {WorkoutExerciseCard} from "../components/WorkoutExerciseCard.tsx";
 
 export function WorkoutDetailPage() {
     const confirm = useConfirmDialog();
@@ -67,25 +64,14 @@ export function WorkoutDetailPage() {
     }, [workoutId]);
 
     useEffect(() => {
-        if (!workoutId) return;
-
-        async function loadInitialWorkout(id: string) {
-            try {
-                const [workoutResponse, exercisesResponse] = await Promise.all([
-                    getWorkoutById(id),
-                    getExercises(),
-                ]);
-                setWorkout(workoutResponse.workout);
-                setExercises(exercisesResponse.exercises);
-            } catch (error) {
-                setLoadError(error instanceof Error ? error.message : "Failed to load workout");
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        void loadInitialWorkout(workoutId);
-    }, [workoutId]);
+        let isCurrent = true;
+        queueMicrotask(() => {
+            if (isCurrent) void loadWorkout();
+        });
+        return () => {
+            isCurrent = false;
+        };
+    }, [loadWorkout]);
 
     async function handleAddExercise(data: AddExerciseToWorkoutInput) {
         if (!workoutId) {
@@ -434,193 +420,23 @@ export function WorkoutDetailPage() {
             ) : (
                 <section className="grid gap-4">
                     {workout.workoutExercises.map((workoutExercise) => (
-                        <Card as="article" className="space-y-6" key={workoutExercise.id}>
-                            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                                <div>
-                                    <p className="text-[10px] font-extrabold tracking-[0.14em] text-flame uppercase">
-                                        Exercise {workoutExercise.position}
-                                    </p>
-                                    <h3 className="mt-1 text-2xl font-black tracking-[-0.04em] text-cream">
-                                        {workoutExercise.exercise.name}
-                                    </h3>
-                                    <p className="mt-1 text-xs font-semibold tracking-[0.08em] text-dim uppercase">
-                                        {workoutExercise.exercise.muscleGroup}
-                                    </p>
-                                </div>
-
-                                {editingWorkoutExercise?.id !== workoutExercise.id && (
-                                    <div className="flex shrink-0 flex-wrap gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            type="button"
-                                            disabled={
-                                                deletingWorkoutExerciseId === workoutExercise.id
-                                            }
-                                            onClick={() =>
-                                                setEditingWorkoutExercise(workoutExercise)
-                                            }
-                                        >
-                                            <Icon name="edit" size={14} />
-                                            Edit
-                                        </Button>
-                                        <Button
-                                            variant="danger"
-                                            size="sm"
-                                            type="button"
-                                            disabled={
-                                                deletingWorkoutExerciseId === workoutExercise.id
-                                            }
-                                            onClick={() =>
-                                                handleDeleteWorkoutExercise(workoutExercise.id)
-                                            }
-                                        >
-                                            <Icon name="trash" size={16} />
-                                            {deletingWorkoutExerciseId === workoutExercise.id
-                                                ? "Deleting..."
-                                                : "Delete"}
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {workoutExercise.notes && (
-                                <p className="rounded-[10px] border border-line bg-white/[0.025] px-4 py-3 text-sm leading-6 text-dim">
-                                    {workoutExercise.notes}
-                                </p>
-                            )}
-
-                            {editingWorkoutExercise?.id === workoutExercise.id ? (
-                                <UpdateWorkoutExerciseForm
-                                    workoutExercise={editingWorkoutExercise}
-                                    onSubmit={handleUpdateWorkoutExercise}
-                                    onCancel={() => setEditingWorkoutExercise(null)}
-                                />
-                            ) : null}
-
-                            {workoutExercise.sets.length === 0 ? (
-                                <p className="rounded-[10px] border border-dashed border-line py-6 text-center text-sm text-dim">
-                                    No sets added yet
-                                </p>
-                            ) : (
-                                <div className="space-y-3 border-t border-line pt-5">
-                                    <div className="flex items-end justify-between gap-4">
-                                        <div>
-                                            <p className="eyebrow">Performance</p>
-                                            <h4 className="mt-1 text-base font-extrabold text-cream">
-                                                Logged sets
-                                            </h4>
-                                        </div>
-                                        <span className="text-xs font-bold tracking-[0.08em] text-dim uppercase">
-                                            {workoutExercise.sets.length} total
-                                        </span>
-                                    </div>
-                                    <ul className="grid gap-2">
-                                        {workoutExercise.sets.map((set) => (
-                                            <li
-                                                className="rounded-[11px] border border-line bg-ink p-3"
-                                                key={set.id}
-                                            >
-                                                {editingWorkoutSet?.id === set.id ? (
-                                                    <UpdateWorkoutSetForm
-                                                        workoutSet={editingWorkoutSet}
-                                                        onSubmit={handleUpdateWorkoutSet}
-                                                        onCancel={() => setEditingWorkoutSet(null)}
-                                                    />
-                                                ) : (
-                                                    <div className="grid gap-3 sm:grid-cols-[36px_minmax(0,1fr)_auto] sm:items-center">
-                                                        <div className="flex items-center gap-3 sm:contents">
-                                                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-line bg-panel text-xs font-black text-cream">
-                                                                {set.setNumber}
-                                                            </span>
-                                                            <div className="grid flex-1 grid-cols-3 gap-2">
-                                                                <div className="rounded-[8px] border border-line bg-panel px-3 py-2">
-                                                                    <span className="block text-[9px] font-extrabold tracking-[0.12em] text-dim uppercase">
-                                                                        Weight
-                                                                    </span>
-                                                                    <strong className="metric-number mt-1 block text-sm text-cream">
-                                                                        {set.weight ?? "—"}
-                                                                        <small className="ml-1 text-[10px] font-bold text-dim">
-                                                                            kg
-                                                                        </small>
-                                                                    </strong>
-                                                                </div>
-                                                                <div className="rounded-[8px] border border-line bg-panel px-3 py-2">
-                                                                    <span className="block text-[9px] font-extrabold tracking-[0.12em] text-dim uppercase">
-                                                                        Reps
-                                                                    </span>
-                                                                    <strong className="metric-number mt-1 block text-sm text-cream">
-                                                                        {set.reps ?? "—"}
-                                                                        <small className="ml-1 text-[10px] font-bold text-dim">
-                                                                            reps
-                                                                        </small>
-                                                                    </strong>
-                                                                </div>
-                                                                <div className="rounded-[8px] border border-line bg-panel px-3 py-2">
-                                                                    <span className="block text-[9px] font-extrabold tracking-[0.12em] text-dim uppercase">
-                                                                        Duration
-                                                                    </span>
-                                                                    <strong className="metric-number mt-1 block text-sm text-cream">
-                                                                        {set.durationSeconds ?? "—"}
-                                                                        <small className="ml-1 text-[10px] font-bold text-dim">
-                                                                            sec
-                                                                        </small>
-                                                                    </strong>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                type="button"
-                                                                disabled={
-                                                                    deletingWorkoutSetId === set.id
-                                                                }
-                                                                onClick={() =>
-                                                                    setEditingWorkoutSet(set)
-                                                                }
-                                                            >
-                                                                <Icon name="edit" size={14} />
-                                                                Edit set
-                                                            </Button>
-                                                            <Button
-                                                                variant="danger"
-                                                                size="sm"
-                                                                type="button"
-                                                                disabled={
-                                                                    deletingWorkoutSetId === set.id
-                                                                }
-                                                                onClick={() =>
-                                                                    handleDeleteWorkoutSet(
-                                                                        workoutExercise.id,
-                                                                        set.id,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Icon name="trash" size={16} />
-                                                                {deletingWorkoutSetId === set.id
-                                                                    ? "Deleting..."
-                                                                    : "Delete"}
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-
-                            <div className="border-t border-line pt-5">
-                                <p className="mb-4 text-xs font-extrabold tracking-[0.1em] text-dim uppercase">
-                                    Add another set
-                                </p>
-                                <AddWorkoutSetForm
-                                    onSubmit={(data) => handleAddSet(workoutExercise.id, data)}
-                                />
-                            </div>
-                        </Card>
+                        <WorkoutExerciseCard
+                            key={workoutExercise.id}
+                            workoutExercise={workoutExercise}
+                            editingWorkoutExercise={editingWorkoutExercise}
+                            editingWorkoutSet={editingWorkoutSet}
+                            deletingWorkoutExerciseId={deletingWorkoutExerciseId}
+                            deletingWorkoutSetId={deletingWorkoutSetId}
+                            onEditExercise={setEditingWorkoutExercise}
+                            onUpdateExercise={handleUpdateWorkoutExercise}
+                            onDeleteExercise={(id) => void handleDeleteWorkoutExercise(id)}
+                            onEditSet={setEditingWorkoutSet}
+                            onUpdateSet={handleUpdateWorkoutSet}
+                            onDeleteSet={(workoutExerciseId, setId) =>
+                                void handleDeleteWorkoutSet(workoutExerciseId, setId)
+                            }
+                            onAddSet={(data) => handleAddSet(workoutExercise.id, data)}
+                        />
                     ))}
                 </section>
             )}

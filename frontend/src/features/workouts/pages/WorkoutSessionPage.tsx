@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
-import {Link, useBlocker, useNavigate, useParams} from "react-router";
+import {useNavigate, useParams} from "react-router";
 import type {Exercise} from "../../exercises/exercise.types.ts";
 import {getExercises} from "../../exercises/api/exercises.api.ts";
 import {
@@ -21,13 +21,15 @@ import {
 } from "../api/workouts.api.ts";
 import type {PreviousPerformance, Workout, WorkoutSet} from "../workout.types.ts";
 import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/AddExerciseToWorkoutForm.tsx";
-import {NewWorkoutSetInlineRow} from "../../workout-exercises/components/NewWorkoutSetInlineRow.tsx";
-import {WorkoutSetInlineRow} from "../../workout-exercises/components/WorkoutSetInlineRow.tsx";
 import {Button} from "../../../components/ui/Button.tsx";
 import {Card} from "../../../components/ui/Card.tsx";
 import {Feedback} from "../../../components/ui/Feedback.tsx";
 import {LoadingState} from "../../../components/ui/LoadingState.tsx";
 import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
+import {WorkoutSessionHeader} from "../components/WorkoutSessionHeader.tsx";
+import {WorkoutSessionExerciseCard} from "../components/WorkoutSessionExerciseCard.tsx";
+import {WorkoutSessionActionBar} from "../components/WorkoutSessionActionBar.tsx";
+import {useUnsavedSessionGuard} from "../hooks/useUnsavedSessionGuard.ts";
 
 export function WorkoutSessionPage() {
     const confirm = useConfirmDialog();
@@ -41,9 +43,7 @@ export function WorkoutSessionPage() {
     const [copyingExerciseId, setCopyingExerciseId] = useState<string | null>(null);
     const [error, setError] = useState("");
     const [dirtySetIds, setDirtySetIds] = useState<Set<string>>(() => new Set());
-    const blocker = useBlocker(
-        useCallback(() => dirtySetIds.size > 0 && !isFinishing, [dirtySetIds.size, isFinishing]),
-    );
+    useUnsavedSessionGuard({dirtySetCount: dirtySetIds.size, isFinishing, confirm});
 
     const loadSession = useCallback(async () => {
         if (!workoutId) return;
@@ -78,72 +78,14 @@ export function WorkoutSessionPage() {
     }, [navigate, workoutId]);
 
     useEffect(() => {
-        if (!workoutId) return;
-
-        async function loadInitialSession(id: string) {
-            try {
-                const [workoutResponse, exercisesResponse, performancesResponse] =
-                    await Promise.all([
-                        getWorkoutById(id),
-                        getExercises(),
-                        getPreviousPerformances(id),
-                    ]);
-
-                let loadedWorkout = workoutResponse.workout;
-                if (loadedWorkout.status === "COMPLETED") {
-                    void navigate(`/workouts/${id}`, {replace: true});
-                    return;
-                }
-                if (loadedWorkout.status === "DRAFT") {
-                    const startResponse = await startWorkout(id);
-                    loadedWorkout = {...loadedWorkout, ...startResponse.workout};
-                }
-
-                setWorkout(loadedWorkout);
-                setExercises(exercisesResponse.exercises);
-                setPreviousPerformances(performancesResponse.previousPerformances);
-            } catch (caughtError) {
-                setError(
-                    caughtError instanceof Error ? caughtError.message : "Failed to load session",
-                );
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        void loadInitialSession(workoutId);
-    }, [navigate, workoutId]);
-
-    useEffect(() => {
-        function warnBeforeLeaving(event: BeforeUnloadEvent) {
-            if (dirtySetIds.size > 0 && !isFinishing) {
-                event.preventDefault();
-            }
-        }
-
-        window.addEventListener("beforeunload", warnBeforeLeaving);
-        return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
-    }, [dirtySetIds.size, isFinishing]);
-
-    useEffect(() => {
-        if (blocker.state !== "blocked") return;
-
         let isCurrent = true;
-        void confirm({
-            title: "Discard unsaved set changes?",
-            message: `${dirtySetIds.size === 1 ? "One set has" : `${dirtySetIds.size} sets have`} unsaved changes. Save them before leaving if you want to keep the edits.`,
-            confirmLabel: "Discard and leave",
-            variant: "danger",
-        }).then((confirmed) => {
-            if (!isCurrent || blocker.state !== "blocked") return;
-            if (confirmed) blocker.proceed();
-            else blocker.reset();
+        queueMicrotask(() => {
+            if (isCurrent) void loadSession();
         });
-
         return () => {
             isCurrent = false;
         };
-    }, [blocker, confirm, dirtySetIds.size]);
+    }, [loadSession]);
 
     const handleDirtyChange = useCallback((setId: string, isDirty: boolean) => {
         setDirtySetIds((current) => {
@@ -293,6 +235,20 @@ export function WorkoutSessionPage() {
         }
     }
 
+    function handleExit() {
+        if (dirtySetIds.size > 0) {
+            void navigate(`/workouts/${workout?.id}`);
+            return;
+        }
+        void confirm({
+            title: "Leave active workout?",
+            message: "Your saved sets will remain and you can continue this session later.",
+            confirmLabel: "Leave session",
+        }).then((confirmed) => {
+            if (confirmed && workout) void navigate(`/workouts/${workout.id}`);
+        });
+    }
+
     if (isLoading) {
         if (!workoutId) return <Feedback>Workout ID is missing</Feedback>;
         return <LoadingState label="Starting workout" />;
@@ -326,44 +282,11 @@ export function WorkoutSessionPage() {
 
     return (
         <section className="mx-auto max-w-4xl space-y-6">
-            <header className="session-header flex flex-col justify-between gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:gap-5 sm:pb-7">
-                <div>
-                    <p className="eyebrow">Live session</p>
-                    <h1 className="mt-2 text-3xl font-black tracking-[-0.055em] text-cream sm:mt-3 sm:text-5xl">
-                        {workout.name}
-                    </h1>
-                    <p className="mt-2 flex items-center gap-2 text-[10px] font-bold tracking-[0.1em] text-positive uppercase sm:mt-3 sm:text-xs">
-                        <span className="size-2 animate-pulse rounded-full bg-positive" />
-                        Workout in progress
-                    </p>
-                </div>
-                <div className="flex items-center justify-between gap-4 sm:block">
-                    <p className="text-xs font-bold tracking-[0.08em] text-dim uppercase sm:hidden">
-                        {completedSetCount} sets done
-                    </p>
-                    <Link
-                        className="inline-flex min-h-11 items-center text-xs font-bold tracking-[0.08em] text-dim uppercase hover:text-cream"
-                        to={`/workouts/${workout.id}`}
-                        onClick={(event) => {
-                            event.preventDefault();
-                            if (dirtySetIds.size > 0) {
-                                void navigate(`/workouts/${workout.id}`);
-                                return;
-                            }
-                            void confirm({
-                                title: "Leave active workout?",
-                                message:
-                                    "Your saved sets will remain and you can continue this session later.",
-                                confirmLabel: "Leave session",
-                            }).then((confirmed) => {
-                                if (confirmed) void navigate(`/workouts/${workout.id}`);
-                            });
-                        }}
-                    >
-                        Exit session →
-                    </Link>
-                </div>
-            </header>
+            <WorkoutSessionHeader
+                workout={workout}
+                completedSetCount={completedSetCount}
+                onExit={handleExit}
+            />
 
             {error && <Feedback>{error}</Feedback>}
 
@@ -392,117 +315,28 @@ export function WorkoutSessionPage() {
                 </Card>
             )}
 
-            {workout.workoutExercises.map((workoutExercise) => {
-                const previous = previousByExerciseId.get(workoutExercise.exerciseId);
-                const lastSet = workoutExercise.sets.at(-1);
-                return (
-                    <Card as="article" className="space-y-6" key={workoutExercise.id}>
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <p className="text-[10px] font-extrabold tracking-[0.14em] text-flame uppercase">
-                                    Exercise {workoutExercise.position}
-                                </p>
-                                <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-cream">
-                                    {workoutExercise.exercise.name}
-                                </h2>
-                                <p className="mt-1 text-xs font-semibold tracking-[0.08em] text-dim uppercase">
-                                    {workoutExercise.exercise.muscleGroup}
-                                </p>
-                            </div>
-                            <span className="shrink-0 rounded-full border border-line bg-white/[0.03] px-3 py-1.5 text-[10px] font-extrabold tracking-[0.08em] text-dim uppercase">
-                                {
-                                    workoutExercise.sets.filter((set) => set.completedAt !== null)
-                                        .length
-                                }
-                                /{workoutExercise.sets.length} done
-                            </span>
-                        </div>
-                        {previous ? (
-                            <div className="border-l-2 border-flame bg-flame/6 px-4 py-3 text-sm text-dim">
-                                <strong className="text-cream">
-                                    Previous ({new Date(previous.performedAt).toLocaleDateString()}
-                                    ):
-                                </strong>{" "}
-                                {previous.sets
-                                    .map((set) =>
-                                        set.durationSeconds !== null
-                                            ? `${set.durationSeconds} sec`
-                                            : `${set.weight ?? "–"} kg × ${set.reps ?? "–"}`,
-                                    )
-                                    .join(" · ")}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-dim">
-                                No previous performance — set the baseline today.
-                            </p>
-                        )}
-                        <div className="space-y-3 border-t border-line pt-5">
-                            <div className="hidden grid-cols-[36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_148px] gap-3 px-3 text-[10px] font-extrabold tracking-[0.12em] text-dim uppercase md:grid">
-                                <span className="text-center">Set</span>
-                                <span>Weight</span>
-                                <span>Reps</span>
-                                <span>Duration</span>
-                                <span className="text-center">Actions</span>
-                            </div>
-                            {workoutExercise.sets.map((set) => (
-                                <WorkoutSetInlineRow
-                                    key={set.id}
-                                    workoutSet={set}
-                                    disabled={workout.status !== "ACTIVE"}
-                                    onSave={(data) =>
-                                        handleSaveSet(workoutExercise.id, set.id, data)
-                                    }
-                                    onToggleCompletion={(completed, data) =>
-                                        handleToggleSet(workoutExercise.id, set.id, completed, data)
-                                    }
-                                    onDirtyChange={handleDirtyChange}
-                                />
-                            ))}
-                            <NewWorkoutSetInlineRow
-                                setNumber={workoutExercise.sets.length + 1}
-                                onSubmit={(data) => handleAddSet(workoutExercise.id, data)}
-                            />
-                        </div>
-                        {lastSet && (
-                            <div className="flex justify-end border-t border-line pt-4">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    type="button"
-                                    disabled={copyingExerciseId === workoutExercise.id}
-                                    onClick={() =>
-                                        void handleCopyLastSet(workoutExercise.id, lastSet)
-                                    }
-                                >
-                                    {copyingExerciseId === workoutExercise.id
-                                        ? "Copying..."
-                                        : "Copy last set"}
-                                </Button>
-                            </div>
-                        )}
-                    </Card>
-                );
-            })}
+            {workout.workoutExercises.map((workoutExercise) => (
+                <WorkoutSessionExerciseCard
+                    key={workoutExercise.id}
+                    workoutExercise={workoutExercise}
+                    previous={previousByExerciseId.get(workoutExercise.exerciseId)}
+                    disabled={workout.status !== "ACTIVE"}
+                    isCopying={copyingExerciseId === workoutExercise.id}
+                    onAddSet={(data) => handleAddSet(workoutExercise.id, data)}
+                    onCopyLastSet={(lastSet) => void handleCopyLastSet(workoutExercise.id, lastSet)}
+                    onSaveSet={(setId, data) => handleSaveSet(workoutExercise.id, setId, data)}
+                    onToggleSet={(setId, completed, data) =>
+                        handleToggleSet(workoutExercise.id, setId, completed, data)
+                    }
+                    onDirtyChange={handleDirtyChange}
+                />
+            ))}
 
-            <footer className="session-action-bar sticky z-30 flex flex-col items-stretch justify-between gap-3 rounded-[14px] border border-line bg-panel/95 p-4 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center">
-                <div>
-                    <span className="metric-number text-xl font-black text-cream">
-                        {completedSetCount}
-                    </span>
-                    <span className="ml-2 text-xs font-bold tracking-[0.08em] text-dim uppercase">
-                        completed sets
-                    </span>
-                </div>
-                <Button
-                    className="w-full sm:w-auto"
-                    size="lg"
-                    type="button"
-                    disabled={isFinishing || completedSetCount === 0}
-                    onClick={() => void handleFinish()}
-                >
-                    {isFinishing ? "Finishing..." : "Finish workout"}
-                </Button>
-            </footer>
+            <WorkoutSessionActionBar
+                completedSetCount={completedSetCount}
+                isFinishing={isFinishing}
+                onFinish={() => void handleFinish()}
+            />
         </section>
     );
 }
