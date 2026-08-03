@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {ExerciseList} from "../components/ExerciseList.tsx";
 import {
     createExercise,
@@ -16,6 +16,9 @@ import {Feedback} from "../../../components/ui/Feedback.tsx";
 import {PageHeader} from "../../../components/ui/PageHeader.tsx";
 import {SkeletonGrid} from "../../../components/ui/SkeletonGrid.tsx";
 import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
+import {Button} from "../../../components/ui/Button.tsx";
+import {Icon} from "../../../components/ui/Icon.tsx";
+import {FormDialog} from "../../../components/ui/FormDialog.tsx";
 
 export function ExercisesPage() {
     const confirm = useConfirmDialog();
@@ -28,9 +31,21 @@ export function ExercisesPage() {
     const [loadError, setLoadError] = useState("");
     const [mutationError, setMutationError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const [isFormOpen, setIsFormOpen] = useState(false);
+
+    const loadExercises = useCallback(async () => {
+        try {
+            const response: ExercisesResponse = await getExercises(view);
+            setExercises(response.exercises);
+        } catch (error) {
+            setLoadError(error instanceof Error ? error.message : "Failed to load exercises");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [view]);
 
     useEffect((): void => {
-        async function loadExercises() {
+        async function loadInitialExercises() {
             try {
                 const response: ExercisesResponse = await getExercises(view);
                 setExercises(response.exercises);
@@ -41,7 +56,7 @@ export function ExercisesPage() {
             }
         }
 
-        void loadExercises();
+        void loadInitialExercises();
     }, [view]);
 
     function changeView(nextView: "active" | "archived") {
@@ -63,6 +78,7 @@ export function ExercisesPage() {
             const response: ExerciseResponse = await createExercise(data);
             setExercises((currentExercises) => [...currentExercises, response.exercise]);
             setSuccessMessage("Exercise created successfully.");
+            setIsFormOpen(false);
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to create exercise");
             throw error;
@@ -126,10 +142,12 @@ export function ExercisesPage() {
 
     function handleEditExercise(exercise: Exercise) {
         setEditingExercise(exercise);
+        setIsFormOpen(true);
     }
 
     function handleCancelExercise() {
         setEditingExercise(null);
+        setIsFormOpen(false);
     }
 
     async function handleUpdateExercise(data: UpdateExerciseInput) {
@@ -150,6 +168,7 @@ export function ExercisesPage() {
             );
 
             setEditingExercise(null);
+            setIsFormOpen(false);
             setSuccessMessage("Exercise updated successfully.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to update exercise");
@@ -162,7 +181,22 @@ export function ExercisesPage() {
     }
 
     if (loadError) {
-        return <Feedback>{loadError}</Feedback>;
+        return (
+            <div className="page-stack">
+                <Feedback>{loadError}</Feedback>
+                <Button
+                    className="w-fit"
+                    variant="secondary"
+                    onClick={() => {
+                        setIsLoading(true);
+                        setLoadError("");
+                        void loadExercises();
+                    }}
+                >
+                    Try again
+                </Button>
+            </div>
+        );
     }
 
     return (
@@ -171,6 +205,20 @@ export function ExercisesPage() {
                 eyebrow="Exercise library"
                 title="Movements"
                 description="Build a clean library of the movements you train. Keep names consistent so your history stays useful."
+                action={
+                    view === "active" ? (
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setEditingExercise(null);
+                                setIsFormOpen(true);
+                            }}
+                        >
+                            <Icon name="plus" size={16} />
+                            Add exercise
+                        </Button>
+                    ) : undefined
+                }
             />
             {mutationError && <Feedback>{mutationError}</Feedback>}
             {successMessage && <Feedback tone="success">{successMessage}</Feedback>}
@@ -200,51 +248,51 @@ export function ExercisesPage() {
                 </button>
             </div>
 
-            <div className="content-grid">
-                <div>
-                    <div className="mb-4 flex items-end justify-between">
-                        <div>
-                            <h2 className="section-title">Your exercises</h2>
-                            <p className="section-caption">
-                                {exercises.length} {view} movements
-                            </p>
-                        </div>
+            <div>
+                <div className="mb-4 flex items-end justify-between">
+                    <div>
+                        <h2 className="section-title">Your exercises</h2>
+                        <p className="section-caption">
+                            {exercises.length} {view} movements
+                        </p>
                     </div>
-                    {exercises.length === 0 ? (
-                        <Card className="py-14 text-center">
-                            <p className="font-bold text-cream">
-                                {view === "active"
-                                    ? "Your library is empty."
-                                    : "No archived exercises."}
-                            </p>
-                            <p className="mt-2 text-sm text-dim">
-                                {view === "active"
-                                    ? "Add your first movement to start building workouts."
-                                    : "Exercises you archive will appear here."}
-                            </p>
-                        </Card>
-                    ) : (
-                        <ExerciseList
-                            exercises={exercises}
-                            onArchive={handleArchiveExercise}
-                            onEdit={handleEditExercise}
-                            archivingExerciseId={archivingExerciseId}
-                            isArchivedView={view === "archived"}
-                            onRestore={handleRestoreExercise}
-                        />
-                    )}
                 </div>
-                <Card as="aside" className="sticky top-24">
-                    {view === "archived" ? (
-                        <div>
-                            <p className="eyebrow">Archive</p>
-                            <h2 className="section-title mt-2">Stored movements</h2>
-                            <p className="section-caption mt-3">
-                                Archived exercises stay in workout history. Restore one to use it in
-                                new workouts again.
-                            </p>
-                        </div>
-                    ) : editingExercise ? (
+                {exercises.length === 0 ? (
+                    <Card className="py-14 text-center">
+                        <p className="font-bold text-cream">
+                            {view === "active"
+                                ? "Your library is empty."
+                                : "No archived exercises."}
+                        </p>
+                        <p className="mt-2 text-sm text-dim">
+                            {view === "active"
+                                ? "Add your first movement to start building workouts."
+                                : "Exercises you archive will appear here."}
+                        </p>
+                    </Card>
+                ) : (
+                    <ExerciseList
+                        exercises={exercises}
+                        onArchive={handleArchiveExercise}
+                        onEdit={handleEditExercise}
+                        archivingExerciseId={archivingExerciseId}
+                        isArchivedView={view === "archived"}
+                        onRestore={handleRestoreExercise}
+                    />
+                )}
+            </div>
+
+            {isFormOpen && view === "active" && (
+                <FormDialog
+                    title={editingExercise ? "Edit exercise" : "Add exercise"}
+                    description={
+                        editingExercise
+                            ? "Keep the movement consistent so workout history remains useful."
+                            : "Use a clear name you will recognize immediately during a session."
+                    }
+                    onClose={handleCancelExercise}
+                >
+                    {editingExercise ? (
                         <UpdateExerciseForm
                             key={editingExercise.id}
                             exercise={editingExercise}
@@ -252,19 +300,10 @@ export function ExercisesPage() {
                             onCancel={handleCancelExercise}
                         />
                     ) : (
-                        <>
-                            <div className="mb-6">
-                                <p className="eyebrow">New movement</p>
-                                <h2 className="section-title mt-2">Add exercise</h2>
-                                <p className="section-caption">
-                                    Use a clear, familiar name you will recognize mid-workout.
-                                </p>
-                            </div>
-                            <CreateExerciseForm onSubmit={handleCreateExercise} />
-                        </>
+                        <CreateExerciseForm onSubmit={handleCreateExercise} />
                     )}
-                </Card>
-            </div>
+                </FormDialog>
+            )}
         </section>
     );
 }

@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {createWorkout, getWorkouts, deleteWorkout, updateWorkout} from "../api/workouts.api.ts";
 import {CreateWorkoutForm} from "../components/CreateWorkoutForm.tsx";
 import {UpdateWorkoutForm} from "../components/UpdateWorkoutForm.tsx";
@@ -10,6 +10,9 @@ import {Feedback} from "../../../components/ui/Feedback.tsx";
 import {PageHeader} from "../../../components/ui/PageHeader.tsx";
 import {SkeletonGrid} from "../../../components/ui/SkeletonGrid.tsx";
 import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
+import {Button} from "../../../components/ui/Button.tsx";
+import {Icon} from "../../../components/ui/Icon.tsx";
+import {FormDialog} from "../../../components/ui/FormDialog.tsx";
 
 export function WorkoutsPage() {
     const confirm = useConfirmDialog();
@@ -20,9 +23,21 @@ export function WorkoutsPage() {
     const [loadError, setLoadError] = useState("");
     const [mutationError, setMutationError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const [isFormOpen, setIsFormOpen] = useState(false);
+
+    const loadWorkouts = useCallback(async () => {
+        try {
+            const response: WorkoutsResponse = await getWorkouts();
+            setWorkouts(response.workouts);
+        } catch (error) {
+            setLoadError(error instanceof Error ? error.message : "Failed to load workouts");
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        async function loadWorkouts() {
+        async function loadInitialWorkouts() {
             try {
                 const response: WorkoutsResponse = await getWorkouts();
                 setWorkouts(response.workouts);
@@ -33,7 +48,7 @@ export function WorkoutsPage() {
             }
         }
 
-        void loadWorkouts();
+        void loadInitialWorkouts();
     }, []);
 
     async function handleCreateWorkout(data: CreateWorkoutInput) {
@@ -53,6 +68,7 @@ export function WorkoutsPage() {
                 ...currentWorkouts,
             ]);
             setSuccessMessage("Workout created successfully.");
+            setIsFormOpen(false);
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to create workout");
             throw error;
@@ -91,10 +107,12 @@ export function WorkoutsPage() {
 
     function handleEditWorkout(workout: WorkoutSummary) {
         setEditingWorkout(workout);
+        setIsFormOpen(true);
     }
 
     function handleCancelEditWorkout() {
         setEditingWorkout(null);
+        setIsFormOpen(false);
     }
 
     async function handleUpdateWorkout(data: UpdateWorkoutInput) {
@@ -123,6 +141,7 @@ export function WorkoutsPage() {
             );
 
             setEditingWorkout(null);
+            setIsFormOpen(false);
             setSuccessMessage("Workout updated successfully.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to update workout");
@@ -135,7 +154,22 @@ export function WorkoutsPage() {
     }
 
     if (loadError) {
-        return <Feedback>{loadError}</Feedback>;
+        return (
+            <div className="page-stack">
+                <Feedback>{loadError}</Feedback>
+                <Button
+                    className="w-fit"
+                    variant="secondary"
+                    onClick={() => {
+                        setIsLoading(true);
+                        setLoadError("");
+                        void loadWorkouts();
+                    }}
+                >
+                    Try again
+                </Button>
+            </div>
+        );
     }
 
     return (
@@ -144,37 +178,56 @@ export function WorkoutsPage() {
                 eyebrow="Training log"
                 title="Workouts"
                 description="Plan the session, log the work and leave with a record you can build on next time."
+                action={
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            setEditingWorkout(null);
+                            setIsFormOpen(true);
+                        }}
+                    >
+                        <Icon name="plus" size={16} />
+                        Create workout
+                    </Button>
+                }
             />
             {mutationError && <Feedback>{mutationError}</Feedback>}
             {successMessage && <Feedback tone="success">{successMessage}</Feedback>}
 
-            <div className="content-grid">
-                <div>
-                    <div className="mb-4 flex items-end justify-between">
-                        <div>
-                            <h2 className="section-title">Recent sessions</h2>
-                            <p className="section-caption">
-                                {workouts.length} workouts in your log
-                            </p>
-                        </div>
+            <div>
+                <div className="mb-4 flex items-end justify-between">
+                    <div>
+                        <h2 className="section-title">Recent sessions</h2>
+                        <p className="section-caption">{workouts.length} workouts in your log</p>
                     </div>
-                    {workouts.length === 0 ? (
-                        <Card className="py-14 text-center">
-                            <p className="font-bold text-cream">No sessions logged yet.</p>
-                            <p className="mt-2 text-sm text-dim">
-                                Create a workout and start your first session.
-                            </p>
-                        </Card>
-                    ) : (
-                        <WorkoutList
-                            workouts={workouts}
-                            onDelete={handleDeleteWorkout}
-                            onEdit={handleEditWorkout}
-                            deletingWorkoutId={deletingWorkoutId}
-                        />
-                    )}
                 </div>
-                <Card as="aside" className="sticky top-24">
+                {workouts.length === 0 ? (
+                    <Card className="py-14 text-center">
+                        <p className="font-bold text-cream">No sessions logged yet.</p>
+                        <p className="mt-2 text-sm text-dim">
+                            Create a workout and start your first session.
+                        </p>
+                    </Card>
+                ) : (
+                    <WorkoutList
+                        workouts={workouts}
+                        onDelete={handleDeleteWorkout}
+                        onEdit={handleEditWorkout}
+                        deletingWorkoutId={deletingWorkoutId}
+                    />
+                )}
+            </div>
+
+            {isFormOpen && (
+                <FormDialog
+                    title={editingWorkout ? "Edit workout" : "Create workout"}
+                    description={
+                        editingWorkout
+                            ? "Update the session details without leaving your training log."
+                            : "Create the session first, then add exercises and working sets."
+                    }
+                    onClose={handleCancelEditWorkout}
+                >
                     {editingWorkout ? (
                         <UpdateWorkoutForm
                             workout={editingWorkout}
@@ -182,19 +235,10 @@ export function WorkoutsPage() {
                             onCancel={handleCancelEditWorkout}
                         />
                     ) : (
-                        <>
-                            <div className="mb-6">
-                                <p className="eyebrow">Next session</p>
-                                <h2 className="section-title mt-2">Create workout</h2>
-                                <p className="section-caption">
-                                    Give it a clear name. You can add exercises after creating it.
-                                </p>
-                            </div>
-                            <CreateWorkoutForm onSubmit={handleCreateWorkout} />
-                        </>
+                        <CreateWorkoutForm onSubmit={handleCreateWorkout} />
                     )}
-                </Card>
-            </div>
+                </FormDialog>
+            )}
         </section>
     );
 }

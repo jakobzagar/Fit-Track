@@ -11,7 +11,8 @@ type IconName =
     | "check"
     | "arrow"
     | "sun"
-    | "moon";
+    | "moon"
+    | "close";
 
 interface IconProps extends SVGProps<SVGSVGElement> {
     name: IconName;
@@ -71,6 +72,7 @@ const paths: Record<IconName, React.ReactNode> = {
         </>
     ),
     moon: <path d="M20.5 14.5A8 8 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z" />,
+    close: <path d="M6 6l12 12M18 6 6 18" />,
 };
 
 export function Icon({name, size = 18, ...props}: IconProps) {

@@ -45,6 +45,24 @@ describe("ExercisesPage", () => {
         );
         renderWithProviders(<ExercisesPage />);
         expect(await screen.findByRole("status")).toHaveTextContent("Could not load exercises");
+        expect(screen.getByRole("button", {name: "Try again"})).toBeInTheDocument();
+    });
+
+    test("retries the initial load without a page refresh", async () => {
+        let attempts = 0;
+        server.use(
+            http.get(`${API_URL}/exercises`, () => {
+                attempts += 1;
+                return attempts === 1
+                    ? HttpResponse.json({message: "Could not load exercises"}, {status: 500})
+                    : HttpResponse.json({exercises: [exercise]});
+            }),
+        );
+        const {user} = renderWithProviders(<ExercisesPage />);
+
+        await user.click(await screen.findByRole("button", {name: "Try again"}));
+        expect(await screen.findByRole("heading", {name: "Bench press"})).toBeInTheDocument();
+        expect(attempts).toBe(2);
     });
 
     test("creates an exercise and appends it to the library", async () => {
@@ -62,6 +80,8 @@ describe("ExercisesPage", () => {
         const {user} = renderWithProviders(<ExercisesPage />);
         await screen.findByText("Your library is empty.");
 
+        await user.click(screen.getByRole("button", {name: "Add exercise"}));
+        expect(screen.getByRole("dialog", {name: "Add exercise"})).toBeInTheDocument();
         await user.type(screen.getByLabelText("Name"), "Bench press");
         await user.type(screen.getByLabelText("Muscle group"), "Chest");
         await user.type(screen.getByLabelText("Equipment"), "Barbell");

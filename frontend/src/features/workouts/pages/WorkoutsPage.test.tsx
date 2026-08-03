@@ -50,6 +50,24 @@ describe("WorkoutsPage", () => {
         );
         renderWithProviders(<WorkoutsPage />);
         expect(await screen.findByRole("status")).toHaveTextContent("Could not load workouts");
+        expect(screen.getByRole("button", {name: "Try again"})).toBeInTheDocument();
+    });
+
+    test("retries the initial load without a page refresh", async () => {
+        let attempts = 0;
+        server.use(
+            http.get(`${API_URL}/workouts`, () => {
+                attempts += 1;
+                return attempts === 1
+                    ? HttpResponse.json({message: "Could not load workouts"}, {status: 500})
+                    : HttpResponse.json({workouts: [summary]});
+            }),
+        );
+        const {user} = renderWithProviders(<WorkoutsPage />);
+
+        await user.click(await screen.findByRole("button", {name: "Try again"}));
+        expect(await screen.findByRole("heading", {name: "Push day"})).toBeInTheDocument();
+        expect(attempts).toBe(2);
     });
 
     test("creates and prepends a workout", async () => {
@@ -63,8 +81,11 @@ describe("WorkoutsPage", () => {
         const {user} = renderWithProviders(<WorkoutsPage />);
         await screen.findByText("No sessions logged yet.");
 
-        await user.type(screen.getByLabelText("Name"), "Push day");
         await user.click(screen.getByRole("button", {name: "Create workout"}));
+        const dialog = screen.getByRole("dialog", {name: "Create workout"});
+        expect(dialog).toBeInTheDocument();
+        await user.type(screen.getByLabelText("Name"), "Push day");
+        await user.click(within(dialog).getByRole("button", {name: "Create workout"}));
 
         expect(await screen.findByRole("heading", {name: "Push day"})).toBeInTheDocument();
         expect(screen.getByRole("status")).toHaveTextContent("Workout created successfully.");
