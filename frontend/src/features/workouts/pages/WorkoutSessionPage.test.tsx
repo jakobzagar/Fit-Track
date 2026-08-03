@@ -1,8 +1,9 @@
 import {http, HttpResponse} from "msw";
-import {Route, Routes} from "react-router";
-import {screen} from "@testing-library/react";
+import {createMemoryRouter, RouterProvider} from "react-router";
+import {render, screen} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
-import {renderWithProviders} from "../../../test/render";
+import {AppProviders} from "../../../app/providers";
 import {server} from "../../../test/mocks/server";
 import {
     createWorkout,
@@ -16,13 +17,24 @@ import {WorkoutSessionPage} from "./WorkoutSessionPage";
 const API_URL = "http://localhost:3001/api";
 
 function renderPage() {
-    return renderWithProviders(
-        <Routes>
-            <Route path="/workouts/:workoutId/session" element={<WorkoutSessionPage />} />
-            <Route path="/workouts/:workoutId" element={<h1>Workout detail</h1>} />
-        </Routes>,
-        {route: `/workouts/${workoutId}/session`},
+    const router = createMemoryRouter(
+        [
+            {path: "/workouts/:workoutId/session", element: <WorkoutSessionPage />},
+            {path: "/workouts/:workoutId", element: <h1>Workout detail</h1>},
+            {path: "/workouts", element: <h1>Workouts</h1>},
+        ],
+        {initialEntries: [`/workouts/${workoutId}/session`]},
     );
+
+    return {
+        user: userEvent.setup(),
+        router,
+        ...render(
+            <AppProviders>
+                <RouterProvider router={router} />
+            </AppProviders>,
+        ),
+    };
 }
 
 function useLoadHandlers(workout = createWorkout()) {
@@ -147,5 +159,28 @@ describe("WorkoutSessionPage", () => {
             "Save or complete the edited set before finishing the workout.",
         );
         expect(finishRequest).not.toHaveBeenCalled();
+    });
+
+    test("blocks every in-app navigation while a set has unsaved edits", async () => {
+        useLoadHandlers();
+        const {user, router} = renderPage();
+        await screen.findByRole("heading", {name: "Push day"});
+
+        const repsInput = screen.getAllByLabelText("Reps")[0];
+        await user.clear(repsInput);
+        await user.type(repsInput, "10");
+        void router.navigate("/workouts");
+
+        expect(
+            await screen.findByRole("alertdialog", {name: "Discard unsaved set changes?"}),
+        ).toBeInTheDocument();
+        expect(screen.getByRole("heading", {name: "Push day"})).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", {name: "Cancel"}));
+        expect(screen.getByRole("heading", {name: "Push day"})).toBeInTheDocument();
+
+        void router.navigate("/workouts");
+        await user.click(await screen.findByRole("button", {name: "Discard and leave"}));
+        expect(await screen.findByRole("heading", {name: "Workouts"})).toBeInTheDocument();
     });
 });

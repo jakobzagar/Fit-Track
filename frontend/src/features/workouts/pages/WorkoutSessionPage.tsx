@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
-import {Link, useNavigate, useParams} from "react-router";
+import {Link, useBlocker, useNavigate, useParams} from "react-router";
 import type {Exercise} from "../../exercises/exercise.types.ts";
 import {getExercises} from "../../exercises/api/exercises.api.ts";
 import {
@@ -41,6 +41,9 @@ export function WorkoutSessionPage() {
     const [copyingExerciseId, setCopyingExerciseId] = useState<string | null>(null);
     const [error, setError] = useState("");
     const [dirtySetIds, setDirtySetIds] = useState<Set<string>>(() => new Set());
+    const blocker = useBlocker(
+        useCallback(() => dirtySetIds.size > 0 && !isFinishing, [dirtySetIds.size, isFinishing]),
+    );
 
     const loadSession = useCallback(async () => {
         if (!workoutId) return;
@@ -121,6 +124,26 @@ export function WorkoutSessionPage() {
         window.addEventListener("beforeunload", warnBeforeLeaving);
         return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
     }, [dirtySetIds.size, isFinishing]);
+
+    useEffect(() => {
+        if (blocker.state !== "blocked") return;
+
+        let isCurrent = true;
+        void confirm({
+            title: "Discard unsaved set changes?",
+            message: `${dirtySetIds.size === 1 ? "One set has" : `${dirtySetIds.size} sets have`} unsaved changes. Save them before leaving if you want to keep the edits.`,
+            confirmLabel: "Discard and leave",
+            variant: "danger",
+        }).then((confirmed) => {
+            if (!isCurrent || blocker.state !== "blocked") return;
+            if (confirmed) blocker.proceed();
+            else blocker.reset();
+        });
+
+        return () => {
+            isCurrent = false;
+        };
+    }, [blocker, confirm, dirtySetIds.size]);
 
     const handleDirtyChange = useCallback((setId: string, isDirty: boolean) => {
         setDirtySetIds((current) => {
@@ -303,38 +326,43 @@ export function WorkoutSessionPage() {
 
     return (
         <section className="mx-auto max-w-4xl space-y-6">
-            <header className="flex flex-col justify-between gap-5 border-b border-line pb-7 sm:flex-row sm:items-end">
+            <header className="session-header flex flex-col justify-between gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:gap-5 sm:pb-7">
                 <div>
                     <p className="eyebrow">Live session</p>
-                    <h1 className="mt-3 text-4xl font-black tracking-[-0.055em] text-cream sm:text-5xl">
+                    <h1 className="mt-2 text-3xl font-black tracking-[-0.055em] text-cream sm:mt-3 sm:text-5xl">
                         {workout.name}
                     </h1>
-                    <p className="mt-3 flex items-center gap-2 text-xs font-bold tracking-[0.1em] text-positive uppercase">
+                    <p className="mt-2 flex items-center gap-2 text-[10px] font-bold tracking-[0.1em] text-positive uppercase sm:mt-3 sm:text-xs">
                         <span className="size-2 animate-pulse rounded-full bg-positive" />
                         Workout in progress
                     </p>
                 </div>
-                <Link
-                    className="text-xs font-bold tracking-[0.08em] text-dim uppercase hover:text-cream"
-                    to={`/workouts/${workout.id}`}
-                    onClick={(event) => {
-                        event.preventDefault();
-                        void confirm({
-                            title: "Leave active workout?",
-                            message:
-                                dirtySetIds.size > 0
-                                    ? `${dirtySetIds.size === 1 ? "One set has" : `${dirtySetIds.size} sets have`} unsaved changes. Leaving now will discard those edits.`
-                                    : "Your saved sets will remain and you can continue this session later.",
-                            confirmLabel:
-                                dirtySetIds.size > 0 ? "Discard and leave" : "Leave session",
-                            variant: dirtySetIds.size > 0 ? "danger" : undefined,
-                        }).then((confirmed) => {
-                            if (confirmed) void navigate(`/workouts/${workout.id}`);
-                        });
-                    }}
-                >
-                    Exit session →
-                </Link>
+                <div className="flex items-center justify-between gap-4 sm:block">
+                    <p className="text-xs font-bold tracking-[0.08em] text-dim uppercase sm:hidden">
+                        {completedSetCount} sets done
+                    </p>
+                    <Link
+                        className="inline-flex min-h-11 items-center text-xs font-bold tracking-[0.08em] text-dim uppercase hover:text-cream"
+                        to={`/workouts/${workout.id}`}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            if (dirtySetIds.size > 0) {
+                                void navigate(`/workouts/${workout.id}`);
+                                return;
+                            }
+                            void confirm({
+                                title: "Leave active workout?",
+                                message:
+                                    "Your saved sets will remain and you can continue this session later.",
+                                confirmLabel: "Leave session",
+                            }).then((confirmed) => {
+                                if (confirmed) void navigate(`/workouts/${workout.id}`);
+                            });
+                        }}
+                    >
+                        Exit session →
+                    </Link>
+                </div>
             </header>
 
             {error && <Feedback>{error}</Feedback>}
