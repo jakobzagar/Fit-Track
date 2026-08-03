@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {useParams} from "react-router";
 
 import {getWorkoutById} from "../api/workouts.api.ts";
@@ -48,20 +48,33 @@ export function WorkoutDetailPage() {
     const [loadError, setLoadError] = useState("");
     const [mutationError, setMutationError] = useState("");
 
-    useEffect(() => {
-        async function loadWorkout() {
-            if (!workoutId) {
-                setLoadError("Workout ID is missing");
-                setIsLoading(false);
-                return;
-            }
+    const loadWorkout = useCallback(async () => {
+        if (!workoutId) return;
 
+        try {
+            const [workoutResponse, exercisesResponse] = await Promise.all([
+                getWorkoutById(workoutId),
+                getExercises(),
+            ]);
+
+            setWorkout(workoutResponse.workout);
+            setExercises(exercisesResponse.exercises);
+        } catch (error) {
+            setLoadError(error instanceof Error ? error.message : "Failed to load workout");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [workoutId]);
+
+    useEffect(() => {
+        if (!workoutId) return;
+
+        async function loadInitialWorkout(id: string) {
             try {
                 const [workoutResponse, exercisesResponse] = await Promise.all([
-                    getWorkoutById(workoutId),
+                    getWorkoutById(id),
                     getExercises(),
                 ]);
-
                 setWorkout(workoutResponse.workout);
                 setExercises(exercisesResponse.exercises);
             } catch (error) {
@@ -71,7 +84,7 @@ export function WorkoutDetailPage() {
             }
         }
 
-        void loadWorkout();
+        void loadInitialWorkout(workoutId);
     }, [workoutId]);
 
     async function handleAddExercise(data: AddExerciseToWorkoutInput) {
@@ -346,11 +359,27 @@ export function WorkoutDetailPage() {
     }
 
     if (isLoading) {
+        if (!workoutId) return <Feedback>Workout ID is missing</Feedback>;
         return <LoadingState label="Loading workout" />;
     }
 
     if (loadError) {
-        return <Feedback>{loadError}</Feedback>;
+        return (
+            <div className="page-stack">
+                <Feedback>{loadError}</Feedback>
+                <Button
+                    className="w-fit"
+                    variant="secondary"
+                    onClick={() => {
+                        setIsLoading(true);
+                        setLoadError("");
+                        void loadWorkout();
+                    }}
+                >
+                    Try again
+                </Button>
+            </div>
+        );
     }
 
     if (!workout) {

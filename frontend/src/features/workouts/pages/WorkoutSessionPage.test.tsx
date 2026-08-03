@@ -114,4 +114,38 @@ describe("WorkoutSessionPage", () => {
 
         expect(await screen.findByRole("heading", {name: "Workout detail"})).toBeInTheDocument();
     });
+
+    test("blocks finishing while a set has unsaved edits", async () => {
+        const completedSet = {...workoutSet, completedAt: "2026-07-26T10:20:00.000Z"};
+        const editableSet = {
+            ...workoutSet,
+            id: "123e4567-e89b-42d3-a456-426614174031",
+            setNumber: 2,
+        };
+        const active = createWorkout({
+            workoutExercises: [
+                {...createWorkout().workoutExercises[0], sets: [completedSet, editableSet]},
+            ],
+        });
+        useLoadHandlers(active);
+        const finishRequest = vi.fn();
+        server.use(
+            http.post(`${API_URL}/workouts/${workoutId}/finish`, () => {
+                finishRequest();
+                return HttpResponse.json({workout: active});
+            }),
+        );
+        const {user} = renderPage();
+        await screen.findByRole("heading", {name: "Push day"});
+
+        const repsInputs = screen.getAllByLabelText("Reps");
+        await user.clear(repsInputs[1]);
+        await user.type(repsInputs[1], "10");
+        await user.click(screen.getByRole("button", {name: "Finish workout"}));
+
+        expect(screen.getByRole("status")).toHaveTextContent(
+            "Save or complete the edited set before finishing the workout.",
+        );
+        expect(finishRequest).not.toHaveBeenCalled();
+    });
 });

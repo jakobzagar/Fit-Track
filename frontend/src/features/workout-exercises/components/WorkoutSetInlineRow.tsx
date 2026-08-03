@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import type {WorkoutSet} from "../../workouts/workout.types.ts";
 import type {UpdateWorkoutSetInput} from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
@@ -9,6 +9,7 @@ interface WorkoutSetInlineRowProps {
     disabled: boolean;
     onSave: (data: UpdateWorkoutSetInput) => Promise<void>;
     onToggleCompletion: (completed: boolean, data: UpdateWorkoutSetInput) => Promise<void>;
+    onDirtyChange?: (setId: string, isDirty: boolean) => void;
 }
 
 export function WorkoutSetInlineRow({
@@ -16,6 +17,7 @@ export function WorkoutSetInlineRow({
     disabled,
     onSave,
     onToggleCompletion,
+    onDirtyChange,
 }: WorkoutSetInlineRowProps) {
     const [reps, setReps] = useState(workoutSet.reps?.toString() ?? "");
     const [weight, setWeight] = useState(workoutSet.weight?.toString() ?? "");
@@ -93,6 +95,26 @@ export function WorkoutSetInlineRow({
         weight !== savedValues.weight ||
         durationSeconds !== savedValues.durationSeconds;
 
+    useEffect(() => {
+        onDirtyChange?.(workoutSet.id, isDirty);
+        return () => onDirtyChange?.(workoutSet.id, false);
+    }, [isDirty, onDirtyChange, workoutSet.id]);
+
+    async function saveAndComplete() {
+        const data = getData();
+        if (!data) return;
+
+        setIsSaving(true);
+        try {
+            await onToggleCompletion(true, data);
+            setSavedValues({reps, weight, durationSeconds});
+        } catch (caughtError) {
+            setError(caughtError instanceof Error ? caughtError.message : "Failed to complete set");
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
     return (
         <div
             className={`rounded-[11px] border p-3 transition ${isCompleted ? "border-positive/40 bg-positive/8" : "border-line bg-ink"}`}
@@ -137,16 +159,27 @@ export function WorkoutSetInlineRow({
                 </label>
                 <div className="col-span-full md:col-span-1">
                     {!isCompleted && isDirty ? (
-                        <Button
-                            className="w-full"
-                            variant="ghost"
-                            size="sm"
-                            type="button"
-                            disabled={disabled || isSaving}
-                            onClick={() => void saveChanges()}
-                        >
-                            {isSaving ? "Saving..." : "Save changes"}
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
+                            <Button
+                                className="w-full"
+                                variant="ghost"
+                                size="sm"
+                                type="button"
+                                disabled={disabled || isSaving}
+                                onClick={() => void saveChanges()}
+                            >
+                                {isSaving ? "Saving..." : "Save"}
+                            </Button>
+                            <Button
+                                className="w-full"
+                                size="sm"
+                                type="button"
+                                disabled={disabled || isSaving}
+                                onClick={() => void saveAndComplete()}
+                            >
+                                Save &amp; complete
+                            </Button>
+                        </div>
                     ) : (
                         <Button
                             className="w-full"

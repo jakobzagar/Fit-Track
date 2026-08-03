@@ -15,7 +15,7 @@ const workoutSet: WorkoutSet = {
 };
 
 describe("WorkoutSetInlineRow", () => {
-    test("saves edited values before allowing completion", async () => {
+    test("saves edited values and completes the set in one action", async () => {
         const user = userEvent.setup();
         const onSave = vi.fn().mockResolvedValue(undefined);
         const onToggleCompletion = vi.fn().mockResolvedValue(undefined);
@@ -30,15 +30,35 @@ describe("WorkoutSetInlineRow", () => {
 
         await user.clear(screen.getByLabelText("Reps"));
         await user.type(screen.getByLabelText("Reps"), "10");
-        await user.click(screen.getByRole("button", {name: "Save changes"}));
+        await user.click(screen.getByRole("button", {name: "Save & complete"}));
 
-        expect(onSave).toHaveBeenCalledWith({reps: 10, weight: 80, durationSeconds: null});
-        await user.click(screen.getByRole("button", {name: "Complete"}));
+        expect(onSave).not.toHaveBeenCalled();
         expect(onToggleCompletion).toHaveBeenCalledWith(true, {
             reps: 10,
             weight: 80,
             durationSeconds: null,
         });
+    });
+
+    test("reports when values become dirty and are saved", async () => {
+        const user = userEvent.setup();
+        const onDirtyChange = vi.fn();
+        render(
+            <WorkoutSetInlineRow
+                workoutSet={workoutSet}
+                disabled={false}
+                onSave={vi.fn().mockResolvedValue(undefined)}
+                onToggleCompletion={vi.fn()}
+                onDirtyChange={onDirtyChange}
+            />,
+        );
+
+        await user.clear(screen.getByLabelText("Reps"));
+        await user.type(screen.getByLabelText("Reps"), "10");
+        expect(onDirtyChange).toHaveBeenLastCalledWith(workoutSet.id, true);
+
+        await user.click(screen.getByRole("button", {name: "Save"}));
+        expect(onDirtyChange).toHaveBeenLastCalledWith(workoutSet.id, false);
     });
 
     test("rejects empty performance values", async () => {

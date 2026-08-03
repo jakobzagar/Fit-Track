@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {Link, useNavigate, useParams} from "react-router";
 import type {Exercise} from "../../exercises/exercise.types.ts";
 import {getExercises} from "../../exercises/api/exercises.api.ts";
@@ -40,32 +40,59 @@ export function WorkoutSessionPage() {
     const [isFinishing, setIsFinishing] = useState(false);
     const [copyingExerciseId, setCopyingExerciseId] = useState<string | null>(null);
     const [error, setError] = useState("");
+    const [dirtySetIds, setDirtySetIds] = useState<Set<string>>(() => new Set());
 
-    useEffect(() => {
-        async function loadSession() {
-            if (!workoutId) {
-                setError("Workout ID is missing");
-                setIsLoading(false);
+    const loadSession = useCallback(async () => {
+        if (!workoutId) return;
+
+        try {
+            const [workoutResponse, exercisesResponse, performancesResponse] = await Promise.all([
+                getWorkoutById(workoutId),
+                getExercises(),
+                getPreviousPerformances(workoutId),
+            ]);
+
+            let loadedWorkout = workoutResponse.workout;
+
+            if (loadedWorkout.status === "COMPLETED") {
+                void navigate(`/workouts/${workoutId}`, {replace: true});
                 return;
             }
 
+            if (loadedWorkout.status === "DRAFT") {
+                const startResponse = await startWorkout(workoutId);
+                loadedWorkout = {...loadedWorkout, ...startResponse.workout};
+            }
+
+            setWorkout(loadedWorkout);
+            setExercises(exercisesResponse.exercises);
+            setPreviousPerformances(performancesResponse.previousPerformances);
+        } catch (caughtError) {
+            setError(caughtError instanceof Error ? caughtError.message : "Failed to load session");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [navigate, workoutId]);
+
+    useEffect(() => {
+        if (!workoutId) return;
+
+        async function loadInitialSession(id: string) {
             try {
                 const [workoutResponse, exercisesResponse, performancesResponse] =
                     await Promise.all([
-                        getWorkoutById(workoutId),
+                        getWorkoutById(id),
                         getExercises(),
-                        getPreviousPerformances(workoutId),
+                        getPreviousPerformances(id),
                     ]);
 
                 let loadedWorkout = workoutResponse.workout;
-
                 if (loadedWorkout.status === "COMPLETED") {
-                    void navigate(`/workouts/${workoutId}`, {replace: true});
+                    void navigate(`/workouts/${id}`, {replace: true});
                     return;
                 }
-
                 if (loadedWorkout.status === "DRAFT") {
-                    const startResponse = await startWorkout(workoutId);
+                    const startResponse = await startWorkout(id);
                     loadedWorkout = {...loadedWorkout, ...startResponse.workout};
                 }
 
@@ -81,19 +108,28 @@ export function WorkoutSessionPage() {
             }
         }
 
-        void loadSession();
+        void loadInitialSession(workoutId);
     }, [navigate, workoutId]);
 
     useEffect(() => {
         function warnBeforeLeaving(event: BeforeUnloadEvent) {
-            if (workout?.status === "ACTIVE" && !isFinishing) {
+            if (dirtySetIds.size > 0 && !isFinishing) {
                 event.preventDefault();
             }
         }
 
         window.addEventListener("beforeunload", warnBeforeLeaving);
         return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
-    }, [isFinishing, workout?.status]);
+    }, [dirtySetIds.size, isFinishing]);
+
+    const handleDirtyChange = useCallback((setId: string, isDirty: boolean) => {
+        setDirtySetIds((current) => {
+            const next = new Set(current);
+            if (isDirty) next.add(setId);
+            else next.delete(setId);
+            return next;
+        });
+    }, []);
 
     const previousByExerciseId = useMemo(
         () =>
@@ -213,6 +249,14 @@ export function WorkoutSessionPage() {
     async function handleFinish() {
         if (!workoutId) return;
         setError("");
+
+        if (dirtySetIds.size > 0) {
+            setError(
+                `Save or complete ${dirtySetIds.size === 1 ? "the edited set" : `all ${dirtySetIds.size} edited sets`} before finishing the workout.`,
+            );
+            return;
+        }
+
         setIsFinishing(true);
 
         try {
@@ -226,8 +270,28 @@ export function WorkoutSessionPage() {
         }
     }
 
-    if (isLoading) return <LoadingState label="Starting workout" />;
-    if (error && !workout) return <Feedback>{error}</Feedback>;
+    if (isLoading) {
+        if (!workoutId) return <Feedback>Workout ID is missing</Feedback>;
+        return <LoadingState label="Starting workout" />;
+    }
+    if (error && !workout) {
+        return (
+            <div className="page-stack">
+                <Feedback>{error}</Feedback>
+                <Button
+                    className="w-fit"
+                    variant="secondary"
+                    onClick={() => {
+                        setIsLoading(true);
+                        setError("");
+                        void loadSession();
+                    }}
+                >
+                    Try again
+                </Button>
+            </div>
+        );
+    }
     if (!workout) return null;
 
     const completedSetCount = workout.workoutExercises.reduce(
@@ -258,8 +322,12 @@ export function WorkoutSessionPage() {
                         void confirm({
                             title: "Leave active workout?",
                             message:
-                                "Your saved sets will remain and you can continue this session later.",
-                            confirmLabel: "Leave session",
+                                dirtySetIds.size > 0
+                                    ? `${dirtySetIds.size === 1 ? "One set has" : `${dirtySetIds.size} sets have`} unsaved changes. Leaving now will discard those edits.`
+                                    : "Your saved sets will remain and you can continue this session later.",
+                            confirmLabel:
+                                dirtySetIds.size > 0 ? "Discard and leave" : "Leave session",
+                            variant: dirtySetIds.size > 0 ? "danger" : undefined,
                         }).then((confirmed) => {
                             if (confirmed) void navigate(`/workouts/${workout.id}`);
                         });
@@ -359,6 +427,7 @@ export function WorkoutSessionPage() {
                                     onToggleCompletion={(completed, data) =>
                                         handleToggleSet(workoutExercise.id, set.id, completed, data)
                                     }
+                                    onDirtyChange={handleDirtyChange}
                                 />
                             ))}
                             <NewWorkoutSetInlineRow
