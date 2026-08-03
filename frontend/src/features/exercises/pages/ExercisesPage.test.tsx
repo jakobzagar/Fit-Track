@@ -36,6 +36,7 @@ describe("ExercisesPage", () => {
         server.use(handleExerciseList([]));
         const {unmount} = renderWithProviders(<ExercisesPage />);
         expect(await screen.findByText("Your library is empty.")).toBeInTheDocument();
+        expect(screen.getByRole("button", {name: "Add your first exercise"})).toBeInTheDocument();
         unmount();
 
         server.use(

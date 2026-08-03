@@ -88,7 +88,7 @@ export function Navbar() {
                 )}
             </header>
 
-            <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-3 rounded-[14px] border border-line bg-panel/95 p-1.5 shadow-2xl backdrop-blur-xl md:hidden">
+            <nav className="mobile-navigation fixed inset-x-3 z-50 grid grid-cols-3 rounded-[14px] border border-line bg-panel/95 p-1.5 shadow-2xl backdrop-blur-xl md:hidden">
                 {navigation.map((item) => (
                     <NavLink key={item.to} className={navigationClass} to={item.to}>
                         {({isActive}) => (

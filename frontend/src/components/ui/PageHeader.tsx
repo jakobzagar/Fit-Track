@@ -15,7 +15,9 @@ export function PageHeader({eyebrow, title, description, action}: PageHeaderProp
                 <h1 className="display-title">{title}</h1>
                 {description && <p className="page-description">{description}</p>}
             </div>
-            {action && <div className="shrink-0">{action}</div>}
+            {action && (
+                <div className="grid shrink-0 [&>*]:w-full sm:block sm:[&>*]:w-auto">{action}</div>
+            )}
         </header>
     );
 }

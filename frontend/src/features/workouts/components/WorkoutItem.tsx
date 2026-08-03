@@ -53,10 +53,10 @@ export function WorkoutItem({workout, onDelete, onEdit, isDeleting}: WorkoutItem
                 <p className="mt-4 line-clamp-2 text-sm leading-6 text-dim">{workout.notes}</p>
             )}
 
-            <div className="mt-6 grid grid-cols-3 gap-2 border-t border-line pt-4">
+            <div className="mt-6 grid grid-cols-2 gap-2 border-t border-line pt-4 sm:grid-cols-3">
                 {workout.status !== "COMPLETED" ? (
                     <Link
-                        className="inline-flex min-h-11 items-center justify-center rounded-[9px] border border-flame bg-flame px-2 text-center text-xs font-extrabold tracking-[0.04em] text-ink uppercase transition hover:bg-flame-bright"
+                        className="col-span-2 inline-flex min-h-11 items-center justify-center gap-1 rounded-[9px] border border-flame bg-flame px-2 text-center text-xs font-extrabold tracking-[0.04em] text-ink uppercase transition hover:bg-flame-bright sm:col-span-1"
                         to={`/workouts/${workout.id}/session`}
                     >
                         <Icon name="arrow" size={15} />
@@ -64,7 +64,7 @@ export function WorkoutItem({workout, onDelete, onEdit, isDeleting}: WorkoutItem
                     </Link>
                 ) : (
                     <Link
-                        className="inline-flex min-h-11 items-center justify-center rounded-[9px] border border-line bg-panel-raised px-2 text-center text-xs font-extrabold tracking-[0.04em] text-cream uppercase transition hover:border-flame/60"
+                        className="col-span-2 inline-flex min-h-11 items-center justify-center rounded-[9px] border border-line bg-panel-raised px-2 text-center text-xs font-extrabold tracking-[0.04em] text-cream uppercase transition hover:border-flame/60 sm:col-span-1"
                         to={`/workouts/${workout.id}`}
                     >
                         View workout

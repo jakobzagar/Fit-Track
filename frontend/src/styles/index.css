@@ -325,6 +325,10 @@ button:disabled {
     bottom: max(12px, env(safe-area-inset-bottom));
 }
 
+.mobile-navigation {
+    bottom: max(12px, env(safe-area-inset-bottom));
+}
+
 .page-stack {
     display: grid;
     gap: 28px;
@@ -1295,7 +1299,22 @@ form label + p {
         gap: 12px;
     }
     .app-main {
-        padding: 28px 16px 108px;
+        padding: 24px 16px calc(108px + env(safe-area-inset-bottom));
+    }
+
+    .session-header {
+        position: sticky;
+        top: 0;
+        z-index: 35;
+        margin: -24px -16px 0;
+        padding: max(16px, env(safe-area-inset-top)) 16px 14px;
+        background: color-mix(in srgb, var(--color-ink) 94%, transparent);
+        box-shadow: 0 1px 0 var(--color-line);
+        backdrop-filter: blur(16px);
+    }
+
+    .session-action-bar {
+        margin-inline: -4px;
     }
 
     .card-grid,
@@ -1320,7 +1339,28 @@ form label + p {
     }
 
     .auth-visual {
+        min-height: 210px;
         padding-inline: 18px;
+    }
+
+    .confirm-backdrop {
+        align-items: end;
+        padding: 0;
+    }
+
+    .confirm-dialog {
+        width: 100%;
+        border-radius: 20px 20px 0 0;
+        padding: 24px 18px max(24px, env(safe-area-inset-bottom));
+    }
+
+    .confirm-dialog-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .confirm-dialog-actions > * {
+        width: 100%;
     }
 
     .form-dialog-backdrop {
@@ -1349,6 +1389,14 @@ form label + p {
 
     .display-title {
         font-size: 2.25rem;
+    }
+
+    .landing-nav .landing-link-muted {
+        display: none;
+    }
+
+    .landing-button-small {
+        padding-inline: 12px;
     }
 }
 

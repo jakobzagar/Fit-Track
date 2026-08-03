@@ -273,6 +273,19 @@ export function ExercisesPage() {
                                 ? "Add your first movement to start building workouts."
                                 : "Exercises you archive will appear here."}
                         </p>
+                        {view === "active" && (
+                            <Button
+                                className="mt-6 w-full sm:w-auto"
+                                type="button"
+                                onClick={() => {
+                                    setEditingExercise(null);
+                                    setIsFormOpen(true);
+                                }}
+                            >
+                                <Icon name="plus" size={16} />
+                                Add your first exercise
+                            </Button>
+                        )}
                     </Card>
                 ) : (
                     <ExerciseList

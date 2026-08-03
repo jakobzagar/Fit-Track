@@ -41,6 +41,7 @@ describe("WorkoutsPage", () => {
         server.use(handleWorkoutList([]));
         const {unmount} = renderWithProviders(<WorkoutsPage />);
         expect(await screen.findByText("No sessions logged yet.")).toBeInTheDocument();
+        expect(screen.getByRole("button", {name: "Create your first workout"})).toBeInTheDocument();
         unmount();
 
         server.use(

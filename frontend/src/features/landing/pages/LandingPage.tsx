@@ -96,8 +96,8 @@ export function LandingPage() {
                         <p className="mt-4 text-sm leading-6 text-dim">
                             Chest, shoulders and back with controlled working sets.
                         </p>
-                        <div className="mt-6 grid grid-cols-3 gap-2 border-t border-line pt-4">
-                            <span className="inline-flex min-h-10 items-center justify-center gap-1 rounded-[9px] border border-flame bg-flame px-2 text-center text-xs font-extrabold tracking-[0.04em] text-ink uppercase">
+                        <div className="mt-6 grid grid-cols-2 gap-2 border-t border-line pt-4 sm:grid-cols-3">
+                            <span className="col-span-2 inline-flex min-h-11 items-center justify-center gap-1 rounded-[9px] border border-flame bg-flame px-2 text-center text-xs font-extrabold tracking-[0.04em] text-ink uppercase sm:col-span-1">
                                 <Icon name="arrow" size={15} /> Continue workout
                             </span>
                             <span className="inline-flex min-h-10 items-center justify-center gap-1 rounded-[9px] px-2 text-xs font-extrabold tracking-[0.04em] text-dim uppercase">

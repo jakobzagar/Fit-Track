@@ -211,6 +211,17 @@ export function WorkoutsPage() {
                         <p className="mt-2 text-sm text-dim">
                             Create a workout and start your first session.
                         </p>
+                        <Button
+                            className="mt-6 w-full sm:w-auto"
+                            type="button"
+                            onClick={() => {
+                                setEditingWorkout(null);
+                                setIsFormOpen(true);
+                            }}
+                        >
+                            <Icon name="plus" size={16} />
+                            Create your first workout
+                        </Button>
                     </Card>
                 ) : (
                     <WorkoutList
