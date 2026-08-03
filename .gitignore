@@ -11,6 +11,9 @@ backend/generated/prisma/
 .env.*
 !.env.example
 !.env.*.example
+.secrets
+.vars
+.input
 
 # IDE
 .idea/

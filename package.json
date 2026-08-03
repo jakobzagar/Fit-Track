@@ -25,6 +25,9 @@
         "typecheck": "npm run build:shared && npm run typecheck --workspace @fit-track/shared && npm run typecheck --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/frontend",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
+        "actions:lint": "actionlint",
+        "actions:list": "act --list",
+        "actions:check": "actionlint && act --dryrun",
         "check": "npm run lint && npm run typecheck && npm run format:check",
         "verify": "npm run check && npm test && npm run build",
         "verify:integration": "npm run verify && npm run test:integration"

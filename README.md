@@ -130,6 +130,9 @@ Run these commands from the repository root:
 | `npm run test:docker`        | Run verification in an isolated test stack     |
 | `npm run typecheck`          | Type-check all workspaces                      |
 | `npm run format`             | Format the repository with Prettier            |
+| `npm run actions:lint`       | Statically check GitHub Actions workflows      |
+| `npm run actions:list`       | List jobs that `act` can run locally           |
+| `npm run actions:check`      | Lint and dry-run GitHub Actions locally        |
 | `npm run check`              | Run lint, type-checking, and formatting checks |
 | `npm run verify`             | Run all checks and a production build          |
 | `npm run verify:integration` | Run verification and backend integration tests |
@@ -141,6 +144,30 @@ The API includes HTTP security headers, credentialed CORS restricted to the conf
 The Dockerfiles contain optimized production stages, but `compose.dev.yaml` is intentionally a development environment. A real deployment still needs platform-specific configuration such as HTTPS termination, secret management, database backups, monitoring, health reporting, and a deployment pipeline.
 
 Never commit `.env` files or real credentials. The committed example files contain development placeholders only.
+
+## Testing GitHub Actions locally
+
+Install Docker Desktop and the local workflow tools:
+
+```bash
+brew install act actionlint
+```
+
+From the repository root, statically validate workflows and inspect the jobs available to `act`:
+
+```bash
+npm run actions:lint
+npm run actions:list
+```
+
+Run all jobs for the default event, or select a single job by its workflow job ID:
+
+```bash
+act
+act -j <job-id>
+```
+
+Use `act -s SECRET_NAME` to enter a secret without placing its value in shell history. Local `.secrets`, `.vars`, and `.input` files are ignored by Git and must never contain values intended for commit. `act` approximates GitHub-hosted runners with Docker, so confirm runner-specific behavior with a real GitHub Actions run before merging.
 
 ## Quality checks
 
