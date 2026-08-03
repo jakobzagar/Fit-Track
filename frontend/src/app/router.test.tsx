@@ -14,5 +14,10 @@ describe("AppRouter", () => {
         );
 
         expect(screen.getByRole("heading", {name: "Page not found"})).toBeInTheDocument();
+        expect(screen.getByRole("link", {name: "Go home"})).toHaveAttribute("href", "/");
+        expect(screen.getByRole("link", {name: "Go to workouts"})).toHaveAttribute(
+            "href",
+            "/workouts",
+        );
     });
 });

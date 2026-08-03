@@ -1,4 +1,4 @@
-import {BrowserRouter, Route, Routes} from "react-router";
+import {BrowserRouter, Link, Route, Routes} from "react-router";
 import {AppLayout} from "../components/layout/AppLayout";
 import {ProtectedRoute} from "../features/auth/components/ProtectedRoute";
 import {LoginPage} from "../features/auth/pages/LogInPage";
@@ -8,6 +8,7 @@ import {WorkoutsPage} from "../features/workouts/pages/WorkoutsPage";
 import {WorkoutDetailPage} from "../features/workouts/pages/WorkoutDetailPage";
 import {WorkoutSessionPage} from "../features/workouts/pages/WorkoutSessionPage";
 import {LandingPage} from "../features/landing/pages/LandingPage";
+import {GuestRoute} from "../features/auth/components/GuestRoute";
 
 export function AppRouter() {
     return (
@@ -15,9 +16,10 @@ export function AppRouter() {
             <Routes>
                 <Route path="/" element={<LandingPage />} />
 
-                <Route path="/login" element={<LoginPage />} />
-
-                <Route path="/register" element={<RegisterPage />} />
+                <Route element={<GuestRoute />}>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                </Route>
 
                 <Route element={<ProtectedRoute />}>
                     <Route element={<AppLayout />}>
@@ -46,6 +48,17 @@ export function AppRouter() {
                                 <p className="mt-4 text-dim">
                                     This route is off the training plan.
                                 </p>
+                                <div className="mt-7 flex flex-wrap justify-center gap-3">
+                                    <Link className="landing-button" to="/">
+                                        Go home
+                                    </Link>
+                                    <Link
+                                        className="landing-button landing-button-secondary"
+                                        to="/workouts"
+                                    >
+                                        Go to workouts
+                                    </Link>
+                                </div>
                             </div>
                         </main>
                     }
