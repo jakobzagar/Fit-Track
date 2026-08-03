@@ -1,0 +1,53 @@
+.eyebrow {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    color: #ff7a33;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+}
+
+.eyebrow::before {
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    content: "";
+}
+
+.display-title {
+    margin: 8px 0 0;
+    color: #f4f1eb;
+    font-size: clamp(2.15rem, 6vw, 4.25rem);
+    font-weight: 900;
+    letter-spacing: -0.055em;
+    line-height: 0.95;
+}
+
+.page-description {
+    max-width: 620px;
+    margin: 14px 0 0;
+    color: #969696;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.section-title {
+    margin: 0;
+    color: #f4f1eb;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+}
+
+.section-caption {
+    margin: 4px 0 0;
+    color: #858585;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.metric-number {
+    font-variant-numeric: tabular-nums;
+}

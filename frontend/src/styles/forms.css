@@ -1,0 +1,91 @@
+.form-stack {
+    display: grid;
+    gap: 18px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.field-label,
+form label {
+    display: grid;
+    gap: 8px;
+    color: #c5c5c5;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.field-control,
+form input,
+form textarea,
+form select {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #303030;
+    border-radius: 10px;
+    outline: none;
+    background: #0d0d0d;
+    padding: 0 14px;
+    color: #f4f1eb;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    transition:
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        background 160ms ease;
+}
+
+form textarea {
+    min-height: 96px;
+    resize: vertical;
+    padding-block: 12px;
+}
+
+form select {
+    appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #969696 50%),
+        linear-gradient(135deg, #969696 50%, transparent 50%);
+    background-position:
+        calc(100% - 18px) 21px,
+        calc(100% - 13px) 21px;
+    background-repeat: no-repeat;
+    background-size: 5px 5px;
+}
+
+.field-control:focus,
+form input:focus,
+form textarea:focus,
+form select:focus {
+    border-color: #ff641a;
+    background: #111111;
+    box-shadow: 0 0 0 3px rgba(255, 100, 26, 0.14);
+}
+
+.field-control:disabled,
+form input:disabled,
+form textarea:disabled,
+form select:disabled {
+    opacity: 0.55;
+}
+
+.field-error,
+form label + p {
+    margin: -3px 0 0;
+    color: #f47777;
+    font-size: 0.78rem;
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
