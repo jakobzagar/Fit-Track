@@ -37,19 +37,14 @@ export function WorkoutsPage() {
     }, []);
 
     useEffect(() => {
-        async function loadInitialWorkouts() {
-            try {
-                const response: WorkoutsResponse = await getWorkouts();
-                setWorkouts(response.workouts);
-            } catch (error) {
-                setLoadError(error instanceof Error ? error.message : "Failed to load workouts");
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        void loadInitialWorkouts();
-    }, []);
+        let isCurrent = true;
+        queueMicrotask(() => {
+            if (isCurrent) void loadWorkouts();
+        });
+        return () => {
+            isCurrent = false;
+        };
+    }, [loadWorkouts]);
 
     async function handleCreateWorkout(data: CreateWorkoutInput) {
         setMutationError("");

@@ -44,20 +44,15 @@ export function ExercisesPage() {
         }
     }, [view]);
 
-    useEffect((): void => {
-        async function loadInitialExercises() {
-            try {
-                const response: ExercisesResponse = await getExercises(view);
-                setExercises(response.exercises);
-            } catch (error) {
-                setLoadError(error instanceof Error ? error.message : "Failed to load exercises");
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        void loadInitialExercises();
-    }, [view]);
+    useEffect(() => {
+        let isCurrent = true;
+        queueMicrotask(() => {
+            if (isCurrent) void loadExercises();
+        });
+        return () => {
+            isCurrent = false;
+        };
+    }, [loadExercises]);
 
     function changeView(nextView: "active" | "archived") {
         if (nextView === view) return;
