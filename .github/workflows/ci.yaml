@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify
+        run: npm run verify
+        env:
+          DATABASE_URL: postgresql://unused:unused@localhost:5432/unused
+
+  integration:
+    name: Integration
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: fit_track_test
+          POSTGRES_PASSWORD: fit_track_test_password
+          POSTGRES_DB: fit_track_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fit_track_test -d fit_track_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://fit_track_test:fit_track_test_password@localhost:5432/fit_track_test
+      JWT_SECRET: fit-track-test-secret-that-is-at-least-32-characters
+      CLIENT_URL: http://localhost:5173
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared contracts
+        run: npm run build:shared
+
+      - name: Generate Prisma client
+        run: npm run generate --workspace @fit-track/backend
+
+      - name: Apply database migrations
+        run: npm exec --workspace @fit-track/backend -- prisma migrate deploy
+
+      - name: Run backend integration tests
+        run: npm run test:integration
