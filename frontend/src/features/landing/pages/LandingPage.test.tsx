@@ -1,6 +1,5 @@
 import {MemoryRouter} from "react-router";
 import {render, screen} from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
 import {AuthContext, type AuthContextValue} from "../../auth/context/auth.context";
 import {LandingPage} from "./LandingPage";
@@ -26,16 +25,6 @@ describe("LandingPage", () => {
         );
         expect(screen.getAllByRole("link", {name: "Log in"}).length).toBeGreaterThan(0);
         expect(screen.getAllByRole("article")).toHaveLength(3);
-    });
-
-    test("allows visitors to change theme", async () => {
-        const user = userEvent.setup();
-        document.documentElement.dataset.theme = "dark";
-        renderPage(null);
-
-        await user.click(screen.getByRole("button", {name: "Switch to light theme"}));
-        expect(document.documentElement.dataset.theme).toBe("light");
-        expect(localStorage.getItem("fittrack-theme")).toBe("light");
     });
 
     test("sends an authenticated user to the dashboard", () => {

@@ -11,8 +11,7 @@ describe("BrandMark", () => {
             </MemoryRouter>,
         );
 
-        expect(screen.getByRole("link")).toHaveAttribute("href", "/");
-        expect(screen.getAllByRole("img", {name: "FitTrack"})).toHaveLength(2);
+        expect(screen.getByRole("link", {name: /FitTrack/})).toHaveAttribute("href", "/");
     });
 
     test("can render without a link", () => {

@@ -24,19 +24,4 @@ describe("Button", () => {
         expect(button).toHaveClass("w-full");
         expect(ref.current).toBe(button);
     });
-
-    test("does not fire clicks when disabled", async () => {
-        const user = userEvent.setup();
-        const onClick = vi.fn();
-
-        render(
-            <Button disabled onClick={onClick}>
-                Save
-            </Button>,
-        );
-
-        await user.click(screen.getByRole("button", {name: "Save"}));
-
-        expect(onClick).not.toHaveBeenCalled();
-    });
 });

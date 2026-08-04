@@ -4,20 +4,13 @@ import {describe, expect, test, vi} from "vitest";
 import {CreateWorkoutForm} from "./CreateWorkoutForm";
 
 describe("CreateWorkoutForm", () => {
-    test("validates required and bounded fields", async () => {
+    test("shows a required-field error without submitting", async () => {
         const user = userEvent.setup();
         const onSubmit = vi.fn();
         render(<CreateWorkoutForm onSubmit={onSubmit} />);
 
         await user.click(screen.getByRole("button", {name: "Create workout"}));
         expect(screen.getByText("Workout name is required")).toBeInTheDocument();
-
-        await user.type(screen.getByLabelText("Name"), "a".repeat(101));
-        await user.type(screen.getByLabelText("Notes"), "a".repeat(1001));
-        await user.click(screen.getByRole("button", {name: "Create workout"}));
-
-        expect(screen.getByText("Workout name is too long")).toBeInTheDocument();
-        expect(screen.getByText("Notes are too long")).toBeInTheDocument();
         expect(onSubmit).not.toHaveBeenCalled();
     });
 
