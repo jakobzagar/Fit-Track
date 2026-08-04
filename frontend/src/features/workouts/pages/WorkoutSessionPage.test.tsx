@@ -8,6 +8,7 @@ import {server} from "../../../test/mocks/server";
 import {
     createWorkout,
     exercise,
+    workoutExercise,
     workoutExerciseId,
     workoutId,
     workoutSet,
@@ -69,6 +70,34 @@ describe("WorkoutSessionPage", () => {
         expect(screen.getByText("Workout in progress")).toBeInTheDocument();
     });
 
+    test("redirects an already completed workout to its details", async () => {
+        useLoadHandlers(createWorkout({status: "COMPLETED"}));
+        renderPage();
+
+        expect(await screen.findByRole("heading", {name: "Workout detail"})).toBeInTheDocument();
+    });
+
+    test("retries a failed session load", async () => {
+        let attempts = 0;
+        server.use(
+            http.get(`${API_URL}/workouts/${workoutId}`, () => {
+                attempts += 1;
+                return attempts === 1
+                    ? HttpResponse.json({message: "Session unavailable"}, {status: 503})
+                    : HttpResponse.json({workout: createWorkout()});
+            }),
+            http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises: [exercise]})),
+            http.get(`${API_URL}/workouts/${workoutId}/previous-performances`, () =>
+                HttpResponse.json({previousPerformances: []}),
+            ),
+        );
+        const {user} = renderPage();
+
+        await user.click(await screen.findByRole("button", {name: "Try again"}));
+        expect(await screen.findByRole("heading", {name: "Push day"})).toBeInTheDocument();
+        expect(attempts).toBe(2);
+    });
+
     test("updates completion of a set", async () => {
         useLoadHandlers();
         server.use(
@@ -125,6 +154,66 @@ describe("WorkoutSessionPage", () => {
         await user.click(screen.getByRole("button", {name: "Finish workout"}));
 
         expect(await screen.findByRole("heading", {name: "Workout detail"})).toBeInTheDocument();
+    });
+
+    test("shows a finish error and keeps the active session open", async () => {
+        const completedSet = {...workoutSet, completedAt: "2026-07-26T10:20:00.000Z"};
+        useLoadHandlers(
+            createWorkout({
+                workoutExercises: [{...createWorkout().workoutExercises[0], sets: [completedSet]}],
+            }),
+        );
+        server.use(
+            http.post(`${API_URL}/workouts/${workoutId}/finish`, () =>
+                HttpResponse.json({message: "Workout could not be finished"}, {status: 409}),
+            ),
+        );
+        const {user} = renderPage();
+        await screen.findByRole("heading", {name: "Push day"});
+        await user.click(screen.getByRole("button", {name: "Finish workout"}));
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("Workout could not be finished");
+        expect(screen.getByRole("heading", {name: "Push day"})).toBeInTheDocument();
+        expect(screen.getByRole("button", {name: "Finish workout"})).toBeEnabled();
+    });
+
+    test("copies the last set", async () => {
+        useLoadHandlers();
+        const copiedSet = {
+            ...workoutSet,
+            id: "123e4567-e89b-42d3-a456-426614174088",
+            setNumber: 2,
+        };
+        server.use(
+            http.post(
+                `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets`,
+                async ({request}) => {
+                    expect(await request.json()).toEqual({reps: 8, weight: 80});
+                    return HttpResponse.json({workoutExerciseSet: copiedSet}, {status: 201});
+                },
+            ),
+        );
+        const {user} = renderPage();
+        await screen.findByRole("heading", {name: "Push day"});
+        await user.click(screen.getByRole("button", {name: "Copy last set"}));
+
+        expect(await screen.findByText("0/2 done")).toBeInTheDocument();
+    });
+
+    test("adds an exercise to an active session", async () => {
+        useLoadHandlers(createWorkout({workoutExercises: []}));
+        server.use(
+            http.post(`${API_URL}/workouts/${workoutId}/exercises`, () => {
+                const {sets: _sets, ...created} = workoutExercise;
+                return HttpResponse.json({workoutExercise: created}, {status: 201});
+            }),
+        );
+        const {user} = renderPage();
+        await screen.findByText("This session needs a movement.");
+        await user.selectOptions(screen.getByLabelText("Exercise"), exercise.id);
+        await user.click(screen.getByRole("button", {name: "Add exercise"}));
+
+        expect(await screen.findByRole("heading", {name: "Bench press"})).toBeInTheDocument();
     });
 
     test("blocks finishing while a set has unsaved edits", async () => {

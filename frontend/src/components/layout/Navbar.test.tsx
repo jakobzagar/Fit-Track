@@ -54,4 +54,15 @@ describe("Navbar", () => {
 
         expect(authValue.signOut).toHaveBeenCalledOnce();
     });
+
+    test("shows a logout error and supports the mobile action", async () => {
+        const user = userEvent.setup();
+        authValue.signOut.mockRejectedValueOnce(new Error("Logout unavailable"));
+        renderNavbar();
+
+        await user.click(screen.getAllByRole("button", {name: "Log out"})[1]);
+
+        expect(await screen.findByText("Logout unavailable")).toBeInTheDocument();
+        expect(screen.getAllByRole("button", {name: "Log out"})[1]).toBeEnabled();
+    });
 });

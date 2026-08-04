@@ -4,6 +4,7 @@ import {describe, expect, test} from "vitest";
 import {server} from "../../../test/mocks/server";
 import {renderWithProviders} from "../../../test/render";
 import {WorkoutsPage} from "./WorkoutsPage";
+import type {WorkoutSummary} from "../workout.types";
 
 const API_URL = "http://localhost:3001/api";
 const workout = {
@@ -20,7 +21,7 @@ const workout = {
 };
 const summary = {...workout, _count: {workoutExercises: 1}};
 
-function handleWorkoutList(workouts = [summary]) {
+function handleWorkoutList(workouts: WorkoutSummary[] = [summary]) {
     return http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts}));
 }
 
@@ -35,6 +36,19 @@ describe("WorkoutsPage", () => {
             "href",
             `/workouts/${workout.id}/session`,
         );
+    });
+
+    test("shows the correct primary action for active and completed workouts", async () => {
+        server.use(
+            handleWorkoutList([
+                {...summary, status: "ACTIVE"},
+                {...summary, id: "123e4567-e89b-42d3-a456-426614174099", status: "COMPLETED"},
+            ]),
+        );
+        renderWithProviders(<WorkoutsPage />);
+
+        expect(await screen.findByRole("link", {name: /Continue workout/})).toBeInTheDocument();
+        expect(screen.getByRole("link", {name: "View workout"})).toBeInTheDocument();
     });
 
     test("shows empty and load-error states", async () => {
@@ -130,5 +144,34 @@ describe("WorkoutsPage", () => {
 
         expect(await screen.findByText("No sessions logged yet.")).toBeInTheDocument();
         expect(screen.getByRole("status")).toHaveTextContent("Workout deleted.");
+    });
+
+    test("keeps a workout when deletion is cancelled", async () => {
+        server.use(handleWorkoutList());
+        const {user} = renderWithProviders(<WorkoutsPage />);
+        await screen.findByRole("heading", {name: "Push day"});
+
+        await user.click(screen.getByRole("button", {name: "Delete"}));
+        await user.click(screen.getByRole("button", {name: "Cancel"}));
+
+        expect(screen.getByRole("heading", {name: "Push day"})).toBeInTheDocument();
+    });
+
+    test("shows a mutation error and keeps the create dialog open", async () => {
+        server.use(
+            handleWorkoutList([]),
+            http.post(`${API_URL}/workouts`, () =>
+                HttpResponse.json({message: "Workout already exists"}, {status: 409}),
+            ),
+        );
+        const {user} = renderWithProviders(<WorkoutsPage />);
+        await screen.findByText("No sessions logged yet.");
+        await user.click(screen.getByRole("button", {name: "Create workout"}));
+        const dialog = screen.getByRole("dialog", {name: "Create workout"});
+        await user.type(screen.getByLabelText("Name"), "Push day");
+        await user.click(within(dialog).getByRole("button", {name: "Create workout"}));
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("Workout already exists");
+        expect(screen.getByRole("dialog", {name: "Create workout"})).toBeInTheDocument();
     });
 });

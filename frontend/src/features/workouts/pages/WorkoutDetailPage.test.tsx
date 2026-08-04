@@ -60,6 +60,24 @@ describe("WorkoutDetailPage", () => {
         expect(await screen.findByRole("alert")).toHaveTextContent("Workout not found");
     });
 
+    test("retries a failed load", async () => {
+        let attempts = 0;
+        server.use(
+            http.get(`${API_URL}/workouts/${workoutId}`, () => {
+                attempts += 1;
+                return attempts === 1
+                    ? HttpResponse.json({message: "Temporary failure"}, {status: 503})
+                    : HttpResponse.json({workout: createWorkout()});
+            }),
+            http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises: [exercise]})),
+        );
+        const {user} = renderPage();
+
+        await user.click(await screen.findByRole("button", {name: "Try again"}));
+        expect(await screen.findByRole("heading", {name: "Push day"})).toBeInTheDocument();
+        expect(attempts).toBe(2);
+    });
+
     test("adds an available exercise", async () => {
         useLoadHandlers(createWorkout({workoutExercises: []}));
         server.use(
@@ -110,5 +128,82 @@ describe("WorkoutDetailPage", () => {
         await user.click(within(dialog).getByRole("button", {name: "Delete set"}));
 
         expect(await screen.findByText("No sets added yet")).toBeInTheDocument();
+    });
+
+    test("updates and removes a workout exercise", async () => {
+        useLoadHandlers();
+        server.use(
+            http.patch(
+                `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}`,
+                async ({request}) => {
+                    expect(await request.json()).toMatchObject({position: 1, notes: "Paused reps"});
+                    return HttpResponse.json({
+                        workoutExercise: {...workoutExercise, notes: "Paused reps"},
+                    });
+                },
+            ),
+            http.delete(`${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}`, () =>
+                HttpResponse.json({message: "Exercise removed"}),
+            ),
+        );
+        const {user} = renderPage();
+        await screen.findByRole("heading", {name: "Bench press"});
+
+        await user.click(screen.getByRole("button", {name: "Edit"}));
+        await user.clear(screen.getByLabelText("Notes"));
+        await user.type(screen.getByLabelText("Notes"), "Paused reps");
+        await user.click(screen.getByRole("button", {name: "Save exercise"}));
+        expect(await screen.findByText("Paused reps")).toBeInTheDocument();
+
+        const exerciseCard = screen.getByRole("heading", {name: "Bench press"}).closest("article");
+        if (!exerciseCard) throw new Error("Exercise card is missing");
+        await user.click(within(exerciseCard).getAllByRole("button", {name: "Delete"})[0]);
+        await user.click(
+            within(screen.getByRole("alertdialog")).getByRole("button", {
+                name: "Remove exercise",
+            }),
+        );
+        expect(await screen.findByText("No exercises added yet.")).toBeInTheDocument();
+    });
+
+    test("shows an add-exercise mutation error", async () => {
+        useLoadHandlers(createWorkout({workoutExercises: []}));
+        server.use(
+            http.post(`${API_URL}/workouts/${workoutId}/exercises`, () =>
+                HttpResponse.json({message: "Exercise already added"}, {status: 409}),
+            ),
+        );
+        const {user} = renderPage();
+        await screen.findByText("No exercises added yet.");
+        await user.selectOptions(screen.getByLabelText("Exercise"), exerciseId);
+        await user.click(screen.getByRole("button", {name: "Add exercise"}));
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("Exercise already added");
+    });
+
+    test("updates an existing workout set", async () => {
+        useLoadHandlers();
+        server.use(
+            http.patch(
+                `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${workoutSet.id}`,
+                async ({request}) => {
+                    expect(await request.json()).toMatchObject({reps: 10, weight: 80});
+                    return HttpResponse.json({
+                        workoutExerciseSet: {...workoutSet, reps: 10},
+                    });
+                },
+            ),
+        );
+        const {user} = renderPage();
+        const editButton = await screen.findByRole("button", {name: "Edit set"});
+        const setItem = editButton.closest("li");
+        if (!setItem) throw new Error("Set row is missing");
+        await user.click(editButton);
+        const repsInput = within(setItem).getByLabelText("Reps");
+        await user.clear(repsInput);
+        await user.type(repsInput, "10");
+        await user.click(within(setItem).getByRole("button", {name: "Save set"}));
+
+        expect(await within(setItem).findByText("10")).toBeInTheDocument();
     });
 });

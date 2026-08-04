@@ -132,6 +132,35 @@ describe("ExercisesPage", () => {
         expect(screen.getByRole("status")).toHaveTextContent("Exercise archived.");
     });
 
+    test("keeps an exercise when archiving is cancelled", async () => {
+        server.use(handleExerciseList());
+        const {user} = renderWithProviders(<ExercisesPage />);
+        await screen.findByRole("heading", {name: "Bench press"});
+
+        await user.click(screen.getByRole("button", {name: "Archive"}));
+        await user.click(screen.getByRole("button", {name: "Cancel"}));
+
+        expect(screen.getByRole("heading", {name: "Bench press"})).toBeInTheDocument();
+    });
+
+    test("shows an archive error without removing the exercise", async () => {
+        server.use(
+            handleExerciseList(),
+            http.delete(`${API_URL}/exercises/${exercise.id}`, () =>
+                HttpResponse.json({message: "Exercise is still in use"}, {status: 409}),
+            ),
+        );
+        const {user} = renderWithProviders(<ExercisesPage />);
+        await screen.findByRole("heading", {name: "Bench press"});
+        await user.click(screen.getByRole("button", {name: "Archive"}));
+        await user.click(
+            within(screen.getByRole("alertdialog")).getByRole("button", {name: "Archive"}),
+        );
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("Exercise is still in use");
+        expect(screen.getByRole("heading", {name: "Bench press"})).toBeInTheDocument();
+    });
+
     test("loads archived exercises and restores one after confirmation", async () => {
         const archivedExercise = {...exercise, isArchived: true};
         server.use(
