@@ -20,13 +20,13 @@ This repository is a portfolio project built to demonstrate production-oriented 
 
 ## Tech stack
 
-| Area           | Technologies                                                     |
-| -------------- | ---------------------------------------------------------------- |
-| Frontend       | React 19, TypeScript, Vite, React Router, Tailwind CSS, Zod      |
-| Backend        | Node.js 24, Express 5, TypeScript, Prisma ORM, Zod               |
-| Database       | PostgreSQL 17                                                    |
-| Authentication | JWT in HTTP-only cookies, bcrypt password hashing                |
-| Tooling        | npm workspaces, Vitest, ESLint, Prettier, Docker, Docker Compose |
+| Area           | Technologies                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| Frontend       | React 19, TypeScript, Vite, React Router, Tailwind CSS, Zod                              |
+| Backend        | Node.js 24, Express 5, TypeScript, Prisma ORM, Zod                                       |
+| Database       | PostgreSQL 17                                                                            |
+| Authentication | JWT in HTTP-only cookies, bcrypt password hashing                                        |
+| Tooling        | npm workspaces, Vitest, Testing Library, MSW, axe-core, ESLint, Prettier, Docker Compose |
 
 ## Architecture
 
@@ -126,7 +126,7 @@ Run these commands from the repository root:
 | `npm run dev:docker:down`    | Stop and remove the development stack          |
 | `npm run build`              | Build all workspaces                           |
 | `npm run lint`               | Lint all workspaces                            |
-| `npm test`                   | Run automated workspace tests                  |
+| `npm test`                   | Run fast shared and frontend tests             |
 | `npm run test:docker`        | Run verification in an isolated test stack     |
 | `npm run typecheck`          | Type-check all workspaces                      |
 | `npm run format`             | Format the repository with Prettier            |
@@ -134,7 +134,7 @@ Run these commands from the repository root:
 | `npm run actions:list`       | List jobs that `act` can run locally           |
 | `npm run actions:check`      | Lint and dry-run GitHub Actions locally        |
 | `npm run check`              | Run lint, type-checking, and formatting checks |
-| `npm run verify`             | Run all checks and a production build          |
+| `npm run verify`             | Run fast tests, checks, and production builds  |
 | `npm run verify:integration` | Run verification and backend integration tests |
 
 ## Security and production notes
@@ -177,7 +177,13 @@ Before opening a pull request, run:
 npm run verify
 ```
 
-Vitest covers the shared Zod schemas and API contracts. Backend integration tests cover authentication, exercises, workouts, workout exercises, sets, and workout lifecycle behavior using Vitest and Supertest, with PostgreSQL migrations applied to an isolated, temporary database by Docker Compose. The frontend test environment uses jsdom, Testing Library, and MSW.
+The test suite is split by responsibility:
+
+- `shared` owns exhaustive schema boundaries, normalization, and API contract values.
+- `frontend` uses jsdom, Testing Library, and MSW for user interactions, state transitions, error feedback, and accessibility smoke checks with axe-core.
+- `backend` uses Vitest, Supertest, and PostgreSQL for HTTP behavior, persistence, authentication, CSRF, ownership, nested-resource isolation, and workout lifecycle rules.
+
+`npm test` and `npm run verify` intentionally exclude the PostgreSQL integration suite. Run it through the isolated Docker stack whenever backend behavior, persistence, authorization, or migrations change.
 
 Run the complete isolated verification stack with:
 
