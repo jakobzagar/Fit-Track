@@ -135,6 +135,9 @@ Run these commands from the repository root:
 | `npm run actions:check`      | Lint and dry-run GitHub Actions locally        |
 | `npm run check`              | Run lint, type-checking, and formatting checks |
 | `npm run verify`             | Run fast tests, checks, and production builds  |
+| `npm run verify:shared`      | Verify only the shared workspace               |
+| `npm run verify:backend`     | Verify the backend and shared build            |
+| `npm run verify:frontend`    | Verify the frontend and shared build           |
 | `npm run verify:integration` | Run verification and backend integration tests |
 
 ## Security and production notes

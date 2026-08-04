@@ -30,6 +30,9 @@
         "actions:check": "actionlint && act --dryrun",
         "check": "npm run lint && npm run typecheck && npm run format:check",
         "verify": "npm run check && npm test && npm run build",
+        "verify:shared": "npm run lint --workspace @fit-track/shared && npm run typecheck --workspace @fit-track/shared && prettier --check shared && npm run test --workspace @fit-track/shared && npm run build --workspace @fit-track/shared",
+        "verify:backend": "npm run build:shared && npm run lint --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/backend && prettier --check backend && npm run build --workspace @fit-track/backend",
+        "verify:frontend": "npm run build:shared && npm run lint --workspace @fit-track/frontend && npm run typecheck --workspace @fit-track/frontend && prettier --check frontend && npm run test --workspace @fit-track/frontend && npm run build --workspace @fit-track/frontend",
         "verify:integration": "npm run verify && npm run test:integration"
     },
     "devDependencies": {
