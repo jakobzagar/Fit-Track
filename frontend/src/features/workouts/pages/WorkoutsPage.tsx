@@ -1,10 +1,9 @@
-import {useCallback, useEffect, useState} from "react";
-import {createWorkout, getWorkouts, deleteWorkout, updateWorkout} from "../api/workouts.api.ts";
+import {useState} from "react";
 import {CreateWorkoutForm} from "../components/CreateWorkoutForm.tsx";
 import {UpdateWorkoutForm} from "../components/UpdateWorkoutForm.tsx";
 import {WorkoutList} from "../components/WorkoutList.tsx";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
-import type {WorkoutSummary, WorkoutsResponse} from "../workout.types.ts";
+import type {WorkoutSummary} from "../workout.types.ts";
 import {Card} from "../../../components/ui/Card.tsx";
 import {Feedback} from "../../../components/ui/Feedback.tsx";
 import {PageHeader} from "../../../components/ui/PageHeader.tsx";
@@ -13,65 +12,21 @@ import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
 import {Button} from "../../../components/ui/Button.tsx";
 import {Icon} from "../../../components/ui/Icon.tsx";
 import {FormDialog} from "../../../components/ui/FormDialog.tsx";
+import {useWorkouts} from "../hooks/useWorkouts.ts";
 
 export function WorkoutsPage() {
     const confirm = useConfirmDialog();
-    const [workouts, setWorkouts] = useState<WorkoutSummary[]>([]);
+    const workoutData = useWorkouts();
     const [editingWorkout, setEditingWorkout] = useState<WorkoutSummary | null>(null);
-    const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [loadError, setLoadError] = useState("");
-    const [mutationError, setMutationError] = useState("");
-    const [successMessage, setSuccessMessage] = useState("");
     const [isFormOpen, setIsFormOpen] = useState(false);
 
-    const loadWorkouts = useCallback(async () => {
-        try {
-            const response: WorkoutsResponse = await getWorkouts();
-            setWorkouts(response.workouts);
-        } catch (error) {
-            setLoadError(error instanceof Error ? error.message : "Failed to load workouts");
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        let isCurrent = true;
-        queueMicrotask(() => {
-            if (isCurrent) void loadWorkouts();
-        });
-        return () => {
-            isCurrent = false;
-        };
-    }, [loadWorkouts]);
-
     async function handleCreateWorkout(data: CreateWorkoutInput) {
-        setMutationError("");
-        setSuccessMessage("");
-
-        try {
-            const response = await createWorkout(data);
-
-            setWorkouts((currentWorkouts) => [
-                {
-                    ...response.workout,
-                    _count: {
-                        workoutExercises: 0,
-                    },
-                },
-                ...currentWorkouts,
-            ]);
-            setSuccessMessage("Workout created successfully.");
-            setIsFormOpen(false);
-        } catch (error) {
-            setMutationError(error instanceof Error ? error.message : "Failed to create workout");
-            throw error;
-        }
+        await workoutData.create(data);
+        setIsFormOpen(false);
     }
 
     async function handleDeleteWorkout(workoutId: string) {
-        const workout = workouts.find((item) => item.id === workoutId);
+        const workout = workoutData.workouts.find((item) => item.id === workoutId);
         if (
             !(await confirm({
                 title: "Delete workout?",
@@ -82,22 +37,7 @@ export function WorkoutsPage() {
         )
             return;
 
-        setMutationError("");
-        setSuccessMessage("");
-        setDeletingWorkoutId(workoutId);
-
-        try {
-            await deleteWorkout(workoutId);
-
-            setWorkouts((currentWorkouts) =>
-                currentWorkouts.filter((workout) => workout.id !== workoutId),
-            );
-            setSuccessMessage("Workout deleted.");
-        } catch (error) {
-            setMutationError(error instanceof Error ? error.message : "Failed to delete workout");
-        } finally {
-            setDeletingWorkoutId(null);
-        }
+        await workoutData.remove(workoutId);
     }
 
     function handleEditWorkout(workout: WorkoutSummary) {
@@ -115,52 +55,20 @@ export function WorkoutsPage() {
             throw new Error("Workout is not selected");
         }
 
-        setMutationError("");
-        setSuccessMessage("");
-
-        try {
-            const response = await updateWorkout(editingWorkout.id, data);
-
-            setWorkouts((currentWorkouts) =>
-                currentWorkouts.map((workout) =>
-                    workout.id === editingWorkout.id
-                        ? {
-                              ...workout,
-                              name: response.workout.name,
-                              performedAt: response.workout.performedAt,
-                              notes: response.workout.notes,
-                              updatedAt: response.workout.updatedAt,
-                          }
-                        : workout,
-                ),
-            );
-
-            setEditingWorkout(null);
-            setIsFormOpen(false);
-            setSuccessMessage("Workout updated successfully.");
-        } catch (error) {
-            setMutationError(error instanceof Error ? error.message : "Failed to update workout");
-            throw error;
-        }
+        await workoutData.update(editingWorkout.id, data);
+        setEditingWorkout(null);
+        setIsFormOpen(false);
     }
 
-    if (isLoading) {
+    if (workoutData.isLoading) {
         return <SkeletonGrid />;
     }
 
-    if (loadError) {
+    if (workoutData.loadError) {
         return (
             <div className="page-stack">
-                <Feedback>{loadError}</Feedback>
-                <Button
-                    className="w-fit"
-                    variant="secondary"
-                    onClick={() => {
-                        setIsLoading(true);
-                        setLoadError("");
-                        void loadWorkouts();
-                    }}
-                >
+                <Feedback>{workoutData.loadError}</Feedback>
+                <Button className="w-fit" variant="secondary" onClick={workoutData.retry}>
                     Try again
                 </Button>
             </div>
@@ -186,10 +94,10 @@ export function WorkoutsPage() {
                     </Button>
                 }
             />
-            {mutationError && <Feedback>{mutationError}</Feedback>}
-            {successMessage && (
-                <Feedback tone="success" onDismiss={() => setSuccessMessage("")}>
-                    {successMessage}
+            {workoutData.mutationError && <Feedback>{workoutData.mutationError}</Feedback>}
+            {workoutData.successMessage && (
+                <Feedback tone="success" onDismiss={workoutData.clearSuccess}>
+                    {workoutData.successMessage}
                 </Feedback>
             )}
 
@@ -197,10 +105,12 @@ export function WorkoutsPage() {
                 <div className="mb-4 flex items-end justify-between">
                     <div>
                         <h2 className="section-title">Recent sessions</h2>
-                        <p className="section-caption">{workouts.length} workouts in your log</p>
+                        <p className="section-caption">
+                            {workoutData.workouts.length} workouts in your log
+                        </p>
                     </div>
                 </div>
-                {workouts.length === 0 ? (
+                {workoutData.workouts.length === 0 ? (
                     <Card className="py-14 text-center">
                         <p className="font-bold text-cream">No sessions logged yet.</p>
                         <p className="mt-2 text-sm text-dim">
@@ -220,10 +130,10 @@ export function WorkoutsPage() {
                     </Card>
                 ) : (
                     <WorkoutList
-                        workouts={workouts}
+                        workouts={workoutData.workouts}
                         onDelete={handleDeleteWorkout}
                         onEdit={handleEditWorkout}
-                        deletingWorkoutId={deletingWorkoutId}
+                        deletingWorkoutId={workoutData.deletingWorkoutId}
                     />
                 )}
             </div>

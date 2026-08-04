@@ -1,13 +1,6 @@
-import {useCallback, useEffect, useState} from "react";
+import {useState} from "react";
 import {ExerciseList} from "../components/ExerciseList.tsx";
-import {
-    createExercise,
-    getExercises,
-    archiveExercise,
-    updateExercise,
-    restoreExercise,
-} from "../api/exercises.api.ts";
-import type {ExercisesResponse, Exercise, ExerciseResponse} from "../exercise.types.ts";
+import type {Exercise} from "../exercise.types.ts";
 import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas.ts";
 import {CreateExerciseForm} from "../components/CreateExerciseForm.tsx";
 import {UpdateExerciseForm} from "../components/UpdateExerciseForm.tsx";
@@ -19,69 +12,28 @@ import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
 import {Button} from "../../../components/ui/Button.tsx";
 import {Icon} from "../../../components/ui/Icon.tsx";
 import {FormDialog} from "../../../components/ui/FormDialog.tsx";
+import {useExercises, type ExerciseView} from "../hooks/useExercises.ts";
 
 export function ExercisesPage() {
     const confirm = useConfirmDialog();
-    const [view, setView] = useState<"active" | "archived">("active");
-    const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [view, setView] = useState<ExerciseView>("active");
+    const exerciseData = useExercises(view);
     const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
-    const [archivingExerciseId, setArchivingExerciseId] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const [loadError, setLoadError] = useState("");
-    const [mutationError, setMutationError] = useState("");
-    const [successMessage, setSuccessMessage] = useState("");
     const [isFormOpen, setIsFormOpen] = useState(false);
-
-    const loadExercises = useCallback(async () => {
-        try {
-            const response: ExercisesResponse = await getExercises(view);
-            setExercises(response.exercises);
-        } catch (error) {
-            setLoadError(error instanceof Error ? error.message : "Failed to load exercises");
-        } finally {
-            setIsLoading(false);
-        }
-    }, [view]);
-
-    useEffect(() => {
-        let isCurrent = true;
-        queueMicrotask(() => {
-            if (isCurrent) void loadExercises();
-        });
-        return () => {
-            isCurrent = false;
-        };
-    }, [loadExercises]);
 
     function changeView(nextView: "active" | "archived") {
         if (nextView === view) return;
         setView(nextView);
-        setExercises([]);
         setEditingExercise(null);
-        setLoadError("");
-        setMutationError("");
-        setSuccessMessage("");
-        setIsLoading(true);
     }
 
     async function handleCreateExercise(data: CreateExerciseInput) {
-        setMutationError("");
-        setSuccessMessage("");
-
-        try {
-            const response: ExerciseResponse = await createExercise(data);
-            setExercises((currentExercises) => [...currentExercises, response.exercise]);
-            setSuccessMessage("Exercise created successfully.");
-            setIsFormOpen(false);
-        } catch (error) {
-            setMutationError(error instanceof Error ? error.message : "Failed to create exercise");
-            throw error;
-        }
+        await exerciseData.create(data);
+        setIsFormOpen(false);
     }
 
     async function handleArchiveExercise(exerciseId: string) {
-        const exercise = exercises.find((item) => item.id === exerciseId);
+        const exercise = exerciseData.exercises.find((item) => item.id === exerciseId);
         if (
             !(await confirm({
                 title: "Archive exercise?",
@@ -91,26 +43,11 @@ export function ExercisesPage() {
         )
             return;
 
-        setMutationError("");
-        setSuccessMessage("");
-        setArchivingExerciseId(exerciseId);
-
-        try {
-            await archiveExercise(exerciseId);
-
-            setExercises((currentExercises) =>
-                currentExercises.filter((exercise) => exercise.id !== exerciseId),
-            );
-            setSuccessMessage("Exercise archived.");
-        } catch (error) {
-            setMutationError(error instanceof Error ? error.message : "Failed to archive exercise");
-        } finally {
-            setArchivingExerciseId(null);
-        }
+        await exerciseData.archive(exerciseId);
     }
 
     async function handleRestoreExercise(exerciseId: string) {
-        const exercise = exercises.find((item) => item.id === exerciseId);
+        const exercise = exerciseData.exercises.find((item) => item.id === exerciseId);
         if (
             !(await confirm({
                 title: "Restore exercise?",
@@ -120,19 +57,7 @@ export function ExercisesPage() {
         )
             return;
 
-        setMutationError("");
-        setSuccessMessage("");
-        setArchivingExerciseId(exerciseId);
-
-        try {
-            await restoreExercise(exerciseId);
-            setExercises((current) => current.filter((item) => item.id !== exerciseId));
-            setSuccessMessage("Exercise restored to your active library.");
-        } catch (error) {
-            setMutationError(error instanceof Error ? error.message : "Failed to restore exercise");
-        } finally {
-            setArchivingExerciseId(null);
-        }
+        await exerciseData.restore(exerciseId);
     }
 
     function handleEditExercise(exercise: Exercise) {
@@ -150,44 +75,20 @@ export function ExercisesPage() {
             throw new Error("Exercise is not selected");
         }
 
-        setMutationError("");
-        setSuccessMessage("");
-
-        try {
-            const response = await updateExercise(editingExercise.id, data);
-
-            setExercises((currentExercises) =>
-                currentExercises.map((exercise) =>
-                    exercise.id === response.exercise.id ? response.exercise : exercise,
-                ),
-            );
-
-            setEditingExercise(null);
-            setIsFormOpen(false);
-            setSuccessMessage("Exercise updated successfully.");
-        } catch (error) {
-            setMutationError(error instanceof Error ? error.message : "Failed to update exercise");
-            throw error;
-        }
+        await exerciseData.update(editingExercise.id, data);
+        setEditingExercise(null);
+        setIsFormOpen(false);
     }
 
-    if (isLoading) {
+    if (exerciseData.isLoading) {
         return <SkeletonGrid />;
     }
 
-    if (loadError) {
+    if (exerciseData.loadError) {
         return (
             <div className="page-stack">
-                <Feedback>{loadError}</Feedback>
-                <Button
-                    className="w-fit"
-                    variant="secondary"
-                    onClick={() => {
-                        setIsLoading(true);
-                        setLoadError("");
-                        void loadExercises();
-                    }}
-                >
+                <Feedback>{exerciseData.loadError}</Feedback>
+                <Button className="w-fit" variant="secondary" onClick={exerciseData.retry}>
                     Try again
                 </Button>
             </div>
@@ -215,10 +116,10 @@ export function ExercisesPage() {
                     ) : undefined
                 }
             />
-            {mutationError && <Feedback>{mutationError}</Feedback>}
-            {successMessage && (
-                <Feedback tone="success" onDismiss={() => setSuccessMessage("")}>
-                    {successMessage}
+            {exerciseData.mutationError && <Feedback>{exerciseData.mutationError}</Feedback>}
+            {exerciseData.successMessage && (
+                <Feedback tone="success" onDismiss={exerciseData.clearSuccess}>
+                    {exerciseData.successMessage}
                 </Feedback>
             )}
 
@@ -252,11 +153,11 @@ export function ExercisesPage() {
                     <div>
                         <h2 className="section-title">Your exercises</h2>
                         <p className="section-caption">
-                            {exercises.length} {view} movements
+                            {exerciseData.exercises.length} {view} movements
                         </p>
                     </div>
                 </div>
-                {exercises.length === 0 ? (
+                {exerciseData.exercises.length === 0 ? (
                     <Card className="py-14 text-center">
                         <p className="font-bold text-cream">
                             {view === "active"
@@ -284,10 +185,10 @@ export function ExercisesPage() {
                     </Card>
                 ) : (
                     <ExerciseList
-                        exercises={exercises}
+                        exercises={exerciseData.exercises}
                         onArchive={handleArchiveExercise}
                         onEdit={handleEditExercise}
-                        archivingExerciseId={archivingExerciseId}
+                        archivingExerciseId={exerciseData.archivingExerciseId}
                         isArchivedView={view === "archived"}
                         onRestore={handleRestoreExercise}
                     />
