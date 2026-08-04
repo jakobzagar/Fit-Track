@@ -132,7 +132,8 @@ Run these commands from the repository root:
 | `npm run format`             | Format the repository with Prettier            |
 | `npm run actions:lint`       | Statically check GitHub Actions workflows      |
 | `npm run actions:list`       | List jobs that `act` can run locally           |
-| `npm run actions:check`      | Lint and dry-run GitHub Actions locally        |
+| `npm run actions:check`      | Lint workflows and dry-run the CI Verify job   |
+| `npm run actions:verify`     | Simulate the CI Verify job with `act`          |
 | `npm run check`              | Run lint, type-checking, and formatting checks |
 | `npm run verify`             | Run fast tests, checks, and production builds  |
 | `npm run verify:shared`      | Verify only the shared workspace               |
@@ -161,16 +162,22 @@ From the repository root, statically validate workflows and inspect the jobs ava
 ```bash
 npm run actions:lint
 npm run actions:list
+npm run actions:check
 ```
 
-Run all jobs for the default event, or select a single job by its workflow job ID:
+Simulate the CI `Verify` job locally:
 
 ```bash
-act
-act -j <job-id>
+npm run actions:verify
 ```
 
-Use `act -s SECRET_NAME` to enter a secret without placing its value in shell history. Local `.secrets`, `.vars`, and `.input` files are ignored by Git and must never contain values intended for commit. `act` approximates GitHub-hosted runners with Docker, so confirm runner-specific behavior with a real GitHub Actions run before merging.
+Use `npm run test:docker` rather than `act` for local backend integration tests. The dedicated Compose stack reproduces the temporary PostgreSQL database and migration lifecycle more reliably than GitHub service-container emulation.
+
+Use `act -s SECRET_NAME` to enter a secret without placing its value in shell history. Local `.secrets`, `.vars`, and `.input` files are ignored by Git and must never contain values intended for commit. The committed `.actrc` maps `ubuntu-latest` to act's medium Ubuntu image. `act` still only approximates GitHub-hosted runners, so confirm runner-specific behavior with a real GitHub Actions run before merging.
+
+## Publishing container images
+
+After CI succeeds on `main`, GitHub Actions publishes multi-platform (`linux/amd64` and `linux/arm64`) production backend and frontend images to GHCR with both `latest` and commit SHA tags. Configure the repository variable `VITE_API_URL` with the public production API URL before enabling the publishing workflow. Authentication uses the workflow-provided `GITHUB_TOKEN`; no separate registry secret is required.
 
 ## Quality checks
 
