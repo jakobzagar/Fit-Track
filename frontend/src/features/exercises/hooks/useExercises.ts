@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {
     archiveExercise,
     createExercise,
@@ -18,15 +18,19 @@ export function useExercises(view: ExerciseView) {
     const [loadError, setLoadError] = useState("");
     const [mutationError, setMutationError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const requestIdRef = useRef(0);
 
     const load = useCallback(async () => {
+        const requestId = ++requestIdRef.current;
         try {
             const response: ExercisesResponse = await getExercises(view);
-            setExercises(response.exercises);
+            if (requestId === requestIdRef.current) setExercises(response.exercises);
         } catch (error) {
-            setLoadError(error instanceof Error ? error.message : "Failed to load exercises");
+            if (requestId === requestIdRef.current) {
+                setLoadError(error instanceof Error ? error.message : "Failed to load exercises");
+            }
         } finally {
-            setIsLoading(false);
+            if (requestId === requestIdRef.current) setIsLoading(false);
         }
     }, [view]);
 
