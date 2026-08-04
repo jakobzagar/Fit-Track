@@ -298,11 +298,42 @@ describe("workout lifecycle", () => {
         expect(body.workout.status).toBe("COMPLETED");
         expect(body.workout.completedAt).not.toBeNull();
     });
+
+    it("does not start or finish another user's workout", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const other = await createTestUser("other@example.com");
+        const draft = await createTestWorkout(other.user.id);
+        const active = await createTestWorkout(other.user.id, {
+            name: "Active",
+            status: "ACTIVE",
+            startedAt: new Date(),
+        });
+        const exercise = await createTestExercise(other.user.id);
+        const workoutExercise = await createTestWorkoutExercise(active.id, exercise.id);
+        await createTestSet(workoutExercise.id, 1, {completedAt: new Date()});
+
+        const start = await authenticated("post", `/api/workouts/${draft.id}/start`, owner.cookie);
+        const finish = await authenticated(
+            "post",
+            `/api/workouts/${active.id}/finish`,
+            owner.cookie,
+        );
+
+        expect(start.status).toBe(404);
+        expect(finish.status).toBe(404);
+        await expect(
+            prisma.workout.findUniqueOrThrow({where: {id: draft.id}}),
+        ).resolves.toMatchObject({status: "DRAFT", startedAt: null});
+        await expect(
+            prisma.workout.findUniqueOrThrow({where: {id: active.id}}),
+        ).resolves.toMatchObject({status: "ACTIVE", completedAt: null});
+    });
 });
 
 describe("GET /api/workouts/:workoutId/previous-performances", () => {
     it("returns the latest completed performance and only its completed sets", async () => {
         const owner = await createTestUser("owner@example.com");
+        const other = await createTestUser("other@example.com");
         const exercise = await createTestExercise(owner.user.id);
         const current = await createTestWorkout(owner.user.id, {name: "Current"});
         await createTestWorkoutExercise(current.id, exercise.id);
@@ -316,6 +347,13 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
             completedAt: new Date(),
         });
         await createTestSet(previousExercise.id, 2, {completedAt: null});
+        const foreign = await createTestWorkout(other.user.id, {
+            name: "Foreign newer performance",
+            status: "COMPLETED",
+            completedAt: new Date("2026-07-25T10:00:00.000Z"),
+        });
+        const foreignExercise = await createTestWorkoutExercise(foreign.id, exercise.id);
+        await createTestSet(foreignExercise.id, 1, {completedAt: new Date()});
 
         const response = await authenticated(
             "get",

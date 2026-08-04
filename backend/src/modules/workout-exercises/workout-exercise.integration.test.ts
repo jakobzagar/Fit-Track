@@ -293,6 +293,53 @@ describe("workout sets", () => {
             prisma.workoutSet.findUniqueOrThrow({where: {id: second.id}}),
         ).resolves.toMatchObject({setNumber: 1});
     });
+
+    it("does not update or delete another user's set", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const other = await createTestUser("other@example.com");
+        const workout = await createTestWorkout(other.user.id);
+        const exercise = await createTestExercise(other.user.id);
+        const item = await createTestWorkoutExercise(workout.id, exercise.id);
+        const set = await createTestSet(item.id, 1, {reps: 10});
+        const path = `/api/workouts/${workout.id}/exercises/${item.id}/sets/${set.id}`;
+
+        const update = await authenticated("patch", path, owner.cookie).send({reps: 12});
+        const deletion = await authenticated("delete", path, owner.cookie);
+
+        expect(update.status).toBe(404);
+        expect(deletion.status).toBe(404);
+        await expect(
+            prisma.workoutSet.findUniqueOrThrow({where: {id: set.id}}),
+        ).resolves.toMatchObject({reps: 10});
+    });
+
+    it("rejects a valid set ID under mismatched workout parents", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const firstWorkout = await createTestWorkout(owner.user.id);
+        const secondWorkout = await createTestWorkout(owner.user.id, {name: "Second"});
+        const firstExercise = await createTestExercise(owner.user.id, {name: "Bench"});
+        const secondExercise = await createTestExercise(owner.user.id, {name: "Squat"});
+        const firstItem = await createTestWorkoutExercise(firstWorkout.id, firstExercise.id);
+        const secondItem = await createTestWorkoutExercise(secondWorkout.id, secondExercise.id);
+        const set = await createTestSet(firstItem.id, 1, {reps: 10});
+
+        const wrongExercise = await authenticated(
+            "patch",
+            `/api/workouts/${firstWorkout.id}/exercises/${secondItem.id}/sets/${set.id}`,
+            owner.cookie,
+        ).send({reps: 12});
+        const wrongWorkout = await authenticated(
+            "delete",
+            `/api/workouts/${secondWorkout.id}/exercises/${firstItem.id}/sets/${set.id}`,
+            owner.cookie,
+        );
+
+        expect(wrongExercise.status).toBe(404);
+        expect(wrongWorkout.status).toBe(404);
+        await expect(
+            prisma.workoutSet.findUniqueOrThrow({where: {id: set.id}}),
+        ).resolves.toMatchObject({reps: 10});
+    });
 });
 
 describe("workout set completion", () => {
@@ -339,6 +386,43 @@ describe("workout set completion", () => {
         expect(messageResponseSchema.parse(response.body)).toEqual({
             message: "Sets can only be completed during an active workout",
         });
+    });
+
+    it("does not change completion for another user's set or mismatched parents", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const other = await createTestUser("other@example.com");
+        const foreignWorkout = await createTestWorkout(other.user.id, {
+            status: "ACTIVE",
+            startedAt: new Date(),
+        });
+        const foreignExercise = await createTestExercise(other.user.id);
+        const foreignItem = await createTestWorkoutExercise(foreignWorkout.id, foreignExercise.id);
+        const foreignSet = await createTestSet(foreignItem.id);
+        const ownerWorkout = await createTestWorkout(owner.user.id, {
+            status: "ACTIVE",
+            startedAt: new Date(),
+        });
+        const ownerExercise = await createTestExercise(owner.user.id);
+        const ownerItem = await createTestWorkoutExercise(ownerWorkout.id, ownerExercise.id);
+        const ownerSet = await createTestSet(ownerItem.id);
+
+        const foreign = await authenticated(
+            "patch",
+            `/api/workouts/${foreignWorkout.id}/exercises/${foreignItem.id}/sets/${foreignSet.id}/completion`,
+            owner.cookie,
+        ).send({completed: true, reps: 10});
+        const mismatched = await authenticated(
+            "patch",
+            `/api/workouts/${ownerWorkout.id}/exercises/${foreignItem.id}/sets/${ownerSet.id}/completion`,
+            owner.cookie,
+        ).send({completed: true, reps: 10});
+
+        expect(foreign.status).toBe(404);
+        expect(mismatched.status).toBe(404);
+        const sets = await prisma.workoutSet.findMany({
+            where: {id: {in: [foreignSet.id, ownerSet.id]}},
+        });
+        expect(sets.every((set) => set.completedAt === null)).toBe(true);
     });
 });
 
