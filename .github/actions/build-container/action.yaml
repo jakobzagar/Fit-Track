@@ -1,0 +1,54 @@
+name: Build and push container
+description: Generate OCI metadata and publish a cached multi-platform image
+
+inputs:
+  image:
+    description: Fully qualified container image name without a tag
+    required: true
+  dockerfile:
+    description: Dockerfile path relative to the repository root
+    required: true
+  cache-scope:
+    description: GitHub Actions cache scope for this image
+    required: true
+  revision:
+    description: Tested Git commit SHA represented by the image
+    required: true
+  build-args:
+    description: Optional newline-delimited Docker build arguments
+    required: false
+    default: ""
+
+outputs:
+  digest:
+    description: Published multi-platform image digest
+    value: ${{ steps.build.outputs.digest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate image metadata
+      id: metadata
+      uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+      with:
+        images: ${{ inputs.image }}
+        tags: |
+          type=raw,value=latest
+          type=raw,value=${{ inputs.revision }}
+        labels: |
+          org.opencontainers.image.revision=${{ inputs.revision }}
+
+    - name: Build and push image
+      id: build
+      uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+      with:
+        context: .
+        file: ${{ inputs.dockerfile }}
+        target: production
+        platforms: linux/amd64,linux/arm64
+        push: true
+        build-args: ${{ inputs.build-args }}
+        tags: ${{ steps.metadata.outputs.tags }}
+        labels: ${{ steps.metadata.outputs.labels }}
+        cache-from: type=gha,scope=${{ inputs.cache-scope }}
+        cache-to: type=gha,mode=max,scope=${{ inputs.cache-scope }}
