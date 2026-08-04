@@ -17,6 +17,56 @@ const activeExercise = {
 };
 
 describe("useExercises", () => {
+    test("does not append an exercise when creation fails", async () => {
+        server.use(
+            http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises: []})),
+            http.post(`${API_URL}/exercises`, () =>
+                HttpResponse.json({message: "Duplicate exercise"}, {status: 409}),
+            ),
+        );
+        const {result} = renderHook(() => useExercises("active"));
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        let caught: unknown;
+        await act(async () => {
+            try {
+                await result.current.create({name: "Bench press", muscleGroup: "Chest"});
+            } catch (error) {
+                caught = error;
+            }
+        });
+
+        expect(caught).toEqual(expect.objectContaining({message: "Duplicate exercise"}));
+        expect(result.current.exercises).toEqual([]);
+        expect(result.current.mutationError).toBe("Duplicate exercise");
+    });
+
+    test("keeps the existing exercise when an update fails", async () => {
+        server.use(
+            http.get(`${API_URL}/exercises`, () =>
+                HttpResponse.json({exercises: [activeExercise]}),
+            ),
+            http.patch(`${API_URL}/exercises/${activeExercise.id}`, () =>
+                HttpResponse.json({message: "Update blocked"}, {status: 409}),
+            ),
+        );
+        const {result} = renderHook(() => useExercises("active"));
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        let caught: unknown;
+        await act(async () => {
+            try {
+                await result.current.update(activeExercise.id, {name: "Incline press"});
+            } catch (error) {
+                caught = error;
+            }
+        });
+
+        expect(caught).toEqual(expect.objectContaining({message: "Update blocked"}));
+        expect(result.current.exercises[0]?.name).toBe(activeExercise.name);
+        expect(result.current.mutationError).toBe("Update blocked");
+    });
+
     test("keeps an exercise when archiving fails", async () => {
         server.use(
             http.get(`${API_URL}/exercises`, () =>

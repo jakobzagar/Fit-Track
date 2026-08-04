@@ -8,6 +8,31 @@ import {useWorkouts} from "./useWorkouts";
 const API_URL = "http://localhost:3001/api";
 
 describe("useWorkouts", () => {
+    test("keeps the existing workout when an update fails", async () => {
+        const workout = {...createWorkout(), _count: {workoutExercises: 1}};
+        server.use(
+            http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts: [workout]})),
+            http.patch(`${API_URL}/workouts/${workout.id}`, () =>
+                HttpResponse.json({message: "Update blocked"}, {status: 409}),
+            ),
+        );
+        const {result} = renderHook(() => useWorkouts());
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        let caught: unknown;
+        await act(async () => {
+            try {
+                await result.current.update(workout.id, {name: "Changed"});
+            } catch (error) {
+                caught = error;
+            }
+        });
+
+        expect(caught).toEqual(expect.objectContaining({message: "Update blocked"}));
+        expect(result.current.workouts[0]?.name).toBe(workout.name);
+        expect(result.current.mutationError).toBe("Update blocked");
+    });
+
     test("keeps data and clears pending state when deletion fails", async () => {
         const workout = {...createWorkout(), _count: {workoutExercises: 1}};
         server.use(
