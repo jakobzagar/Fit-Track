@@ -1,0 +1,22 @@
+name: Set up Node workspace
+description: Set up Node.js and install locked workspace dependencies
+
+inputs:
+  node-version:
+    description: Node.js version to install
+    required: false
+    default: "24"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
