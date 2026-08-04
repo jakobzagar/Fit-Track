@@ -48,10 +48,11 @@ describe("loginSchema", () => {
         expect(result.email).toBe("jakob@example.com");
     });
 
-    test("rejects an empty password", () => {
-        expect(loginSchema.safeParse({email: "jakob@example.com", password: ""}).success).toBe(
-            false,
-        );
+    test.each([
+        ["an empty password", ""],
+        ["a password over 72 characters", "a".repeat(73)],
+    ])("rejects %s", (_case, password) => {
+        expect(loginSchema.safeParse({email: "jakob@example.com", password}).success).toBe(false);
     });
 });
 
