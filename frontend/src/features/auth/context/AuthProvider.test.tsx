@@ -1,11 +1,11 @@
 import {http, HttpResponse} from "msw";
 import {screen} from "@testing-library/react";
 import {describe, expect, test} from "vitest";
+import {API_URL} from "../../../test/constants";
 import {renderWithProviders} from "../../../test/render";
 import {server} from "../../../test/mocks/server";
 import {useAuth} from "../hooks/useAuth";
 
-const API_URL = "http://localhost:3001/api";
 const currentUser = {
     id: "123e4567-e89b-42d3-a456-426614174000",
     name: "Jakob",

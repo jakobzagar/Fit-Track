@@ -1,11 +1,10 @@
 import {act, renderHook, waitFor} from "@testing-library/react";
 import {http, HttpResponse} from "msw";
 import {describe, expect, test} from "vitest";
+import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
 import {createWorkout} from "../../../test/fixtures/workouts";
 import {useWorkouts} from "./useWorkouts";
-
-const API_URL = "http://localhost:3001/api";
 
 describe("useWorkouts", () => {
     test("keeps the existing workout when an update fails", async () => {

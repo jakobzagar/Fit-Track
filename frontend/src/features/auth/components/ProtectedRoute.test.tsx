@@ -2,11 +2,10 @@ import {http, HttpResponse} from "msw";
 import {Route, Routes} from "react-router";
 import {screen} from "@testing-library/react";
 import {describe, expect, test} from "vitest";
+import {API_URL} from "../../../test/constants";
 import {renderWithProviders} from "../../../test/render";
 import {server} from "../../../test/mocks/server";
 import {ProtectedRoute} from "./ProtectedRoute";
-
-const API_URL = "http://localhost:3001/api";
 
 function renderProtectedRoute() {
     return renderWithProviders(

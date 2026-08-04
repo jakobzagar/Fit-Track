@@ -1,6 +1,7 @@
 import {act, renderHook, waitFor} from "@testing-library/react";
 import {http, HttpResponse} from "msw";
 import {describe, expect, test, vi} from "vitest";
+import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
 import {
     createWorkout,
@@ -11,9 +12,7 @@ import {
 } from "../../../test/fixtures/workouts";
 import {useWorkoutDetail} from "./useWorkoutDetail";
 
-const API_URL = "http://localhost:3001/api";
-
-function useLoadHandlers(workout = createWorkout()) {
+function mockLoadRequests(workout = createWorkout()) {
     server.use(
         http.get(`${API_URL}/workouts/${workoutId}`, () => HttpResponse.json({workout})),
         http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises: [exercise]})),
@@ -22,7 +21,7 @@ function useLoadHandlers(workout = createWorkout()) {
 
 describe("useWorkoutDetail", () => {
     test("keeps workout state unchanged when adding an exercise fails", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/exercises`, () =>
                 HttpResponse.json({message: "Exercise already added"}, {status: 409}),
@@ -46,7 +45,7 @@ describe("useWorkoutDetail", () => {
     });
 
     test("does not delete an exercise when confirmation is cancelled", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         const confirm = vi.fn().mockResolvedValue(false);
         const {result} = renderHook(() => useWorkoutDetail(workoutId, confirm));
         await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -65,7 +64,7 @@ describe("useWorkoutDetail", () => {
             position: 2,
             exercise: {...exercise, id: "123e4567-e89b-42d3-a456-426614174002", name: "Row"},
         };
-        useLoadHandlers(createWorkout({workoutExercises: [workoutExercise, second]}));
+        mockLoadRequests(createWorkout({workoutExercises: [workoutExercise, second]}));
         server.use(
             http.patch(`${API_URL}/workouts/${workoutId}/exercises/${second.id}`, () =>
                 HttpResponse.json({workoutExercise: {...second, position: 1}}),
@@ -86,7 +85,7 @@ describe("useWorkoutDetail", () => {
     });
 
     test("preserves the selected exercise when an update fails", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.patch(`${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}`, () =>
                 HttpResponse.json({message: "Position unavailable"}, {status: 409}),
@@ -112,7 +111,7 @@ describe("useWorkoutDetail", () => {
     });
 
     test("keeps an exercise and clears pending state when removal fails", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.delete(`${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}`, () =>
                 HttpResponse.json({message: "Exercise cannot be removed"}, {status: 409}),

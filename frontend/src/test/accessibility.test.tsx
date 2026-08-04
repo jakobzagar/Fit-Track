@@ -11,11 +11,10 @@ import {WorkoutsPage} from "../features/workouts/pages/WorkoutsPage";
 import {ExercisesPage} from "../features/exercises/pages/ExercisesPage";
 import {WorkoutDetailPage} from "../features/workouts/pages/WorkoutDetailPage";
 import {WorkoutSessionPage} from "../features/workouts/pages/WorkoutSessionPage";
+import {API_URL} from "./constants";
 import {server} from "./mocks/server";
 import {createWorkout, exercise, workoutId} from "./fixtures/workouts";
 import {renderWithProviders} from "./render";
-
-const API_URL = "http://localhost:3001/api";
 
 async function expectNoAccessibilityViolations(container: HTMLElement) {
     const result = await axe.run(container, {

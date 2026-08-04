@@ -4,6 +4,7 @@ import {http, HttpResponse} from "msw";
 import {createMemoryRouter, RouterProvider, useNavigate, useParams} from "react-router";
 import {describe, expect, test, vi} from "vitest";
 import {AppProviders} from "../../../app/providers";
+import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
 import {
     createWorkout,
@@ -14,7 +15,6 @@ import {
 } from "../../../test/fixtures/workouts";
 import {useWorkoutSession} from "./useWorkoutSession";
 
-const API_URL = "http://localhost:3001/api";
 type SessionState = ReturnType<typeof useWorkoutSession>;
 
 function renderSessionHook(confirm = vi.fn().mockResolvedValue(false)) {
@@ -48,7 +48,7 @@ function renderSessionHook(confirm = vi.fn().mockResolvedValue(false)) {
     };
 }
 
-function useLoadHandlers() {
+function mockLoadRequests() {
     server.use(
         http.get(`${API_URL}/workouts/${workoutId}`, () =>
             HttpResponse.json({workout: createWorkout()}),
@@ -62,7 +62,7 @@ function useLoadHandlers() {
 
 describe("useWorkoutSession", () => {
     test("keeps the session open when clean exit is cancelled", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         const hook = renderSessionHook();
         await waitFor(() => expect(hook.current?.isLoading).toBe(false));
 
@@ -73,7 +73,7 @@ describe("useWorkoutSession", () => {
     });
 
     test("does not append a set when creation fails", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets`, () =>
                 HttpResponse.json({message: "Set rejected"}, {status: 422}),
@@ -89,7 +89,7 @@ describe("useWorkoutSession", () => {
     });
 
     test("keeps a set unchanged when saving fails", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.patch(
                 `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${workoutSet.id}`,
@@ -113,7 +113,7 @@ describe("useWorkoutSession", () => {
     });
 
     test("keeps completion unchanged when toggling a set fails", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.patch(
                 `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${workoutSet.id}/completion`,
@@ -138,7 +138,7 @@ describe("useWorkoutSession", () => {
     });
 
     test("reports an add-exercise failure without changing the session", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/exercises`, () =>
                 HttpResponse.json({message: "Exercise already exists"}, {status: 409}),

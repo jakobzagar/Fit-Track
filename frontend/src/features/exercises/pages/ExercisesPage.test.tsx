@@ -1,21 +1,11 @@
 import {http, HttpResponse} from "msw";
 import {screen, within} from "@testing-library/react";
 import {describe, expect, test} from "vitest";
+import {API_URL} from "../../../test/constants";
+import {exercise} from "../../../test/fixtures/exercises";
 import {server} from "../../../test/mocks/server";
 import {renderWithProviders} from "../../../test/render";
 import {ExercisesPage} from "./ExercisesPage";
-
-const API_URL = "http://localhost:3001/api";
-const exercise = {
-    id: "123e4567-e89b-42d3-a456-426614174001",
-    userId: "123e4567-e89b-42d3-a456-426614174000",
-    name: "Bench press",
-    muscleGroup: "Chest",
-    equipment: "Barbell",
-    isArchived: false,
-    createdAt: "2026-07-26T10:00:00.000Z",
-    updatedAt: "2026-07-26T10:00:00.000Z",
-};
 
 function handleExerciseList(exercises = [exercise]) {
     return http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises}));

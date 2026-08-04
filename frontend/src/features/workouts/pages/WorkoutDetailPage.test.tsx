@@ -2,6 +2,7 @@ import {http, HttpResponse} from "msw";
 import {Route, Routes} from "react-router";
 import {screen, within} from "@testing-library/react";
 import {describe, expect, test} from "vitest";
+import {API_URL} from "../../../test/constants";
 import {renderWithProviders} from "../../../test/render";
 import {server} from "../../../test/mocks/server";
 import {
@@ -15,8 +16,6 @@ import {
 } from "../../../test/fixtures/workouts";
 import {WorkoutDetailPage} from "./WorkoutDetailPage";
 
-const API_URL = "http://localhost:3001/api";
-
 function renderPage() {
     return renderWithProviders(
         <Routes>
@@ -26,7 +25,7 @@ function renderPage() {
     );
 }
 
-function useLoadHandlers(workout = createWorkout(), exercises = [exercise]) {
+function mockLoadRequests(workout = createWorkout(), exercises = [exercise]) {
     server.use(
         http.get(`${API_URL}/workouts/${workoutId}`, () => HttpResponse.json({workout})),
         http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises})),
@@ -35,7 +34,7 @@ function useLoadHandlers(workout = createWorkout(), exercises = [exercise]) {
 
 describe("WorkoutDetailPage", () => {
     test("loads workout details and its logged sets", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         renderPage();
 
         expect(screen.getByText("Loading workout")).toBeInTheDocument();
@@ -79,7 +78,7 @@ describe("WorkoutDetailPage", () => {
     });
 
     test("adds an available exercise", async () => {
-        useLoadHandlers(createWorkout({workoutExercises: []}));
+        mockLoadRequests(createWorkout({workoutExercises: []}));
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/exercises`, async ({request}) => {
                 expect(await request.json()).toEqual({exerciseId});
@@ -99,7 +98,7 @@ describe("WorkoutDetailPage", () => {
 
     test("adds and deletes a workout set", async () => {
         const exerciseWithoutSets = {...workoutExercise, sets: []};
-        useLoadHandlers(createWorkout({workoutExercises: [exerciseWithoutSets]}));
+        mockLoadRequests(createWorkout({workoutExercises: [exerciseWithoutSets]}));
         server.use(
             http.post(
                 `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets`,
@@ -131,7 +130,7 @@ describe("WorkoutDetailPage", () => {
     });
 
     test("updates and removes a workout exercise", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.patch(
                 `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}`,
@@ -167,7 +166,7 @@ describe("WorkoutDetailPage", () => {
     });
 
     test("shows an add-exercise mutation error", async () => {
-        useLoadHandlers(createWorkout({workoutExercises: []}));
+        mockLoadRequests(createWorkout({workoutExercises: []}));
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/exercises`, () =>
                 HttpResponse.json({message: "Exercise already added"}, {status: 409}),
@@ -182,7 +181,7 @@ describe("WorkoutDetailPage", () => {
     });
 
     test("updates an existing workout set", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.patch(
                 `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${workoutSet.id}`,

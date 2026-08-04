@@ -1,6 +1,6 @@
 import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {afterEach, describe, expect, test} from "vitest";
+import {describe, expect, test} from "vitest";
 import {ThemeToggle} from "./ThemeToggle";
 
 function addThemeMeta(content: string) {
@@ -10,12 +10,6 @@ function addThemeMeta(content: string) {
     document.head.append(meta);
     return meta;
 }
-
-afterEach(() => {
-    delete document.documentElement.dataset.theme;
-    document.querySelector('meta[name="theme-color"]')?.remove();
-    localStorage.clear();
-});
 
 describe("ThemeToggle", () => {
     test("uses the document theme as its accessible initial state", () => {

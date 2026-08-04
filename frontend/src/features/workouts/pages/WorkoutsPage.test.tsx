@@ -1,12 +1,12 @@
 import {http, HttpResponse} from "msw";
 import {screen, within} from "@testing-library/react";
 import {describe, expect, test} from "vitest";
+import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
 import {renderWithProviders} from "../../../test/render";
 import {WorkoutsPage} from "./WorkoutsPage";
 import type {WorkoutSummary} from "../workout.types";
 
-const API_URL = "http://localhost:3001/api";
 const workout = {
     id: "123e4567-e89b-42d3-a456-426614174010",
     userId: "123e4567-e89b-42d3-a456-426614174000",

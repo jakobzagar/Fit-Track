@@ -1,20 +1,10 @@
 import {act, renderHook, waitFor} from "@testing-library/react";
 import {http, HttpResponse, delay} from "msw";
 import {describe, expect, test} from "vitest";
+import {API_URL} from "../../../test/constants";
+import {exercise as activeExercise} from "../../../test/fixtures/exercises";
 import {server} from "../../../test/mocks/server";
 import {useExercises} from "./useExercises";
-
-const API_URL = "http://localhost:3001/api";
-const activeExercise = {
-    id: "123e4567-e89b-42d3-a456-426614174001",
-    userId: "123e4567-e89b-42d3-a456-426614174000",
-    name: "Bench press",
-    muscleGroup: "Chest",
-    equipment: "Barbell",
-    isArchived: false,
-    createdAt: "2026-07-26T10:00:00.000Z",
-    updatedAt: "2026-07-26T10:00:00.000Z",
-};
 
 describe("useExercises", () => {
     test("does not append an exercise when creation fails", async () => {

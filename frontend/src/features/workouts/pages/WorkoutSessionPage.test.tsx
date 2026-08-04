@@ -4,6 +4,7 @@ import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
 import {AppProviders} from "../../../app/providers";
+import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
 import {
     createWorkout,
@@ -14,8 +15,6 @@ import {
     workoutSet,
 } from "../../../test/fixtures/workouts";
 import {WorkoutSessionPage} from "./WorkoutSessionPage";
-
-const API_URL = "http://localhost:3001/api";
 
 function renderPage() {
     const router = createMemoryRouter(
@@ -38,7 +37,7 @@ function renderPage() {
     };
 }
 
-function useLoadHandlers(workout = createWorkout()) {
+function mockLoadRequests(workout = createWorkout()) {
     server.use(
         http.get(`${API_URL}/workouts/${workoutId}`, () => HttpResponse.json({workout})),
         http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises: [exercise]})),
@@ -51,7 +50,7 @@ function useLoadHandlers(workout = createWorkout()) {
 describe("WorkoutSessionPage", () => {
     test("starts a draft workout and renders the live session", async () => {
         const draft = createWorkout({status: "DRAFT", startedAt: null});
-        useLoadHandlers(draft);
+        mockLoadRequests(draft);
         const startRequest = vi.fn();
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/start`, () => {
@@ -71,7 +70,7 @@ describe("WorkoutSessionPage", () => {
     });
 
     test("redirects an already completed workout to its details", async () => {
-        useLoadHandlers(createWorkout({status: "COMPLETED"}));
+        mockLoadRequests(createWorkout({status: "COMPLETED"}));
         renderPage();
 
         expect(await screen.findByRole("heading", {name: "Workout detail"})).toBeInTheDocument();
@@ -99,7 +98,7 @@ describe("WorkoutSessionPage", () => {
     });
 
     test("updates completion of a set", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         server.use(
             http.patch(
                 `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${workoutSet.id}/completion`,
@@ -136,7 +135,7 @@ describe("WorkoutSessionPage", () => {
         const active = createWorkout({
             workoutExercises: [{...createWorkout().workoutExercises[0], sets: [completedSet]}],
         });
-        useLoadHandlers(active);
+        mockLoadRequests(active);
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/finish`, () =>
                 HttpResponse.json({
@@ -158,7 +157,7 @@ describe("WorkoutSessionPage", () => {
 
     test("shows a finish error and keeps the active session open", async () => {
         const completedSet = {...workoutSet, completedAt: "2026-07-26T10:20:00.000Z"};
-        useLoadHandlers(
+        mockLoadRequests(
             createWorkout({
                 workoutExercises: [{...createWorkout().workoutExercises[0], sets: [completedSet]}],
             }),
@@ -178,7 +177,7 @@ describe("WorkoutSessionPage", () => {
     });
 
     test("copies the last set", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         const copiedSet = {
             ...workoutSet,
             id: "123e4567-e89b-42d3-a456-426614174088",
@@ -201,7 +200,7 @@ describe("WorkoutSessionPage", () => {
     });
 
     test("adds an exercise to an active session", async () => {
-        useLoadHandlers(createWorkout({workoutExercises: []}));
+        mockLoadRequests(createWorkout({workoutExercises: []}));
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/exercises`, () => {
                 const {sets: _sets, ...created} = workoutExercise;
@@ -228,7 +227,7 @@ describe("WorkoutSessionPage", () => {
                 {...createWorkout().workoutExercises[0], sets: [completedSet, editableSet]},
             ],
         });
-        useLoadHandlers(active);
+        mockLoadRequests(active);
         const finishRequest = vi.fn();
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/finish`, () => {
@@ -251,7 +250,7 @@ describe("WorkoutSessionPage", () => {
     });
 
     test("blocks every in-app navigation while a set has unsaved edits", async () => {
-        useLoadHandlers();
+        mockLoadRequests();
         const {user, router} = renderPage();
         await screen.findByRole("heading", {name: "Push day"});
 

@@ -1,6 +1,5 @@
 import {http, HttpResponse, type RequestHandler} from "msw";
-
-const API_URL = "http://localhost:3001/api";
+import {API_URL} from "../constants";
 
 export const handlers: RequestHandler[] = [
     http.get(`${API_URL}/auth/me`, () =>

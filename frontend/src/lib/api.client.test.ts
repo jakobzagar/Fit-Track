@@ -1,10 +1,10 @@
 import {http, HttpResponse} from "msw";
 import {z} from "zod";
 import {describe, expect, test, vi} from "vitest";
+import {API_URL} from "../test/constants";
 import {server} from "../test/mocks/server";
 import {apiRequest} from "./api.client";
 
-const API_URL = "http://localhost:3001/api";
 const responseSchema = z.object({value: z.string()});
 
 describe("apiRequest", () => {
