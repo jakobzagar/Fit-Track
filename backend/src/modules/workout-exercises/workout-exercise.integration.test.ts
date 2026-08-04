@@ -1,5 +1,5 @@
 import request from "supertest";
-import {afterAll, beforeEach, describe, expect, it} from "vitest";
+import {describe, expect, it} from "vitest";
 import {messageResponseSchema} from "@fit-track/shared/auth";
 import {
     addExerciseToWorkoutResponseSchema,
@@ -9,7 +9,6 @@ import {
 } from "@fit-track/shared/workout-exercises";
 import {app} from "../../app.js";
 import {prisma} from "../../db/prisma.js";
-import {clearTestDatabase, disconnectTestDatabase} from "../../test/database.js";
 import {
     authenticated,
     createTestExercise,
@@ -18,9 +17,6 @@ import {
     createTestWorkout,
     createTestWorkoutExercise,
 } from "../../test/fixtures.js";
-
-beforeEach(clearTestDatabase);
-afterAll(disconnectTestDatabase);
 
 describe("POST /api/workouts/:workoutId/exercises", () => {
     it("adds owned active exercises at sequential positions", async () => {

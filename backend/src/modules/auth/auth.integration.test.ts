@@ -1,12 +1,11 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import request, {type Response} from "supertest";
-import {afterAll, beforeEach, describe, expect, it} from "vitest";
+import {describe, expect, it} from "vitest";
 import {authResponseSchema, messageResponseSchema} from "@fit-track/shared/auth";
 import {app} from "../../app.js";
 import {env} from "../../config/env.js";
 import {prisma} from "../../db/prisma.js";
-import {clearTestDatabase, disconnectTestDatabase} from "../../test/database.js";
 
 const origin = env.clientUrl;
 const password = "test-password";
@@ -36,9 +35,6 @@ const createUser = async () =>
             passwordHash: await bcrypt.hash(password, 4),
         },
     });
-
-beforeEach(clearTestDatabase);
-afterAll(disconnectTestDatabase);
 
 describe("POST /api/auth/register", () => {
     it("normalizes and stores a user, then sets the authentication cookie", async () => {

@@ -1,5 +1,5 @@
 import request from "supertest";
-import {afterAll, beforeEach, describe, expect, it} from "vitest";
+import {describe, expect, it} from "vitest";
 import {messageResponseSchema} from "@fit-track/shared/auth";
 import {
     createWorkoutResponseSchema,
@@ -9,7 +9,6 @@ import {
 } from "@fit-track/shared/workouts";
 import {app} from "../../app.js";
 import {prisma} from "../../db/prisma.js";
-import {clearTestDatabase, disconnectTestDatabase} from "../../test/database.js";
 import {
     authenticated,
     createTestExercise,
@@ -19,9 +18,6 @@ import {
     createTestWorkoutExercise,
     testOrigin,
 } from "../../test/fixtures.js";
-
-beforeEach(clearTestDatabase);
-afterAll(disconnectTestDatabase);
 
 describe("POST /api/workouts", () => {
     it("normalizes and creates a draft workout for the authenticated user", async () => {
