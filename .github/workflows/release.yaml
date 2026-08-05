@@ -78,7 +78,6 @@ jobs:
     needs: validate-release
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: production
 
     permissions:
       contents: read

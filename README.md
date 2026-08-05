@@ -198,7 +198,7 @@ git commit --allow-empty \
 git push origin main
 ```
 
-The image release workflow validates the generated `vMAJOR.MINOR.PATCH` tag, its membership in `main`, and that it is the highest release version on `main`, then promotes the existing backend and frontend `sha-<commit>` images without rebuilding them. It adds the immutable version tag (`1.0.0`) and the moving `1.0`, `1`, and `latest` tags. The workflow uses the `production` GitHub environment, where required reviewers can be configured for release approval. Do not move or reuse an existing release tag; publish a new patch version instead.
+The image release workflow validates the generated `vMAJOR.MINOR.PATCH` tag, its membership in `main`, and that it is the highest release version on `main`, then promotes the existing backend and frontend `sha-<commit>` images without rebuilding them. It adds the immutable version tag (`1.0.0`) and the moving `1.0`, `1`, and `latest` tags. Image promotion is a packaging step rather than an application deployment, so it does not target a GitHub environment. Add a protected production environment later when a CD workflow deploys the images to real infrastructure. Do not move or reuse an existing release tag; publish a new patch version instead.
 
 ## Quality checks
 
