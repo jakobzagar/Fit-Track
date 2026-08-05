@@ -20,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    env:
+      DATABASE_URL: postgresql://unused:unused@localhost:5432/unused
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -27,10 +30,11 @@ jobs:
       - name: Set up Node workspace
         uses: ./.github/actions/setup-node-workspace
 
+      - name: Generate Prisma client
+        run: npm run generate --workspace @fit-track/backend
+
       - name: Verify
         run: npm run verify
-        env:
-          DATABASE_URL: postgresql://unused:unused@localhost:5432/unused
 
   integration:
     name: Integration
