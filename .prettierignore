@@ -7,6 +7,7 @@ node_modules/
 backend/generated/prisma/
 backend/prisma/migrations/
 package-lock.json
+CHANGELOG.md
 .env
 .env.*
 !.env.example
