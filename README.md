@@ -179,14 +179,26 @@ Use `act -s SECRET_NAME` to enter a secret without placing its value in shell hi
 
 After CI succeeds on `main`, GitHub Actions publishes multi-platform (`linux/amd64` and `linux/arm64`) backend and frontend images to GHCR with the moving `main` tag and an immutable `sha-<commit>` tag. Each image includes an SBOM attestation describing its packaged components and a max-level provenance attestation describing how and from which revision it was built. Configure the repository variable `VITE_API_URL` with the public API URL before enabling image publishing. Authentication uses the workflow-provided `GITHUB_TOKEN`; no separate registry secret is required.
 
-Create a production release only after the tagged commit's main images have been published:
+Release Please manages FitTrack as one versioned product across all three workspaces. Configure a repository secret named `RELEASE_PLEASE_TOKEN` with a fine-grained personal access token scoped only to this repository. Grant it read/write access to contents, pull requests, and issues so Release Please-created pull requests, tags, and releases can trigger the existing workflows.
+
+After a successful image build on `main`, Release Please creates or updates one release pull request from the Conventional Commits since the previous release:
+
+- `fix:` proposes a patch release.
+- `feat:` proposes a minor release.
+- `feat!:` or a `BREAKING CHANGE` footer proposes a major release.
+
+Review the generated version and `CHANGELOG.md`, wait for the release pull request checks, and squash-merge it. The merge runs CI and publishes immutable SHA images first. Release Please then creates the `vMAJOR.MINOR.PATCH` Git tag and GitHub Release, which triggers the image release workflow.
+
+To request a specific next version, add a `Release-As` footer to a Conventional Commit, for example:
 
 ```bash
-git tag -a v1.0.0 -m "release: v1.0.0"
-git push origin v1.0.0
+git commit --allow-empty \
+  -m "chore: prepare release 1.0.0" \
+  -m "Release-As: 1.0.0"
+git push origin main
 ```
 
-The release workflow validates the `vMAJOR.MINOR.PATCH` tag, its membership in `main`, and that it is the highest release version on `main`, then promotes the existing backend and frontend `sha-<commit>` images without rebuilding them. It adds the immutable version tag (`1.0.0`) and the moving `1.0`, `1`, and `latest` tags. The workflow uses the `production` GitHub environment, where required reviewers can be configured for release approval.
+The image release workflow validates the generated `vMAJOR.MINOR.PATCH` tag, its membership in `main`, and that it is the highest release version on `main`, then promotes the existing backend and frontend `sha-<commit>` images without rebuilding them. It adds the immutable version tag (`1.0.0`) and the moving `1.0`, `1`, and `latest` tags. The workflow uses the `production` GitHub environment, where required reviewers can be configured for release approval. Do not move or reuse an existing release tag; publish a new patch version instead.
 
 ## Quality checks
 
