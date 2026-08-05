@@ -177,7 +177,16 @@ Use `act -s SECRET_NAME` to enter a secret without placing its value in shell hi
 
 ## Publishing container images
 
-After CI succeeds on `main`, GitHub Actions publishes multi-platform (`linux/amd64` and `linux/arm64`) production backend and frontend images to GHCR with both `latest` and commit SHA tags. Configure the repository variable `VITE_API_URL` with the public production API URL before enabling the publishing workflow. Authentication uses the workflow-provided `GITHUB_TOKEN`; no separate registry secret is required.
+After CI succeeds on `main`, GitHub Actions publishes multi-platform (`linux/amd64` and `linux/arm64`) backend and frontend images to GHCR with the moving `main` tag and an immutable `sha-<commit>` tag. Each image includes an SBOM attestation describing its packaged components and a max-level provenance attestation describing how and from which revision it was built. Configure the repository variable `VITE_API_URL` with the public API URL before enabling image publishing. Authentication uses the workflow-provided `GITHUB_TOKEN`; no separate registry secret is required.
+
+Create a production release only after the tagged commit's main images have been published:
+
+```bash
+git tag -a v1.0.0 -m "release: v1.0.0"
+git push origin v1.0.0
+```
+
+The release workflow validates the `vMAJOR.MINOR.PATCH` tag, its membership in `main`, and that it is the highest release version on `main`, then promotes the existing backend and frontend `sha-<commit>` images without rebuilding them. It adds the immutable version tag (`1.0.0`) and the moving `1.0`, `1`, and `latest` tags. The workflow uses the `production` GitHub environment, where required reviewers can be configured for release approval.
 
 ## Quality checks
 
