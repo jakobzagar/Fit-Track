@@ -35,7 +35,7 @@
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/jsonwebtoken": "^9.0.10",
-        "@types/node": "^26.0.1",
+        "@types/node": "^25.9.5",
         "@types/pg": "^8.20.3",
         "@types/supertest": "^7.2.1",
         "eslint": "^10.8.0",
