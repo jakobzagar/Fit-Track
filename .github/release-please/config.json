@@ -1,0 +1,32 @@
+{
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/v17.6.1/schemas/config.json",
+    "release-type": "simple",
+    "include-component-in-tag": false,
+    "include-v-in-tag": true,
+    "pull-request-title-pattern": "chore: release ${version}",
+    "changelog-sections": [
+        {
+            "type": "feat",
+            "section": "Features"
+        },
+        {
+            "type": "fix",
+            "section": "Bug Fixes"
+        },
+        {
+            "type": "perf",
+            "section": "Performance Improvements"
+        },
+        {
+            "type": "revert",
+            "section": "Reverts"
+        }
+    ],
+    "bootstrap-sha": "7d9f46b31b93cf4ad2a9d040233ebf6684621098",
+    "packages": {
+        ".": {
+            "component": "fit-track",
+            "package-name": "fit-track"
+        }
+    }
+}
