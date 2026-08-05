@@ -14,6 +14,9 @@ inputs:
   revision:
     description: Tested Git commit SHA represented by the image
     required: true
+  tags:
+    description: Newline-delimited Docker metadata tag definitions
+    required: true
   build-args:
     description: Optional newline-delimited Docker build arguments
     required: false
@@ -32,9 +35,7 @@ runs:
       uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
       with:
         images: ${{ inputs.image }}
-        tags: |
-          type=raw,value=latest
-          type=raw,value=${{ inputs.revision }}
+        tags: ${{ inputs.tags }}
         labels: |
           org.opencontainers.image.revision=${{ inputs.revision }}
 
@@ -47,6 +48,8 @@ runs:
         target: production
         platforms: linux/amd64,linux/arm64
         push: true
+        sbom: true
+        provenance: mode=max
         build-args: ${{ inputs.build-args }}
         tags: ${{ steps.metadata.outputs.tags }}
         labels: ${{ steps.metadata.outputs.labels }}

@@ -20,7 +20,9 @@ jobs:
     name: Build and push images
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main'
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -51,18 +53,38 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push backend image
+        id: backend
         uses: ./.github/actions/build-container
         with:
           image: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
           dockerfile: backend/Dockerfile
           cache-scope: backend
           revision: ${{ github.event.workflow_run.head_sha }}
+          tags: |
+            type=raw,value=sha-${{ github.event.workflow_run.head_sha }}
 
       - name: Build and push frontend image
+        id: frontend
         uses: ./.github/actions/build-container
         with:
           image: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}
           dockerfile: frontend/Dockerfile
           cache-scope: frontend
           revision: ${{ github.event.workflow_run.head_sha }}
+          tags: |
+            type=raw,value=sha-${{ github.event.workflow_run.head_sha }}
           build-args: VITE_API_URL=${{ vars.VITE_API_URL }}
+
+      - name: Promote images to main
+        shell: bash
+        env:
+          BACKEND_DIGEST: ${{ steps.backend.outputs.digest }}
+          FRONTEND_DIGEST: ${{ steps.frontend.outputs.digest }}
+        run: |
+          docker buildx imagetools create \
+            --tag "$REGISTRY/$BACKEND_IMAGE:main" \
+            "$REGISTRY/$BACKEND_IMAGE@$BACKEND_DIGEST"
+
+          docker buildx imagetools create \
+            --tag "$REGISTRY/$FRONTEND_IMAGE:main" \
+            "$REGISTRY/$FRONTEND_IMAGE@$FRONTEND_DIGEST"
