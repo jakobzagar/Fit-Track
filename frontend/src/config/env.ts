@@ -1,7 +1,9 @@
 import {z, flattenError} from "zod";
 
 const envSchema = z.object({
-    VITE_API_URL: z.url("VITE_API_URL must be a valid URL"),
+    VITE_API_URL: z.literal("/api", {
+        error: "VITE_API_URL must be /api",
+    }),
 });
 
 const parsedEnv = envSchema.safeParse(import.meta.env);

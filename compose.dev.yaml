@@ -87,7 +87,8 @@ services:
       target: development
     init: true
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001/api}
+      VITE_API_URL: ${VITE_API_URL:-/api}
+      API_PROXY_TARGET: ${API_PROXY_TARGET:-http://backend:3001}
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
     volumes:

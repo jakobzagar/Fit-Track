@@ -71,7 +71,7 @@ The repository uses npm workspaces. The frontend and backend consume `@fit-track
 
 4. Open the application at [http://localhost:5173](http://localhost:5173).
 
-The API is available at `http://localhost:3001/api`. PostgreSQL is exposed only on `127.0.0.1:5433` by default. Database migrations run automatically before the API starts.
+The frontend calls the API through the Vite proxy at `http://localhost:5173/api`. The backend remains available directly on `http://localhost:3001` for API development, and PostgreSQL is exposed only on `127.0.0.1:5433` by default. Database migrations run automatically before the API starts.
 
 Stop the environment with:
 
@@ -112,6 +112,8 @@ Run the API and frontend in separate terminals:
 npm run dev:backend
 npm run dev:frontend
 ```
+
+The frontend always requests the relative `/api` path. Vite proxies it to `API_PROXY_TARGET` during local development; the default in `frontend/.env.example` targets the locally running backend.
 
 ## Available commands
 
@@ -177,7 +179,7 @@ Use `act -s SECRET_NAME` to enter a secret without placing its value in shell hi
 
 ## Publishing container images
 
-After CI succeeds on `main`, GitHub Actions publishes multi-platform (`linux/amd64` and `linux/arm64`) backend and frontend images to GHCR with the moving `main` tag and an immutable `sha-<commit>` tag. Each image includes an SBOM attestation describing its packaged components and a max-level provenance attestation describing how and from which revision it was built. Configure the repository variable `VITE_API_URL` with the public API URL before enabling image publishing. Authentication uses the workflow-provided `GITHUB_TOKEN`; no separate registry secret is required.
+After CI succeeds on `main`, GitHub Actions publishes multi-platform (`linux/amd64` and `linux/arm64`) backend and frontend images to GHCR with the moving `main` tag and an immutable `sha-<commit>` tag. Each image includes an SBOM attestation describing its packaged components and a max-level provenance attestation describing how and from which revision it was built. Configure the repository variable `VITE_API_URL` as `/api` before enabling image publishing. Authentication uses the workflow-provided `GITHUB_TOKEN`; no separate registry secret is required.
 
 Release Please manages FitTrack as one versioned product across all three workspaces. Configure a repository secret named `RELEASE_PLEASE_TOKEN` with a fine-grained personal access token scoped only to this repository. Grant it read/write access to contents, pull requests, and issues so Release Please-created pull requests, tags, and releases can trigger the existing workflows.
 

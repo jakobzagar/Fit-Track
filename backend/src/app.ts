@@ -14,6 +14,7 @@ import workoutExerciseRoutes from "./modules/workout-exercises/workout-exercise.
 
 export const app = express();
 
+app.set("trust proxy", env.nodeEnv === "production" ? 1 : false);
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(

@@ -11,7 +11,7 @@ export default defineConfig({
         setupFiles: ["./src/test/setup.ts"],
         restoreMocks: true,
         env: {
-            VITE_API_URL: "http://localhost:3001/api",
+            VITE_API_URL: "/api",
         },
     },
 });
