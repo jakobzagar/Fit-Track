@@ -191,6 +191,8 @@ After a successful image build on `main`, Release Please creates or updates one 
 
 Review the generated version and `CHANGELOG.md`, wait for the release pull request checks, and squash-merge it. The merge runs CI and publishes immutable SHA images first. Release Please then creates the `vMAJOR.MINOR.PATCH` Git tag and GitHub Release, which triggers the image release workflow.
 
+Do not create or push a release tag manually during the normal release process. Squash-merging the Release Please pull request is sufficient; after the build for that merge succeeds, Release Please publishes the tag and GitHub Release automatically.
+
 To request a specific next version, add a `Release-As` footer to a Conventional Commit, for example:
 
 ```bash
