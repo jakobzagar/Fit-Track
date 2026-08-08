@@ -6,6 +6,7 @@ import {env} from "./config/env.js";
 import {verifyCsrfOrigin} from "./common/middleware/csrf.middleware.js";
 import {errorMiddleware} from "./common/middleware/error.middleware.js";
 import {apiRateLimiter} from "./common/middleware/rate-limit.middleware.js";
+import {apiNotFound} from "./common/middleware/not-found.middleware.js";
 
 import authRoutes from "./modules/auth/auth.routes.js";
 import exerciseRoutes from "./modules/exercises/exercise.routes.js";
@@ -41,4 +42,5 @@ app.use("/api/exercises", exerciseRoutes);
 app.use("/api/workouts", workoutRoutes);
 app.use("/api/workouts", workoutExerciseRoutes);
 
+app.use("/api", apiNotFound);
 app.use(errorMiddleware);
