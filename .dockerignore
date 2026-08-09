@@ -15,6 +15,9 @@ backend/generated
 **/.env.*
 **/env.docker
 **/env.docker.*
+**/.secrets
+**/.vars
+**/.input
 
 # Logs
 **/*.log
@@ -25,5 +28,9 @@ backend/generated
 **/.DS_Store
 
 # Files not required by application images
+.actrc
+AGENTS.md
+CHANGELOG.md
+compose*.yaml
 README.md
 logo

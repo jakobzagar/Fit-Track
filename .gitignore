@@ -6,6 +6,13 @@ dist/
 build/
 backend/generated/prisma/
 
+# Test and tool output
+coverage/
+*.tsbuildinfo
+.eslintcache
+.cache/
+.vite/
+
 # Environment
 .env
 .env.*
