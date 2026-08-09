@@ -175,7 +175,7 @@ npm run actions:verify
 
 Use `npm run test:docker` rather than `act` for local backend integration tests. The dedicated Compose stack reproduces the temporary PostgreSQL database and migration lifecycle more reliably than GitHub service-container emulation.
 
-Use `act -s SECRET_NAME` to enter a secret without placing its value in shell history. Local `.secrets`, `.vars`, and `.input` files are ignored by Git and must never contain values intended for commit. The committed `.actrc` maps `ubuntu-latest` to act's medium Ubuntu image. `act` still only approximates GitHub-hosted runners, so confirm runner-specific behavior with a real GitHub Actions run before merging.
+The current local workflow simulation does not require repository variables or secrets. If a future workflow needs a secret, use `act -s SECRET_NAME` to enter it without placing its value in shell history. Local `.secrets`, `.vars`, and `.input` files remain ignored by Git and must never contain values intended for commit. The committed `.actrc` maps `ubuntu-latest` to act's medium Ubuntu image. `act` still only approximates GitHub-hosted runners, so confirm runner-specific behavior with a real GitHub Actions run before merging.
 
 ## Publishing container images
 
