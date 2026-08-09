@@ -8,6 +8,12 @@ import type {
     SetWorkoutSetCompletionInput,
 } from "./workout-exercise.schema.js";
 
+function assertWorkoutIsMutable(status: "DRAFT" | "ACTIVE" | "COMPLETED") {
+    if (status === "COMPLETED") {
+        throw new AppError("Completed workout is read-only", 409);
+    }
+}
+
 export async function addExerciseToWorkoutService(
     userId: string,
     workoutId: string,
@@ -24,6 +30,8 @@ export async function addExerciseToWorkoutService(
         if (!workout) {
             throw new AppError("Workout not found", 404);
         }
+
+        assertWorkoutIsMutable(workout.status);
 
         const exercise = await tx.exercise.findFirst({
             where: {
@@ -93,11 +101,18 @@ export async function addSetToWorkoutExerciseService(
                     userId,
                 },
             },
+            include: {
+                workout: {
+                    select: {status: true},
+                },
+            },
         });
 
         if (!workoutExercise) {
             throw new AppError("Workout exercise not found", 404);
         }
+
+        assertWorkoutIsMutable(workoutExercise.workout.status);
 
         const lastSet = await tx.workoutSet.findFirst({
             where: {
@@ -140,11 +155,18 @@ export async function updateWorkoutExerciseService(
                     userId,
                 },
             },
+            include: {
+                workout: {
+                    select: {status: true},
+                },
+            },
         });
 
         if (!workoutExercise) {
             throw new AppError("Workout exercise not found", 404);
         }
+
+        assertWorkoutIsMutable(workoutExercise.workout.status);
 
         if (data.position !== undefined && data.position !== workoutExercise.position) {
             const exerciseCount = await tx.workoutExercise.count({
@@ -244,11 +266,18 @@ export async function deleteWorkoutExerciseService(
                     userId,
                 },
             },
+            include: {
+                workout: {
+                    select: {status: true},
+                },
+            },
         });
 
         if (!workoutExercise) {
             throw new AppError("Workout exercise not found", 404);
         }
+
+        assertWorkoutIsMutable(workoutExercise.workout.status);
 
         await tx.workoutExercise.delete({
             where: {
@@ -305,11 +334,20 @@ export async function updateWorkoutSetService(
                     },
                 },
             },
+            include: {
+                workoutExercise: {
+                    select: {
+                        workout: {select: {status: true}},
+                    },
+                },
+            },
         });
 
         if (!existingSet) {
             throw new AppError("Workout set not found", 404);
         }
+
+        assertWorkoutIsMutable(existingSet.workoutExercise.workout.status);
 
         const reps = data.reps !== undefined ? data.reps : existingSet.reps;
         const durationSeconds =
@@ -354,11 +392,20 @@ export async function deleteWorkoutSetService(
                     },
                 },
             },
+            include: {
+                workoutExercise: {
+                    select: {
+                        workout: {select: {status: true}},
+                    },
+                },
+            },
         });
 
         if (!workoutSet) {
             throw new AppError("Workout set not found", 404);
         }
+
+        assertWorkoutIsMutable(workoutSet.workoutExercise.workout.status);
 
         await tx.workoutSet.delete({
             where: {

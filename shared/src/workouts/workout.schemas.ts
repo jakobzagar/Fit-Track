@@ -2,7 +2,7 @@ import {z} from "zod";
 
 export const createWorkoutSchema = z.object({
     name: z.string().trim().min(1, "Workout name is required").max(100, "Workout name is too long"),
-    performedAt: z.iso.datetime("Invalid workout date").optional(),
+    performedAt: z.iso.date("Invalid workout date").optional(),
     notes: z.string().trim().max(1000, "Notes are too long").nullable().optional(),
 });
 
@@ -14,7 +14,7 @@ export const updateWorkoutSchema = z
             .min(1, "Workout name is required")
             .max(100, "Workout name is too long")
             .optional(),
-        performedAt: z.iso.datetime("Invalid workout date").optional(),
+        performedAt: z.iso.date("Invalid workout date").optional(),
         notes: z.string().trim().max(1000, "Notes are too long").nullable().optional(),
     })
     .refine((data) => Object.keys(data).length > 0, {

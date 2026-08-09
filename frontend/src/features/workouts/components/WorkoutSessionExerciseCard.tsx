@@ -7,6 +7,7 @@ import type {
     UpdateWorkoutSetInput,
 } from "../../workout-exercises/schemas/workout.exercises.schemas";
 import type {PreviousPerformance, WorkoutExercise, WorkoutSet} from "../workout.types";
+import {formatWorkoutDate} from "../workout-date";
 
 interface WorkoutSessionExerciseCardProps {
     workoutExercise: WorkoutExercise;
@@ -55,7 +56,7 @@ export function WorkoutSessionExerciseCard({
             {previous ? (
                 <div className="border-l-2 border-flame bg-flame/6 px-4 py-3 text-sm text-dim">
                     <strong className="text-cream">
-                        Previous ({new Date(previous.performedAt).toLocaleDateString()}):
+                        Previous ({formatWorkoutDate(previous.performedAt)}):
                     </strong>{" "}
                     {previous.sets
                         .map((set) =>

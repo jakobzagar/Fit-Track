@@ -422,6 +422,49 @@ describe("workout set completion", () => {
     });
 });
 
+describe("completed workout mutations", () => {
+    it("keeps exercises and sets in a completed workout read-only", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const workout = await createTestWorkout(owner.user.id, {
+            status: "COMPLETED",
+            startedAt: new Date(),
+            completedAt: new Date(),
+        });
+        const exercise = await createTestExercise(owner.user.id);
+        const otherExercise = await createTestExercise(owner.user.id, {name: "Other exercise"});
+        const item = await createTestWorkoutExercise(workout.id, exercise.id);
+        const set = await createTestSet(item.id, 1, {completedAt: new Date()});
+        const itemPath = `/api/workouts/${workout.id}/exercises/${item.id}`;
+        const setPath = `${itemPath}/sets/${set.id}`;
+
+        const responses = await Promise.all([
+            authenticated("post", `/api/workouts/${workout.id}/exercises`, owner.cookie).send({
+                exerciseId: otherExercise.id,
+            }),
+            authenticated("patch", itemPath, owner.cookie).send({notes: "Changed"}),
+            authenticated("delete", itemPath, owner.cookie),
+            authenticated("post", `${itemPath}/sets`, owner.cookie).send({reps: 12}),
+            authenticated("patch", setPath, owner.cookie).send({reps: 12}),
+            authenticated("delete", setPath, owner.cookie),
+        ]);
+
+        expect(responses.map((response) => response.status)).toEqual([
+            409, 409, 409, 409, 409, 409,
+        ]);
+        for (const response of responses) {
+            expect(messageResponseSchema.parse(response.body)).toEqual({
+                message: "Completed workout is read-only",
+            });
+        }
+        expect(await prisma.workoutExercise.count({where: {workoutId: workout.id}})).toBe(1);
+        await expect(
+            prisma.workoutSet.findUniqueOrThrow({where: {id: set.id}}),
+        ).resolves.toMatchObject({
+            reps: 10,
+        });
+    });
+});
+
 describe("workout exercise CSRF protection", () => {
     it("rejects state changes from an untrusted origin", async () => {
         const owner = await createTestUser("owner@example.com");

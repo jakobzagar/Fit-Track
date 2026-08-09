@@ -3,6 +3,7 @@ import {Button} from "../../../components/ui/Button.tsx";
 import {Card} from "../../../components/ui/Card.tsx";
 import type {WorkoutSummary} from "../workout.types.ts";
 import {Icon} from "../../../components/ui/Icon.tsx";
+import {formatWorkoutDate} from "../workout-date.ts";
 
 interface WorkoutItemProps {
     workout: WorkoutSummary;
@@ -43,7 +44,7 @@ export function WorkoutItem({workout, onDelete, onEdit, isDeleting}: WorkoutItem
             </div>
 
             <p className="mt-3 text-xs font-semibold tracking-[0.05em] text-dim uppercase">
-                {new Date(workout.performedAt).toLocaleDateString(undefined, {
+                {formatWorkoutDate(workout.performedAt, {
                     day: "2-digit",
                     month: "short",
                     year: "numeric",
@@ -70,28 +71,32 @@ export function WorkoutItem({workout, onDelete, onEdit, isDeleting}: WorkoutItem
                         View workout
                     </Link>
                 )}
-                <Button
-                    className="w-full"
-                    size="sm"
-                    variant="ghost"
-                    type="button"
-                    disabled={isDeleting}
-                    onClick={() => onEdit(workout)}
-                >
-                    <Icon name="edit" size={14} />
-                    Edit
-                </Button>
-                <Button
-                    className="w-full"
-                    size="sm"
-                    variant="danger"
-                    type="button"
-                    disabled={isDeleting}
-                    onClick={() => onDelete(workout.id)}
-                >
-                    <Icon className="shrink-0" name="trash" size={18} />
-                    {isDeleting ? "Deleting..." : "Delete"}
-                </Button>
+                {workout.status !== "COMPLETED" && (
+                    <Button
+                        className="w-full"
+                        size="sm"
+                        variant="ghost"
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={() => onEdit(workout)}
+                    >
+                        <Icon name="edit" size={14} />
+                        Edit
+                    </Button>
+                )}
+                {workout.status !== "COMPLETED" && (
+                    <Button
+                        className="w-full"
+                        size="sm"
+                        variant="danger"
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={() => onDelete(workout.id)}
+                    >
+                        <Icon className="shrink-0" name="trash" size={18} />
+                        {isDeleting ? "Deleting..." : "Delete"}
+                    </Button>
+                )}
             </div>
         </Card>
     );

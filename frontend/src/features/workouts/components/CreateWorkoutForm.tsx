@@ -33,7 +33,7 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
 
         const result = createWorkoutSchema.safeParse({
             name,
-            performedAt: performedAt === "" ? undefined : new Date(performedAt).toISOString(),
+            performedAt: performedAt === "" ? undefined : performedAt,
             notes: notes.trim() === "" ? undefined : notes,
         });
 

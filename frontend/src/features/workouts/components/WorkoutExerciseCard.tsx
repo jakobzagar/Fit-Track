@@ -13,6 +13,7 @@ import type {WorkoutExercise, WorkoutSet} from "../workout.types";
 
 interface WorkoutExerciseCardProps {
     workoutExercise: WorkoutExercise;
+    readOnly?: boolean;
     editingWorkoutExercise: WorkoutExercise | null;
     editingWorkoutSet: WorkoutSet | null;
     deletingWorkoutExerciseId: string | null;
@@ -28,6 +29,7 @@ interface WorkoutExerciseCardProps {
 
 export function WorkoutExerciseCard({
     workoutExercise,
+    readOnly = false,
     editingWorkoutExercise,
     editingWorkoutSet,
     deletingWorkoutExerciseId,
@@ -55,7 +57,7 @@ export function WorkoutExerciseCard({
                     </p>
                 </div>
 
-                {editingWorkoutExercise?.id !== workoutExercise.id && (
+                {!readOnly && editingWorkoutExercise?.id !== workoutExercise.id && (
                     <div className="flex shrink-0 flex-wrap gap-2">
                         <Button
                             variant="ghost"
@@ -89,7 +91,7 @@ export function WorkoutExerciseCard({
                 </p>
             )}
 
-            {editingWorkoutExercise?.id === workoutExercise.id && (
+            {!readOnly && editingWorkoutExercise?.id === workoutExercise.id && (
                 <UpdateWorkoutExerciseForm
                     workoutExercise={editingWorkoutExercise}
                     onSubmit={onUpdateExercise}
@@ -120,7 +122,7 @@ export function WorkoutExerciseCard({
                                 className="rounded-[11px] border border-line bg-ink p-3"
                                 key={set.id}
                             >
-                                {editingWorkoutSet?.id === set.id ? (
+                                {!readOnly && editingWorkoutSet?.id === set.id ? (
                                     <UpdateWorkoutSetForm
                                         workoutSet={editingWorkoutSet}
                                         onSubmit={onUpdateSet}
@@ -150,32 +152,34 @@ export function WorkoutExerciseCard({
                                                 />
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                type="button"
-                                                disabled={deletingWorkoutSetId === set.id}
-                                                onClick={() => onEditSet(set)}
-                                            >
-                                                <Icon name="edit" size={14} />
-                                                Edit set
-                                            </Button>
-                                            <Button
-                                                variant="danger"
-                                                size="sm"
-                                                type="button"
-                                                disabled={deletingWorkoutSetId === set.id}
-                                                onClick={() =>
-                                                    onDeleteSet(workoutExercise.id, set.id)
-                                                }
-                                            >
-                                                <Icon name="trash" size={16} />
-                                                {deletingWorkoutSetId === set.id
-                                                    ? "Deleting..."
-                                                    : "Delete"}
-                                            </Button>
-                                        </div>
+                                        {!readOnly && (
+                                            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    type="button"
+                                                    disabled={deletingWorkoutSetId === set.id}
+                                                    onClick={() => onEditSet(set)}
+                                                >
+                                                    <Icon name="edit" size={14} />
+                                                    Edit set
+                                                </Button>
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    type="button"
+                                                    disabled={deletingWorkoutSetId === set.id}
+                                                    onClick={() =>
+                                                        onDeleteSet(workoutExercise.id, set.id)
+                                                    }
+                                                >
+                                                    <Icon name="trash" size={16} />
+                                                    {deletingWorkoutSetId === set.id
+                                                        ? "Deleting..."
+                                                        : "Delete"}
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </li>
@@ -184,12 +188,14 @@ export function WorkoutExerciseCard({
                 </div>
             )}
 
-            <div className="border-t border-line pt-5">
-                <p className="mb-4 text-xs font-extrabold tracking-[0.1em] text-dim uppercase">
-                    Add another set
-                </p>
-                <AddWorkoutSetForm onSubmit={onAddSet} />
-            </div>
+            {!readOnly && (
+                <div className="border-t border-line pt-5">
+                    <p className="mb-4 text-xs font-extrabold tracking-[0.1em] text-dim uppercase">
+                        Add another set
+                    </p>
+                    <AddWorkoutSetForm onSubmit={onAddSet} />
+                </div>
+            )}
         </Card>
     );
 }

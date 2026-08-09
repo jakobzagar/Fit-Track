@@ -47,6 +47,23 @@ describe("WorkoutDetailPage", () => {
         );
     });
 
+    test("renders a completed workout as read-only", async () => {
+        mockLoadRequests(
+            createWorkout({
+                status: "COMPLETED",
+                completedAt: "2026-07-26T11:00:00.000Z",
+            }),
+        );
+        renderPage();
+
+        expect(await screen.findByText("Completed session")).toBeInTheDocument();
+        expect(screen.queryByRole("heading", {name: "Add exercise"})).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", {name: "Edit"})).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", {name: "Edit set"})).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", {name: "Delete"})).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", {name: "Add set"})).not.toBeInTheDocument();
+    });
+
     test("shows a failed load", async () => {
         server.use(
             http.get(`${API_URL}/workouts/${workoutId}`, () =>

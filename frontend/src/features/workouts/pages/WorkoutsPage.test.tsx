@@ -49,6 +49,8 @@ describe("WorkoutsPage", () => {
 
         expect(await screen.findByRole("link", {name: /Continue workout/})).toBeInTheDocument();
         expect(screen.getByRole("link", {name: "View workout"})).toBeInTheDocument();
+        expect(screen.getAllByRole("button", {name: "Edit"})).toHaveLength(1);
+        expect(screen.getAllByRole("button", {name: "Delete"})).toHaveLength(1);
     });
 
     test("shows empty and load-error states", async () => {

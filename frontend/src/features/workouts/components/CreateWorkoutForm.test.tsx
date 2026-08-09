@@ -26,7 +26,7 @@ describe("CreateWorkoutForm", () => {
 
         expect(onSubmit).toHaveBeenCalledWith({
             name: "Push day",
-            performedAt: "2026-07-26T00:00:00.000Z",
+            performedAt: "2026-07-26",
             notes: "Heavy session",
         });
         expect(screen.getByLabelText("Name")).toHaveValue("");

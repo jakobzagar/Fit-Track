@@ -13,12 +13,12 @@ describe("createWorkoutSchema", () => {
             createWorkoutSchema.parse({
                 name: "  Push day ",
                 notes: "  Heavy session ",
-                performedAt: "2026-07-26T10:00:00.000Z",
+                performedAt: "2026-07-26",
             }),
         ).toEqual({
             name: "Push day",
             notes: "Heavy session",
-            performedAt: "2026-07-26T10:00:00.000Z",
+            performedAt: "2026-07-26",
         });
     });
 
@@ -26,6 +26,10 @@ describe("createWorkoutSchema", () => {
         ["an empty name", {name: " "}],
         ["a name over 100 characters", {name: "a".repeat(101)}],
         ["an invalid date", {name: "Push day", performedAt: "today"}],
+        [
+            "a timestamp instead of a calendar date",
+            {name: "Push day", performedAt: "2026-07-26T10:00:00.000Z"},
+        ],
         ["notes over 1000 characters", {name: "Push day", notes: "a".repeat(1001)}],
     ])("rejects %s", (_case, input) => {
         expect(createWorkoutSchema.safeParse(input).success).toBe(false);

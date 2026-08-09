@@ -8,6 +8,7 @@ import {PageHeader} from "../../../components/ui/PageHeader";
 import {useConfirmDialog} from "../../../components/ui/useConfirmDialog";
 import {WorkoutExerciseCard} from "../components/WorkoutExerciseCard";
 import {useWorkoutDetail} from "../hooks/useWorkoutDetail";
+import {formatWorkoutDate} from "../workout-date";
 
 export function WorkoutDetailPage() {
     const confirm = useConfirmDialog();
@@ -58,7 +59,7 @@ export function WorkoutDetailPage() {
             <PageHeader
                 eyebrow={workout.status === "COMPLETED" ? "Completed session" : "Workout plan"}
                 title={workout.name}
-                description={`${new Date(workout.performedAt).toLocaleDateString(undefined, {day: "2-digit", month: "long", year: "numeric"})}${workout.notes ? ` · ${workout.notes}` : ""}`}
+                description={`${formatWorkoutDate(workout.performedAt, {day: "2-digit", month: "long", year: "numeric"})}${workout.notes ? ` · ${workout.notes}` : ""}`}
                 action={
                     workout.status !== "COMPLETED" ? (
                         <Link
@@ -73,21 +74,23 @@ export function WorkoutDetailPage() {
 
             {mutationError && <Feedback>{mutationError}</Feedback>}
 
-            <Card>
-                <div className="mb-5">
-                    <p className="eyebrow">Workout builder</p>
-                    <h2 className="section-title mt-2">Add exercise</h2>
-                </div>
-                <AddExerciseToWorkoutForm
-                    exercises={exercises.filter(
-                        (exercise) =>
-                            !workout.workoutExercises.some(
-                                (workoutExercise) => workoutExercise.exerciseId === exercise.id,
-                            ),
-                    )}
-                    onSubmit={handleAddExercise}
-                />
-            </Card>
+            {workout.status !== "COMPLETED" && (
+                <Card>
+                    <div className="mb-5">
+                        <p className="eyebrow">Workout builder</p>
+                        <h2 className="section-title mt-2">Add exercise</h2>
+                    </div>
+                    <AddExerciseToWorkoutForm
+                        exercises={exercises.filter(
+                            (exercise) =>
+                                !workout.workoutExercises.some(
+                                    (workoutExercise) => workoutExercise.exerciseId === exercise.id,
+                                ),
+                        )}
+                        onSubmit={handleAddExercise}
+                    />
+                </Card>
+            )}
 
             <div>
                 <h2 className="section-title">Exercises</h2>
@@ -104,6 +107,7 @@ export function WorkoutDetailPage() {
                         <WorkoutExerciseCard
                             key={workoutExercise.id}
                             workoutExercise={workoutExercise}
+                            readOnly={workout.status === "COMPLETED"}
                             editingWorkoutExercise={editingWorkoutExercise}
                             editingWorkoutSet={editingWorkoutSet}
                             deletingWorkoutExerciseId={deletingWorkoutExerciseId}

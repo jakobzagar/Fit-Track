@@ -3,6 +3,10 @@ import {AppError} from "../../common/errors/app.error.js";
 import {runSerializableTransaction} from "../../db/transaction.js";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "./workout.schema.js";
 
+function workoutDateToTimestamp(date: string) {
+    return new Date(`${date}T00:00:00.000Z`);
+}
+
 export async function getWorkoutsService(userId: string) {
     return prisma.workout.findMany({
         where: {
@@ -151,7 +155,7 @@ export async function createWorkoutService(userId: string, data: CreateWorkoutIn
             }),
 
             ...(data.performedAt !== undefined && {
-                performedAt: new Date(data.performedAt),
+                performedAt: workoutDateToTimestamp(data.performedAt),
             }),
         },
     });
@@ -167,6 +171,10 @@ export async function deleteWorkoutByIdService(userId: string, workoutId: string
 
     if (!workout) {
         throw new AppError("Workout not found", 404);
+    }
+
+    if (workout.status === "COMPLETED") {
+        throw new AppError("Completed workout is read-only", 409);
     }
 
     return prisma.workout.delete({
@@ -192,13 +200,19 @@ export async function updateWorkoutByIdService(
         throw new AppError("Workout not found", 404);
     }
 
+    if (workout.status === "COMPLETED") {
+        throw new AppError("Completed workout is read-only", 409);
+    }
+
     return prisma.workout.update({
         where: {
             id: workoutId,
         },
         data: {
             ...(data.name !== undefined && {name: data.name}),
-            ...(data.performedAt !== undefined && {performedAt: new Date(data.performedAt)}),
+            ...(data.performedAt !== undefined && {
+                performedAt: workoutDateToTimestamp(data.performedAt),
+            }),
             ...(data.notes !== undefined && {notes: data.notes}),
         },
     });

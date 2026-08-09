@@ -32,7 +32,7 @@ describe("UpdateWorkoutForm", () => {
 
         expect(onSubmit).toHaveBeenCalledWith({
             name: "Upper body",
-            performedAt: "2026-07-26T00:00:00.000Z",
+            performedAt: "2026-07-26",
             notes: null,
         });
     });

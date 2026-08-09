@@ -22,7 +22,7 @@ import {
 describe("POST /api/workouts", () => {
     it("normalizes and creates a draft workout for the authenticated user", async () => {
         const owner = await createTestUser("owner@example.com");
-        const performedAt = "2026-07-20T10:00:00.000Z";
+        const performedAt = "2026-07-20";
 
         const response = await authenticated("post", "/api/workouts", owner.cookie).send({
             name: "  Push day  ",
@@ -35,7 +35,7 @@ describe("POST /api/workouts", () => {
         expect(body.workout).toMatchObject({
             name: "Push day",
             notes: "Heavy session",
-            performedAt,
+            performedAt: "2026-07-20T00:00:00.000Z",
             status: "DRAFT",
             userId: owner.user.id,
         });
@@ -184,6 +184,34 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
 
         expect(response.status).toBe(404);
         expect(await prisma.workout.count()).toBe(1);
+    });
+
+    it("keeps completed workouts read-only", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const workout = await createTestWorkout(owner.user.id, {
+            status: "COMPLETED",
+            startedAt: new Date(),
+            completedAt: new Date(),
+        });
+
+        const update = await authenticated(
+            "patch",
+            `/api/workouts/${workout.id}`,
+            owner.cookie,
+        ).send({name: "Changed"});
+        const deletion = await authenticated("delete", `/api/workouts/${workout.id}`, owner.cookie);
+
+        expect(update.status).toBe(409);
+        expect(deletion.status).toBe(409);
+        expect(messageResponseSchema.parse(update.body)).toEqual({
+            message: "Completed workout is read-only",
+        });
+        await expect(
+            prisma.workout.findUniqueOrThrow({where: {id: workout.id}}),
+        ).resolves.toMatchObject({
+            name: "Test workout",
+            status: "COMPLETED",
+        });
     });
 });
 

@@ -8,6 +8,7 @@ import {
     focusFirstInvalidField,
     invalidFieldProps,
 } from "../../../components/ui/formAccessibility.ts";
+import {workoutDateInputValue} from "../workout-date.ts";
 
 interface UpdateWorkoutFormProps {
     workout: WorkoutSummary;
@@ -25,14 +26,9 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
     const formRef = useRef<HTMLFormElement>(null);
     const id = useId();
     const [name, setName] = useState(workout.name);
-    const [performedAt, setPerformedAt] = useState(() => {
-        const date = new Date(workout.performedAt);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
-    });
+    const [performedAt, setPerformedAt] = useState(() =>
+        workoutDateInputValue(workout.performedAt),
+    );
     const [notes, setNotes] = useState(workout.notes ?? "");
 
     const [errors, setErrors] = useState<UpdateWorkoutErrors>({});
@@ -43,7 +39,7 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
 
         const result = updateWorkoutSchema.safeParse({
             name,
-            performedAt: performedAt === "" ? undefined : new Date(performedAt).toISOString(),
+            performedAt: performedAt === "" ? undefined : performedAt,
             notes: notes.trim() === "" ? null : notes,
         });
 
