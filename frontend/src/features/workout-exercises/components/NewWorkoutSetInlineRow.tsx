@@ -1,6 +1,7 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import type {CreateWorkoutSetInput} from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
+import {parseNewWorkoutSet} from "../schemas/workout-set-input.parser.ts";
 
 interface NewWorkoutSetInlineRowProps {
     setNumber: number;
@@ -19,24 +20,25 @@ export function NewWorkoutSetInlineRow({setNumber, onSubmit}: NewWorkoutSetInlin
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        if (reps === "" && durationSeconds === "") {
-            setError("Enter reps or duration");
+        const result = parseNewWorkoutSet({reps, weight, durationSeconds});
+        if (!result.success) {
+            setError(
+                result.errors.reps ??
+                    result.errors.weight ??
+                    result.errors.durationSeconds ??
+                    result.errors.form ??
+                    "Check the entered values",
+            );
             queueMicrotask(() =>
                 formRef.current?.querySelector<HTMLInputElement>("input")?.focus(),
             );
             return;
         }
 
-        const data: CreateWorkoutSetInput = {
-            ...(reps !== "" && {reps: Number(reps)}),
-            ...(weight !== "" && {weight: Number(weight)}),
-            ...(durationSeconds !== "" && {durationSeconds: Number(durationSeconds)}),
-        };
-
         setError("");
         setIsSubmitting(true);
         try {
-            await onSubmit(data);
+            await onSubmit(result.data);
             setReps("");
             setWeight("");
             setDurationSeconds("");

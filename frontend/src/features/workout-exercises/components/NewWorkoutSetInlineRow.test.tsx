@@ -10,7 +10,7 @@ describe("NewWorkoutSetInlineRow", () => {
         render(<NewWorkoutSetInlineRow setNumber={2} onSubmit={onSubmit} />);
 
         await user.click(screen.getByRole("button", {name: "Add"}));
-        expect(screen.getByText("Enter reps or duration")).toBeInTheDocument();
+        expect(screen.getByText("Either reps or durationSeconds is required")).toBeInTheDocument();
 
         await user.type(screen.getByLabelText("Weight (kg)"), "80");
         await user.type(screen.getByLabelText("Reps"), "10");

@@ -3,6 +3,7 @@ import type {WorkoutSet} from "../../workouts/workout.types.ts";
 import type {UpdateWorkoutSetInput} from "../schemas/workout.exercises.schemas.ts";
 import {Button} from "../../../components/ui/Button.tsx";
 import {Icon} from "../../../components/ui/Icon.tsx";
+import {parseEditedWorkoutSet} from "../schemas/workout-set-input.parser.ts";
 
 interface WorkoutSetInlineRowProps {
     workoutSet: WorkoutSet;
@@ -35,33 +36,21 @@ export function WorkoutSetInlineRow({
     });
 
     function getData(): UpdateWorkoutSetInput | null {
-        if (reps === "" && durationSeconds === "") {
-            setError("Enter reps or duration");
-            queueMicrotask(() => firstInputRef.current?.focus());
-            return null;
-        }
-
-        const nextReps = reps === "" ? null : Number(reps);
-        const nextWeight = weight === "" ? null : Number(weight);
-        const nextDurationSeconds = durationSeconds === "" ? null : Number(durationSeconds);
-
-        if (
-            (nextReps !== null && (!Number.isInteger(nextReps) || nextReps <= 0)) ||
-            (nextWeight !== null && (!Number.isFinite(nextWeight) || nextWeight < 0)) ||
-            (nextDurationSeconds !== null &&
-                (!Number.isInteger(nextDurationSeconds) || nextDurationSeconds <= 0))
-        ) {
-            setError("Check the entered values");
+        const result = parseEditedWorkoutSet({reps, weight, durationSeconds});
+        if (!result.success) {
+            setError(
+                result.errors.reps ??
+                    result.errors.weight ??
+                    result.errors.durationSeconds ??
+                    result.errors.form ??
+                    "Check the entered values",
+            );
             queueMicrotask(() => firstInputRef.current?.focus());
             return null;
         }
 
         setError("");
-        return {
-            reps: nextReps,
-            weight: nextWeight,
-            durationSeconds: nextDurationSeconds,
-        };
+        return result.data;
     }
 
     async function run(action: (data: UpdateWorkoutSetInput) => Promise<void>) {

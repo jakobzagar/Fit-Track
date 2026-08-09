@@ -74,7 +74,7 @@ describe("WorkoutSetInlineRow", () => {
         );
 
         await user.click(screen.getByRole("button", {name: "Complete"}));
-        expect(screen.getByText("Enter reps or duration")).toBeInTheDocument();
+        expect(screen.getByText("Either reps or durationSeconds is required")).toBeInTheDocument();
         expect(onSave).not.toHaveBeenCalled();
     });
 });

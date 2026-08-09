@@ -1,9 +1,6 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
-import {z} from "zod";
-import {
-    createWorkoutSetSchema,
-    type CreateWorkoutSetInput,
-} from "../schemas/workout.exercises.schemas.ts";
+import type {CreateWorkoutSetInput} from "../schemas/workout.exercises.schemas.ts";
+import {parseNewWorkoutSet} from "../schemas/workout-set-input.parser.ts";
 import {Button} from "../../../components/ui/Button.tsx";
 import {FieldError} from "../../../components/ui/FieldError.tsx";
 import {
@@ -34,21 +31,10 @@ export function AddWorkoutSetForm({onSubmit}: AddWorkoutSetFormProps) {
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        const result = createWorkoutSetSchema.safeParse({
-            reps: reps === "" ? undefined : Number(reps),
-            weight: weight === "" ? undefined : Number(weight),
-            durationSeconds: durationSeconds === "" ? undefined : Number(durationSeconds),
-        });
+        const result = parseNewWorkoutSet({reps, weight, durationSeconds});
 
         if (!result.success) {
-            const flattenedError = z.flattenError(result.error);
-
-            setErrors({
-                reps: flattenedError.fieldErrors.reps?.[0],
-                weight: flattenedError.fieldErrors.weight?.[0],
-                durationSeconds: flattenedError.fieldErrors.durationSeconds?.[0],
-                form: flattenedError.formErrors[0],
-            });
+            setErrors(result.errors);
             focusFirstInvalidField(formRef);
 
             return;
