@@ -176,7 +176,7 @@ jobs:
               --tag "$image:$MAJOR.$MINOR" \
               --tag "$image:$MAJOR" \
               --tag "$image:latest" \
-              "$source_ref"
+              "$image@$source_digest"
           }
 
           promote_image "$REGISTRY/$BACKEND_IMAGE"
