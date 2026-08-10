@@ -1,5 +1,5 @@
 import {act, renderHook, waitFor} from "@testing-library/react";
-import {http, HttpResponse} from "msw";
+import {delay, http, HttpResponse} from "msw";
 import {describe, expect, test, vi} from "vitest";
 import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
@@ -20,6 +20,31 @@ function mockLoadRequests(workout = createWorkout()) {
 }
 
 describe("useWorkoutDetail", () => {
+    test("ignores a stale response after the workout ID changes", async () => {
+        const nextWorkoutId = "123e4567-e89b-42d3-a456-426614174099";
+        server.use(
+            http.get(`${API_URL}/workouts/:id`, async ({params}) => {
+                if (params.id === workoutId) await delay(50);
+                return HttpResponse.json({
+                    workout: createWorkout({
+                        id: String(params.id),
+                        name: params.id === workoutId ? "Old workout" : "Current workout",
+                    }),
+                });
+            }),
+            http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises: [exercise]})),
+        );
+        const {result, rerender} = renderHook(({id}) => useWorkoutDetail(id, vi.fn()), {
+            initialProps: {id: workoutId},
+        });
+
+        rerender({id: nextWorkoutId});
+
+        await waitFor(() => expect(result.current.workout?.name).toBe("Current workout"));
+        await act(() => delay(60));
+        expect(result.current.workout?.name).toBe("Current workout");
+    });
+
     test("keeps workout state unchanged when adding an exercise fails", async () => {
         mockLoadRequests();
         server.use(

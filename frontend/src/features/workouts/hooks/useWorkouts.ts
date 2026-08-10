@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {createWorkout, deleteWorkout, getWorkouts, updateWorkout} from "../api/workouts.api";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas";
 import type {WorkoutSummary, WorkoutsResponse} from "../workout.types";
@@ -10,15 +10,19 @@ export function useWorkouts() {
     const [loadError, setLoadError] = useState("");
     const [mutationError, setMutationError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const requestIdRef = useRef(0);
 
     const load = useCallback(async () => {
+        const requestId = ++requestIdRef.current;
         try {
             const response: WorkoutsResponse = await getWorkouts();
-            setWorkouts(response.workouts);
+            if (requestId === requestIdRef.current) setWorkouts(response.workouts);
         } catch (error) {
-            setLoadError(error instanceof Error ? error.message : "Failed to load workouts");
+            if (requestId === requestIdRef.current) {
+                setLoadError(error instanceof Error ? error.message : "Failed to load workouts");
+            }
         } finally {
-            setIsLoading(false);
+            if (requestId === requestIdRef.current) setIsLoading(false);
         }
     }, []);
 
@@ -29,6 +33,7 @@ export function useWorkouts() {
         });
         return () => {
             isCurrent = false;
+            requestIdRef.current += 1;
         };
     }, [load]);
 

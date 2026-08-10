@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import type {ConfirmDialogFunction} from "../../../components/ui/confirm-dialog.context";
 import {getExercises} from "../../exercises/api/exercises.api";
 import type {Exercise} from "../../exercises/exercise.types";
@@ -31,28 +31,44 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
     const [mutationError, setMutationError] = useState("");
+    const requestIdRef = useRef(0);
 
     const load = useCallback(async () => {
         if (!workoutId) return;
+        const requestId = ++requestIdRef.current;
         try {
             const [workoutResponse, exercisesResponse] = await Promise.all([
                 getWorkoutById(workoutId),
                 getExercises(),
             ]);
+            if (requestId !== requestIdRef.current) return;
             setWorkout(workoutResponse.workout);
             setExercises(exercisesResponse.exercises);
         } catch (error) {
-            setLoadError(error instanceof Error ? error.message : "Failed to load workout");
+            if (requestId === requestIdRef.current) {
+                setLoadError(error instanceof Error ? error.message : "Failed to load workout");
+            }
         } finally {
-            setIsLoading(false);
+            if (requestId === requestIdRef.current) setIsLoading(false);
         }
     }, [workoutId]);
 
     useEffect(() => {
-        let current = true;
-        queueMicrotask(() => current && void load());
+        let isCurrent = true;
+        queueMicrotask(() => {
+            if (!isCurrent) return;
+            setWorkout(null);
+            setExercises([]);
+            setEditingWorkoutExercise(null);
+            setEditingWorkoutSet(null);
+            setLoadError("");
+            setMutationError("");
+            setIsLoading(true);
+            void load();
+        });
         return () => {
-            current = false;
+            isCurrent = false;
+            requestIdRef.current += 1;
         };
     }, [load]);
 

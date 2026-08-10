@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import type {NavigateFunction} from "react-router";
 import type {ConfirmDialogFunction} from "../../../components/ui/confirm-dialog.context";
 import {getExercises} from "../../exercises/api/exercises.api";
@@ -36,16 +36,20 @@ export function useWorkoutSession(
     const [copyingExerciseId, setCopyingExerciseId] = useState<string | null>(null);
     const [error, setError] = useState("");
     const [dirtySetIds, setDirtySetIds] = useState<Set<string>>(() => new Set());
+    const requestIdRef = useRef(0);
     useUnsavedSessionGuard({dirtySetCount: dirtySetIds.size, isFinishing, confirm});
 
     const load = useCallback(async () => {
         if (!workoutId) return;
+        const requestId = ++requestIdRef.current;
         try {
             const [workoutResponse, exercisesResponse, performancesResponse] = await Promise.all([
                 getWorkoutById(workoutId),
                 getExercises(),
                 getPreviousPerformances(workoutId),
             ]);
+            if (requestId !== requestIdRef.current) return;
+
             let loaded = workoutResponse.workout;
             if (loaded.status === "COMPLETED") {
                 void navigate(`/workouts/${workoutId}`, {replace: true});
@@ -53,23 +57,38 @@ export function useWorkoutSession(
             }
             if (loaded.status === "DRAFT") {
                 const response = await startWorkout(workoutId);
+                if (requestId !== requestIdRef.current) return;
                 loaded = {...loaded, ...response.workout};
             }
             setWorkout(loaded);
             setExercises(exercisesResponse.exercises);
             setPreviousPerformances(performancesResponse.previousPerformances);
         } catch (caught) {
-            setError(caught instanceof Error ? caught.message : "Failed to load session");
+            if (requestId === requestIdRef.current) {
+                setError(caught instanceof Error ? caught.message : "Failed to load session");
+            }
         } finally {
-            setIsLoading(false);
+            if (requestId === requestIdRef.current) setIsLoading(false);
         }
     }, [navigate, workoutId]);
 
     useEffect(() => {
-        let current = true;
-        queueMicrotask(() => current && void load());
+        let isCurrent = true;
+        queueMicrotask(() => {
+            if (!isCurrent) return;
+            setWorkout(null);
+            setExercises([]);
+            setPreviousPerformances([]);
+            setDirtySetIds(new Set());
+            setError("");
+            setIsFinishing(false);
+            setCopyingExerciseId(null);
+            setIsLoading(true);
+            void load();
+        });
         return () => {
-            current = false;
+            isCurrent = false;
+            requestIdRef.current += 1;
         };
     }, [load]);
 

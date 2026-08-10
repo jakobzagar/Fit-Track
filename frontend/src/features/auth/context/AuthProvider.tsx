@@ -1,4 +1,4 @@
-import {useEffect, useState, type ReactNode} from "react";
+import {useEffect, useRef, useState, type ReactNode} from "react";
 import {getMe, logout} from "../api/auth.api";
 import type {User} from "../auth.types";
 import {AuthContext} from "./auth.context";
@@ -24,6 +24,7 @@ export function AuthProvider({children}: AuthProviderProps) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [sessionError, setSessionError] = useState(false);
+    const requestIdRef = useRef(0);
 
     async function signOut() {
         await logout();
@@ -31,19 +32,37 @@ export function AuthProvider({children}: AuthProviderProps) {
     }
 
     useEffect(() => {
+        const requestId = ++requestIdRef.current;
         void restoreCurrentUser()
-            .then(setUser)
-            .catch(() => setSessionError(true))
-            .finally(() => setIsLoading(false));
+            .then((restoredUser) => {
+                if (requestId === requestIdRef.current) setUser(restoredUser);
+            })
+            .catch(() => {
+                if (requestId === requestIdRef.current) setSessionError(true);
+            })
+            .finally(() => {
+                if (requestId === requestIdRef.current) setIsLoading(false);
+            });
+
+        return () => {
+            requestIdRef.current += 1;
+        };
     }, []);
 
     function retryCurrentUser() {
+        const requestId = ++requestIdRef.current;
         setIsLoading(true);
         setSessionError(false);
         void restoreCurrentUser()
-            .then(setUser)
-            .catch(() => setSessionError(true))
-            .finally(() => setIsLoading(false));
+            .then((restoredUser) => {
+                if (requestId === requestIdRef.current) setUser(restoredUser);
+            })
+            .catch(() => {
+                if (requestId === requestIdRef.current) setSessionError(true);
+            })
+            .finally(() => {
+                if (requestId === requestIdRef.current) setIsLoading(false);
+            });
     }
 
     if (sessionError) {

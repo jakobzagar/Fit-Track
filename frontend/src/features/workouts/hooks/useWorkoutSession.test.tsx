@@ -1,6 +1,6 @@
 import {useEffect} from "react";
 import {act, render, waitFor} from "@testing-library/react";
-import {http, HttpResponse} from "msw";
+import {delay, http, HttpResponse} from "msw";
 import {createMemoryRouter, RouterProvider, useNavigate, useParams} from "react-router";
 import {describe, expect, test, vi} from "vitest";
 import {AppProviders} from "../../../app/providers";
@@ -61,6 +61,33 @@ function mockLoadRequests() {
 }
 
 describe("useWorkoutSession", () => {
+    test("ignores stale session data after navigating to another workout", async () => {
+        const nextWorkoutId = "123e4567-e89b-42d3-a456-426614174099";
+        server.use(
+            http.get(`${API_URL}/workouts/:id`, async ({params}) => {
+                if (params.id === workoutId) await delay(50);
+                return HttpResponse.json({
+                    workout: createWorkout({
+                        id: String(params.id),
+                        name: params.id === workoutId ? "Old session" : "Current session",
+                    }),
+                });
+            }),
+            http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises: [exercise]})),
+            http.get(`${API_URL}/workouts/:id/previous-performances`, () =>
+                HttpResponse.json({previousPerformances: []}),
+            ),
+        );
+        const hook = renderSessionHook();
+
+        await act(() => hook.router.navigate(`/workouts/${nextWorkoutId}/session`));
+
+        await waitFor(() => expect(hook.current?.workout?.name).toBe("Current session"));
+        await act(() => delay(60));
+        expect(hook.current?.workout?.name).toBe("Current session");
+        expect(hook.router.state.location.pathname).toBe(`/workouts/${nextWorkoutId}/session`);
+    });
+
     test("keeps the session open when clean exit is cancelled", async () => {
         mockLoadRequests();
         const hook = renderSessionHook();

@@ -47,6 +47,7 @@ export function useExercises(view: ExerciseView) {
         });
         return () => {
             isCurrent = false;
+            requestIdRef.current += 1;
         };
     }, [load]);
 
