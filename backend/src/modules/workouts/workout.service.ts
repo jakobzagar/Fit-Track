@@ -2,6 +2,7 @@ import {prisma} from "../../db/prisma.js";
 import {AppError} from "../../common/errors/app.error.js";
 import {runSerializableTransaction} from "../../db/transaction.js";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "./workout.schema.js";
+import {assertWorkoutIsMutable} from "./workout-edit.policy.js";
 
 function workoutDateToTimestamp(date: string) {
     return new Date(`${date}T00:00:00.000Z`);
@@ -173,9 +174,7 @@ export async function deleteWorkoutByIdService(userId: string, workoutId: string
         throw new AppError("Workout not found", 404);
     }
 
-    if (workout.status === "COMPLETED") {
-        throw new AppError("Completed workout is read-only", 409);
-    }
+    assertWorkoutIsMutable(workout.status);
 
     return prisma.workout.delete({
         where: {
@@ -200,9 +199,7 @@ export async function updateWorkoutByIdService(
         throw new AppError("Workout not found", 404);
     }
 
-    if (workout.status === "COMPLETED") {
-        throw new AppError("Completed workout is read-only", 409);
-    }
+    assertWorkoutIsMutable(workout.status);
 
     return prisma.workout.update({
         where: {

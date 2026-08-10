@@ -1,13 +1,15 @@
 import type {Request, Response} from "express";
 import {
     addExerciseToWorkoutService,
-    addSetToWorkoutExerciseService,
     deleteWorkoutExerciseService,
-    deleteWorkoutSetService,
     updateWorkoutExerciseService,
+} from "./workout-exercise.service.js";
+import {
+    addSetToWorkoutExerciseService,
+    deleteWorkoutSetService,
     updateWorkoutSetService,
     setWorkoutSetCompletionService,
-} from "./workout-exercise.service.js";
+} from "./workout-set.service.js";
 import type {
     AddExerciseToWorkoutInput,
     CreateWorkoutSetInput,
