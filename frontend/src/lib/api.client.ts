@@ -1,5 +1,6 @@
 import {z} from "zod";
 import {env} from "../config/env.ts";
+import {ApiError} from "../common/errors/api.error.ts";
 
 interface ApiOptions {
     method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
@@ -9,6 +10,18 @@ interface ApiOptions {
 const errorResponseSchema = z.object({
     message: z.string(),
 });
+
+async function readResponseBody(response: Response): Promise<unknown> {
+    const text = await response.text();
+
+    if (text.trim() === "") return undefined;
+
+    try {
+        return JSON.parse(text) as unknown;
+    } catch {
+        return undefined;
+    }
+}
 
 export async function apiRequest<T>(
     path: string,
@@ -22,19 +35,22 @@ export async function apiRequest<T>(
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
 
-    const result: unknown = await response.json();
+    const result = await readResponseBody(response);
 
     if (!response.ok) {
         const parsedError = errorResponseSchema.safeParse(result);
 
-        throw new Error(parsedError.success ? parsedError.data.message : "Request failed");
+        throw new ApiError(
+            parsedError.success ? parsedError.data.message : "Request failed",
+            response.status,
+        );
     }
 
     const parsedResult = schema.safeParse(result);
 
     if (!parsedResult.success) {
         console.error("Invalid API response", parsedResult.error);
-        throw new Error("Invalid server response");
+        throw new ApiError("Invalid server response", response.status);
     }
 
     return parsedResult.data;

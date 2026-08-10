@@ -82,7 +82,7 @@ export async function getMeService(userId: string) {
     });
 
     if (!user) {
-        throw new AppError("User does not exist", 404);
+        throw new AppError("Authentication required", 401);
     }
 
     return user;

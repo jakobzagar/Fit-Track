@@ -43,6 +43,32 @@ describe("AuthProvider", () => {
         expect(await screen.findByText("Signed out")).toBeInTheDocument();
     });
 
+    test("distinguishes a temporary session failure from a signed-out state", async () => {
+        let attempts = 0;
+        server.use(
+            http.get(`${API_URL}/auth/me`, () => {
+                attempts += 1;
+                return attempts === 1
+                    ? new HttpResponse("<html>Service unavailable</html>", {
+                          status: 503,
+                          headers: {"Content-Type": "text/html"},
+                      })
+                    : HttpResponse.json({user: currentUser});
+            }),
+        );
+        const {user} = renderWithProviders(<AuthState />);
+
+        expect(await screen.findByRole("alert")).toHaveTextContent(
+            "Unable to restore your session. Please try again.",
+        );
+        expect(screen.queryByText("Signed out")).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", {name: "Try again"}));
+
+        expect(await screen.findByText("jakob@example.com")).toBeInTheDocument();
+        expect(attempts).toBe(2);
+    });
+
     test("logs out and clears the current user", async () => {
         server.use(
             http.get(`${API_URL}/auth/me`, () => HttpResponse.json({user: currentUser})),

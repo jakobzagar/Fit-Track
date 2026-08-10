@@ -180,14 +180,14 @@ describe("GET /api/auth/me", () => {
         });
     });
 
-    it("returns not found when the token user no longer exists", async () => {
+    it("rejects a session whose user no longer exists", async () => {
         const token = jwt.sign({userId: crypto.randomUUID()}, env.jwtSecret, {expiresIn: "7d"});
 
         const response = await request(app).get("/api/auth/me").set("Cookie", `token=${token}`);
 
-        expect(response.status).toBe(404);
+        expect(response.status).toBe(401);
         expect(messageResponseSchema.parse(response.body)).toEqual({
-            message: "User does not exist",
+            message: "Authentication required",
         });
     });
 });
