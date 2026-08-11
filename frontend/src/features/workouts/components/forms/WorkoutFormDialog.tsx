@@ -1,4 +1,4 @@
-import {FormDialog} from "../../../../components/ui/FormDialog";
+import {FormDialog} from "../../../../components/ui/dialogs/FormDialog";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../../schemas/workout.schemas";
 import type {WorkoutSummary} from "../../workout.types";
 import {CreateWorkoutForm} from "./CreateWorkoutForm";

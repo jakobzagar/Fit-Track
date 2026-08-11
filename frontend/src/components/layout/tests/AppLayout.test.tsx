@@ -1,9 +1,9 @@
 import {MemoryRouter, Route, Routes} from "react-router";
 import {render, screen} from "@testing-library/react";
 import {describe, expect, test, vi} from "vitest";
-import {AuthContext} from "../../features/auth/context/auth.context";
-import {user} from "../../test/fixtures/users";
-import {AppLayout} from "./AppLayout";
+import {AuthContext} from "../../../features/auth/context/auth.context";
+import {user} from "../../../test/fixtures/users";
+import {AppLayout} from "../shell/AppLayout";
 
 const authValue = {
     user,

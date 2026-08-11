@@ -1,12 +1,12 @@
 import {useState} from "react";
 import {Link, useNavigate} from "react-router";
-import {BrandMark} from "../../../components/ui/BrandMark";
-import {Feedback} from "../../../components/ui/Feedback";
+import {BrandMark} from "../../../components/ui/display/BrandMark";
+import {Feedback} from "../../../components/ui/feedback/Feedback";
 import {LoginForm} from "../components/LogInForm";
 import {login} from "../api/auth.api";
 import type {LoginInput} from "../schemas/auth.schemas";
 import {useAuth} from "../hooks/useAuth.ts";
-import {ThemeToggle} from "../../../components/ui/ThemeToggle";
+import {ThemeToggle} from "../../../components/ui/actions/ThemeToggle";
 
 export function LoginPage() {
     const navigate = useNavigate();

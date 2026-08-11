@@ -1,9 +1,9 @@
 import {Link} from "react-router";
-import {BrandMark} from "../../../components/ui/BrandMark";
-import {Icon} from "../../../components/ui/Icon";
+import {BrandMark} from "../../../components/ui/display/BrandMark";
+import {Icon} from "../../../components/ui/display/Icon";
 import {useAuth} from "../../auth/hooks/useAuth";
-import {Footer} from "../../../components/layout/Footer";
-import {ThemeToggle} from "../../../components/ui/ThemeToggle";
+import {Footer} from "../../../components/layout/footer/Footer";
+import {ThemeToggle} from "../../../components/ui/actions/ThemeToggle";
 import {LandingFeatures} from "../components/LandingFeatures";
 import {LandingWorkoutPreview} from "../components/LandingWorkoutPreview";
 

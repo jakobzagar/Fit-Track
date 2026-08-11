@@ -1,7 +1,7 @@
 import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
-import {FormDialog} from "./FormDialog";
+import {FormDialog} from "../dialogs/FormDialog";
 
 describe("FormDialog", () => {
     test("focuses the first field and closes with Escape", async () => {

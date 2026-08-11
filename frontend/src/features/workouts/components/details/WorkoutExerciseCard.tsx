@@ -1,6 +1,6 @@
-import {Button} from "../../../../components/ui/Button";
-import {Card} from "../../../../components/ui/Card";
-import {Icon} from "../../../../components/ui/Icon";
+import {Button} from "../../../../components/ui/actions/Button";
+import {Card} from "../../../../components/ui/display/Card";
+import {Icon} from "../../../../components/ui/display/Icon";
 import {AddWorkoutSetForm} from "../../../workout-exercises/components/sets/AddWorkoutSetForm";
 import {UpdateWorkoutExerciseForm} from "../../../workout-exercises/components/exercises/UpdateWorkoutExerciseForm";
 import type {

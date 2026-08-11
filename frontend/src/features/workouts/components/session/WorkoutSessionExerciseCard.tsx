@@ -1,5 +1,5 @@
-import {Button} from "../../../../components/ui/Button";
-import {Card} from "../../../../components/ui/Card";
+import {Button} from "../../../../components/ui/actions/Button";
+import {Card} from "../../../../components/ui/display/Card";
 import {NewWorkoutSetInlineRow} from "../../../workout-exercises/components/sets/NewWorkoutSetInlineRow";
 import {WorkoutSetInlineRow} from "../../../workout-exercises/components/sets/WorkoutSetInlineRow";
 import type {

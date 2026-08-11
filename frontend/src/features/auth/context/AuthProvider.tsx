@@ -3,8 +3,8 @@ import {getMe, logout} from "../api/auth.api";
 import type {User} from "../auth.types";
 import {AuthContext} from "./auth.context";
 import {ApiError} from "../../../common/errors/api.error";
-import {Feedback} from "../../../components/ui/Feedback";
-import {Button} from "../../../components/ui/Button";
+import {Feedback} from "../../../components/ui/feedback/Feedback";
+import {Button} from "../../../components/ui/actions/Button";
 
 interface AuthProviderProps {
     children: ReactNode;

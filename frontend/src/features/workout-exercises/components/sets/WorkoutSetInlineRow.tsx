@@ -1,6 +1,6 @@
 import {useId} from "react";
-import {Button} from "../../../../components/ui/Button";
-import {Icon} from "../../../../components/ui/Icon";
+import {Button} from "../../../../components/ui/actions/Button";
+import {Icon} from "../../../../components/ui/display/Icon";
 import type {WorkoutSet} from "../../../workouts/workout.types";
 import {useWorkoutSetDraft} from "../../hooks/useWorkoutSetDraft";
 import type {UpdateWorkoutSetInput} from "../../schemas/workout.exercises.schemas";

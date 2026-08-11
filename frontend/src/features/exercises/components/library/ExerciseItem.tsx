@@ -1,7 +1,7 @@
-import {Button} from "../../../../components/ui/Button";
-import {Card} from "../../../../components/ui/Card";
+import {Button} from "../../../../components/ui/actions/Button";
+import {Card} from "../../../../components/ui/display/Card";
 import type {Exercise} from "../../exercise.types.ts";
-import {Icon} from "../../../../components/ui/Icon";
+import {Icon} from "../../../../components/ui/display/Icon";
 
 interface ExerciseItemProps {
     exercise: Exercise;

@@ -1,12 +1,12 @@
 import {z} from "zod";
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import {createExerciseSchema, type CreateExerciseInput} from "../../schemas/exercise.schemas";
-import {Button} from "../../../../components/ui/Button";
-import {FieldError} from "../../../../components/ui/FieldError";
+import {Button} from "../../../../components/ui/actions/Button";
+import {FieldError} from "../../../../components/ui/forms/FieldError";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/formAccessibility";
+} from "../../../../components/ui/forms/formAccessibility";
 
 interface CreateExerciseFormProps {
     onSubmit: (data: CreateExerciseInput) => Promise<void>;

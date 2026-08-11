@@ -1,11 +1,11 @@
 import {Link, useParams} from "react-router";
 import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/exercises/AddExerciseToWorkoutForm";
-import {Button} from "../../../components/ui/Button";
-import {Card} from "../../../components/ui/Card";
-import {Feedback} from "../../../components/ui/Feedback";
-import {LoadingState} from "../../../components/ui/LoadingState";
-import {PageHeader} from "../../../components/ui/PageHeader";
-import {useConfirmDialog} from "../../../components/ui/useConfirmDialog";
+import {Button} from "../../../components/ui/actions/Button";
+import {Card} from "../../../components/ui/display/Card";
+import {Feedback} from "../../../components/ui/feedback/Feedback";
+import {LoadingState} from "../../../components/ui/display/LoadingState";
+import {PageHeader} from "../../../components/ui/display/PageHeader";
+import {useConfirmDialog} from "../../../components/ui/dialogs/useConfirmDialog";
 import {WorkoutExerciseCard} from "../components/details/WorkoutExerciseCard";
 import {useWorkoutDetail} from "../hooks/data/useWorkoutDetail";
 import {formatWorkoutDate} from "../utils/workout-date";

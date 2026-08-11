@@ -1,5 +1,5 @@
 import {useEffect, useId, useRef, type ReactNode} from "react";
-import {Icon} from "./Icon";
+import {Icon} from "../display/Icon";
 
 interface FormDialogProps {
     title: string;

@@ -1,9 +1,9 @@
 import {MemoryRouter} from "react-router";
 import {render, screen} from "@testing-library/react";
 import {describe, expect, test, vi} from "vitest";
-import {AuthContext, type AuthContextValue} from "../../features/auth/context/auth.context";
-import {user as authenticatedUser} from "../../test/fixtures/users";
-import {Footer} from "./Footer";
+import {AuthContext, type AuthContextValue} from "../../../features/auth/context/auth.context";
+import {user as authenticatedUser} from "../../../test/fixtures/users";
+import {Footer} from "../footer/Footer";
 
 function renderFooter(user: AuthContextValue["user"], variant: "app" | "landing" = "landing") {
     return render(

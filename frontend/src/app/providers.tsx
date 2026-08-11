@@ -1,6 +1,6 @@
 import type {ReactNode} from "react";
 import {AuthProvider} from "../features/auth/context/AuthProvider";
-import {ConfirmDialogProvider} from "../components/ui/ConfirmDialogProvider";
+import {ConfirmDialogProvider} from "../components/ui/dialogs/ConfirmDialogProvider";
 
 interface AppProvidersProps {
     children: ReactNode;

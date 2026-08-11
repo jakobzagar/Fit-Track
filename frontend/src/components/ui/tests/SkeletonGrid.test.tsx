@@ -1,6 +1,6 @@
 import {render, screen} from "@testing-library/react";
 import {describe, expect, test} from "vitest";
-import {SkeletonGrid} from "./SkeletonGrid";
+import {SkeletonGrid} from "../display/SkeletonGrid";
 
 describe("SkeletonGrid", () => {
     test("exposes its loading state to assistive technology", () => {

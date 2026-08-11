@@ -1,5 +1,5 @@
 import {Navigate, Outlet} from "react-router";
-import {LoadingState} from "../../../components/ui/LoadingState";
+import {LoadingState} from "../../../components/ui/display/LoadingState";
 import {useAuth} from "../hooks/useAuth";
 
 export function GuestRoute() {

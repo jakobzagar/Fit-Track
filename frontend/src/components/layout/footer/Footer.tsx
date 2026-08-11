@@ -1,7 +1,7 @@
 import {Link} from "react-router";
-import {useAuth} from "../../features/auth/hooks/useAuth";
-import {BrandMark} from "../ui/BrandMark";
-import {Icon} from "../ui/Icon";
+import {useAuth} from "../../../features/auth/hooks/useAuth";
+import {BrandMark} from "../../ui/display/BrandMark";
+import {Icon} from "../../ui/display/Icon";
 
 interface FooterProps {
     variant?: "app" | "landing";

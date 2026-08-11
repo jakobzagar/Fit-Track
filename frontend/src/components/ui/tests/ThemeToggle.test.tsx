@@ -1,7 +1,7 @@
 import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test} from "vitest";
-import {ThemeToggle} from "./ThemeToggle";
+import {ThemeToggle} from "../actions/ThemeToggle";
 
 function addThemeMeta(content: string) {
     const meta = document.createElement("meta");

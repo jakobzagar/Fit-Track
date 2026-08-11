@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import type {NavigateFunction} from "react-router";
-import type {ConfirmDialogFunction} from "../../../../components/ui/confirm-dialog.context";
+import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/confirm-dialog.context";
 import {getExercises} from "../../../exercises/api/exercises.api";
 import type {Exercise} from "../../../exercises/exercise.types";
 import {

@@ -2,12 +2,12 @@ import {useId, useRef, useState, type SubmitEvent} from "react";
 import type {WorkoutSet} from "../../../workouts/workout.types.ts";
 import type {UpdateWorkoutSetInput} from "../../schemas/workout.exercises.schemas.ts";
 import {parseEditedWorkoutSet} from "../../schemas/workout-set-input.parser.ts";
-import {Button} from "../../../../components/ui/Button.tsx";
-import {FieldError} from "../../../../components/ui/FieldError.tsx";
+import {Button} from "../../../../components/ui/actions/Button.tsx";
+import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/formAccessibility.ts";
+} from "../../../../components/ui/forms/formAccessibility.ts";
 
 interface UpdateWorkoutSetFormProps {
     workoutSet: WorkoutSet;

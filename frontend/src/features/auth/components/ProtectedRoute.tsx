@@ -1,6 +1,6 @@
 import {Navigate, Outlet} from "react-router";
 import {useAuth} from "../hooks/useAuth";
-import {LoadingState} from "../../../components/ui/LoadingState";
+import {LoadingState} from "../../../components/ui/display/LoadingState";
 
 export function ProtectedRoute() {
     const {user, isLoading} = useAuth();

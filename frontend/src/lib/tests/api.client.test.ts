@@ -1,10 +1,10 @@
 import {http, HttpResponse} from "msw";
 import {z} from "zod";
 import {describe, expect, test, vi} from "vitest";
-import {API_URL} from "../test/constants";
-import {server} from "../test/mocks/server";
-import {ApiError} from "../common/errors/api.error";
-import {apiRequest} from "./api.client";
+import {ApiError} from "../../common/errors/api.error";
+import {API_URL} from "../../test/constants";
+import {server} from "../../test/mocks/server";
+import {apiRequest} from "../api.client";
 
 const responseSchema = z.object({value: z.string()});
 

@@ -1,8 +1,8 @@
 import {Link} from "react-router";
-import {Button} from "../../../../components/ui/Button.tsx";
-import {Card} from "../../../../components/ui/Card.tsx";
+import {Button} from "../../../../components/ui/actions/Button.tsx";
+import {Card} from "../../../../components/ui/display/Card.tsx";
 import type {WorkoutSummary} from "../../workout.types.ts";
-import {Icon} from "../../../../components/ui/Icon.tsx";
+import {Icon} from "../../../../components/ui/display/Icon.tsx";
 import {formatWorkoutDate} from "../../utils/workout-date.ts";
 
 interface WorkoutItemProps {

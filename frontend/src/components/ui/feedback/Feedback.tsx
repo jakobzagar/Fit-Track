@@ -1,5 +1,5 @@
 import {useEffect, type ReactNode} from "react";
-import {Icon} from "./Icon";
+import {Icon} from "../display/Icon";
 
 interface FeedbackProps {
     children: ReactNode;

@@ -2,12 +2,12 @@ import {z} from "zod";
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import {updateExerciseSchema, type UpdateExerciseInput} from "../../schemas/exercise.schemas";
 import type {Exercise} from "../../exercise.types.ts";
-import {Button} from "../../../../components/ui/Button";
-import {FieldError} from "../../../../components/ui/FieldError";
+import {Button} from "../../../../components/ui/actions/Button";
+import {FieldError} from "../../../../components/ui/forms/FieldError";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/formAccessibility";
+} from "../../../../components/ui/forms/formAccessibility";
 
 interface UpdateExerciseFormProps {
     exercise: Exercise;

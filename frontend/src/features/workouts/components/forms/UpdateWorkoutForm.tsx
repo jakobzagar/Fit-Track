@@ -2,12 +2,12 @@ import {useId, useRef, useState, type SubmitEvent} from "react";
 import {z} from "zod";
 import {updateWorkoutSchema, type UpdateWorkoutInput} from "../../schemas/workout.schemas.ts";
 import type {WorkoutSummary} from "../../workout.types.ts";
-import {Button} from "../../../../components/ui/Button.tsx";
-import {FieldError} from "../../../../components/ui/FieldError.tsx";
+import {Button} from "../../../../components/ui/actions/Button.tsx";
+import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/formAccessibility.ts";
+} from "../../../../components/ui/forms/formAccessibility.ts";
 import {workoutDateInputValue} from "../../utils/workout-date.ts";
 
 interface UpdateWorkoutFormProps {

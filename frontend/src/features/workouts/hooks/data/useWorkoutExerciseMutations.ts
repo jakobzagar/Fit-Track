@@ -1,5 +1,5 @@
 import {useState, type Dispatch, type SetStateAction} from "react";
-import type {ConfirmDialogFunction} from "../../../../components/ui/confirm-dialog.context";
+import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/confirm-dialog.context";
 import {
     addExerciseToWorkout,
     deleteWorkoutExercise,

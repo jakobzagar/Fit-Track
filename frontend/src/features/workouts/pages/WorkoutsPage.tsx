@@ -4,12 +4,12 @@ import {WorkoutEmptyState} from "../components/list/WorkoutEmptyState.tsx";
 import {WorkoutList} from "../components/list/WorkoutList.tsx";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
 import type {WorkoutSummary} from "../workout.types.ts";
-import {Feedback} from "../../../components/ui/Feedback.tsx";
-import {PageHeader} from "../../../components/ui/PageHeader.tsx";
-import {SkeletonGrid} from "../../../components/ui/SkeletonGrid.tsx";
-import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
-import {Button} from "../../../components/ui/Button.tsx";
-import {Icon} from "../../../components/ui/Icon.tsx";
+import {Feedback} from "../../../components/ui/feedback/Feedback.tsx";
+import {PageHeader} from "../../../components/ui/display/PageHeader.tsx";
+import {SkeletonGrid} from "../../../components/ui/display/SkeletonGrid.tsx";
+import {useConfirmDialog} from "../../../components/ui/dialogs/useConfirmDialog.ts";
+import {Button} from "../../../components/ui/actions/Button.tsx";
+import {Icon} from "../../../components/ui/display/Icon.tsx";
 import {useWorkouts} from "../hooks/data/useWorkouts.ts";
 
 export function WorkoutsPage() {

@@ -2,8 +2,8 @@ import {useState} from "react";
 import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test} from "vitest";
-import {ConfirmDialogProvider} from "./ConfirmDialogProvider";
-import {useConfirmDialog} from "./useConfirmDialog";
+import {ConfirmDialogProvider} from "../dialogs/ConfirmDialogProvider";
+import {useConfirmDialog} from "../dialogs/useConfirmDialog";
 
 function DialogHarness() {
     const confirm = useConfirmDialog();

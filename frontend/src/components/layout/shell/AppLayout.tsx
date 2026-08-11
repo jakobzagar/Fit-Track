@@ -1,6 +1,6 @@
 import {Outlet, useLocation} from "react-router";
-import {Navbar} from "./Navbar";
-import {Footer} from "./Footer";
+import {Footer} from "../footer/Footer";
+import {Navbar} from "../navigation/Navbar";
 
 export function AppLayout() {
     const {pathname} = useLocation();

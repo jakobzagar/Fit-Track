@@ -1,7 +1,7 @@
 import {MemoryRouter} from "react-router";
 import {render, screen} from "@testing-library/react";
 import {describe, expect, test} from "vitest";
-import {BrandMark} from "./BrandMark";
+import {BrandMark} from "../display/BrandMark";
 
 describe("BrandMark", () => {
     test("links both logo variants to the home page by default", () => {

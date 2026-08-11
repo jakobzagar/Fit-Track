@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState, type ReactNode} from "react";
-import {Button} from "./Button";
+import {ConfirmDialog} from "./ConfirmDialog";
 import {ConfirmDialogContext, type ConfirmDialogOptions} from "./confirm-dialog.context";
 
 interface PendingDialog extends ConfirmDialogOptions {
@@ -64,48 +64,7 @@ export function ConfirmDialogProvider({children}: {children: ReactNode}) {
         <ConfirmDialogContext value={confirm}>
             {children}
             {dialog && (
-                <div
-                    className="confirm-backdrop"
-                    role="presentation"
-                    onMouseDown={(event) => {
-                        if (event.target === event.currentTarget) close(false);
-                    }}
-                >
-                    <section
-                        className="confirm-dialog"
-                        data-confirm-dialog
-                        role="alertdialog"
-                        aria-modal="true"
-                        aria-labelledby="confirm-dialog-title"
-                        aria-describedby="confirm-dialog-message"
-                    >
-                        <span
-                            className={`confirm-dialog-mark ${dialog.variant === "danger" ? "is-danger" : ""}`}
-                        >
-                            !
-                        </span>
-                        <p className="eyebrow">Confirm action</p>
-                        <h2 id="confirm-dialog-title">{dialog.title}</h2>
-                        <p id="confirm-dialog-message" className="confirm-dialog-message">
-                            {dialog.message}
-                        </p>
-                        <div className="confirm-dialog-actions">
-                            <Button
-                                ref={cancelButtonRef}
-                                variant="secondary"
-                                onClick={() => close(false)}
-                            >
-                                {dialog.cancelLabel ?? "Cancel"}
-                            </Button>
-                            <Button
-                                variant={dialog.variant === "danger" ? "danger" : "primary"}
-                                onClick={() => close(true)}
-                            >
-                                {dialog.confirmLabel ?? "Confirm"}
-                            </Button>
-                        </div>
-                    </section>
-                </div>
+                <ConfirmDialog dialog={dialog} cancelButtonRef={cancelButtonRef} onClose={close} />
             )}
         </ConfirmDialogContext>
     );

@@ -1,7 +1,7 @@
 import {render, waitFor} from "@testing-library/react";
 import {createMemoryRouter, RouterProvider} from "react-router";
 import {describe, expect, test, vi} from "vitest";
-import type {ConfirmDialogFunction} from "../../../components/ui/confirm-dialog.context";
+import type {ConfirmDialogFunction} from "../../../components/ui/dialogs/confirm-dialog.context";
 import {useUnsavedSessionGuard} from "../hooks/session/useUnsavedSessionGuard";
 
 function renderGuard({

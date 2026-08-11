@@ -1,9 +1,12 @@
 import {z} from "zod";
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import {registerSchema, type RegisterInput} from "../schemas/auth.schemas";
-import {Button} from "../../../components/ui/Button";
-import {FieldError} from "../../../components/ui/FieldError";
-import {focusFirstInvalidField, invalidFieldProps} from "../../../components/ui/formAccessibility";
+import {Button} from "../../../components/ui/actions/Button";
+import {FieldError} from "../../../components/ui/forms/FieldError";
+import {
+    focusFirstInvalidField,
+    invalidFieldProps,
+} from "../../../components/ui/forms/formAccessibility";
 
 interface RegisterFormProps {
     onSubmit: (data: RegisterInput) => Promise<void>;

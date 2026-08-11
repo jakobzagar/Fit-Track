@@ -1,6 +1,6 @@
-import {Button} from "../../../../components/ui/Button";
-import {Card} from "../../../../components/ui/Card";
-import {Icon} from "../../../../components/ui/Icon";
+import {Button} from "../../../../components/ui/actions/Button";
+import {Card} from "../../../../components/ui/display/Card";
+import {Icon} from "../../../../components/ui/display/Icon";
 
 export function WorkoutEmptyState({onCreate}: {onCreate: () => void}) {
     return (

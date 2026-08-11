@@ -5,12 +5,12 @@ import {
     addExerciseToWorkoutSchema,
     type AddExerciseToWorkoutInput,
 } from "../../schemas/workout.exercises.schemas.ts";
-import {Button} from "../../../../components/ui/Button.tsx";
-import {FieldError} from "../../../../components/ui/FieldError.tsx";
+import {Button} from "../../../../components/ui/actions/Button.tsx";
+import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/formAccessibility.ts";
+} from "../../../../components/ui/forms/formAccessibility.ts";
 
 interface AddExerciseToWorkoutFormProps {
     exercises: Exercise[];

@@ -1,4 +1,4 @@
-import {Icon} from "../../../components/ui/Icon";
+import {Icon} from "../../../components/ui/display/Icon";
 
 export function LandingWorkoutPreview() {
     return (

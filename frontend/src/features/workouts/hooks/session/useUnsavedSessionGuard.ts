@@ -1,6 +1,6 @@
 import {useCallback, useEffect} from "react";
 import {useBlocker} from "react-router";
-import type {ConfirmDialogOptions} from "../../../../components/ui/confirm-dialog.context";
+import type {ConfirmDialogOptions} from "../../../../components/ui/dialogs/confirm-dialog.context";
 
 type Confirm = (options: ConfirmDialogOptions) => Promise<boolean>;
 
