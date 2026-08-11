@@ -12,7 +12,7 @@ This repository is a portfolio project built to demonstrate production-oriented 
 
 - Account registration, login, logout, and session restoration
 - Per-user exercise library with archive and restore support
-- Workout creation, editing, deletion, and lifecycle states
+- Workout creation, editing, deletion, cancellation, reopening, and lifecycle states
 - Exercises and ordered sets within a workout
 - Reps, weight, duration, notes, and set completion tracking
 - Previous-performance context during workout sessions

@@ -1,6 +1,6 @@
 import {http, HttpResponse} from "msw";
 import {createMemoryRouter, RouterProvider} from "react-router";
-import {render, screen} from "@testing-library/react";
+import {render, screen, within} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
 import {AppProviders} from "../../../app/providers";
@@ -158,6 +158,33 @@ describe("WorkoutSessionPage", () => {
         await user.click(screen.getByRole("button", {name: "Finish workout"}));
 
         expect(await screen.findByRole("heading", {name: "Workout detail"})).toBeInTheDocument();
+    });
+
+    test("cancels an active session after confirmation and returns to detail", async () => {
+        mockLoadRequests();
+        const cancelRequest = vi.fn();
+        server.use(
+            http.post(`${API_URL}/workouts/${workoutId}/cancel`, () => {
+                cancelRequest();
+                return HttpResponse.json({
+                    workout: createWorkoutBase({
+                        status: "DRAFT",
+                        startedAt: null,
+                        completedAt: null,
+                    }),
+                });
+            }),
+        );
+        const {user} = renderPage();
+        await screen.findByRole("heading", {name: "Push day"});
+
+        await user.click(screen.getByRole("button", {name: "Cancel session"}));
+        const dialog = screen.getByRole("alertdialog", {name: "Cancel active session?"});
+        expect(dialog).toHaveTextContent("completed set checkmarks will be reset");
+        await user.click(within(dialog).getByRole("button", {name: "Cancel session"}));
+
+        expect(await screen.findByRole("heading", {name: "Workout detail"})).toBeInTheDocument();
+        expect(cancelRequest).toHaveBeenCalledOnce();
     });
 
     test("shows a finish error and keeps the active session open", async () => {

@@ -58,6 +58,18 @@ export function finishWorkout(workoutId: string): Promise<WorkoutBaseResponse> {
     });
 }
 
+export function cancelWorkout(workoutId: string): Promise<WorkoutBaseResponse> {
+    return apiRequest(`/workouts/${workoutId}/cancel`, workoutBaseResponseSchema, {
+        method: "POST",
+    });
+}
+
+export function reopenWorkout(workoutId: string): Promise<WorkoutBaseResponse> {
+    return apiRequest(`/workouts/${workoutId}/reopen`, workoutBaseResponseSchema, {
+        method: "POST",
+    });
+}
+
 export function getPreviousPerformances(workoutId: string): Promise<PreviousPerformancesResponse> {
     return apiRequest(
         `/workouts/${workoutId}/previous-performances`,

@@ -1,4 +1,4 @@
-import {Link, useParams} from "react-router";
+import {Link, useNavigate, useParams} from "react-router";
 import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/exercises/AddExerciseToWorkoutForm";
 import {Button} from "../../../components/ui/actions/Button";
 import {Card} from "../../../components/ui/display/Card";
@@ -12,6 +12,7 @@ import {formatWorkoutDate} from "../utils/workout-date";
 
 export function WorkoutDetailPage() {
     const confirm = useConfirmDialog();
+    const navigate = useNavigate();
     const {workoutId} = useParams();
     const {
         workout,
@@ -21,6 +22,7 @@ export function WorkoutDetailPage() {
         deletingWorkoutExerciseId,
         deletingWorkoutSetId,
         isLoading,
+        isReopening,
         loadError,
         mutationError,
         setEditingWorkoutExercise,
@@ -31,8 +33,24 @@ export function WorkoutDetailPage() {
         removeExercise: handleDeleteWorkoutExercise,
         updateSet: handleUpdateWorkoutSet,
         removeSet: handleDeleteWorkoutSet,
+        reopen,
         retry,
     } = useWorkoutDetail(workoutId, confirm);
+
+    async function handleReopenWorkout() {
+        if (!workout) return;
+        const confirmed = await confirm({
+            title: "Reopen completed workout?",
+            message:
+                "The workout will become active again so you can correct exercises and sets. Existing completed sets will remain checked.",
+            confirmLabel: "Reopen workout",
+        });
+        if (!confirmed) return;
+
+        if (await reopen()) {
+            void navigate(`/workouts/${workout.id}/session`);
+        }
+    }
 
     if (isLoading) {
         if (!workoutId) return <Feedback>Workout ID is missing</Feedback>;
@@ -68,7 +86,15 @@ export function WorkoutDetailPage() {
                         >
                             {workout.status === "ACTIVE" ? "Continue session" : "Start workout"}
                         </Link>
-                    ) : undefined
+                    ) : (
+                        <Button
+                            type="button"
+                            disabled={isReopening}
+                            onClick={() => void handleReopenWorkout()}
+                        >
+                            {isReopening ? "Reopening..." : "Reopen workout"}
+                        </Button>
+                    )
                 }
             />
 

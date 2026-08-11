@@ -2,7 +2,7 @@ import {useCallback, useEffect, useRef, useState} from "react";
 import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/confirm-dialog.context";
 import {getExercises} from "../../../exercises/api/exercises.api";
 import type {Exercise} from "../../../exercises/exercise.types";
-import {getWorkoutById} from "../../api/workouts.api";
+import {getWorkoutById, reopenWorkout} from "../../api/workouts.api";
 import type {Workout} from "../../workout.types";
 import {useWorkoutExerciseMutations} from "./useWorkoutExerciseMutations";
 import {useWorkoutSetMutations} from "./useWorkoutSetMutations";
@@ -12,6 +12,8 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
+    const [lifecycleError, setLifecycleError] = useState("");
+    const [isReopening, setIsReopening] = useState(false);
     const requestIdRef = useRef(0);
     const exerciseMutations = useWorkoutExerciseMutations(workoutId, confirm, setWorkout);
     const setMutations = useWorkoutSetMutations(workoutId, confirm, setWorkout);
@@ -48,6 +50,8 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
             setExerciseError("");
             setSetError("");
             setLoadError("");
+            setLifecycleError("");
+            setIsReopening(false);
             setIsLoading(true);
             void load();
         });
@@ -57,6 +61,24 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
         };
     }, [load, setEditingExercise, setEditingSet, setExerciseError, setSetError]);
 
+    async function reopen() {
+        if (!workoutId) return false;
+        setLifecycleError("");
+        setIsReopening(true);
+        try {
+            const response = await reopenWorkout(workoutId);
+            setWorkout((current) => (current ? {...current, ...response.workout} : current));
+            return true;
+        } catch (caught) {
+            setLifecycleError(
+                caught instanceof Error ? caught.message : "Failed to reopen workout",
+            );
+            return false;
+        } finally {
+            setIsReopening(false);
+        }
+    }
+
     return {
         workout,
         exercises,
@@ -65,8 +87,9 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
         deletingWorkoutExerciseId: exerciseMutations.deletingExerciseId,
         deletingWorkoutSetId: setMutations.deletingSetId,
         isLoading,
+        isReopening,
         loadError,
-        mutationError: exerciseMutations.error || setMutations.error,
+        mutationError: lifecycleError || exerciseMutations.error || setMutations.error,
         setEditingWorkoutExercise: exerciseMutations.setEditingExercise,
         setEditingWorkoutSet: setMutations.setEditingSet,
         addExercise: exerciseMutations.add,
@@ -75,6 +98,7 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
         removeExercise: exerciseMutations.remove,
         updateSet: setMutations.update,
         removeSet: setMutations.remove,
+        reopen,
         retry: () => {
             setIsLoading(true);
             setLoadError("");

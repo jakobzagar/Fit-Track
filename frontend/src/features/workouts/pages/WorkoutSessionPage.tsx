@@ -21,6 +21,7 @@ export function WorkoutSessionPage() {
         completedSetCount,
         isLoading,
         isFinishing,
+        isCancelling,
         copyingExerciseId,
         error,
         addExercise: handleAddExercise,
@@ -29,6 +30,7 @@ export function WorkoutSessionPage() {
         saveSet: handleSaveSet,
         toggleSet: handleToggleSet,
         finish: handleFinish,
+        cancel: handleCancel,
         exit: handleExit,
         retry,
         onDirtyChange: handleDirtyChange,
@@ -105,7 +107,9 @@ export function WorkoutSessionPage() {
             <WorkoutSessionActionBar
                 completedSetCount={completedSetCount}
                 isFinishing={isFinishing}
+                isCancelling={isCancelling}
                 onFinish={() => void handleFinish()}
+                onCancel={() => void handleCancel()}
             />
         </section>
     );

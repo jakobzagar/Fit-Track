@@ -4,6 +4,7 @@ import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/conf
 import {getExercises} from "../../../exercises/api/exercises.api";
 import type {Exercise} from "../../../exercises/exercise.types";
 import {
+    cancelWorkout,
     finishWorkout,
     getPreviousPerformances,
     getWorkoutById,
@@ -23,6 +24,7 @@ export function useWorkoutSession(
     const [previousPerformances, setPreviousPerformances] = useState<PreviousPerformance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFinishing, setIsFinishing] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
     const [error, setError] = useState("");
     const [dirtySetIds, setDirtySetIds] = useState<Set<string>>(() => new Set());
     const requestIdRef = useRef(0);
@@ -33,7 +35,11 @@ export function useWorkoutSession(
         setError,
     );
     const {setCopyingExerciseId} = mutations;
-    useUnsavedSessionGuard({dirtySetCount: dirtySetIds.size, isFinishing, confirm});
+    useUnsavedSessionGuard({
+        dirtySetCount: dirtySetIds.size,
+        isFinishing: isFinishing || isCancelling,
+        confirm,
+    });
 
     const load = useCallback(async () => {
         if (!workoutId) return;
@@ -78,6 +84,7 @@ export function useWorkoutSession(
             setDirtySetIds(new Set());
             setError("");
             setIsFinishing(false);
+            setIsCancelling(false);
             setCopyingExerciseId(null);
             setIsLoading(true);
             void load();
@@ -121,6 +128,35 @@ export function useWorkoutSession(
         }
     }
 
+    async function cancel() {
+        if (!workoutId) return;
+        setError("");
+        if (dirtySetIds.size > 0) {
+            setError(
+                `Save or discard ${dirtySetIds.size === 1 ? "the edited set" : `all ${dirtySetIds.size} edited sets`} before cancelling the session.`,
+            );
+            return;
+        }
+
+        const confirmed = await confirm({
+            title: "Cancel active session?",
+            message:
+                "The workout will return to draft. Saved set values will remain, but completed set checkmarks will be reset.",
+            confirmLabel: "Cancel session",
+            variant: "danger",
+        });
+        if (!confirmed) return;
+
+        setIsCancelling(true);
+        try {
+            await cancelWorkout(workoutId);
+            void navigate(`/workouts/${workoutId}`, {replace: true});
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : "Failed to cancel session");
+            setIsCancelling(false);
+        }
+    }
+
     function exit() {
         if (dirtySetIds.size > 0) {
             void navigate(`/workouts/${workout?.id}`);
@@ -153,6 +189,7 @@ export function useWorkoutSession(
         completedSetCount,
         isLoading,
         isFinishing,
+        isCancelling,
         copyingExerciseId: mutations.copyingExerciseId,
         error,
         addExercise: mutations.addExercise,
@@ -161,6 +198,7 @@ export function useWorkoutSession(
         saveSet: mutations.saveSet,
         toggleSet: mutations.toggleSet,
         finish,
+        cancel,
         exit,
         retry,
         onDirtyChange,

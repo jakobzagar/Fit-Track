@@ -20,6 +20,7 @@ function renderPage() {
     return renderWithProviders(
         <Routes>
             <Route path="/workouts/:workoutId" element={<WorkoutDetailPage />} />
+            <Route path="/workouts/:workoutId/session" element={<h1>Workout session</h1>} />
         </Routes>,
         {route: `/workouts/${workoutId}`},
     );
@@ -62,6 +63,41 @@ describe("WorkoutDetailPage", () => {
         expect(screen.queryByRole("button", {name: "Edit set"})).not.toBeInTheDocument();
         expect(screen.queryByRole("button", {name: "Delete"})).not.toBeInTheDocument();
         expect(screen.queryByRole("button", {name: "Add set"})).not.toBeInTheDocument();
+        expect(screen.getByRole("button", {name: "Reopen workout"})).toBeInTheDocument();
+    });
+
+    test("reopens a completed workout after confirmation", async () => {
+        const completed = createWorkout({
+            status: "COMPLETED",
+            completedAt: "2026-07-26T11:00:00.000Z",
+        });
+        mockLoadRequests(completed);
+        server.use(
+            http.post(`${API_URL}/workouts/${workoutId}/reopen`, () =>
+                HttpResponse.json({
+                    workout: {
+                        id: completed.id,
+                        name: completed.name,
+                        status: "ACTIVE",
+                        startedAt: completed.startedAt,
+                        completedAt: null,
+                        performedAt: completed.performedAt,
+                        notes: completed.notes,
+                        createdAt: completed.createdAt,
+                        updatedAt: completed.updatedAt,
+                        userId: completed.userId,
+                    },
+                }),
+            ),
+        );
+        const {user} = renderPage();
+        await screen.findByText("Completed session");
+
+        await user.click(screen.getByRole("button", {name: "Reopen workout"}));
+        const dialog = screen.getByRole("alertdialog", {name: "Reopen completed workout?"});
+        await user.click(within(dialog).getByRole("button", {name: "Reopen workout"}));
+
+        expect(await screen.findByRole("heading", {name: "Workout session"})).toBeInTheDocument();
     });
 
     test("shows a failed load", async () => {

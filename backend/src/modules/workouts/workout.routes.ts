@@ -8,6 +8,8 @@ import {
     updateWorkout,
     startWorkout,
     finishWorkout,
+    cancelWorkout,
+    reopenWorkout,
     getPreviousPerformances,
 } from "./workout.controller.js";
 import {validate} from "../../common/middleware/validate.middleware.js";
@@ -36,6 +38,10 @@ router.post("/", validate(createWorkoutSchema), createWorkout);
 router.post("/:workoutId/start", validate(workoutIdSchema, "params"), startWorkout);
 
 router.post("/:workoutId/finish", validate(workoutIdSchema, "params"), finishWorkout);
+
+router.post("/:workoutId/cancel", validate(workoutIdSchema, "params"), cancelWorkout);
+
+router.post("/:workoutId/reopen", validate(workoutIdSchema, "params"), reopenWorkout);
 
 router.delete("/:workoutId", validate(workoutIdSchema, "params"), deleteWorkout);
 

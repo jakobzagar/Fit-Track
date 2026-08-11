@@ -1,6 +1,5 @@
 import {prisma} from "../../../db/prisma.js";
 import {AppError} from "../../../common/errors/app.error.js";
-import {runSerializableTransaction} from "../../../db/transaction.js";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "@fit-track/shared/workouts";
 import {assertWorkoutIsMutable} from "../policies/workout-edit.policy.js";
 
@@ -210,104 +209,5 @@ export async function updateWorkoutByIdService(
             }),
             ...(data.notes !== undefined && {notes: data.notes}),
         },
-    });
-}
-
-export async function startWorkoutService(userId: string, workoutId: string) {
-    return runSerializableTransaction(async (tx) => {
-        const workout = await tx.workout.findFirst({
-            where: {
-                id: workoutId,
-                userId,
-            },
-        });
-
-        if (!workout) {
-            throw new AppError("Workout not found", 404);
-        }
-
-        // Starting a workout is idempotent. The session page can request this
-        // more than once while mounting (for example in React Strict Mode).
-        if (workout.status === "ACTIVE") {
-            return workout;
-        }
-
-        if (workout.status === "COMPLETED") {
-            throw new AppError("Completed workout cannot be started", 409);
-        }
-
-        const activeWorkout = await tx.workout.findFirst({
-            where: {
-                userId,
-                status: "ACTIVE",
-            },
-            select: {
-                id: true,
-            },
-        });
-
-        if (activeWorkout) {
-            throw new AppError("Another workout is already active", 409);
-        }
-
-        return tx.workout.update({
-            where: {
-                id: workoutId,
-            },
-            data: {
-                status: "ACTIVE",
-                startedAt: new Date(),
-                completedAt: null,
-            },
-        });
-    });
-}
-
-export async function finishWorkoutService(userId: string, workoutId: string) {
-    return runSerializableTransaction(async (tx) => {
-        const workout = await tx.workout.findFirst({
-            where: {
-                id: workoutId,
-                userId,
-            },
-        });
-
-        if (!workout) {
-            throw new AppError("Workout not found", 404);
-        }
-
-        if (workout.status !== "ACTIVE") {
-            throw new AppError(
-                workout.status === "COMPLETED"
-                    ? "Workout is already completed"
-                    : "Workout must be started before it can be finished",
-                409,
-            );
-        }
-
-        const completedSetCount = await tx.workoutSet.count({
-            where: {
-                completedAt: {
-                    not: null,
-                },
-                workoutExercise: {
-                    workoutId,
-                },
-            },
-        });
-
-        if (completedSetCount === 0) {
-            throw new AppError("Complete at least one set before finishing the workout", 409);
-        }
-
-        return tx.workout.update({
-            where: {
-                id: workoutId,
-            },
-            data: {
-                status: "COMPLETED",
-                completedAt: new Date(),
-            },
-        });
     });
 }

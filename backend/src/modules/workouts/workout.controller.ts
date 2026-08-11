@@ -5,10 +5,14 @@ import {
     createWorkoutService,
     deleteWorkoutByIdService,
     updateWorkoutByIdService,
-    startWorkoutService,
-    finishWorkoutService,
     getPreviousPerformancesService,
 } from "./services/workout.service.js";
+import {
+    cancelWorkoutService,
+    finishWorkoutService,
+    reopenWorkoutService,
+    startWorkoutService,
+} from "./services/workout-lifecycle.service.js";
 import type {
     CreateWorkoutInput,
     UpdateWorkoutInput,
@@ -91,6 +95,26 @@ export async function finishWorkout(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
 
     const workout = await finishWorkoutService(res.locals.userId, params.workoutId);
+
+    res.status(200).json({
+        workout,
+    });
+}
+
+export async function cancelWorkout(_req: Request, res: Response) {
+    const params = res.locals.params as WorkoutIdParams;
+
+    const workout = await cancelWorkoutService(res.locals.userId, params.workoutId);
+
+    res.status(200).json({
+        workout,
+    });
+}
+
+export async function reopenWorkout(_req: Request, res: Response) {
+    const params = res.locals.params as WorkoutIdParams;
+
+    const workout = await reopenWorkoutService(res.locals.userId, params.workoutId);
 
     res.status(200).json({
         workout,
