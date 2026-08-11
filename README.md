@@ -41,7 +41,7 @@ fit-track/
 
 The repository uses npm workspaces. The frontend and backend consume `@fit-track/shared`, keeping request validation, response shapes, and TypeScript contracts consistent across application boundaries. The backend validates untrusted request data before controllers run, while the frontend validates actual JSON responses at the HTTP boundary. Backend integration tests parse real endpoint responses with the same shared schemas to catch contract drift before deployment. Backend features follow a route → controller → service structure, while frontend code is organized by feature.
 
-Large features are subdivided only when the extra level represents a useful domain boundary. For example, backend workout modules keep `services/`, `policies/`, and local `tests/`, while frontend workout components are grouped into `forms/`, `list/`, `details/`, and `session/`. Workout-exercise UI separates exercise-level controls from set-level controls. Smaller features remain flat to avoid unnecessary navigation and empty structural layers. Tests for frontend components and hooks stay beside the code they exercise.
+Large features are subdivided only when the extra level represents a useful domain boundary. For example, backend workout modules keep `services/`, `policies/`, and local `tests/`, while frontend workout components are grouped into `forms/`, `list/`, `details/`, and `session/`. Workout-exercise UI separates exercise-level controls from set-level controls. Smaller features remain flat to avoid unnecessary navigation and empty structural layers. Each frontend feature collects its tests in a local `tests/` directory, while shared test infrastructure remains under `frontend/src/test/`.
 
 ## Getting started
 

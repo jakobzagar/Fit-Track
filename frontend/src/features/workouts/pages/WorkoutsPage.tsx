@@ -1,17 +1,15 @@
 import {useState} from "react";
-import {CreateWorkoutForm} from "../components/forms/CreateWorkoutForm.tsx";
-import {UpdateWorkoutForm} from "../components/forms/UpdateWorkoutForm.tsx";
+import {WorkoutFormDialog} from "../components/forms/WorkoutFormDialog.tsx";
+import {WorkoutEmptyState} from "../components/list/WorkoutEmptyState.tsx";
 import {WorkoutList} from "../components/list/WorkoutList.tsx";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
 import type {WorkoutSummary} from "../workout.types.ts";
-import {Card} from "../../../components/ui/Card.tsx";
 import {Feedback} from "../../../components/ui/Feedback.tsx";
 import {PageHeader} from "../../../components/ui/PageHeader.tsx";
 import {SkeletonGrid} from "../../../components/ui/SkeletonGrid.tsx";
 import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
 import {Button} from "../../../components/ui/Button.tsx";
 import {Icon} from "../../../components/ui/Icon.tsx";
-import {FormDialog} from "../../../components/ui/FormDialog.tsx";
 import {useWorkouts} from "../hooks/data/useWorkouts.ts";
 
 export function WorkoutsPage() {
@@ -19,6 +17,11 @@ export function WorkoutsPage() {
     const workoutData = useWorkouts();
     const [editingWorkout, setEditingWorkout] = useState<WorkoutSummary | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
+
+    function openCreateForm() {
+        setEditingWorkout(null);
+        setIsFormOpen(true);
+    }
 
     async function handleCreateWorkout(data: CreateWorkoutInput) {
         await workoutData.create(data);
@@ -82,13 +85,7 @@ export function WorkoutsPage() {
                 title="Workouts"
                 description="Plan the session, log the work and leave with a record you can build on next time."
                 action={
-                    <Button
-                        type="button"
-                        onClick={() => {
-                            setEditingWorkout(null);
-                            setIsFormOpen(true);
-                        }}
-                    >
+                    <Button type="button" onClick={openCreateForm}>
                         <Icon name="plus" size={16} />
                         Create workout
                     </Button>
@@ -111,23 +108,7 @@ export function WorkoutsPage() {
                     </div>
                 </div>
                 {workoutData.workouts.length === 0 ? (
-                    <Card className="py-14 text-center">
-                        <p className="font-bold text-cream">No sessions logged yet.</p>
-                        <p className="mt-2 text-sm text-dim">
-                            Create a workout and start your first session.
-                        </p>
-                        <Button
-                            className="mt-6 w-full sm:w-auto"
-                            type="button"
-                            onClick={() => {
-                                setEditingWorkout(null);
-                                setIsFormOpen(true);
-                            }}
-                        >
-                            <Icon name="plus" size={16} />
-                            Create your first workout
-                        </Button>
-                    </Card>
+                    <WorkoutEmptyState onCreate={openCreateForm} />
                 ) : (
                     <WorkoutList
                         workouts={workoutData.workouts}
@@ -139,25 +120,12 @@ export function WorkoutsPage() {
             </div>
 
             {isFormOpen && (
-                <FormDialog
-                    title={editingWorkout ? "Edit workout" : "Create workout"}
-                    description={
-                        editingWorkout
-                            ? "Update the session details without leaving your training log."
-                            : "Create the session first, then add exercises and working sets."
-                    }
+                <WorkoutFormDialog
+                    workout={editingWorkout}
+                    onCreate={handleCreateWorkout}
+                    onUpdate={handleUpdateWorkout}
                     onClose={handleCancelEditWorkout}
-                >
-                    {editingWorkout ? (
-                        <UpdateWorkoutForm
-                            workout={editingWorkout}
-                            onSubmit={handleUpdateWorkout}
-                            onCancel={handleCancelEditWorkout}
-                        />
-                    ) : (
-                        <CreateWorkoutForm onSubmit={handleCreateWorkout} />
-                    )}
-                </FormDialog>
+                />
             )}
         </section>
     );

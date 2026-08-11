@@ -4,24 +4,14 @@ import type {ConfirmDialogFunction} from "../../../../components/ui/confirm-dial
 import {getExercises} from "../../../exercises/api/exercises.api";
 import type {Exercise} from "../../../exercises/exercise.types";
 import {
-    addExerciseToWorkout,
-    addSetToWorkoutExercise,
-    setWorkoutSetCompletion,
-    updateWorkoutSet,
-} from "../../../workout-exercises/api/workout.exercises.api";
-import type {
-    AddExerciseToWorkoutInput,
-    CreateWorkoutSetInput,
-    UpdateWorkoutSetInput,
-} from "../../../workout-exercises/schemas/workout.exercises.schemas";
-import {
     finishWorkout,
     getPreviousPerformances,
     getWorkoutById,
     startWorkout,
 } from "../../api/workouts.api";
-import type {PreviousPerformance, Workout, WorkoutSet} from "../../workout.types";
+import type {PreviousPerformance, Workout} from "../../workout.types";
 import {useUnsavedSessionGuard} from "./useUnsavedSessionGuard";
+import {useWorkoutSessionMutations} from "./useWorkoutSessionMutations";
 
 export function useWorkoutSession(
     workoutId: string | undefined,
@@ -33,10 +23,16 @@ export function useWorkoutSession(
     const [previousPerformances, setPreviousPerformances] = useState<PreviousPerformance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFinishing, setIsFinishing] = useState(false);
-    const [copyingExerciseId, setCopyingExerciseId] = useState<string | null>(null);
     const [error, setError] = useState("");
     const [dirtySetIds, setDirtySetIds] = useState<Set<string>>(() => new Set());
     const requestIdRef = useRef(0);
+    const mutations = useWorkoutSessionMutations(
+        workoutId,
+        setWorkout,
+        setPreviousPerformances,
+        setError,
+    );
+    const {setCopyingExerciseId} = mutations;
     useUnsavedSessionGuard({dirtySetCount: dirtySetIds.size, isFinishing, confirm});
 
     const load = useCallback(async () => {
@@ -90,7 +86,7 @@ export function useWorkoutSession(
             isCurrent = false;
             requestIdRef.current += 1;
         };
-    }, [load]);
+    }, [load, setCopyingExerciseId]);
 
     const onDirtyChange = useCallback((setId: string, dirty: boolean) => {
         setDirtySetIds((current) => {
@@ -105,103 +101,6 @@ export function useWorkoutSession(
         () => new Map(previousPerformances.map((item) => [item.exerciseId, item])),
         [previousPerformances],
     );
-
-    function replaceSet(workoutExerciseId: string, nextSet: WorkoutSet) {
-        setWorkout((current) =>
-            current
-                ? {
-                      ...current,
-                      workoutExercises: current.workoutExercises.map((item) =>
-                          item.id === workoutExerciseId
-                              ? {
-                                    ...item,
-                                    sets: item.sets.map((set) =>
-                                        set.id === nextSet.id ? nextSet : set,
-                                    ),
-                                }
-                              : item,
-                      ),
-                  }
-                : null,
-        );
-    }
-
-    async function addExercise(data: AddExerciseToWorkoutInput) {
-        if (!workoutId) return;
-        setError("");
-        try {
-            const response = await addExerciseToWorkout(workoutId, data);
-            setWorkout((current) =>
-                current
-                    ? {
-                          ...current,
-                          workoutExercises: [
-                              ...current.workoutExercises,
-                              {...response.workoutExercise, sets: []},
-                          ],
-                      }
-                    : null,
-            );
-            const performances = await getPreviousPerformances(workoutId);
-            setPreviousPerformances(performances.previousPerformances);
-        } catch (caught) {
-            setError(caught instanceof Error ? caught.message : "Failed to add exercise");
-            throw caught;
-        }
-    }
-
-    async function addSet(workoutExerciseId: string, data: CreateWorkoutSetInput) {
-        if (!workoutId) return;
-        setError("");
-        const response = await addSetToWorkoutExercise(workoutId, workoutExerciseId, data);
-        setWorkout((current) =>
-            current
-                ? {
-                      ...current,
-                      workoutExercises: current.workoutExercises.map((item) =>
-                          item.id === workoutExerciseId
-                              ? {...item, sets: [...item.sets, response.workoutExerciseSet]}
-                              : item,
-                      ),
-                  }
-                : null,
-        );
-    }
-
-    async function copyLastSet(workoutExerciseId: string, lastSet: WorkoutSet) {
-        setCopyingExerciseId(workoutExerciseId);
-        try {
-            await addSet(workoutExerciseId, {
-                ...(lastSet.reps !== null && {reps: lastSet.reps}),
-                ...(lastSet.weight !== null && {weight: lastSet.weight}),
-                ...(lastSet.durationSeconds !== null && {durationSeconds: lastSet.durationSeconds}),
-            });
-        } catch (caught) {
-            setError(caught instanceof Error ? caught.message : "Failed to copy set");
-        } finally {
-            setCopyingExerciseId(null);
-        }
-    }
-
-    async function saveSet(workoutExerciseId: string, setId: string, data: UpdateWorkoutSetInput) {
-        if (!workoutId) return;
-        const response = await updateWorkoutSet(workoutId, workoutExerciseId, setId, data);
-        replaceSet(workoutExerciseId, response.workoutExerciseSet);
-    }
-
-    async function toggleSet(
-        workoutExerciseId: string,
-        setId: string,
-        completed: boolean,
-        data: UpdateWorkoutSetInput,
-    ) {
-        if (!workoutId) return;
-        const response = await setWorkoutSetCompletion(workoutId, workoutExerciseId, setId, {
-            ...data,
-            completed,
-        });
-        replaceSet(workoutExerciseId, response.workoutExerciseSet);
-    }
 
     async function finish() {
         if (!workoutId) return;
@@ -254,13 +153,13 @@ export function useWorkoutSession(
         completedSetCount,
         isLoading,
         isFinishing,
-        copyingExerciseId,
+        copyingExerciseId: mutations.copyingExerciseId,
         error,
-        addExercise,
-        addSet,
-        copyLastSet,
-        saveSet,
-        toggleSet,
+        addExercise: mutations.addExercise,
+        addSet: mutations.addSet,
+        copyLastSet: mutations.copyLastSet,
+        saveSet: mutations.saveSet,
+        toggleSet: mutations.toggleSet,
         finish,
         exit,
         retry,

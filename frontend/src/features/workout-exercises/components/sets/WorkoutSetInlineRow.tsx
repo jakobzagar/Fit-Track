@@ -1,9 +1,9 @@
-import {useEffect, useId, useRef, useState} from "react";
-import type {WorkoutSet} from "../../../workouts/workout.types.ts";
-import type {UpdateWorkoutSetInput} from "../../schemas/workout.exercises.schemas.ts";
-import {Button} from "../../../../components/ui/Button.tsx";
-import {Icon} from "../../../../components/ui/Icon.tsx";
-import {parseEditedWorkoutSet} from "../../schemas/workout-set-input.parser.ts";
+import {useId} from "react";
+import {Button} from "../../../../components/ui/Button";
+import {Icon} from "../../../../components/ui/Icon";
+import type {WorkoutSet} from "../../../workouts/workout.types";
+import {useWorkoutSetDraft} from "../../hooks/useWorkoutSetDraft";
+import type {UpdateWorkoutSetInput} from "../../schemas/workout.exercises.schemas";
 
 interface WorkoutSetInlineRowProps {
     workoutSet: WorkoutSet;
@@ -13,100 +13,22 @@ interface WorkoutSetInlineRowProps {
     onDirtyChange?: (setId: string, isDirty: boolean) => void;
 }
 
-export function WorkoutSetInlineRow({
-    workoutSet,
-    disabled,
-    onSave,
-    onToggleCompletion,
-    onDirtyChange,
-}: WorkoutSetInlineRowProps) {
-    const firstInputRef = useRef<HTMLInputElement>(null);
+export function WorkoutSetInlineRow(props: WorkoutSetInlineRowProps) {
+    const {workoutSet, disabled} = props;
     const id = useId();
-    const [reps, setReps] = useState(workoutSet.reps?.toString() ?? "");
-    const [weight, setWeight] = useState(workoutSet.weight?.toString() ?? "");
-    const [durationSeconds, setDurationSeconds] = useState(
-        workoutSet.durationSeconds?.toString() ?? "",
-    );
-    const [error, setError] = useState("");
-    const [isSaving, setIsSaving] = useState(false);
-    const [savedValues, setSavedValues] = useState({
-        reps: workoutSet.reps?.toString() ?? "",
-        weight: workoutSet.weight?.toString() ?? "",
-        durationSeconds: workoutSet.durationSeconds?.toString() ?? "",
-    });
-
-    function getData(): UpdateWorkoutSetInput | null {
-        const result = parseEditedWorkoutSet({reps, weight, durationSeconds});
-        if (!result.success) {
-            setError(
-                result.errors.reps ??
-                    result.errors.weight ??
-                    result.errors.durationSeconds ??
-                    result.errors.form ??
-                    "Check the entered values",
-            );
-            queueMicrotask(() => firstInputRef.current?.focus());
-            return null;
-        }
-
-        setError("");
-        return result.data;
-    }
-
-    async function run(action: (data: UpdateWorkoutSetInput) => Promise<void>) {
-        const data = getData();
-        if (!data) return;
-
-        setIsSaving(true);
-        try {
-            await action(data);
-        } catch (caughtError) {
-            setError(caughtError instanceof Error ? caughtError.message : "Failed to save set");
-        } finally {
-            setIsSaving(false);
-        }
-    }
-
-    async function saveChanges() {
-        const data = getData();
-        if (!data) return;
-
-        setIsSaving(true);
-        try {
-            await onSave(data);
-            setSavedValues({reps, weight, durationSeconds});
-        } catch (caughtError) {
-            setError(caughtError instanceof Error ? caughtError.message : "Failed to save set");
-        } finally {
-            setIsSaving(false);
-        }
-    }
-
+    const {
+        firstInputRef,
+        values,
+        setValue,
+        error,
+        isSaving,
+        isDirty,
+        save,
+        saveAndComplete,
+        toggleCompletion,
+    } = useWorkoutSetDraft(props);
     const isCompleted = workoutSet.completedAt !== null;
-    const isDirty =
-        reps !== savedValues.reps ||
-        weight !== savedValues.weight ||
-        durationSeconds !== savedValues.durationSeconds;
-
-    useEffect(() => {
-        onDirtyChange?.(workoutSet.id, isDirty);
-        return () => onDirtyChange?.(workoutSet.id, false);
-    }, [isDirty, onDirtyChange, workoutSet.id]);
-
-    async function saveAndComplete() {
-        const data = getData();
-        if (!data) return;
-
-        setIsSaving(true);
-        try {
-            await onToggleCompletion(true, data);
-            setSavedValues({reps, weight, durationSeconds});
-        } catch (caughtError) {
-            setError(caughtError instanceof Error ? caughtError.message : "Failed to complete set");
-        } finally {
-            setIsSaving(false);
-        }
-    }
+    const inputDisabled = disabled || isSaving || isCompleted;
 
     return (
         <div
@@ -116,47 +38,35 @@ export function WorkoutSetInlineRow({
                 <span className="hidden text-center text-xs font-black text-dim md:block">
                     {workoutSet.setNumber}
                 </span>
-                <label>
-                    <span className="md:sr-only">Weight (kg)</span>
-                    <input
-                        ref={firstInputRef}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        inputMode="decimal"
-                        value={weight}
-                        disabled={disabled || isSaving || isCompleted}
-                        aria-invalid={error ? true : undefined}
-                        aria-describedby={error ? `${id}-error` : undefined}
-                        onChange={(event) => setWeight(event.target.value)}
-                    />
-                </label>
-                <label>
-                    <span className="md:sr-only">Reps</span>
-                    <input
-                        type="number"
-                        min="1"
-                        inputMode="numeric"
-                        value={reps}
-                        disabled={disabled || isSaving || isCompleted}
-                        aria-invalid={error ? true : undefined}
-                        aria-describedby={error ? `${id}-error` : undefined}
-                        onChange={(event) => setReps(event.target.value)}
-                    />
-                </label>
-                <label>
-                    <span className="md:sr-only">Duration (seconds)</span>
-                    <input
-                        type="number"
-                        min="1"
-                        inputMode="numeric"
-                        value={durationSeconds}
-                        disabled={disabled || isSaving || isCompleted}
-                        aria-invalid={error ? true : undefined}
-                        aria-describedby={error ? `${id}-error` : undefined}
-                        onChange={(event) => setDurationSeconds(event.target.value)}
-                    />
-                </label>
+                <SetInput
+                    ref={firstInputRef}
+                    label="Weight (kg)"
+                    value={values.weight}
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    disabled={inputDisabled}
+                    errorId={error ? `${id}-error` : undefined}
+                    onChange={(value) => setValue("weight", value)}
+                />
+                <SetInput
+                    label="Reps"
+                    value={values.reps}
+                    min="1"
+                    inputMode="numeric"
+                    disabled={inputDisabled}
+                    errorId={error ? `${id}-error` : undefined}
+                    onChange={(value) => setValue("reps", value)}
+                />
+                <SetInput
+                    label="Duration (seconds)"
+                    value={values.durationSeconds}
+                    min="1"
+                    inputMode="numeric"
+                    disabled={inputDisabled}
+                    errorId={error ? `${id}-error` : undefined}
+                    onChange={(value) => setValue("durationSeconds", value)}
+                />
                 <div className="col-span-full md:col-span-1">
                     {!isCompleted && isDirty ? (
                         <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
@@ -166,7 +76,7 @@ export function WorkoutSetInlineRow({
                                 size="sm"
                                 type="button"
                                 disabled={disabled || isSaving}
-                                onClick={() => void saveChanges()}
+                                onClick={() => void save()}
                             >
                                 {isSaving ? "Saving..." : "Save"}
                             </Button>
@@ -187,9 +97,7 @@ export function WorkoutSetInlineRow({
                             size="sm"
                             type="button"
                             disabled={disabled || isSaving}
-                            onClick={() =>
-                                void run((data) => onToggleCompletion(!isCompleted, data))
-                            }
+                            onClick={() => void toggleCompletion(!isCompleted)}
                         >
                             {!isCompleted && <Icon name="check" size={14} />}
                             {isCompleted ? "Undo set" : "Complete"}
@@ -203,5 +111,34 @@ export function WorkoutSetInlineRow({
                 </p>
             )}
         </div>
+    );
+}
+
+interface SetInputProps {
+    ref?: React.Ref<HTMLInputElement>;
+    label: string;
+    value: string;
+    min: string;
+    step?: string;
+    inputMode: "decimal" | "numeric";
+    disabled: boolean;
+    errorId?: string;
+    onChange: (value: string) => void;
+}
+
+function SetInput({ref, label, value, errorId, onChange, ...inputProps}: SetInputProps) {
+    return (
+        <label>
+            <span className="md:sr-only">{label}</span>
+            <input
+                ref={ref}
+                type="number"
+                value={value}
+                aria-invalid={errorId ? true : undefined}
+                aria-describedby={errorId}
+                onChange={(event) => onChange(event.target.value)}
+                {...inputProps}
+            />
+        </label>
     );
 }
