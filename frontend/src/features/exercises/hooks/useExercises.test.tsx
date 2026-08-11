@@ -7,6 +7,47 @@ import {server} from "../../../test/mocks/server";
 import {useExercises} from "./useExercises";
 
 describe("useExercises", () => {
+    test("keeps exercises sorted by name after creating and renaming one", async () => {
+        const squat = {
+            ...activeExercise,
+            id: "123e4567-e89b-42d3-a456-426614174002",
+            name: "Squat",
+        };
+        const deadlift = {
+            ...activeExercise,
+            id: "123e4567-e89b-42d3-a456-426614174003",
+            name: "Deadlift",
+        };
+        const overheadPress = {...deadlift, name: "Overhead press"};
+        server.use(
+            http.get(`${API_URL}/exercises`, () =>
+                HttpResponse.json({exercises: [activeExercise, squat]}),
+            ),
+            http.post(`${API_URL}/exercises`, () =>
+                HttpResponse.json({exercise: deadlift}, {status: 201}),
+            ),
+            http.patch(`${API_URL}/exercises/${deadlift.id}`, () =>
+                HttpResponse.json({exercise: overheadPress}),
+            ),
+        );
+        const {result} = renderHook(() => useExercises("active"));
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        await act(() => result.current.create({name: "Deadlift", muscleGroup: "Back"}));
+        expect(result.current.exercises.map(({name}) => name)).toEqual([
+            "Bench press",
+            "Deadlift",
+            "Squat",
+        ]);
+
+        await act(() => result.current.update(deadlift.id, {name: "Overhead press"}));
+        expect(result.current.exercises.map(({name}) => name)).toEqual([
+            "Bench press",
+            "Overhead press",
+            "Squat",
+        ]);
+    });
+
     test("does not append an exercise when creation fails", async () => {
         server.use(
             http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises: []})),

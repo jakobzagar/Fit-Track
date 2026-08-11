@@ -7,6 +7,53 @@ import {createWorkout} from "../../../test/fixtures/workouts";
 import {useWorkouts} from "./useWorkouts";
 
 describe("useWorkouts", () => {
+    test("keeps workouts sorted by performed date after creating and rescheduling one", async () => {
+        const oldest = {
+            ...createWorkout({
+                id: "123e4567-e89b-42d3-a456-426614174011",
+                name: "Oldest",
+                performedAt: "2026-07-20T00:00:00.000Z",
+            }),
+            _count: {workoutExercises: 1},
+        };
+        const newest = {
+            ...createWorkout({name: "Newest", performedAt: "2026-07-26T00:00:00.000Z"}),
+            _count: {workoutExercises: 1},
+        };
+        const historical = createWorkout({
+            id: "123e4567-e89b-42d3-a456-426614174012",
+            name: "Historical",
+            performedAt: "2026-07-22T00:00:00.000Z",
+        });
+        server.use(
+            http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts: [newest, oldest]})),
+            http.post(`${API_URL}/workouts`, () =>
+                HttpResponse.json({workout: historical}, {status: 201}),
+            ),
+            http.patch(`${API_URL}/workouts/${oldest.id}`, () =>
+                HttpResponse.json({
+                    workout: {...oldest, performedAt: "2026-07-28T00:00:00.000Z"},
+                }),
+            ),
+        );
+        const {result} = renderHook(() => useWorkouts());
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        await act(() => result.current.create({name: "Historical", performedAt: "2026-07-22"}));
+        expect(result.current.workouts.map(({name}) => name)).toEqual([
+            "Newest",
+            "Historical",
+            "Oldest",
+        ]);
+
+        await act(() => result.current.update(oldest.id, {performedAt: "2026-07-28"}));
+        expect(result.current.workouts.map(({name}) => name)).toEqual([
+            "Oldest",
+            "Newest",
+            "Historical",
+        ]);
+    });
+
     test("keeps the newest result when load requests overlap", async () => {
         let attempts = 0;
         const older = {...createWorkout({name: "Older response"}), _count: {workoutExercises: 1}};

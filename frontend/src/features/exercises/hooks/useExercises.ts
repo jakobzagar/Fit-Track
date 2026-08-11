@@ -11,6 +11,10 @@ import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise
 
 export type ExerciseView = "active" | "archived";
 
+function sortExercisesByName(exercises: Exercise[]) {
+    return [...exercises].sort((left, right) => left.name.localeCompare(right.name));
+}
+
 export function useExercises(view: ExerciseView) {
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [archivingExerciseId, setArchivingExerciseId] = useState<string | null>(null);
@@ -56,7 +60,7 @@ export function useExercises(view: ExerciseView) {
         setSuccessMessage("");
         try {
             const response = await createExercise(data);
-            setExercises((current) => [...current, response.exercise]);
+            setExercises((current) => sortExercisesByName([...current, response.exercise]));
             setSuccessMessage("Exercise created successfully.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to create exercise");
@@ -70,8 +74,10 @@ export function useExercises(view: ExerciseView) {
         try {
             const response = await updateExercise(exerciseId, data);
             setExercises((current) =>
-                current.map((exercise) =>
-                    exercise.id === response.exercise.id ? response.exercise : exercise,
+                sortExercisesByName(
+                    current.map((exercise) =>
+                        exercise.id === response.exercise.id ? response.exercise : exercise,
+                    ),
                 ),
             );
             setSuccessMessage("Exercise updated successfully.");

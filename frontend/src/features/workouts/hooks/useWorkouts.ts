@@ -3,6 +3,12 @@ import {createWorkout, deleteWorkout, getWorkouts, updateWorkout} from "../api/w
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas";
 import type {WorkoutSummary, WorkoutsResponse} from "../workout.types";
 
+function sortWorkoutsByPerformedAt(workouts: WorkoutSummary[]) {
+    return [...workouts].sort(
+        (left, right) => Date.parse(right.performedAt) - Date.parse(left.performedAt),
+    );
+}
+
 export function useWorkouts() {
     const [workouts, setWorkouts] = useState<WorkoutSummary[]>([]);
     const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | null>(null);
@@ -42,10 +48,12 @@ export function useWorkouts() {
         setSuccessMessage("");
         try {
             const response = await createWorkout(data);
-            setWorkouts((current) => [
-                {...response.workout, _count: {workoutExercises: 0}},
-                ...current,
-            ]);
+            setWorkouts((current) =>
+                sortWorkoutsByPerformedAt([
+                    ...current,
+                    {...response.workout, _count: {workoutExercises: 0}},
+                ]),
+            );
             setSuccessMessage("Workout created successfully.");
         } catch (error) {
             setMutationError(error instanceof Error ? error.message : "Failed to create workout");
@@ -59,16 +67,18 @@ export function useWorkouts() {
         try {
             const response = await updateWorkout(workoutId, data);
             setWorkouts((current) =>
-                current.map((workout) =>
-                    workout.id === workoutId
-                        ? {
-                              ...workout,
-                              name: response.workout.name,
-                              performedAt: response.workout.performedAt,
-                              notes: response.workout.notes,
-                              updatedAt: response.workout.updatedAt,
-                          }
-                        : workout,
+                sortWorkoutsByPerformedAt(
+                    current.map((workout) =>
+                        workout.id === workoutId
+                            ? {
+                                  ...workout,
+                                  name: response.workout.name,
+                                  performedAt: response.workout.performedAt,
+                                  notes: response.workout.notes,
+                                  updatedAt: response.workout.updatedAt,
+                              }
+                            : workout,
+                    ),
                 ),
             );
             setSuccessMessage("Workout updated successfully.");
