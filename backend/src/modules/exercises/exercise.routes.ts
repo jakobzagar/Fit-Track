@@ -14,7 +14,7 @@ import {
     updateExerciseSchema,
     exerciseIdSchema,
     getExercisesQuerySchema,
-} from "./exercise.schema.js";
+} from "@fit-track/shared/exercises";
 
 const router = Router();
 

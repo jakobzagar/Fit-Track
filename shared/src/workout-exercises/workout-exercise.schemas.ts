@@ -71,12 +71,12 @@ export const setWorkoutSetCompletionSchema = workoutSetValuesSchema.extend({
     completed: z.boolean(),
 });
 
-export const workoutSetParamsSchema = z.object({
+export const workoutExerciseParamsSchema = z.object({
     workoutId: z.uuid("Invalid workout ID"),
     workoutExerciseId: z.uuid("Invalid workout exercise ID"),
 });
 
-export const workoutSetIdParamsSchema = workoutSetParamsSchema.extend({
+export const workoutSetIdParamsSchema = workoutExerciseParamsSchema.extend({
     setId: z.uuid("Invalid set ID"),
 });
 
@@ -109,7 +109,7 @@ export type CreateWorkoutSetInput = z.infer<typeof createWorkoutSetSchema>;
 export type UpdateWorkoutExerciseInput = z.infer<typeof updateWorkoutExerciseSchema>;
 export type UpdateWorkoutSetInput = z.infer<typeof updateWorkoutSetSchema>;
 export type SetWorkoutSetCompletionInput = z.infer<typeof setWorkoutSetCompletionSchema>;
-export type WorkoutSetParams = z.infer<typeof workoutSetParamsSchema>;
+export type WorkoutExerciseParams = z.infer<typeof workoutExerciseParamsSchema>;
 export type WorkoutSetIdParams = z.infer<typeof workoutSetIdParamsSchema>;
 export type AddExerciseToWorkoutResponse = z.infer<typeof addExerciseToWorkoutResponseSchema>;
 export type AddSetToWorkoutExerciseResponse = z.infer<typeof addSetToWorkoutExerciseResponseSchema>;

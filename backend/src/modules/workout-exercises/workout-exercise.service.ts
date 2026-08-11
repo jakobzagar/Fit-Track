@@ -4,7 +4,7 @@ import {assertWorkoutIsMutable} from "../workouts/workout-edit.policy.js";
 import type {
     AddExerciseToWorkoutInput,
     UpdateWorkoutExerciseInput,
-} from "./workout-exercise.schema.js";
+} from "@fit-track/shared/workout-exercises";
 
 export async function addExerciseToWorkoutService(
     userId: string,

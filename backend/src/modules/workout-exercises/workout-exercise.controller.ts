@@ -16,10 +16,10 @@ import type {
     UpdateWorkoutExerciseInput,
     UpdateWorkoutSetInput,
     SetWorkoutSetCompletionInput,
-    WorkoutIdParams,
     WorkoutSetIdParams,
-    WorkoutSetParams,
-} from "./workout-exercise.schema.js";
+    WorkoutExerciseParams,
+} from "@fit-track/shared/workout-exercises";
+import type {WorkoutIdParams} from "@fit-track/shared/workouts";
 
 export async function addExerciseToWorkout(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
@@ -37,7 +37,7 @@ export async function addExerciseToWorkout(_req: Request, res: Response) {
 }
 
 export async function addSetToWorkoutExercise(_req: Request, res: Response) {
-    const params = res.locals.params as WorkoutSetParams;
+    const params = res.locals.params as WorkoutExerciseParams;
     const body = res.locals.body as CreateWorkoutSetInput;
 
     const workoutExerciseSet = await addSetToWorkoutExerciseService(
@@ -53,7 +53,7 @@ export async function addSetToWorkoutExercise(_req: Request, res: Response) {
 }
 
 export async function updateWorkoutExercise(_req: Request, res: Response) {
-    const params = res.locals.params as WorkoutSetParams;
+    const params = res.locals.params as WorkoutExerciseParams;
     const body = res.locals.body as UpdateWorkoutExerciseInput;
 
     const workoutExercise = await updateWorkoutExerciseService(
@@ -69,7 +69,7 @@ export async function updateWorkoutExercise(_req: Request, res: Response) {
 }
 
 export async function deleteWorkoutExercise(_req: Request, res: Response) {
-    const params = res.locals.params as WorkoutSetParams;
+    const params = res.locals.params as WorkoutExerciseParams;
 
     await deleteWorkoutExerciseService(
         res.locals.userId,

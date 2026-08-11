@@ -1,5 +1,6 @@
 export type {
-    CreateWorkoutResponse,
+    DeleteWorkoutResponse,
+    WorkoutBaseResponse,
     Workout,
     WorkoutBase,
     WorkoutExercise,

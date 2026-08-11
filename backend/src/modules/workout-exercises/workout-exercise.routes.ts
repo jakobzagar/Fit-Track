@@ -18,7 +18,7 @@ import {
     setWorkoutSetCompletionSchema,
     workoutIdSchema,
     workoutSetIdParamsSchema,
-    workoutSetParamsSchema,
+    workoutExerciseParamsSchema,
 } from "@fit-track/shared";
 
 const router = Router();
@@ -33,21 +33,21 @@ router.post(
 );
 router.post(
     "/:workoutId/exercises/:workoutExerciseId/sets",
-    validate(workoutSetParamsSchema, "params"),
+    validate(workoutExerciseParamsSchema, "params"),
     validate(createWorkoutSetSchema),
     addSetToWorkoutExercise,
 );
 
 router.patch(
     "/:workoutId/exercises/:workoutExerciseId",
-    validate(workoutSetParamsSchema, "params"),
+    validate(workoutExerciseParamsSchema, "params"),
     validate(updateWorkoutExerciseSchema),
     updateWorkoutExercise,
 );
 
 router.delete(
     "/:workoutId/exercises/:workoutExerciseId",
-    validate(workoutSetParamsSchema, "params"),
+    validate(workoutExerciseParamsSchema, "params"),
     deleteWorkoutExercise,
 );
 

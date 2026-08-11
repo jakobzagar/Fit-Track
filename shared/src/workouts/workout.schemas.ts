@@ -96,7 +96,7 @@ export const previousPerformancesResponseSchema = z.object({
     previousPerformances: z.array(previousPerformanceSchema),
 });
 
-export const createWorkoutResponseSchema = z.object({
+export const workoutBaseResponseSchema = z.object({
     workout: workoutBaseSchema,
 });
 
@@ -117,5 +117,6 @@ export type Workout = z.infer<typeof workoutSchema>;
 export type WorkoutResponse = z.infer<typeof workoutResponseSchema>;
 export type PreviousPerformance = z.infer<typeof previousPerformanceSchema>;
 export type PreviousPerformancesResponse = z.infer<typeof previousPerformancesResponseSchema>;
-export type CreateWorkoutResponse = z.infer<typeof createWorkoutResponseSchema>;
+export type WorkoutBaseResponse = z.infer<typeof workoutBaseResponseSchema>;
+export type DeleteWorkoutResponse = z.infer<typeof deleteWorkoutResponseSchema>;
 export type WorkoutsResponse = z.infer<typeof workoutsResponseSchema>;

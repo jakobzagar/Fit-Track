@@ -5,7 +5,7 @@ import type {
     CreateWorkoutSetInput,
     SetWorkoutSetCompletionInput,
     UpdateWorkoutSetInput,
-} from "./workout-exercise.schema.js";
+} from "@fit-track/shared/workout-exercises";
 
 export async function addSetToWorkoutExerciseService(
     userId: string,

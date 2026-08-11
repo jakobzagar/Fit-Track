@@ -1,6 +1,5 @@
 import {AppError} from "../../common/errors/app.error.js";
-
-type WorkoutStatus = "DRAFT" | "ACTIVE" | "COMPLETED";
+import type {WorkoutStatus} from "@fit-track/shared/workouts";
 
 export function assertWorkoutIsMutable(status: WorkoutStatus) {
     if (status === "COMPLETED") {

@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {prisma} from "../../db/prisma.js";
 import {env} from "../../config/env.js";
-import type {RegisterInput, LoginInput} from "./auth.schema.js";
+import type {RegisterInput, LoginInput} from "@fit-track/shared/auth";
 import {AppError} from "../../common/errors/app.error.js";
 
 function createToken(userId: string) {

@@ -2,7 +2,7 @@ import request from "supertest";
 import {describe, expect, it} from "vitest";
 import {messageResponseSchema} from "@fit-track/shared/auth";
 import {
-    createWorkoutResponseSchema,
+    workoutBaseResponseSchema,
     previousPerformancesResponseSchema,
     workoutResponseSchema,
     workoutsResponseSchema,
@@ -29,7 +29,7 @@ describe("POST /api/workouts", () => {
             notes: "  Heavy session  ",
             performedAt,
         });
-        const body = createWorkoutResponseSchema.parse(response.body);
+        const body = workoutBaseResponseSchema.parse(response.body);
 
         expect(response.status).toBe(201);
         expect(body.workout).toMatchObject({
@@ -131,7 +131,7 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
             `/api/workouts/${workout.id}`,
             owner.cookie,
         ).send({name: "  Pull day  ", notes: null});
-        const body = createWorkoutResponseSchema.parse(response.body);
+        const body = workoutBaseResponseSchema.parse(response.body);
 
         expect(response.status).toBe(200);
         expect(body.workout).toMatchObject({name: "Pull day", notes: null});
@@ -225,13 +225,13 @@ describe("workout lifecycle", () => {
             `/api/workouts/${workout.id}/start`,
             owner.cookie,
         );
-        const firstBody = createWorkoutResponseSchema.parse(first.body);
+        const firstBody = workoutBaseResponseSchema.parse(first.body);
         const second = await authenticated(
             "post",
             `/api/workouts/${workout.id}/start`,
             owner.cookie,
         );
-        const secondBody = createWorkoutResponseSchema.parse(second.body);
+        const secondBody = workoutBaseResponseSchema.parse(second.body);
 
         expect(first.status).toBe(200);
         expect(firstBody.workout.status).toBe("ACTIVE");
@@ -316,7 +316,7 @@ describe("workout lifecycle", () => {
             `/api/workouts/${workout.id}/finish`,
             owner.cookie,
         );
-        const body = createWorkoutResponseSchema.parse(response.body);
+        const body = workoutBaseResponseSchema.parse(response.body);
 
         expect(response.status).toBe(200);
         expect(body.workout.status).toBe("COMPLETED");

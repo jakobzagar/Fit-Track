@@ -1,5 +1,5 @@
 export {
-    createWorkoutResponseSchema,
+    workoutBaseResponseSchema,
     deleteWorkoutResponseSchema,
     workoutExerciseSchema,
     workoutResponseSchema,

@@ -4,7 +4,7 @@ import type {
     CreateExerciseInput,
     GetExercisesQuery,
     UpdateExerciseInput,
-} from "./exercise.schema.js";
+} from "@fit-track/shared/exercises";
 
 export async function getExercisesService(userId: string, query: GetExercisesQuery) {
     return prisma.exercise.findMany({

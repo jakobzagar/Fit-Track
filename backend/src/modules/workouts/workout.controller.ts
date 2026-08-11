@@ -9,7 +9,11 @@ import {
     finishWorkoutService,
     getPreviousPerformancesService,
 } from "./workout.service.js";
-import type {CreateWorkoutInput, UpdateWorkoutInput, WorkoutIdParams} from "./workout.schema.js";
+import type {
+    CreateWorkoutInput,
+    UpdateWorkoutInput,
+    WorkoutIdParams,
+} from "@fit-track/shared/workouts";
 
 export async function getWorkouts(_req: Request, res: Response) {
     const workouts = await getWorkoutsService(res.locals.userId);

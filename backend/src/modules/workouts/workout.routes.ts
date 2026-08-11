@@ -11,7 +11,11 @@ import {
     getPreviousPerformances,
 } from "./workout.controller.js";
 import {validate} from "../../common/middleware/validate.middleware.js";
-import {createWorkoutSchema, updateWorkoutSchema, workoutIdSchema} from "./workout.schema.js";
+import {
+    createWorkoutSchema,
+    updateWorkoutSchema,
+    workoutIdSchema,
+} from "@fit-track/shared/workouts";
 
 const router = Router();
 

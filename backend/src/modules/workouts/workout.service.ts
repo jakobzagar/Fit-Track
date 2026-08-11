@@ -1,7 +1,7 @@
 import {prisma} from "../../db/prisma.js";
 import {AppError} from "../../common/errors/app.error.js";
 import {runSerializableTransaction} from "../../db/transaction.js";
-import type {CreateWorkoutInput, UpdateWorkoutInput} from "./workout.schema.js";
+import type {CreateWorkoutInput, UpdateWorkoutInput} from "@fit-track/shared/workouts";
 import {assertWorkoutIsMutable} from "./workout-edit.policy.js";
 
 function workoutDateToTimestamp(date: string) {

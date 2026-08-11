@@ -12,7 +12,7 @@ import type {
     ExerciseIdParams,
     GetExercisesQuery,
     UpdateExerciseInput,
-} from "./exercise.schema.js";
+} from "@fit-track/shared/exercises";
 
 export async function getExercises(_req: Request, res: Response) {
     const query = res.locals.query as GetExercisesQuery;

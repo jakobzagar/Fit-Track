@@ -7,7 +7,7 @@ import {
 } from "./auth.controller.js";
 import {validate} from "../../common/middleware/validate.middleware.js";
 import {authenticate} from "./auth.middleware.js";
-import {registerSchema, loginSchema} from "./auth.schema.js";
+import {registerSchema, loginSchema} from "@fit-track/shared/auth";
 import {
     loginRateLimiter,
     registerRateLimiter,

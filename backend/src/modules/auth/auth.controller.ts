@@ -1,6 +1,6 @@
 import type {Request, Response} from "express";
 import {registerService, loginService, getMeService} from "./auth.service.js";
-import type {LoginInput, RegisterInput} from "./auth.schema.js";
+import type {LoginInput, RegisterInput} from "@fit-track/shared/auth";
 import {clearAuthCookie, setAuthCookie} from "./auth.cookie.js";
 
 export async function registerController(_req: Request, res: Response) {
