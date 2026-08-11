@@ -68,4 +68,19 @@ describe("workout response values", () => {
 
         expect(result.weight).toBe(82.5);
     });
+
+    test("rejects additional set response fields", () => {
+        expect(
+            workoutSetSchema.safeParse({
+                id: "123e4567-e89b-42d3-a456-426614174000",
+                setNumber: 1,
+                reps: 8,
+                weight: 82.5,
+                durationSeconds: null,
+                completedAt: null,
+                workoutExerciseId: "123e4567-e89b-42d3-a456-426614174001",
+                internalValue: true,
+            }).success,
+        ).toBe(false);
+    });
 });

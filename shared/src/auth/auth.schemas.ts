@@ -17,17 +17,21 @@ export const loginSchema = z.object({
     password: z.string().min(1, "Password is required").max(72, "Password is too long"),
 });
 
-export const userSchema = z.object({
-    id: z.uuid(),
-    name: z.string(),
-    email: z.email(),
-    createdAt: z.iso.datetime(),
-    updatedAt: z.iso.datetime(),
-});
+export const userSchema = z
+    .object({
+        id: z.uuid(),
+        name: z.string(),
+        email: z.email(),
+        createdAt: z.iso.datetime(),
+        updatedAt: z.iso.datetime(),
+    })
+    .strict();
 
-export const authResponseSchema = z.object({
-    user: userSchema,
-});
+export const authResponseSchema = z
+    .object({
+        user: userSchema,
+    })
+    .strict();
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

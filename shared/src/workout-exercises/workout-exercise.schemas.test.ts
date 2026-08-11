@@ -3,6 +3,7 @@ import {describe, expect, test} from "vitest";
 import {
     addExerciseToWorkoutSchema,
     createWorkoutSetSchema,
+    deleteWorkoutSetResponseSchema,
     setWorkoutSetCompletionSchema,
     updateWorkoutExerciseSchema,
     updateWorkoutSetSchema,
@@ -87,6 +88,15 @@ describe("workout set parameters", () => {
                 workoutId: "123e4567-e89b-42d3-a456-426614174000",
                 workoutExerciseId: "123e4567-e89b-42d3-a456-426614174001",
             }).success,
+        ).toBe(false);
+    });
+});
+
+describe("workout exercise responses", () => {
+    test("rejects additional response fields", () => {
+        expect(
+            deleteWorkoutSetResponseSchema.safeParse({message: "Set deleted", deletedId: "hidden"})
+                .success,
         ).toBe(false);
     });
 });

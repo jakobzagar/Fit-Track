@@ -28,4 +28,11 @@ describe("common response schemas", () => {
             }).success,
         ).toBe(false);
     });
+
+    test("rejects additional response fields", () => {
+        expect(
+            messageResponseSchema.safeParse({message: "Resource not found", stack: "secret"})
+                .success,
+        ).toBe(false);
+    });
 });

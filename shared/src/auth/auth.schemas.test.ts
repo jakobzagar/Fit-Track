@@ -65,4 +65,10 @@ describe("authentication responses", () => {
     test("rejects a user with non-ISO dates", () => {
         expect(userSchema.safeParse({...validUser, createdAt: "yesterday"}).success).toBe(false);
     });
+
+    test("rejects additional user response fields", () => {
+        expect(userSchema.safeParse({...validUser, passwordHash: "must-not-leak"}).success).toBe(
+            false,
+        );
+    });
 });

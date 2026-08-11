@@ -24,24 +24,30 @@ export const getExercisesQuerySchema = z.object({
     status: z.enum(["active", "archived"]).default("active"),
 });
 
-export const exerciseSchema = z.object({
-    id: z.uuid(),
-    name: z.string(),
-    muscleGroup: z.string(),
-    equipment: z.string().nullable(),
-    isArchived: z.boolean(),
-    createdAt: z.iso.datetime(),
-    updatedAt: z.iso.datetime(),
-    userId: z.uuid(),
-});
+export const exerciseSchema = z
+    .object({
+        id: z.uuid(),
+        name: z.string(),
+        muscleGroup: z.string(),
+        equipment: z.string().nullable(),
+        isArchived: z.boolean(),
+        createdAt: z.iso.datetime(),
+        updatedAt: z.iso.datetime(),
+        userId: z.uuid(),
+    })
+    .strict();
 
-export const exerciseResponseSchema = z.object({
-    exercise: exerciseSchema,
-});
+export const exerciseResponseSchema = z
+    .object({
+        exercise: exerciseSchema,
+    })
+    .strict();
 
-export const exercisesResponseSchema = z.object({
-    exercises: z.array(exerciseSchema),
-});
+export const exercisesResponseSchema = z
+    .object({
+        exercises: z.array(exerciseSchema),
+    })
+    .strict();
 
 export type CreateExerciseInput = z.infer<typeof createExerciseSchema>;
 export type UpdateExerciseInput = z.infer<typeof updateExerciseSchema>;

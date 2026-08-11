@@ -2,10 +2,22 @@ import {describe, expect, test} from "vitest";
 
 import {
     createExerciseSchema,
+    exerciseSchema,
     exerciseIdSchema,
     getExercisesQuerySchema,
     updateExerciseSchema,
 } from "./exercise.schemas.js";
+
+const validExercise = {
+    id: "123e4567-e89b-42d3-a456-426614174000",
+    userId: "123e4567-e89b-42d3-a456-426614174001",
+    name: "Bench press",
+    muscleGroup: "Chest",
+    equipment: "Barbell",
+    isArchived: false,
+    createdAt: "2026-07-26T10:00:00.000Z",
+    updatedAt: "2026-07-26T10:00:00.000Z",
+};
 
 describe("createExerciseSchema", () => {
     test("accepts and trims a valid exercise", () => {
@@ -54,5 +66,13 @@ describe("exercise request parameters", () => {
 
     test("rejects an invalid exercise ID", () => {
         expect(exerciseIdSchema.safeParse({exerciseId: "not-a-uuid"}).success).toBe(false);
+    });
+});
+
+describe("exercise responses", () => {
+    test("rejects additional exercise fields", () => {
+        expect(exerciseSchema.safeParse({...validExercise, internalNote: "hidden"}).success).toBe(
+            false,
+        );
     });
 });

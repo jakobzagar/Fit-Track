@@ -11,4 +11,10 @@ describe("health response schemas", () => {
     test("rejects an unknown health state", () => {
         expect(readinessResponseSchema.safeParse({status: "unknown"}).success).toBe(false);
     });
+
+    test("rejects additional health response fields", () => {
+        expect(
+            readinessResponseSchema.safeParse({status: "ready", database: "internal"}).success,
+        ).toBe(false);
+    });
 });

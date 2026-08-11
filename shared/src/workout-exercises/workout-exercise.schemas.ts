@@ -80,29 +80,41 @@ export const workoutSetIdParamsSchema = workoutExerciseParamsSchema.extend({
     setId: z.uuid("Invalid set ID"),
 });
 
-export const addExerciseToWorkoutResponseSchema = z.object({
-    workoutExercise: workoutExerciseSchema.omit({sets: true}),
-});
+export const addExerciseToWorkoutResponseSchema = z
+    .object({
+        workoutExercise: workoutExerciseSchema.omit({sets: true}),
+    })
+    .strict();
 
-export const addSetToWorkoutExerciseResponseSchema = z.object({
-    workoutExerciseSet: workoutSetSchema,
-});
+export const addSetToWorkoutExerciseResponseSchema = z
+    .object({
+        workoutExerciseSet: workoutSetSchema,
+    })
+    .strict();
 
-export const workoutExerciseResponseSchema = z.object({
-    workoutExercise: workoutExerciseSchema,
-});
+export const workoutExerciseResponseSchema = z
+    .object({
+        workoutExercise: workoutExerciseSchema,
+    })
+    .strict();
 
-export const workoutSetResponseSchema = z.object({
-    workoutExerciseSet: workoutSetSchema,
-});
+export const workoutSetResponseSchema = z
+    .object({
+        workoutExerciseSet: workoutSetSchema,
+    })
+    .strict();
 
-export const deleteWorkoutExerciseResponseSchema = z.object({
-    message: z.string(),
-});
+export const deleteWorkoutExerciseResponseSchema = z
+    .object({
+        message: z.string(),
+    })
+    .strict();
 
-export const deleteWorkoutSetResponseSchema = z.object({
-    message: z.string(),
-});
+export const deleteWorkoutSetResponseSchema = z
+    .object({
+        message: z.string(),
+    })
+    .strict();
 
 export type AddExerciseToWorkoutInput = z.infer<typeof addExerciseToWorkoutSchema>;
 export type CreateWorkoutSetInput = z.infer<typeof createWorkoutSetSchema>;

@@ -27,82 +27,104 @@ export const workoutIdSchema = z.object({
 
 export const workoutStatusSchema = z.enum(["DRAFT", "ACTIVE", "COMPLETED"]);
 
-export const workoutSetSchema = z.object({
-    id: z.uuid(),
-    setNumber: z.number().int().positive(),
-    reps: z.number().int().positive().nullable(),
-    weight: z.coerce.number().nonnegative().nullable(),
-    durationSeconds: z.number().int().positive().nullable(),
-    completedAt: z.iso.datetime().nullable(),
-    workoutExerciseId: z.uuid(),
-});
+export const workoutSetSchema = z
+    .object({
+        id: z.uuid(),
+        setNumber: z.number().int().positive(),
+        reps: z.number().int().positive().nullable(),
+        weight: z.coerce.number().nonnegative().nullable(),
+        durationSeconds: z.number().int().positive().nullable(),
+        completedAt: z.iso.datetime().nullable(),
+        workoutExerciseId: z.uuid(),
+    })
+    .strict();
 
-export const workoutExerciseDetailsSchema = z.object({
-    id: z.uuid(),
-    name: z.string(),
-    muscleGroup: z.string(),
-    equipment: z.string().nullable(),
-});
+export const workoutExerciseDetailsSchema = z
+    .object({
+        id: z.uuid(),
+        name: z.string(),
+        muscleGroup: z.string(),
+        equipment: z.string().nullable(),
+    })
+    .strict();
 
-export const workoutExerciseSchema = z.object({
-    id: z.uuid(),
-    position: z.number().int().positive(),
-    notes: z.string().nullable(),
-    workoutId: z.uuid(),
-    exerciseId: z.uuid(),
-    exercise: workoutExerciseDetailsSchema,
-    sets: z.array(workoutSetSchema),
-});
+export const workoutExerciseSchema = z
+    .object({
+        id: z.uuid(),
+        position: z.number().int().positive(),
+        notes: z.string().nullable(),
+        workoutId: z.uuid(),
+        exerciseId: z.uuid(),
+        exercise: workoutExerciseDetailsSchema,
+        sets: z.array(workoutSetSchema),
+    })
+    .strict();
 
-export const workoutBaseSchema = z.object({
-    id: z.uuid(),
-    name: z.string(),
-    status: workoutStatusSchema,
-    startedAt: z.iso.datetime().nullable(),
-    completedAt: z.iso.datetime().nullable(),
-    performedAt: z.iso.datetime(),
-    notes: z.string().nullable(),
-    createdAt: z.iso.datetime(),
-    updatedAt: z.iso.datetime(),
-    userId: z.uuid(),
-});
+export const workoutBaseSchema = z
+    .object({
+        id: z.uuid(),
+        name: z.string(),
+        status: workoutStatusSchema,
+        startedAt: z.iso.datetime().nullable(),
+        completedAt: z.iso.datetime().nullable(),
+        performedAt: z.iso.datetime(),
+        notes: z.string().nullable(),
+        createdAt: z.iso.datetime(),
+        updatedAt: z.iso.datetime(),
+        userId: z.uuid(),
+    })
+    .strict();
 
 export const workoutSummarySchema = workoutBaseSchema.extend({
-    _count: z.object({
-        workoutExercises: z.number().int().nonnegative(),
-    }),
+    _count: z
+        .object({
+            workoutExercises: z.number().int().nonnegative(),
+        })
+        .strict(),
 });
 
 export const workoutSchema = workoutBaseSchema.extend({
     workoutExercises: z.array(workoutExerciseSchema),
 });
 
-export const workoutsResponseSchema = z.object({
-    workouts: z.array(workoutSummarySchema),
-});
+export const workoutsResponseSchema = z
+    .object({
+        workouts: z.array(workoutSummarySchema),
+    })
+    .strict();
 
-export const workoutResponseSchema = z.object({
-    workout: workoutSchema,
-});
+export const workoutResponseSchema = z
+    .object({
+        workout: workoutSchema,
+    })
+    .strict();
 
-export const previousPerformanceSchema = z.object({
-    exerciseId: z.uuid(),
-    workoutId: z.uuid(),
-    performedAt: z.iso.datetime(),
-    sets: z.array(workoutSetSchema),
-});
+export const previousPerformanceSchema = z
+    .object({
+        exerciseId: z.uuid(),
+        workoutId: z.uuid(),
+        performedAt: z.iso.datetime(),
+        sets: z.array(workoutSetSchema),
+    })
+    .strict();
 
-export const previousPerformancesResponseSchema = z.object({
-    previousPerformances: z.array(previousPerformanceSchema),
-});
+export const previousPerformancesResponseSchema = z
+    .object({
+        previousPerformances: z.array(previousPerformanceSchema),
+    })
+    .strict();
 
-export const workoutBaseResponseSchema = z.object({
-    workout: workoutBaseSchema,
-});
+export const workoutBaseResponseSchema = z
+    .object({
+        workout: workoutBaseSchema,
+    })
+    .strict();
 
-export const deleteWorkoutResponseSchema = z.object({
-    message: z.string(),
-});
+export const deleteWorkoutResponseSchema = z
+    .object({
+        message: z.string(),
+    })
+    .strict();
 
 export type CreateWorkoutInput = z.infer<typeof createWorkoutSchema>;
 export type UpdateWorkoutInput = z.infer<typeof updateWorkoutSchema>;
