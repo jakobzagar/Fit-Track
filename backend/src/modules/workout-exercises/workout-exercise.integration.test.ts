@@ -1,9 +1,11 @@
 import request from "supertest";
 import {describe, expect, it} from "vitest";
-import {messageResponseSchema} from "@fit-track/shared/auth";
+import {messageResponseSchema} from "@fit-track/shared/common";
 import {
     addExerciseToWorkoutResponseSchema,
     addSetToWorkoutExerciseResponseSchema,
+    deleteWorkoutExerciseResponseSchema,
+    deleteWorkoutSetResponseSchema,
     workoutExerciseResponseSchema,
     workoutSetResponseSchema,
 } from "@fit-track/shared/workout-exercises";
@@ -19,6 +21,31 @@ import {
 } from "../../test/fixtures.js";
 
 describe("POST /api/workouts/:workoutId/exercises", () => {
+    it("assigns unique sequential positions to concurrently added exercises", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const workout = await createTestWorkout(owner.user.id);
+        const exercises = await Promise.all([
+            createTestExercise(owner.user.id, {name: "Bench"}),
+            createTestExercise(owner.user.id, {name: "Squat"}),
+        ]);
+
+        const responses = await Promise.all(
+            exercises.map((exercise) =>
+                authenticated("post", `/api/workouts/${workout.id}/exercises`, owner.cookie).send({
+                    exerciseId: exercise.id,
+                }),
+            ),
+        );
+        const stored = await prisma.workoutExercise.findMany({
+            where: {workoutId: workout.id},
+            orderBy: {position: "asc"},
+        });
+
+        expect(responses.map((response) => response.status)).toEqual([201, 201]);
+        for (const response of responses) addExerciseToWorkoutResponseSchema.parse(response.body);
+        expect(stored.map(({position}) => position)).toEqual([1, 2]);
+    });
+
     it("adds owned active exercises at sequential positions", async () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id);
@@ -96,6 +123,43 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
 });
 
 describe("workout exercise updates and deletion", () => {
+    it("preserves unique contiguous positions during concurrent moves", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const workout = await createTestWorkout(owner.user.id);
+        const exercises = await Promise.all([
+            createTestExercise(owner.user.id, {name: "First"}),
+            createTestExercise(owner.user.id, {name: "Second"}),
+            createTestExercise(owner.user.id, {name: "Third"}),
+        ]);
+        const items = await Promise.all(
+            exercises.map((exercise, index) =>
+                createTestWorkoutExercise(workout.id, exercise.id, index + 1),
+            ),
+        );
+
+        const responses = await Promise.all([
+            authenticated(
+                "patch",
+                `/api/workouts/${workout.id}/exercises/${items[0]!.id}`,
+                owner.cookie,
+            ).send({position: 3}),
+            authenticated(
+                "patch",
+                `/api/workouts/${workout.id}/exercises/${items[2]!.id}`,
+                owner.cookie,
+            ).send({position: 1}),
+        ]);
+        const stored = await prisma.workoutExercise.findMany({
+            where: {workoutId: workout.id},
+            orderBy: {position: "asc"},
+        });
+
+        expect(responses.map((response) => response.status)).toEqual([200, 200]);
+        for (const response of responses) workoutExerciseResponseSchema.parse(response.body);
+        expect(stored.map(({position}) => position)).toEqual([1, 2, 3]);
+        expect(new Set(stored.map(({id}) => id)).size).toBe(3);
+    });
+
     it("moves an exercise and shifts the other positions", async () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id);
@@ -166,7 +230,9 @@ describe("workout exercise updates and deletion", () => {
         );
 
         expect(response.status).toBe(200);
-        expect(messageResponseSchema.parse(response.body).message).toContain("deleted");
+        expect(deleteWorkoutExerciseResponseSchema.parse(response.body)).toEqual({
+            message: "Workout exercise deleted successfully",
+        });
         expect(await prisma.workoutSet.count()).toBe(0);
         await expect(
             prisma.workoutExercise.findUniqueOrThrow({where: {id: second.id}}),
@@ -197,6 +263,28 @@ describe("workout exercise updates and deletion", () => {
 });
 
 describe("workout sets", () => {
+    it("assigns unique sequential numbers to concurrently added sets", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const workout = await createTestWorkout(owner.user.id);
+        const exercise = await createTestExercise(owner.user.id);
+        const item = await createTestWorkoutExercise(workout.id, exercise.id);
+        const path = `/api/workouts/${workout.id}/exercises/${item.id}/sets`;
+
+        const responses = await Promise.all([
+            authenticated("post", path, owner.cookie).send({reps: 8}),
+            authenticated("post", path, owner.cookie).send({reps: 10}),
+        ]);
+        const stored = await prisma.workoutSet.findMany({
+            where: {workoutExerciseId: item.id},
+            orderBy: {setNumber: "asc"},
+        });
+
+        expect(responses.map((response) => response.status)).toEqual([201, 201]);
+        for (const response of responses)
+            addSetToWorkoutExerciseResponseSchema.parse(response.body);
+        expect(stored.map(({setNumber}) => setNumber)).toEqual([1, 2]);
+    });
+
     it("adds repetition and duration sets with sequential numbers", async () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id);
@@ -285,6 +373,9 @@ describe("workout sets", () => {
         );
 
         expect(response.status).toBe(200);
+        expect(deleteWorkoutSetResponseSchema.parse(response.body)).toEqual({
+            message: "Workout set deleted successfully",
+        });
         await expect(
             prisma.workoutSet.findUniqueOrThrow({where: {id: second.id}}),
         ).resolves.toMatchObject({setNumber: 1});

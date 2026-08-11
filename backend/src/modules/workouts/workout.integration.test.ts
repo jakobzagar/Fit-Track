@@ -1,7 +1,8 @@
 import request from "supertest";
 import {describe, expect, it} from "vitest";
-import {messageResponseSchema} from "@fit-track/shared/auth";
+import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
 import {
+    deleteWorkoutResponseSchema,
     workoutBaseResponseSchema,
     previousPerformancesResponseSchema,
     workoutResponseSchema,
@@ -53,7 +54,7 @@ describe("POST /api/workouts", () => {
             .send({name: "Push day"});
 
         expect(invalid.status).toBe(400);
-        expect(invalid.body).toMatchObject({message: "Validation failed"});
+        expect(validationErrorResponseSchema.parse(invalid.body).message).toBe("Validation failed");
         expect(unauthenticated.status).toBe(401);
         expect(await prisma.workout.count()).toBe(0);
     });
@@ -167,7 +168,7 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         const response = await authenticated("delete", `/api/workouts/${workout.id}`, owner.cookie);
 
         expect(response.status).toBe(200);
-        expect(messageResponseSchema.parse(response.body)).toEqual({
+        expect(deleteWorkoutResponseSchema.parse(response.body)).toEqual({
             message: "Workout deleted successfully",
         });
         expect(await prisma.workout.findUnique({where: {id: workout.id}})).toBeNull();
@@ -216,6 +217,29 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
 });
 
 describe("workout lifecycle", () => {
+    it("allows only one of two concurrent workout starts to become active", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const first = await createTestWorkout(owner.user.id, {name: "First"});
+        const second = await createTestWorkout(owner.user.id, {name: "Second"});
+
+        const responses = await Promise.all(
+            [first, second].map((workout) =>
+                authenticated("post", `/api/workouts/${workout.id}/start`, owner.cookie),
+            ),
+        );
+        const successful = responses.find((response) => response.status === 200);
+        const conflicted = responses.find((response) => response.status === 409);
+
+        expect(responses.map((response) => response.status).sort()).toEqual([200, 409]);
+        expect(workoutBaseResponseSchema.parse(successful?.body).workout.status).toBe("ACTIVE");
+        expect(messageResponseSchema.parse(conflicted?.body)).toEqual({
+            message: "Another workout is already active",
+        });
+        expect(await prisma.workout.count({where: {userId: owner.user.id, status: "ACTIVE"}})).toBe(
+            1,
+        );
+    });
+
     it("starts a draft workout and treats repeated starts as idempotent", async () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id);
