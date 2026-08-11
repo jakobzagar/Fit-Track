@@ -1,5 +1,6 @@
 import request from "supertest";
 import {describe, expect, it, vi} from "vitest";
+import {livenessResponseSchema, readinessResponseSchema} from "@fit-track/shared/health";
 import {app} from "../../app.js";
 import {prisma} from "../../db/prisma.js";
 
@@ -8,14 +9,14 @@ describe("health endpoints", () => {
         const response = await request(app).get("/api/health/live");
 
         expect(response.status).toBe(200);
-        expect(response.body).toEqual({status: "ok"});
+        expect(livenessResponseSchema.parse(response.body)).toEqual({status: "ok"});
     });
 
     it("reports readiness when the database is reachable", async () => {
         const response = await request(app).get("/api/health/ready");
 
         expect(response.status).toBe(200);
-        expect(response.body).toEqual({status: "ready"});
+        expect(readinessResponseSchema.parse(response.body)).toEqual({status: "ready"});
     });
 
     it("reports unavailable when the database is unreachable", async () => {
@@ -24,6 +25,6 @@ describe("health endpoints", () => {
         const response = await request(app).get("/api/health/ready");
 
         expect(response.status).toBe(503);
-        expect(response.body).toEqual({status: "not_ready"});
+        expect(readinessResponseSchema.parse(response.body)).toEqual({status: "not_ready"});
     });
 });

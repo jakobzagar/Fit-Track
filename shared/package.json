@@ -14,9 +14,17 @@
             "types": "./dist/auth/auth.schemas.d.ts",
             "import": "./dist/auth/auth.schemas.js"
         },
+        "./common": {
+            "types": "./dist/common/response.schemas.d.ts",
+            "import": "./dist/common/response.schemas.js"
+        },
         "./exercises": {
             "types": "./dist/exercises/exercise.schemas.d.ts",
             "import": "./dist/exercises/exercise.schemas.js"
+        },
+        "./health": {
+            "types": "./dist/health/health.schemas.d.ts",
+            "import": "./dist/health/health.schemas.js"
         },
         "./workouts": {
             "types": "./dist/workouts/workout.schemas.d.ts",

@@ -1,4 +1,5 @@
 import {z} from "zod";
+export {messageResponseSchema, type MessageResponse} from "../common/response.schemas.js";
 
 const emailSchema = z.string().trim().toLowerCase().pipe(z.email("Invalid email address"));
 
@@ -28,12 +29,7 @@ export const authResponseSchema = z.object({
     user: userSchema,
 });
 
-export const messageResponseSchema = z.object({
-    message: z.string(),
-});
-
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type User = z.infer<typeof userSchema>;
 export type AuthResponse = z.infer<typeof authResponseSchema>;
-export type MessageResponse = z.infer<typeof messageResponseSchema>;

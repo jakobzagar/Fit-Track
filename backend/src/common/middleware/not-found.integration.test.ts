@@ -1,5 +1,6 @@
 import request from "supertest";
 import {describe, expect, it} from "vitest";
+import {messageResponseSchema} from "@fit-track/shared/common";
 import {app} from "../../app.js";
 
 describe("unknown API routes", () => {
@@ -8,6 +9,6 @@ describe("unknown API routes", () => {
 
         expect(response.status).toBe(404);
         expect(response.type).toBe("application/json");
-        expect(response.body).toEqual({message: "Resource not found"});
+        expect(messageResponseSchema.parse(response.body)).toEqual({message: "Resource not found"});
     });
 });

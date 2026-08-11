@@ -2,7 +2,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import request, {type Response} from "supertest";
 import {describe, expect, it} from "vitest";
-import {authResponseSchema, messageResponseSchema} from "@fit-track/shared/auth";
+import {authResponseSchema} from "@fit-track/shared/auth";
+import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
 import {app} from "../../app.js";
 import {env} from "../../config/env.js";
 import {prisma} from "../../db/prisma.js";
@@ -84,7 +85,7 @@ describe("POST /api/auth/register", () => {
         });
 
         expect(response.status).toBe(400);
-        expect(response.body).toEqual({
+        expect(validationErrorResponseSchema.parse(response.body)).toEqual({
             message: "Validation failed",
             errors: {
                 name: ["Name is required"],
@@ -137,7 +138,7 @@ describe("POST /api/auth/login", () => {
         });
 
         expect(response.status).toBe(400);
-        expect(response.body).toEqual({
+        expect(validationErrorResponseSchema.parse(response.body)).toEqual({
             message: "Validation failed",
             errors: {
                 email: ["Invalid email address"],

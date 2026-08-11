@@ -35,18 +35,18 @@ fit-track/
 ├── frontend/          React single-page application
 ├── backend/           Express REST API and Prisma data layer
 │   └── prisma/        Schema and database migrations
-├── shared/            Shared Zod schemas and TypeScript contracts
+├── shared/            Shared request, response, and validation contracts
 └── compose.dev.yaml   Local containerized development stack
 ```
 
-The repository uses npm workspaces. The frontend and backend consume `@fit-track/shared`, keeping validation rules and API contracts consistent across application boundaries. Backend features follow a route → controller → service structure, while frontend code is organized by feature.
+The repository uses npm workspaces. The frontend and backend consume `@fit-track/shared`, keeping request validation, response shapes, and TypeScript contracts consistent across application boundaries. The backend validates untrusted request data before controllers run, while the frontend validates actual JSON responses at the HTTP boundary. Backend integration tests parse real endpoint responses with the same shared schemas to catch contract drift before deployment. Backend features follow a route → controller → service structure, while frontend code is organized by feature.
 
 ## Getting started
 
 ### Prerequisites
 
 - Docker with Docker Compose
-- Alternatively, Node.js 24+, npm 11+, and PostgreSQL
+- Alternatively, Node.js 24.18+, npm 11+, and PostgreSQL
 
 ### Docker development environment
 
@@ -214,9 +214,9 @@ npm run verify
 
 The test suite is split by responsibility:
 
-- `shared` owns exhaustive schema boundaries, normalization, and API contract values.
-- `frontend` uses jsdom, Testing Library, and MSW for user interactions, state transitions, error feedback, and accessibility smoke checks with axe-core.
-- `backend` uses Vitest, Supertest, and PostgreSQL for HTTP behavior, persistence, authentication, CSRF, ownership, nested-resource isolation, and workout lifecycle rules.
+- `shared` owns exhaustive input boundaries, normalization, common error and health responses, and domain response contracts.
+- `frontend` uses jsdom, Testing Library, and MSW for user interactions, state transitions, error feedback, and accessibility smoke checks with axe-core. Its API client validates successful and error responses with shared Zod schemas.
+- `backend` uses Vitest, Supertest, and PostgreSQL for HTTP behavior, persistence, authentication, CSRF, ownership, nested-resource isolation, and workout lifecycle rules. Integration tests validate real JSON responses with the same shared contracts used by the frontend, exercise transaction retries with concurrent requests, and cover rate limits and graceful shutdown behavior.
 
 `npm test` and `npm run verify` intentionally exclude the PostgreSQL integration suite. Run it through the isolated Docker stack whenever backend behavior, persistence, authorization, or migrations change.
 
@@ -226,7 +226,7 @@ Run the complete isolated verification stack with:
 npm run test:docker
 ```
 
-The command builds a dedicated test image, starts a temporary PostgreSQL database, applies all migrations, and runs `npm run verify:integration`. Stop and remove the test stack afterward with `npm run test:docker:down`.
+The command builds a dedicated test image, starts PostgreSQL on a non-persistent `tmpfs`, applies all migrations, and runs `npm run verify:integration`. Stop and remove the test stack afterward with `npm run test:docker:down`. Run that cleanup command before retrying an interrupted stack when you need to verify the complete migration chain against a newly created database container.
 
 ## Author
 

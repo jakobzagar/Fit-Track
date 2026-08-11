@@ -1,4 +1,5 @@
 import {z} from "zod";
+import {messageResponseSchema} from "@fit-track/shared/common";
 import {env} from "../config/env.ts";
 import {ApiError} from "../common/errors/api.error.ts";
 
@@ -6,10 +7,6 @@ interface ApiOptions {
     method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
     body?: unknown;
 }
-
-const errorResponseSchema = z.object({
-    message: z.string(),
-});
 
 async function readResponseBody(response: Response): Promise<unknown> {
     const text = await response.text();
@@ -38,7 +35,7 @@ export async function apiRequest<T>(
     const result = await readResponseBody(response);
 
     if (!response.ok) {
-        const parsedError = errorResponseSchema.safeParse(result);
+        const parsedError = messageResponseSchema.safeParse(result);
 
         throw new ApiError(
             parsedError.success ? parsedError.data.message : "Request failed",

@@ -1,6 +1,6 @@
 import request from "supertest";
 import {describe, expect, it} from "vitest";
-import {messageResponseSchema} from "@fit-track/shared/auth";
+import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
 import {exerciseResponseSchema, exercisesResponseSchema} from "@fit-track/shared/exercises";
 import {app} from "../../app.js";
 import {prisma} from "../../db/prisma.js";
@@ -92,7 +92,7 @@ describe("POST /api/exercises", () => {
         });
 
         expect(response.status).toBe(400);
-        expect(response.body).toEqual({
+        expect(validationErrorResponseSchema.parse(response.body)).toEqual({
             message: "Validation failed",
             errors: {
                 name: ["Name is required"],
@@ -155,7 +155,9 @@ describe("GET /api/exercises", () => {
         const response = await authenticated("get", "/api/exercises?status=deleted", owner.cookie);
 
         expect(response.status).toBe(400);
-        expect(response.body).toMatchObject({message: "Validation failed"});
+        expect(validationErrorResponseSchema.parse(response.body).message).toBe(
+            "Validation failed",
+        );
     });
 });
 
@@ -194,7 +196,7 @@ describe("GET /api/exercises/:exerciseId", () => {
         const response = await authenticated("get", "/api/exercises/not-a-uuid", owner.cookie);
 
         expect(response.status).toBe(400);
-        expect(response.body).toEqual({
+        expect(validationErrorResponseSchema.parse(response.body)).toEqual({
             message: "Validation failed",
             errors: {exerciseId: ["Invalid exercise ID"]},
         });
@@ -232,7 +234,9 @@ describe("PATCH /api/exercises/:exerciseId", () => {
         ).send({});
 
         expect(response.status).toBe(400);
-        expect(response.body).toMatchObject({message: "Validation failed"});
+        expect(validationErrorResponseSchema.parse(response.body).message).toBe(
+            "Validation failed",
+        );
     });
 
     it("rejects a name already used by another owned exercise", async () => {
