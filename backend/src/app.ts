@@ -21,7 +21,8 @@ app.disable("x-powered-by");
 app.use(helmet());
 app.use(
     cors({
-        origin: env.clientUrl,
+        origin: (origin, callback) =>
+            callback(null, origin === undefined || origin === env.clientUrl),
         credentials: true,
     }),
 );

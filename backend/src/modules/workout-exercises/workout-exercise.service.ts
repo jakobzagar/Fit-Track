@@ -72,7 +72,14 @@ export async function addExerciseToWorkoutService(
                 ...(data.notes !== undefined && {notes: data.notes}),
             },
             include: {
-                exercise: true,
+                exercise: {
+                    select: {
+                        id: true,
+                        name: true,
+                        muscleGroup: true,
+                        equipment: true,
+                    },
+                },
             },
         });
     });

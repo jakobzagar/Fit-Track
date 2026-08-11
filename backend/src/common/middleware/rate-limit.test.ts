@@ -26,7 +26,7 @@ function createTestApp() {
     return app;
 }
 
-describe("rate limiters", () => {
+describe("rate limiter middleware", () => {
     it("limits general API traffic but skips preflight requests", async () => {
         const app = createTestApp();
 

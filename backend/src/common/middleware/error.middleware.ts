@@ -2,6 +2,15 @@ import type {NextFunction, Request, Response} from "express";
 import {Prisma} from "../../../generated/prisma/client.js";
 import {AppError} from "../errors/app.error.js";
 
+function isRequestBodyError(error: unknown): error is {type: string} {
+    return (
+        typeof error === "object" &&
+        error !== null &&
+        "type" in error &&
+        (error.type === "entity.too.large" || error.type === "entity.parse.failed")
+    );
+}
+
 export function errorMiddleware(error: unknown, _req: Request, res: Response, _next: NextFunction) {
     if (error instanceof AppError) {
         res.status(error.statusCode).json({
@@ -31,6 +40,14 @@ export function errorMiddleware(error: unknown, _req: Request, res: Response, _n
             });
             return;
         }
+    }
+
+    if (isRequestBodyError(error)) {
+        const isTooLarge = error.type === "entity.too.large";
+        res.status(isTooLarge ? 413 : 400).json({
+            message: isTooLarge ? "Request payload too large" : "Invalid JSON payload",
+        });
+        return;
     }
 
     console.error(error);

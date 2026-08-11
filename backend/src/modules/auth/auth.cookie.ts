@@ -4,12 +4,16 @@ import {env} from "../../config/env.js";
 const AUTH_COOKIE_NAME = "token";
 const AUTH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-const authCookieOptions: CookieOptions = {
-    httpOnly: true,
-    secure: env.nodeEnv === "production",
-    sameSite: "lax",
-    path: "/",
-};
+export function createAuthCookieOptions(nodeEnv: "development" | "test" | "production") {
+    return {
+        httpOnly: true,
+        secure: nodeEnv === "production",
+        sameSite: "lax",
+        path: "/",
+    } satisfies CookieOptions;
+}
+
+const authCookieOptions = createAuthCookieOptions(env.nodeEnv);
 
 export function setAuthCookie(res: Response, token: string) {
     res.cookie(AUTH_COOKIE_NAME, token, {

@@ -45,6 +45,19 @@ describe("graceful shutdown", () => {
         expect(dependencies.exit).toHaveBeenCalledWith(1);
     });
 
+    it("exits with failure when Prisma disconnect fails", async () => {
+        const dependencies = createDependencies();
+        const error = new Error("disconnect failed");
+        dependencies.disconnect.mockRejectedValueOnce(error);
+        const shutdown = createShutdownHandler(dependencies);
+
+        await shutdown("SIGTERM");
+
+        expect(dependencies.server.close).toHaveBeenCalledOnce();
+        expect(dependencies.logError).toHaveBeenCalledWith("Graceful shutdown failed", error);
+        expect(dependencies.exit).toHaveBeenCalledWith(1);
+    });
+
     it("force-closes connections and exits with failure after the timeout", async () => {
         vi.useFakeTimers();
         const dependencies = createDependencies();
@@ -56,6 +69,23 @@ describe("graceful shutdown", () => {
 
         expect(dependencies.server.closeAllConnections).toHaveBeenCalledOnce();
         expect(dependencies.disconnect).not.toHaveBeenCalled();
+        expect(dependencies.logError).toHaveBeenCalledWith("Graceful shutdown timed out");
+        expect(dependencies.exit).toHaveBeenCalledWith(1);
+    });
+
+    it("times out while Prisma disconnect is pending", async () => {
+        vi.useFakeTimers();
+        const dependencies = createDependencies();
+        dependencies.disconnect.mockImplementationOnce(() => new Promise(() => undefined));
+        const shutdown = createShutdownHandler({...dependencies, timeoutMs: 10_000});
+
+        void shutdown("SIGTERM");
+        await vi.advanceTimersByTimeAsync(10_000);
+
+        expect(dependencies.server.close).toHaveBeenCalledOnce();
+        expect(dependencies.disconnect).toHaveBeenCalledOnce();
+        expect(dependencies.server.closeAllConnections).toHaveBeenCalledOnce();
+        expect(dependencies.exit).toHaveBeenCalledTimes(1);
         expect(dependencies.exit).toHaveBeenCalledWith(1);
     });
 });
