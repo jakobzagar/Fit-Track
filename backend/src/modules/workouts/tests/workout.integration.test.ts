@@ -208,7 +208,7 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         expect(await prisma.workout.count()).toBe(1);
     });
 
-    it("keeps completed workouts read-only", async () => {
+    it("keeps completed workouts immutable but allows their deletion", async () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id, {
             status: "COMPLETED",
@@ -224,16 +224,14 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         const deletion = await authenticated("delete", `/api/workouts/${workout.id}`, owner.cookie);
 
         expect(update.status).toBe(409);
-        expect(deletion.status).toBe(409);
         expect(messageResponseSchema.parse(update.body)).toEqual({
             message: "Completed workout is read-only",
         });
-        await expect(
-            prisma.workout.findUniqueOrThrow({where: {id: workout.id}}),
-        ).resolves.toMatchObject({
-            name: "Test workout",
-            status: "COMPLETED",
+        expect(deletion.status).toBe(200);
+        expect(deleteWorkoutResponseSchema.parse(deletion.body)).toEqual({
+            message: "Workout deleted successfully",
         });
+        expect(await prisma.workout.findUnique({where: {id: workout.id}})).toBeNull();
     });
 });
 

@@ -174,8 +174,6 @@ export async function deleteWorkoutByIdService(userId: string, workoutId: string
         throw new AppError("Workout not found", 404);
     }
 
-    assertWorkoutIsMutable(workout.status);
-
     return prisma.workout.delete({
         where: {
             id: workoutId,

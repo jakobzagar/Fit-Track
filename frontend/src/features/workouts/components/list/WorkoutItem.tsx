@@ -84,19 +84,17 @@ export function WorkoutItem({workout, onDelete, onEdit, isDeleting}: WorkoutItem
                         Edit
                     </Button>
                 )}
-                {workout.status !== "COMPLETED" && (
-                    <Button
-                        className="w-full"
-                        size="sm"
-                        variant="danger"
-                        type="button"
-                        disabled={isDeleting}
-                        onClick={() => onDelete(workout.id)}
-                    >
-                        <Icon className="shrink-0" name="trash" size={18} />
-                        {isDeleting ? "Deleting..." : "Delete"}
-                    </Button>
-                )}
+                <Button
+                    className="w-full"
+                    size="sm"
+                    variant="danger"
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => onDelete(workout.id)}
+                >
+                    <Icon className="shrink-0" name="trash" size={18} />
+                    {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
             </div>
         </Card>
     );
