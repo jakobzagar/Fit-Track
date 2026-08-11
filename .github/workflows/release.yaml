@@ -87,6 +87,7 @@ jobs:
       REGISTRY: ghcr.io
       BACKEND_IMAGE: ${{ github.repository_owner }}/fit-track-backend
       FRONTEND_IMAGE: ${{ github.repository_owner }}/fit-track-frontend
+      MIGRATION_IMAGE: ${{ github.repository_owner }}/fit-track-migration
 
     steps:
       - name: Set up Docker Buildx
@@ -137,6 +138,7 @@ jobs:
 
           verify_image "$REGISTRY/$BACKEND_IMAGE"
           verify_image "$REGISTRY/$FRONTEND_IMAGE"
+          verify_image "$REGISTRY/$MIGRATION_IMAGE"
 
       - name: Promote release images
         shell: bash
@@ -181,3 +183,4 @@ jobs:
 
           promote_image "$REGISTRY/$BACKEND_IMAGE"
           promote_image "$REGISTRY/$FRONTEND_IMAGE"
+          promote_image "$REGISTRY/$MIGRATION_IMAGE"

@@ -149,9 +149,38 @@ Run these commands from the repository root:
 
 The API includes HTTP security headers, credentialed CORS restricted to the configured client URL, request-size limits, rate limiting, Zod validation, CSRF origin checks for state-changing requests, and secure cookies in production.
 
-The Dockerfiles contain optimized production stages, but `compose.dev.yaml` is intentionally a development environment. A real deployment still needs platform-specific configuration such as HTTPS termination, secret management, database backups, monitoring, health reporting, and a deployment pipeline.
+Rate limiting currently uses the default in-memory store from `express-rate-limit`. This is appropriate for the current single-process runtime and local verification, but counters are not shared between multiple backend processes. Any runtime that starts more than one backend process must either accept per-process limits or configure a shared rate-limit store. The API trusts one reverse proxy hop only when `NODE_ENV=production`; keep that setting aligned with the actual proxy topology so client IP-based limits remain accurate.
+
+The backend exposes separate health endpoints:
+
+- `GET /api/health/live` verifies that the HTTP process is responding without depending on PostgreSQL.
+- `GET /api/health/ready` verifies that the application can query PostgreSQL and returns `503` while it is unavailable.
+
+The Dockerfiles contain optimized production stages, but `compose.dev.yaml` is intentionally a development environment and does not exercise the production containers. The backend production image runs as the unprivileged `node` user and uses the liveness endpoint for its container health check. The frontend production image uses unprivileged Nginx on port `8080`, serves immutable built assets, and exposes `/health` for its container health check.
+
+The production frontend configuration expects the API to be reachable from its container as `backend:3001` and proxies browser requests from `/api` to that address. This matches a shared container network with the backend service named `backend`. A different runtime topology must either provide that hostname or route `/api` externally and update `frontend/nginx.conf` accordingly. `VITE_API_URL` should remain `/api` when the browser accesses both applications through the same public origin.
+
+Backend logs currently use the standard output and error streams. This keeps containers stateless and makes logs available to the surrounding runtime, but the current messages are plain text and do not include request IDs or structured HTTP access fields. If structured request logging is introduced, it must continue to exclude passwords, JWTs, cookies, secrets, and sensitive request bodies.
+
+A real deployment still needs runtime-specific configuration such as HTTPS termination, secret management, database backups, monitoring, health reporting, and a deployment pipeline.
 
 Never commit `.env` files or real credentials. The committed example files contain development placeholders only.
+
+## Database migration lifecycle
+
+Prisma migrations under `backend/prisma/migrations/` are append-only deployment artifacts. Apply committed migrations with `prisma migrate deploy`; do not use `prisma migrate dev` against shared or production data and do not modify an already released migration.
+
+The development Compose stack starts the dedicated `migration` service after PostgreSQL becomes healthy. The backend starts only after that service exits successfully. The isolated test stack follows the same ordering against a temporary test database.
+
+The backend Dockerfile also provides a dedicated `migration` target whose only command is `prisma migrate deploy`. Run this target once for a release before starting the corresponding backend version. Do not make every backend replica independently run migrations during application startup. A failed migration must stop the rollout rather than allowing the new API version to start against an incompatible schema.
+
+The published backend application image intentionally contains only production dependencies and compiled runtime files. The image-publishing workflow separately publishes the Dockerfile's `migration` target as `fit-track-migration`. Run the immutable migration image for the same commit as the backend release; do not use a moving tag when applying migrations to a persistent database.
+
+## Container verification boundary
+
+`npm run build` verifies that all production build stages compile, while `npm run test:docker` verifies the complete migration chain and application behavior against an isolated PostgreSQL database. Neither command currently starts the final frontend and backend production container targets together.
+
+Until a dedicated production-container smoke command exists, changes to Dockerfiles, Nginx proxying, container health checks, exposed ports, or startup commands require a manual smoke check of the built production targets. That check should confirm the frontend `/health` endpoint, backend `/api/health/live`, backend `/api/health/ready`, and at least one browser request through `/api`. Do not describe the production containers as smoke-tested unless that check was actually performed.
 
 ## Testing GitHub Actions locally
 
@@ -181,7 +210,7 @@ The current local workflow simulation does not require repository variables or s
 
 ## Publishing container images
 
-After CI succeeds on `main`, GitHub Actions publishes multi-platform (`linux/amd64` and `linux/arm64`) backend and frontend images to GHCR with the moving `main` tag and an immutable `sha-<commit>` tag. Each image includes an SBOM attestation describing its packaged components and a max-level provenance attestation describing how and from which revision it was built. Configure the repository variable `VITE_API_URL` as `/api` before enabling image publishing. Authentication uses the workflow-provided `GITHUB_TOKEN`; no separate registry secret is required.
+After CI succeeds on `main`, GitHub Actions publishes multi-platform (`linux/amd64` and `linux/arm64`) `fit-track-backend`, `fit-track-frontend`, and `fit-track-migration` images to GHCR with the moving `main` tag and an immutable `sha-<commit>` tag. The migration image uses the dedicated target from `backend/Dockerfile` and runs `prisma migrate deploy` as its default command. Each image includes an SBOM attestation describing its packaged components and a max-level provenance attestation describing how and from which revision it was built. Configure the repository variable `VITE_API_URL` as `/api` before enabling image publishing. Authentication uses the workflow-provided `GITHUB_TOKEN`; no separate registry secret is required.
 
 Release Please manages FitTrack as one versioned product across all three workspaces. Configure a repository secret named `RELEASE_PLEASE_TOKEN` with a fine-grained personal access token scoped only to this repository. Grant it read/write access to contents, pull requests, and issues so Release Please-created pull requests, tags, and releases can trigger the existing workflows.
 
@@ -204,7 +233,7 @@ git commit --allow-empty \
 git push origin main
 ```
 
-The image release workflow validates the generated `vMAJOR.MINOR.PATCH` tag, its membership in `main`, and that it is the highest release version on `main`, then promotes the existing backend and frontend `sha-<commit>` images without rebuilding them. It adds the immutable version tag (`1.0.0`) and the moving `1.0`, `1`, and `latest` tags. Image promotion is a packaging step rather than an application deployment, so it does not target a GitHub environment. Add a protected production environment later when a CD workflow deploys the images to real infrastructure. Do not move or reuse an existing release tag; publish a new patch version instead.
+The image release workflow validates the generated `vMAJOR.MINOR.PATCH` tag, its membership in `main`, and that it is the highest release version on `main`, then promotes the existing backend, frontend, and migration `sha-<commit>` images without rebuilding them. It adds the immutable version tag (`1.0.0`) and the moving `1.0`, `1`, and `latest` tags to all three images. Image promotion is a packaging step rather than an application deployment, so it does not target a GitHub environment. Add a protected production environment later when a CD workflow deploys the images to real infrastructure. Do not move or reuse an existing release tag; publish a new patch version instead. Always execute migrations from the immutable `sha-<commit>` or exact version tag that matches the backend being released, never from `main` or `latest`.
 
 ## Quality checks
 

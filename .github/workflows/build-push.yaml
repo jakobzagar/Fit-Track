@@ -30,6 +30,7 @@ jobs:
       REGISTRY: ghcr.io
       BACKEND_IMAGE: ${{ github.repository_owner }}/fit-track-backend
       FRONTEND_IMAGE: ${{ github.repository_owner }}/fit-track-frontend
+      MIGRATION_IMAGE: ${{ github.repository_owner }}/fit-track-migration
 
     steps:
       - name: Checkout tested revision
@@ -75,11 +76,24 @@ jobs:
             type=raw,value=sha-${{ github.event.workflow_run.head_sha }}
           build-args: VITE_API_URL=${{ vars.VITE_API_URL }}
 
+      - name: Build and push migration image
+        id: migration
+        uses: ./.github/actions/build-container
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}
+          dockerfile: backend/Dockerfile
+          target: migration
+          cache-scope: migration
+          revision: ${{ github.event.workflow_run.head_sha }}
+          tags: |
+            type=raw,value=sha-${{ github.event.workflow_run.head_sha }}
+
       - name: Promote images to main
         shell: bash
         env:
           BACKEND_DIGEST: ${{ steps.backend.outputs.digest }}
           FRONTEND_DIGEST: ${{ steps.frontend.outputs.digest }}
+          MIGRATION_DIGEST: ${{ steps.migration.outputs.digest }}
         run: |
           docker buildx imagetools create \
             --tag "$REGISTRY/$BACKEND_IMAGE:main" \
@@ -88,3 +102,7 @@ jobs:
           docker buildx imagetools create \
             --tag "$REGISTRY/$FRONTEND_IMAGE:main" \
             "$REGISTRY/$FRONTEND_IMAGE@$FRONTEND_DIGEST"
+
+          docker buildx imagetools create \
+            --tag "$REGISTRY/$MIGRATION_IMAGE:main" \
+            "$REGISTRY/$MIGRATION_IMAGE@$MIGRATION_DIGEST"
