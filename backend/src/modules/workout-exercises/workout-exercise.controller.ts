@@ -3,13 +3,13 @@ import {
     addExerciseToWorkoutService,
     deleteWorkoutExerciseService,
     updateWorkoutExerciseService,
-} from "./workout-exercise.service.js";
+} from "./services/workout-exercise.service.js";
 import {
     addSetToWorkoutExerciseService,
     deleteWorkoutSetService,
     updateWorkoutSetService,
     setWorkoutSetCompletionService,
-} from "./workout-set.service.js";
+} from "./services/workout-set.service.js";
 import type {
     AddExerciseToWorkoutInput,
     CreateWorkoutSetInput,

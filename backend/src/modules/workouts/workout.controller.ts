@@ -8,7 +8,7 @@ import {
     startWorkoutService,
     finishWorkoutService,
     getPreviousPerformancesService,
-} from "./workout.service.js";
+} from "./services/workout.service.js";
 import type {
     CreateWorkoutInput,
     UpdateWorkoutInput,

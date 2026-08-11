@@ -1,14 +1,14 @@
 import {Link, useParams} from "react-router";
-import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/AddExerciseToWorkoutForm";
+import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/exercises/AddExerciseToWorkoutForm";
 import {Button} from "../../../components/ui/Button";
 import {Card} from "../../../components/ui/Card";
 import {Feedback} from "../../../components/ui/Feedback";
 import {LoadingState} from "../../../components/ui/LoadingState";
 import {PageHeader} from "../../../components/ui/PageHeader";
 import {useConfirmDialog} from "../../../components/ui/useConfirmDialog";
-import {WorkoutExerciseCard} from "../components/WorkoutExerciseCard";
-import {useWorkoutDetail} from "../hooks/useWorkoutDetail";
-import {formatWorkoutDate} from "../workout-date";
+import {WorkoutExerciseCard} from "../components/details/WorkoutExerciseCard";
+import {useWorkoutDetail} from "../hooks/data/useWorkoutDetail";
+import {formatWorkoutDate} from "../utils/workout-date";
 
 export function WorkoutDetailPage() {
     const confirm = useConfirmDialog();

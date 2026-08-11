@@ -1,7 +1,7 @@
 import {useState} from "react";
-import {CreateWorkoutForm} from "../components/CreateWorkoutForm.tsx";
-import {UpdateWorkoutForm} from "../components/UpdateWorkoutForm.tsx";
-import {WorkoutList} from "../components/WorkoutList.tsx";
+import {CreateWorkoutForm} from "../components/forms/CreateWorkoutForm.tsx";
+import {UpdateWorkoutForm} from "../components/forms/UpdateWorkoutForm.tsx";
+import {WorkoutList} from "../components/list/WorkoutList.tsx";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
 import type {WorkoutSummary} from "../workout.types.ts";
 import {Card} from "../../../components/ui/Card.tsx";
@@ -12,7 +12,7 @@ import {useConfirmDialog} from "../../../components/ui/useConfirmDialog.ts";
 import {Button} from "../../../components/ui/Button.tsx";
 import {Icon} from "../../../components/ui/Icon.tsx";
 import {FormDialog} from "../../../components/ui/FormDialog.tsx";
-import {useWorkouts} from "../hooks/useWorkouts.ts";
+import {useWorkouts} from "../hooks/data/useWorkouts.ts";
 
 export function WorkoutsPage() {
     const confirm = useConfirmDialog();

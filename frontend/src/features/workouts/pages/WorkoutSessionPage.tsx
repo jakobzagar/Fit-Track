@@ -1,14 +1,14 @@
 import {useNavigate, useParams} from "react-router";
-import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/AddExerciseToWorkoutForm";
+import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/exercises/AddExerciseToWorkoutForm";
 import {Button} from "../../../components/ui/Button";
 import {Card} from "../../../components/ui/Card";
 import {Feedback} from "../../../components/ui/Feedback";
 import {LoadingState} from "../../../components/ui/LoadingState";
 import {useConfirmDialog} from "../../../components/ui/useConfirmDialog";
-import {WorkoutSessionActionBar} from "../components/WorkoutSessionActionBar";
-import {WorkoutSessionExerciseCard} from "../components/WorkoutSessionExerciseCard";
-import {WorkoutSessionHeader} from "../components/WorkoutSessionHeader";
-import {useWorkoutSession} from "../hooks/useWorkoutSession";
+import {WorkoutSessionActionBar} from "../components/session/WorkoutSessionActionBar";
+import {WorkoutSessionExerciseCard} from "../components/session/WorkoutSessionExerciseCard";
+import {WorkoutSessionHeader} from "../components/session/WorkoutSessionHeader";
+import {useWorkoutSession} from "../hooks/session/useWorkoutSession";
 
 export function WorkoutSessionPage() {
     const confirm = useConfirmDialog();
