@@ -3,24 +3,21 @@ import {delay, http, HttpResponse} from "msw";
 import {describe, expect, test} from "vitest";
 import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
-import {createWorkout} from "../../../test/fixtures/workouts";
+import {createWorkoutBase, createWorkoutSummary} from "../../../test/fixtures/workouts";
 import {useWorkouts} from "./useWorkouts";
 
 describe("useWorkouts", () => {
     test("keeps workouts sorted by performed date after creating and rescheduling one", async () => {
-        const oldest = {
-            ...createWorkout({
-                id: "123e4567-e89b-42d3-a456-426614174011",
-                name: "Oldest",
-                performedAt: "2026-07-20T00:00:00.000Z",
-            }),
-            _count: {workoutExercises: 1},
-        };
-        const newest = {
-            ...createWorkout({name: "Newest", performedAt: "2026-07-26T00:00:00.000Z"}),
-            _count: {workoutExercises: 1},
-        };
-        const historical = createWorkout({
+        const oldest = createWorkoutSummary({
+            id: "123e4567-e89b-42d3-a456-426614174011",
+            name: "Oldest",
+            performedAt: "2026-07-20T00:00:00.000Z",
+        });
+        const newest = createWorkoutSummary({
+            name: "Newest",
+            performedAt: "2026-07-26T00:00:00.000Z",
+        });
+        const historical = createWorkoutBase({
             id: "123e4567-e89b-42d3-a456-426614174012",
             name: "Historical",
             performedAt: "2026-07-22T00:00:00.000Z",
@@ -32,7 +29,10 @@ describe("useWorkouts", () => {
             ),
             http.patch(`${API_URL}/workouts/${oldest.id}`, () =>
                 HttpResponse.json({
-                    workout: {...oldest, performedAt: "2026-07-28T00:00:00.000Z"},
+                    workout: createWorkoutBase({
+                        ...oldest,
+                        performedAt: "2026-07-28T00:00:00.000Z",
+                    }),
                 }),
             ),
         );
@@ -56,8 +56,8 @@ describe("useWorkouts", () => {
 
     test("keeps the newest result when load requests overlap", async () => {
         let attempts = 0;
-        const older = {...createWorkout({name: "Older response"}), _count: {workoutExercises: 1}};
-        const newer = {...createWorkout({name: "Newer response"}), _count: {workoutExercises: 1}};
+        const older = createWorkoutSummary({name: "Older response"});
+        const newer = createWorkoutSummary({name: "Newer response"});
         server.use(
             http.get(`${API_URL}/workouts`, async () => {
                 attempts += 1;
@@ -79,7 +79,7 @@ describe("useWorkouts", () => {
     });
 
     test("keeps the existing workout when an update fails", async () => {
-        const workout = {...createWorkout(), _count: {workoutExercises: 1}};
+        const workout = createWorkoutSummary();
         server.use(
             http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts: [workout]})),
             http.patch(`${API_URL}/workouts/${workout.id}`, () =>
@@ -104,7 +104,7 @@ describe("useWorkouts", () => {
     });
 
     test("keeps data and clears pending state when deletion fails", async () => {
-        const workout = {...createWorkout(), _count: {workoutExercises: 1}};
+        const workout = createWorkoutSummary();
         server.use(
             http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts: [workout]})),
             http.delete(`${API_URL}/workouts/${workout.id}`, () =>

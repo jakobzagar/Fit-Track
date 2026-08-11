@@ -87,7 +87,11 @@ describe("useWorkoutDetail", () => {
             id: "123e4567-e89b-42d3-a456-426614174022",
             exerciseId: "123e4567-e89b-42d3-a456-426614174002",
             position: 2,
-            exercise: {...exercise, id: "123e4567-e89b-42d3-a456-426614174002", name: "Row"},
+            exercise: {
+                ...workoutExercise.exercise,
+                id: "123e4567-e89b-42d3-a456-426614174002",
+                name: "Row",
+            },
         };
         mockLoadRequests(createWorkout({workoutExercises: [workoutExercise, second]}));
         server.use(

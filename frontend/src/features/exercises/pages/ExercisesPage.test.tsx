@@ -22,13 +22,15 @@ describe("ExercisesPage", () => {
         expect(screen.getByText("Barbell")).toBeInTheDocument();
     });
 
-    test("shows empty and load-error states", async () => {
+    test("shows the empty state", async () => {
         server.use(handleExerciseList([]));
-        const {unmount} = renderWithProviders(<ExercisesPage />);
+        renderWithProviders(<ExercisesPage />);
+
         expect(await screen.findByText("Your library is empty.")).toBeInTheDocument();
         expect(screen.getByRole("button", {name: "Add your first exercise"})).toBeInTheDocument();
-        unmount();
+    });
 
+    test("shows a load error", async () => {
         server.use(
             http.get(`${API_URL}/exercises`, () =>
                 HttpResponse.json({message: "Could not load exercises"}, {status: 500}),

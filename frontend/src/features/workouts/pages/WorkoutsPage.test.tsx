@@ -4,22 +4,12 @@ import {describe, expect, test} from "vitest";
 import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
 import {renderWithProviders} from "../../../test/render";
+import {createWorkoutSummary} from "../../../test/fixtures/workouts";
 import {WorkoutsPage} from "./WorkoutsPage";
 import type {WorkoutSummary} from "../workout.types";
 
-const workout = {
-    id: "123e4567-e89b-42d3-a456-426614174010",
-    userId: "123e4567-e89b-42d3-a456-426614174000",
-    name: "Push day",
-    status: "DRAFT" as const,
-    performedAt: "2026-07-26T10:00:00.000Z",
-    startedAt: null,
-    completedAt: null,
-    notes: "Heavy session",
-    createdAt: "2026-07-26T10:00:00.000Z",
-    updatedAt: "2026-07-26T10:00:00.000Z",
-};
-const summary = {...workout, _count: {workoutExercises: 1}};
+const summary = createWorkoutSummary({status: "DRAFT"});
+const {_count: _count, ...workout} = summary;
 
 function handleWorkoutList(workouts: WorkoutSummary[] = [summary]) {
     return http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts}));
@@ -53,13 +43,15 @@ describe("WorkoutsPage", () => {
         expect(screen.getAllByRole("button", {name: "Delete"})).toHaveLength(1);
     });
 
-    test("shows empty and load-error states", async () => {
+    test("shows the empty state", async () => {
         server.use(handleWorkoutList([]));
-        const {unmount} = renderWithProviders(<WorkoutsPage />);
+        renderWithProviders(<WorkoutsPage />);
+
         expect(await screen.findByText("No sessions logged yet.")).toBeInTheDocument();
         expect(screen.getByRole("button", {name: "Create your first workout"})).toBeInTheDocument();
-        unmount();
+    });
 
+    test("shows a load error", async () => {
         server.use(
             http.get(`${API_URL}/workouts`, () =>
                 HttpResponse.json({message: "Could not load workouts"}, {status: 500}),

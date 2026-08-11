@@ -2,6 +2,7 @@ import {MemoryRouter} from "react-router";
 import {render, screen} from "@testing-library/react";
 import {describe, expect, test, vi} from "vitest";
 import {AuthContext, type AuthContextValue} from "../../features/auth/context/auth.context";
+import {user as authenticatedUser} from "../../test/fixtures/users";
 import {Footer} from "./Footer";
 
 function renderFooter(user: AuthContextValue["user"], variant: "app" | "landing" = "landing") {
@@ -25,13 +26,7 @@ describe("Footer", () => {
     });
 
     test("offers the dashboard to an authenticated user", () => {
-        renderFooter({
-            id: "123e4567-e89b-42d3-a456-426614174000",
-            name: "Jakob",
-            email: "jakob@example.com",
-            createdAt: "2026-07-26T10:00:00.000Z",
-            updatedAt: "2026-07-26T10:00:00.000Z",
-        });
+        renderFooter(authenticatedUser);
         expect(screen.getByRole("link", {name: "Dashboard"})).toHaveAttribute("href", "/workouts");
     });
 

@@ -1,19 +1,8 @@
 import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
-import type {Exercise} from "../exercise.types";
+import {exercise} from "../../../test/fixtures/exercises";
 import {UpdateExerciseForm} from "./UpdateExerciseForm";
-
-const exercise: Exercise = {
-    id: "123e4567-e89b-42d3-a456-426614174001",
-    userId: "123e4567-e89b-42d3-a456-426614174000",
-    name: "Bench press",
-    muscleGroup: "Chest",
-    equipment: "Barbell",
-    isArchived: false,
-    createdAt: "2026-07-26T10:00:00.000Z",
-    updatedAt: "2026-07-26T10:00:00.000Z",
-};
 
 describe("UpdateExerciseForm", () => {
     test("starts with current values and submits normalized changes", async () => {

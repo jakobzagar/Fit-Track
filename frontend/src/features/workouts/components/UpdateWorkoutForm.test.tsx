@@ -1,22 +1,10 @@
 import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
-import type {WorkoutSummary} from "../workout.types";
+import {createWorkoutSummary} from "../../../test/fixtures/workouts";
 import {UpdateWorkoutForm} from "./UpdateWorkoutForm";
 
-const workout: WorkoutSummary = {
-    id: "123e4567-e89b-42d3-a456-426614174010",
-    userId: "123e4567-e89b-42d3-a456-426614174000",
-    name: "Push day",
-    status: "DRAFT",
-    performedAt: "2026-07-26T10:00:00.000Z",
-    startedAt: null,
-    completedAt: null,
-    notes: "Heavy session",
-    createdAt: "2026-07-26T10:00:00.000Z",
-    updatedAt: "2026-07-26T10:00:00.000Z",
-    _count: {workoutExercises: 1},
-};
+const workout = createWorkoutSummary({status: "DRAFT"});
 
 describe("UpdateWorkoutForm", () => {
     test("prefills and submits normalized changes", async () => {

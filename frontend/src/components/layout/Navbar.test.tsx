@@ -3,16 +3,11 @@ import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
 import {AuthContext} from "../../features/auth/context/auth.context";
+import {user} from "../../test/fixtures/users";
 import {Navbar} from "./Navbar";
 
 const authValue = {
-    user: {
-        id: "123e4567-e89b-42d3-a456-426614174000",
-        name: "Jakob",
-        email: "jakob@example.com",
-        createdAt: "2026-07-26T10:00:00.000Z",
-        updatedAt: "2026-07-26T10:00:00.000Z",
-    },
+    user,
     isLoading: false,
     setUser: vi.fn(),
     signOut: vi.fn().mockResolvedValue(undefined),

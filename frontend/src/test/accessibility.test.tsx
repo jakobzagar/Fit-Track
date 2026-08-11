@@ -13,7 +13,7 @@ import {WorkoutDetailPage} from "../features/workouts/pages/WorkoutDetailPage";
 import {WorkoutSessionPage} from "../features/workouts/pages/WorkoutSessionPage";
 import {API_URL} from "./constants";
 import {server} from "./mocks/server";
-import {createWorkout, exercise, workoutId} from "./fixtures/workouts";
+import {createWorkout, createWorkoutSummary, exercise, workoutId} from "./fixtures/workouts";
 import {renderWithProviders} from "./render";
 
 async function expectNoAccessibilityViolations(container: HTMLElement) {
@@ -104,7 +104,7 @@ describe("accessibility smoke tests", () => {
     });
 
     test("has no detectable violations in form and confirmation dialogs", async () => {
-        const workout = {...createWorkout(), _count: {workoutExercises: 1}};
+        const workout = createWorkoutSummary();
         server.use(http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts: [workout]})));
         const {container, user} = renderWithProviders(
             <main>

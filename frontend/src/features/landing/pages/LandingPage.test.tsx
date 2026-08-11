@@ -2,6 +2,7 @@ import {MemoryRouter} from "react-router";
 import {render, screen} from "@testing-library/react";
 import {describe, expect, test, vi} from "vitest";
 import {AuthContext, type AuthContextValue} from "../../auth/context/auth.context";
+import {user as authenticatedUser} from "../../../test/fixtures/users";
 import {LandingPage} from "./LandingPage";
 
 function renderPage(user: AuthContextValue["user"]) {
@@ -28,13 +29,7 @@ describe("LandingPage", () => {
     });
 
     test("sends an authenticated user to the dashboard", () => {
-        renderPage({
-            id: "123e4567-e89b-42d3-a456-426614174000",
-            name: "Jakob",
-            email: "jakob@example.com",
-            createdAt: "2026-07-26T10:00:00.000Z",
-            updatedAt: "2026-07-26T10:00:00.000Z",
-        });
+        renderPage(authenticatedUser);
 
         expect(screen.getAllByRole("link", {name: /Open dashboard/})[0]).toHaveAttribute(
             "href",

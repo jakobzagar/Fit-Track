@@ -1,4 +1,10 @@
-import type {Workout, WorkoutExercise, WorkoutSet} from "../../features/workouts/workout.types";
+import type {
+    Workout,
+    WorkoutBase,
+    WorkoutExercise,
+    WorkoutSet,
+    WorkoutSummary,
+} from "../../features/workouts/workout.types";
 import {exercise, exerciseId, userId} from "./exercises";
 
 export {exercise, exerciseId, userId} from "./exercises";
@@ -47,4 +53,26 @@ export function createWorkout(overrides: Partial<Workout> = {}): Workout {
         workoutExercises: [workoutExercise],
         ...overrides,
     };
+}
+
+export function createWorkoutSummary(overrides: Partial<WorkoutSummary> = {}): WorkoutSummary {
+    const workout = createWorkoutBase();
+
+    return {
+        ...workout,
+        _count: {workoutExercises: 1},
+        ...overrides,
+    };
+}
+
+export function createWorkoutBase(
+    overrides: Partial<WorkoutBase> & {workoutExercises?: unknown; _count?: unknown} = {},
+): WorkoutBase {
+    const {workoutExercises: _workoutExercises, ...workout} = createWorkout();
+    const {
+        workoutExercises: _overriddenWorkoutExercises,
+        _count: _overriddenCount,
+        ...baseOverrides
+    } = overrides;
+    return {...workout, ...baseOverrides};
 }

@@ -4,6 +4,8 @@ import {afterAll, afterEach, beforeAll, vi} from "vitest";
 import {server} from "./mocks/server";
 
 const storage = new Map<string, string>();
+const initialDocumentTitle = document.title;
+const initialScrollTo = window.scrollTo.bind(window);
 const localStorageMock: Storage = {
     get length() {
         return storage.size;
@@ -28,6 +30,9 @@ afterEach(() => {
     localStorage.clear();
     delete document.documentElement.dataset.theme;
     document.querySelector('meta[name="theme-color"]')?.remove();
+    document.title = initialDocumentTitle;
+    window.history.replaceState({}, "", "/");
+    window.scrollTo = initialScrollTo;
     vi.useRealTimers();
 });
 

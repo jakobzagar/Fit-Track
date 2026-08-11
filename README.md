@@ -128,7 +128,7 @@ Run these commands from the repository root:
 | `npm run dev:docker:down`    | Stop and remove the development stack          |
 | `npm run build`              | Build all workspaces                           |
 | `npm run lint`               | Lint all workspaces                            |
-| `npm test`                   | Run fast shared and frontend tests             |
+| `npm test`                   | Run all fast workspace tests                   |
 | `npm run test:docker`        | Run verification in an isolated test stack     |
 | `npm run typecheck`          | Type-check all workspaces                      |
 | `npm run format`             | Format the repository with Prettier            |
@@ -216,9 +216,9 @@ The test suite is split by responsibility:
 
 - `shared` owns exhaustive input boundaries, normalization, common error and health responses, and domain response contracts.
 - `frontend` uses jsdom, Testing Library, and MSW for user interactions, state transitions, error feedback, and accessibility smoke checks with axe-core. Its API client validates successful and error responses with shared Zod schemas.
-- `backend` uses Vitest, Supertest, and PostgreSQL for HTTP behavior, persistence, authentication, CSRF, ownership, nested-resource isolation, and workout lifecycle rules. Integration tests validate real JSON responses with the same shared contracts used by the frontend, exercise transaction retries with concurrent requests, and cover rate limits and graceful shutdown behavior.
+- `backend` runs fast unit tests for isolated middleware, transaction retries, cookie options, and graceful shutdown. Its PostgreSQL integration tests use Vitest and Supertest for HTTP behavior, persistence, authentication, security middleware, ownership, nested-resource isolation, concurrency, and workout lifecycle rules. Integration tests validate real JSON responses with the same strict shared contracts used by the frontend.
 
-`npm test` and `npm run verify` intentionally exclude the PostgreSQL integration suite. Run it through the isolated Docker stack whenever backend behavior, persistence, authorization, or migrations change.
+`npm test` and `npm run verify` include backend unit tests but intentionally exclude the PostgreSQL integration suite. Run it through the isolated Docker stack whenever backend behavior, persistence, authorization, security middleware, or migrations change.
 
 Run the complete isolated verification stack with:
 

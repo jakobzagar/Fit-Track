@@ -5,6 +5,7 @@ import {describe, expect, test} from "vitest";
 import {API_URL} from "../../../test/constants";
 import {renderWithProviders} from "../../../test/render";
 import {server} from "../../../test/mocks/server";
+import {user} from "../../../test/fixtures/users";
 import {ProtectedRoute} from "./ProtectedRoute";
 
 function renderProtectedRoute() {
@@ -40,19 +41,7 @@ describe("ProtectedRoute", () => {
     });
 
     test("renders the protected page for an authenticated user", async () => {
-        server.use(
-            http.get(`${API_URL}/auth/me`, () =>
-                HttpResponse.json({
-                    user: {
-                        id: "123e4567-e89b-42d3-a456-426614174000",
-                        name: "Jakob",
-                        email: "jakob@example.com",
-                        createdAt: "2026-07-26T10:00:00.000Z",
-                        updatedAt: "2026-07-26T10:00:00.000Z",
-                    },
-                }),
-            ),
-        );
+        server.use(http.get(`${API_URL}/auth/me`, () => HttpResponse.json({user})));
 
         renderProtectedRoute();
 
