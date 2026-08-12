@@ -21,7 +21,10 @@ jobs:
     timeout-minutes: 20
 
     env:
+      NODE_ENV: test
       DATABASE_URL: postgresql://unused:unused@localhost:5432/unused
+      JWT_SECRET: fit-track-test-secret-that-is-at-least-32-characters
+      CLIENT_URL: http://localhost:5173
 
     steps:
       - name: Checkout repository
