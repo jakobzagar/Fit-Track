@@ -5,18 +5,31 @@ FitTrack uses GitHub Actions to verify the repository, publish immutable contain
 ## Pipeline overview
 
 ```mermaid
-flowchart LR
-    PUSH[Push to main] --> TEST[Fast verification]
-    TEST --> INTEGRATION[PostgreSQL integration tests]
-    INTEGRATION --> BUILD[Build three multi-platform images]
-    BUILD --> SHA[Publish sha-commit tags]
-    SHA --> MAIN[Promote tested digests to main]
-    MAIN --> RP[Release Please PR]
-    RP --> TAG[Git tag and GitHub Release]
-    TAG --> VERSION[Promote existing digests to SemVer tags]
+flowchart TB
+    subgraph Quality[Quality gate]
+        direction LR
+        Push[Push to main] --> Verify[Verify]
+        Verify --> Integration[Integration]
+    end
+
+    subgraph Artifacts[Artifact publication]
+        direction LR
+        Build[Build three images] --> Sha[SHA tags]
+        Sha --> Main[main tags]
+    end
+
+    subgraph Release[Release promotion]
+        direction LR
+        ReleasePR[Release Please PR] --> Merge[Merge release PR]
+        Merge --> Tag[Version tag]
+        Tag --> SemVer[SemVer tags]
+    end
+
+    Integration --> Build
+    Main --> ReleasePR
 ```
 
-The image workflow runs only after the `Test` workflow succeeds for a push to `main`. It checks out the exact tested SHA rather than the current branch tip.
+The image workflow runs only after the `Test` workflow succeeds for a push to `main`. It checks out the exact tested SHA rather than the current branch tip. A pull request or push that changes only Markdown files skips the `Test` workflow and therefore does not publish images. Release Please creates or updates a release pull request after artifact publication; merging that pull request creates the version tag and GitHub Release, which promote the matching immutable image digests to SemVer tags.
 
 ## Published images
 
@@ -103,11 +116,38 @@ npm run actions:verify
 
 If a future local workflow simulation requires a secret, pass it interactively with `act -s SECRET_NAME`. Do not commit `.secrets`, `.vars`, `.input`, environment files, or credentials.
 
-## Container runtime notes
+## Production runtime
 
-The backend production image runs as the unprivileged `node` user and checks `/api/health/live`. The frontend uses unprivileged Nginx on port `8080`, serves hashed assets with immutable caching, and checks `/health`.
+The frontend production image runs unprivileged Nginx on port `8080`; the backend production image runs as the unprivileged `node` user on port `3001` and checks `/api/health/live`.
 
-Frontend Nginx currently proxies `/api` to `backend:3001`. A runtime must provide that shared-network hostname or replace the proxy with an equivalent external route.
+```mermaid
+flowchart LR
+    Browser([Browser]) --> Nginx
+
+    subgraph Frontend[Frontend container]
+        Nginx[Nginx :8080]
+        Assets[React build]
+    end
+
+    subgraph Backend[Backend container]
+        API[Express API :3001]
+    end
+
+    Nginx --> API
+    Nginx --> Assets
+    API --> Database[(PostgreSQL)]
+```
+
+Nginx gives the browser one public origin. It serves the React build and forwards only `/api` requests to the API; PostgreSQL is never exposed to the browser.
+
+| Request path          | Nginx behavior                                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `/assets/`            | Serves hashed Vite assets with immutable one-year caching.                                                      |
+| `/` and client routes | Serves the React single-page application with an `index.html` fallback.                                         |
+| `/api/`               | Proxies to the `fittrack_backend` upstream at `backend:3001`, forwarding host, client IP, and protocol headers. |
+| `/health`             | Returns a no-cache Nginx health response without writing an access log.                                         |
+
+Nginx enforces a 100 KB request body limit, disables version tokens, enables gzip for suitable text assets, and applies connect, send, and read proxy timeouts. A production runtime must preserve the internal `backend:3001` hostname or provide an equivalent route.
 
 The normal verification compiles production builds but does not start the final frontend and backend targets together. Changes to Dockerfiles, Nginx routing, health checks, ports, or startup commands require a production-container smoke check covering:
 
