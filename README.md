@@ -33,31 +33,29 @@ This project is built as a production-oriented TypeScript monorepo. Its focus is
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DRAFT: Create workout
-    DRAFT --> ACTIVE: Start
-    ACTIVE --> DRAFT: Cancel session
-    ACTIVE --> COMPLETED: Finish with completed set
-    COMPLETED --> ACTIVE: Reopen for correction
-    DRAFT --> [*]: Delete
-    ACTIVE --> [*]: Delete
-    COMPLETED --> [*]: Delete
+    state "Draft workout" as Draft
+    state "Active session" as Active
+    state "Completed record" as Completed
+
+    [*] --> Draft: Create
+    Draft --> Active: Start
+    Active --> Draft: Cancel
+    Active --> Completed: Finish
+    Completed --> Active: Reopen
 ```
 
-Only one workout can be active for a user. Cancelling preserves saved set values but clears their completion marks. Reopening preserves the original session data and makes the completed workout editable through the active-session flow.
+A user can have only one active workout. **Cancel** returns it to draft and clears completion marks without discarding entered set values. **Reopen** returns a completed workout to the active session while preserving its recorded data. Any owned workout can be deleted from every lifecycle state together with its nested exercises and sets.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    UI[React feature] --> CLIENT[Typed API client]
-    SHARED[Shared Zod contracts] --> UI
-    SHARED --> API
-    CLIENT --> API[Express route and validation]
-    API --> CONTROLLER[Controller]
-    CONTROLLER --> SERVICE[Domain service]
-    SERVICE --> PRISMA[Prisma transaction]
-    PRISMA --> DB[(PostgreSQL)]
-    API --> CLIENT
+    User([User]) --> Frontend[React application]
+    Frontend -->|/api| API[Express API]
+    API --> Database[(PostgreSQL)]
+
+    Contracts[Shared Zod contracts] -.-> Frontend
+    Contracts -.-> API
 ```
 
 ```text
@@ -71,9 +69,11 @@ fit-track/
 └── compose.test.yaml  Isolated verification stack with temporary PostgreSQL
 ```
 
-Backend features follow a route → controller → service structure. Frontend code is organized around user-facing features, with reusable layout and UI primitives kept outside feature modules. Large areas gain subdirectories only when they represent a meaningful responsibility.
+The React application sends `/api` requests to the Express API, which persists data in PostgreSQL. Shared Zod contracts keep both applications aligned at the HTTP boundary; API responses return along the same path.
 
-Read [Architecture and design decisions](docs/architecture.md) for the request flow, data model, security boundaries, and trade-offs.
+Frontend code is organized around user-facing features, while reusable layout and UI primitives remain outside feature modules. Large areas gain subdirectories only when they represent a meaningful responsibility.
+
+Read [Architecture and design decisions](docs/architecture.md) for request flow, backend layers, data model, security boundaries, and trade-offs.
 
 ## Technology stack
 

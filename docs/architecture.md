@@ -16,27 +16,38 @@ Shared contracts describe data crossing the HTTP boundary. They do not contain R
 
 ```mermaid
 sequenceDiagram
+    autonumber
     actor User
-    participant UI as React feature
-    participant Client as API client
-    participant Route as Express route
+    participant Frontend as React application
+    participant Gateway as Express middleware
+    participant Route as Protected route
     participant Service as Domain service
     participant DB as PostgreSQL
 
-    User->>UI: Submit action
-    UI->>Client: Typed request
-    Client->>Route: JSON + auth cookie
-    Route->>Route: Auth, CSRF, rate limit, Zod validation
-    Route->>Service: Validated input + user ID
-    Service->>DB: Ownership-scoped query or transaction
+    User->>Frontend: Action
+    Frontend->>Gateway: /api request
+    Gateway->>Route: Accepted request
+    Route->>Service: Validated command
+    Service->>DB: Prisma query or transaction
     DB-->>Service: Persisted result
     Service-->>Route: Domain result
-    Route-->>Client: JSON response
-    Client->>Client: Parse shared response schema
-    Client-->>UI: Validated data
+    Route-->>Frontend: JSON response
+    Frontend-->>User: Updated UI
 ```
 
-Routes define middleware and validation. Controllers translate HTTP concerns. Services contain lifecycle, ownership, and transactional rules. Prisma owns persistence and database relations.
+The diagram shows the successful path for a protected feature request. Express runs these layers in order:
+
+| Scope           | Middleware                                                       | Responsibility                                                                      |
+| --------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Application     | Helmet → CORS → general rate limiter                             | Security headers, allowed browser origin, request throttling                        |
+| Application     | JSON and URL-encoded parsers → cookie parser → CSRF origin check | Parse bodies up to 100 KB, read the auth cookie, protect state-changing requests    |
+| Protected route | JWT authentication → Zod validation → controller                 | Establish the user identity, validate path/query/body data, translate HTTP concerns |
+| Service         | Ownership rules → Prisma transaction when required               | Enforce domain rules and persist a consistent result                                |
+| Final handler   | Not-found middleware → error middleware                          | Return stable responses for unknown routes and failures                             |
+
+Public health routes and login or registration omit JWT authentication. Login and registration use their own endpoint rate limiters in addition to the general limiter.
+
+Shared Zod schemas validate input at the API boundary and successful responses at the frontend boundary. Inside the API, routes define middleware, controllers translate HTTP concerns, services contain lifecycle, ownership, and transaction rules, and Prisma owns persistence. The final not-found and error middleware convert unmatched routes, expected `AppError` instances, Prisma errors, malformed JSON, and unexpected failures into stable HTTP responses.
 
 ## Feature organization
 
@@ -46,28 +57,83 @@ Frontend features live under `frontend/src/features/`. Feature APIs, schemas, ho
 
 This structure optimizes navigation without forcing every feature into an identical template.
 
-## Data model and invariants
+## PostgreSQL data model
+
+The diagram reflects the persisted PostgreSQL tables. `PK`, `FK`, and `UK` mark primary, foreign, and unique keys; `NULL` marks optional columns.
 
 ```mermaid
 erDiagram
-    USER ||--o{ EXERCISE : owns
-    USER ||--o{ WORKOUT : owns
-    WORKOUT ||--o{ WORKOUT_EXERCISE : contains
-    EXERCISE ||--o{ WORKOUT_EXERCISE : referenced_by
-    WORKOUT_EXERCISE ||--o{ WORKOUT_SET : contains
+    User {
+        text id PK
+        text name
+        text email UK
+        text passwordHash
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    Exercise {
+        text id PK
+        text userId FK
+        text name
+        text muscleGroup
+        text equipment "NULL"
+        boolean isArchived
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    Workout {
+        text id PK
+        text userId FK
+        text name
+        text status
+        timestamp startedAt "NULL"
+        timestamp completedAt "NULL"
+        timestamp performedAt
+        text notes "NULL"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    WorkoutExercise {
+        text id PK
+        text workoutId FK
+        text exerciseId FK
+        int position
+        text notes "NULL"
+    }
+
+    WorkoutSet {
+        text id PK
+        text workoutExerciseId FK
+        int setNumber
+        int reps "NULL"
+        numeric weight "NULL"
+        int durationSeconds "NULL"
+        timestamp completedAt "NULL"
+    }
+
+    User ||--o{ Exercise : owns
+    User ||--o{ Workout : owns
+    Workout ||--o{ WorkoutExercise : contains
+    Exercise ||--o{ WorkoutExercise : uses
+    WorkoutExercise ||--o{ WorkoutSet : records
 ```
 
-Important relational rules include:
+`WorkoutExercise` is the join table between `Workout` and `Exercise`. It stores the position and notes specific to that workout. `WorkoutSet` belongs to this join table, so recorded values stay attached to a particular workout exercise rather than changing the reusable exercise definition. `WorkoutSet.weight` is `DECIMAL(8,2)`.
 
-- exercise names are unique per user;
-- an exercise can appear only once in a workout;
-- exercise positions are unique within a workout;
-- set numbers are unique within a workout exercise;
-- deleting a workout cascades to its workout exercises and sets;
-- deleting an exercise referenced by workout history is restricted;
-- protected reads and mutations are always scoped to the authenticated owner.
+The ERD includes every persisted scalar field and relation from the five Prisma models. Prisma relation arrays such as `User.workouts` are represented by the connecting lines rather than repeated as database columns.
 
-Ordering mutations run in serializable transactions with retry handling. Services temporarily move conflicting positions or numbers and then close gaps in a deterministic order.
+Database constraints and indexes:
+
+- `WorkoutStatus` is a PostgreSQL enum: `DRAFT`, `ACTIVE`, or `COMPLETED`, with `DRAFT` as the default;
+- `User.email`, `Exercise(userId, name)`, `WorkoutExercise(workoutId, exerciseId)`, `WorkoutExercise(workoutId, position)`, and `WorkoutSet(workoutExerciseId, setNumber)` are unique;
+- indexes support `Exercise(userId, isArchived)`, `Workout(userId, performedAt DESC)`, and `WorkoutExercise(exerciseId)`;
+- deleting a user cascades to that user's exercises and workouts; deleting a workout cascades to its workout exercises and sets; deleting an exercise referenced by a workout is restricted;
+- database checks require positive positions, set numbers, reps, and durations; weight is `0` through `999999.99`; each set has either reps or duration.
+
+Application invariants complement the database rules: protected reads and mutations are scoped to the authenticated owner, while ordering mutations run in serializable transactions with retry handling. Services temporarily move conflicting positions or numbers and then close gaps in a deterministic order.
 
 ## Workout lifecycle
 
