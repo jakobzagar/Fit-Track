@@ -17,7 +17,7 @@ This project is built as a production-oriented TypeScript monorepo. Its focus is
 - **Recoverable workout lifecycle:** sessions can be started, cancelled, completed, reopened for corrections, and safely deleted.
 - **Real integration environment:** Supertest exercises the exported Express application against migrated PostgreSQL, not an in-memory database.
 - **Defensive HTTP defaults:** HTTP-only cookies, CSRF origin checks, restricted credentialed CORS, Helmet, payload limits, and rate limiting.
-- **Operational lifecycle:** separate liveness/readiness checks, graceful shutdown, append-only migrations, non-root containers, immutable image tags, SBOM, and build provenance.
+- **Operational lifecycle:** separate liveness/readiness checks, graceful shutdown, append-only migrations, non-root containers, immutable image tags, production-container smoke checks, SBOM, and build provenance.
 
 ## Product capabilities
 
@@ -147,6 +147,7 @@ npm run test:docker
 | Backend unit        | Middleware, transaction retry logic, cookies, and graceful shutdown              |
 | Backend integration | HTTP behavior against migrated PostgreSQL, ownership, lifecycle, and concurrency |
 | Frontend            | User interactions, state transitions, API failures, routing, and accessibility   |
+| Production smoke    | Final container startup, migrations, Nginx static serving, and Nginx → API proxy |
 
 See [Testing strategy](docs/testing.md) for suite boundaries, database safety, commands, and test conventions.
 
@@ -177,7 +178,7 @@ Successful commits on `main` publish three multi-platform images from the same t
 - `fit-track-frontend`
 - `fit-track-migration`
 
-Images receive immutable `sha-<commit>` tags, SBOM attestations, and build provenance. Release Please manages product versions and promotes existing images without rebuilding them.
+Images receive immutable `sha-<commit>` tags, SBOM attestations, and build provenance. Each immutable image set is smoke-tested before its moving `main` tags are promoted. Release Please manages product versions and promotes existing images without rebuilding them.
 
 See [Release and container process](docs/release-process.md) for migration ordering, image tags, local workflow checks, and release operations.
 

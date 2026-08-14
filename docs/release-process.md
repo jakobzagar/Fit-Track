@@ -15,7 +15,8 @@ flowchart TB
     subgraph Artifacts[Artifact publication]
         direction LR
         Build[Build three images] --> Sha[SHA tags]
-        Sha --> Main[main tags]
+        Sha --> Smoke[Production smoke]
+        Smoke --> Main[main tags]
     end
 
     subgraph Release[Release promotion]
@@ -29,7 +30,7 @@ flowchart TB
     Main --> ReleasePR
 ```
 
-The image workflow runs only after the `Test` workflow succeeds for a push to `main`. It checks out the exact tested SHA rather than the current branch tip. A pull request or push that changes only Markdown files skips the `Test` workflow and therefore does not publish images. Release Please creates or updates a release pull request after artifact publication; merging that pull request creates the version tag and GitHub Release, which promote the matching immutable image digests to SemVer tags.
+The image workflow runs only after the `Test` workflow succeeds for a push to `main`. It checks out the exact tested SHA rather than the current branch tip, pushes immutable SHA tags, then smoke-tests those images before promoting the moving `main` tags. A pull request or push that changes only Markdown files skips the `Test` workflow and therefore does not publish images. Release Please creates or updates a release pull request after artifact publication; merging that pull request creates the version tag and GitHub Release, which promote the matching immutable image digests to SemVer tags.
 
 ## Published images
 
@@ -43,7 +44,7 @@ Images are built for `linux/amd64` and `linux/arm64`. Each build publishes an SB
 
 ## Image tags
 
-After a successful `main` build, every image receives:
+After a successful build and production smoke test, every image receives:
 
 - immutable `sha-<commit>`;
 - moving `main`.
@@ -149,11 +150,21 @@ Nginx gives the browser one public origin. It serves the React build and forward
 
 Nginx enforces a 100 KB request body limit, disables version tokens, enables gzip for suitable text assets, and applies connect, send, and read proxy timeouts. A production runtime must preserve the internal `backend:3001` hostname or provide an equivalent route.
 
-The normal verification compiles production builds but does not start the final frontend and backend targets together. Changes to Dockerfiles, Nginx routing, health checks, ports, or startup commands require a production-container smoke check covering:
+After the images are pushed with immutable SHA tags, the image workflow starts the production smoke stack. It starts an ephemeral PostgreSQL database, applies committed migrations with the final migration image, and starts the final backend and Nginx images. The check proves:
 
 - frontend `/health`;
 - backend `/api/health/live`;
 - backend `/api/health/ready`;
-- at least one browser request through `/api`.
+- the Nginx-served SPA entry point;
+- a browser-equivalent request through Nginx `/api` to backend readiness.
 
-Do not claim the production containers were smoke-tested unless that check was actually performed.
+The stack uses host ports `13001` and `18080` by default so it does not collide with local development. To run the stack locally, first build the three local image tags and then start it:
+
+```bash
+docker build --target production --tag fit-track-backend:smoke -f backend/Dockerfile .
+docker build --target migration --tag fit-track-migration:smoke -f backend/Dockerfile .
+docker build --target production --tag fit-track-frontend:smoke -f frontend/Dockerfile .
+docker compose -f compose.production-smoke.yaml up --detach --wait --wait-timeout 120
+```
+
+Clean up afterward with `docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans`. Set `SMOKE_BACKEND_PORT` or `SMOKE_FRONTEND_PORT` when the default host ports are unavailable.

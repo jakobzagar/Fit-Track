@@ -88,6 +88,35 @@ jobs:
           tags: |
             type=raw,value=sha-${{ github.event.workflow_run.head_sha }}
 
+      - name: Smoke test production containers
+        env:
+          BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:sha-${{ github.event.workflow_run.head_sha }}
+          FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:sha-${{ github.event.workflow_run.head_sha }}
+          MIGRATION_IMAGE: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}:sha-${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+
+          cleanup() {
+            exit_code=$?
+
+            if [ "$exit_code" -ne 0 ]; then
+              docker compose -f compose.production-smoke.yaml logs --no-color || true
+            fi
+
+            docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans || true
+            return "$exit_code"
+          }
+
+          trap cleanup EXIT
+
+          docker compose -f compose.production-smoke.yaml up --detach --wait --wait-timeout 120
+
+          curl --fail --silent --show-error http://127.0.0.1:18080/health
+          curl --fail --silent --show-error http://127.0.0.1:13001/api/health/live
+          curl --fail --silent --show-error http://127.0.0.1:13001/api/health/ready
+          curl --fail --silent --show-error http://127.0.0.1:18080/api/health/ready
+          curl --fail --silent --show-error http://127.0.0.1:18080/ | grep -q '<div id="root">'
+
       - name: Promote images to main
         shell: bash
         env:

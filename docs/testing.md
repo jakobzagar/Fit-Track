@@ -10,6 +10,7 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 | Backend unit        | Beside the owning area as `*.test.ts`     | Middleware, cookie options, transaction retry, graceful shutdown            |
 | Backend integration | Owning modules as `*.integration.test.ts` | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency       |
 | Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions |
+| Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy |
 
 ## Fast verification
 
@@ -51,6 +52,14 @@ npm run test:docker:down
 ```
 
 Never point integration tests at development or production data. Destructive test cleanup is guarded by `NODE_ENV=test` and requires a database name ending in `_test`.
+
+## Production container smoke test
+
+The image-publishing workflow runs the production smoke stack after immutable SHA images are available. It is a deployment-artifact check, not a replacement for browser end-to-end or PostgreSQL integration tests.
+
+The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same readiness request through Nginx `/api`, and the SPA entry document.
+
+For a local run, build `fit-track-backend:smoke`, `fit-track-frontend:smoke`, and `fit-track-migration:smoke` first; the exact commands are in the [release and container process](release-process.md#production-runtime). Remove the stack afterward with `docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans`.
 
 ## Contract testing
 
