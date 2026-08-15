@@ -37,9 +37,6 @@ jobs:
       - name: Set up Node workspace
         uses: ./.github/actions/setup-node-workspace
 
-      - name: Generate Prisma client
-        run: npm run generate --workspace @fit-track/backend
-
       - name: Verify
         run: npm run verify
 

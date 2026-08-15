@@ -18,7 +18,7 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 npm run verify
 ```
 
-This command runs linting, type checking, formatting checks, fast workspace tests, and production builds. It intentionally excludes PostgreSQL integration tests.
+This command generates the Prisma client, then runs linting, type checking, formatting checks, fast workspace tests, and production builds. Prisma generation uses a local placeholder URL when `DATABASE_URL` is unset and does not connect to PostgreSQL. The command intentionally excludes PostgreSQL integration tests.
 
 Useful narrower commands are:
 

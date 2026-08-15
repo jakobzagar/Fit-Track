@@ -135,6 +135,8 @@ Run the fast workspace verification before opening a pull request:
 npm run verify
 ```
 
+The command generates the Prisma client automatically and does not require a running database. PostgreSQL is required only for the isolated integration suite below.
+
 Run the complete isolated suite for backend behavior, persistence, authorization, concurrency, security middleware, or migrations:
 
 ```bash
