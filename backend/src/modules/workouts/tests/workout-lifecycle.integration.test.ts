@@ -12,6 +12,45 @@ import {
 } from "../../../test/fixtures.js";
 
 describe("workout lifecycle", () => {
+    it("enforces one active workout per user in PostgreSQL", async () => {
+        const owner = await createTestUser("owner@example.com");
+        await createTestWorkout(owner.user.id, {status: "ACTIVE", startedAt: new Date()});
+
+        await expect(
+            createTestWorkout(owner.user.id, {
+                name: "Second active workout",
+                status: "ACTIVE",
+                startedAt: new Date(),
+            }),
+        ).rejects.toMatchObject({code: "P2002"});
+    });
+
+    it("enforces valid lifecycle timestamps in PostgreSQL", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const startedAt = new Date("2026-08-15T10:00:00.000Z");
+        const completedAt = new Date("2026-08-15T11:00:00.000Z");
+
+        await expect(
+            createTestWorkout(owner.user.id, {status: "ACTIVE", completedAt}),
+        ).rejects.toThrow();
+        await expect(
+            createTestWorkout(owner.user.id, {status: "COMPLETED", startedAt}),
+        ).rejects.toThrow();
+        await expect(
+            createTestWorkout(owner.user.id, {status: "DRAFT", completedAt}),
+        ).rejects.toThrow();
+        await expect(
+            createTestWorkout(owner.user.id, {status: "DRAFT", startedAt}),
+        ).rejects.toThrow();
+        await expect(
+            createTestWorkout(owner.user.id, {
+                status: "COMPLETED",
+                startedAt: completedAt,
+                completedAt: startedAt,
+            }),
+        ).rejects.toThrow();
+    });
+
     it("allows only one of two concurrent workout starts to become active", async () => {
         const owner = await createTestUser("owner@example.com");
         const first = await createTestWorkout(owner.user.id, {name: "First"});
@@ -79,6 +118,7 @@ describe("workout lifecycle", () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id, {
             status: "COMPLETED",
+            startedAt: new Date(),
             completedAt: new Date(),
         });
 
@@ -183,7 +223,7 @@ describe("workout lifecycle", () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id, {
             status,
-            ...(status === "COMPLETED" && {completedAt: new Date()}),
+            ...(status === "COMPLETED" && {startedAt: new Date(), completedAt: new Date()}),
         });
 
         const response = await authenticated(
@@ -236,6 +276,7 @@ describe("workout lifecycle", () => {
         const completed = await createTestWorkout(owner.user.id, {
             name: "Completed",
             status: "COMPLETED",
+            startedAt: new Date(),
             completedAt: new Date(),
         });
 
@@ -299,6 +340,7 @@ describe("workout lifecycle", () => {
         const completed = await createTestWorkout(other.user.id, {
             name: "Completed",
             status: "COMPLETED",
+            startedAt: new Date(),
             completedAt: new Date(),
         });
         const reopen = await authenticated(

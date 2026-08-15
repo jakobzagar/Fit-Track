@@ -1,6 +1,19 @@
 import {AppError} from "../../../common/errors/app.error.js";
 import {runSerializableTransaction} from "../../../db/transaction.js";
 
+function isUniqueConstraintError(error: unknown): error is {code: string} {
+    return typeof error === "object" && error !== null && "code" in error && error.code === "P2002";
+}
+
+function rethrowActiveWorkoutConstraint(error: unknown): never {
+    // The partial unique index is the final guard when concurrent transactions race.
+    if (isUniqueConstraintError(error)) {
+        throw new AppError("Another workout is already active", 409);
+    }
+
+    throw error;
+}
+
 export async function startWorkoutService(userId: string, workoutId: string) {
     return runSerializableTransaction(async (tx) => {
         const workout = await tx.workout.findFirst({where: {id: workoutId, userId}});
@@ -23,7 +36,7 @@ export async function startWorkoutService(userId: string, workoutId: string) {
             where: {id: workoutId},
             data: {status: "ACTIVE", startedAt: new Date(), completedAt: null},
         });
-    });
+    }).catch(rethrowActiveWorkoutConstraint);
 }
 
 export async function finishWorkoutService(userId: string, workoutId: string) {
@@ -102,5 +115,5 @@ export async function reopenWorkoutService(userId: string, workoutId: string) {
                 completedAt: null,
             },
         });
-    });
+    }).catch(rethrowActiveWorkoutConstraint);
 }

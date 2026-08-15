@@ -19,6 +19,7 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
         const previous = await createTestWorkout(owner.user.id, {
             name: "Previous",
             status: "COMPLETED",
+            startedAt: new Date("2026-07-20T09:00:00.000Z"),
             completedAt: new Date("2026-07-20T10:00:00.000Z"),
         });
         const previousExercise = await createTestWorkoutExercise(previous.id, exercise.id);
@@ -29,6 +30,7 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
         const foreign = await createTestWorkout(other.user.id, {
             name: "Foreign newer performance",
             status: "COMPLETED",
+            startedAt: new Date("2026-07-25T09:00:00.000Z"),
             completedAt: new Date("2026-07-25T10:00:00.000Z"),
         });
         const foreignExercise = await createTestWorkoutExercise(foreign.id, exercise.id);
