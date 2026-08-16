@@ -4,6 +4,8 @@ on:
   workflow_run:
     workflows:
       - Test
+    branches:
+      - main
     types:
       - completed
 
@@ -74,7 +76,6 @@ jobs:
           revision: ${{ github.event.workflow_run.head_sha }}
           tags: |
             type=raw,value=sha-${{ github.event.workflow_run.head_sha }}
-          build-args: VITE_API_URL=${{ vars.VITE_API_URL }}
 
       - name: Build and push migration image
         id: migration

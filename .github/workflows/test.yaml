@@ -19,6 +19,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  actionlint:
+    name: Actions lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      ACTIONLINT_VERSION: 1.7.12
+      ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install actionlint
+        shell: bash
+        run: |
+          archive="$RUNNER_TEMP/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+
+          curl --fail --location --silent --show-error \
+            --output "$archive" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+
+          echo "$ACTIONLINT_SHA256  $archive" | sha256sum --check
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP" actionlint
+
+      - name: Lint GitHub Actions workflows
+        run: |
+          "$RUNNER_TEMP/actionlint" -color
+
   verify:
     name: Verify
     runs-on: ubuntu-latest
@@ -85,3 +114,80 @@ jobs:
 
       - name: Run backend integration tests
         run: npm run test:integration
+
+  container-smoke:
+    name: Production container smoke
+    needs: verify
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Build backend production image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: backend/Dockerfile
+          target: production
+          load: true
+          tags: fit-track-backend:smoke
+          provenance: false
+          sbom: false
+          cache-from: type=gha,scope=smoke-backend
+          cache-to: type=gha,mode=max,scope=smoke-backend
+
+      - name: Build migration image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: backend/Dockerfile
+          target: migration
+          load: true
+          tags: fit-track-migration:smoke
+          provenance: false
+          sbom: false
+          cache-from: type=gha,scope=smoke-backend
+
+      - name: Build frontend production image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: frontend/Dockerfile
+          target: production
+          load: true
+          tags: fit-track-frontend:smoke
+          provenance: false
+          sbom: false
+          cache-from: type=gha,scope=smoke-frontend
+          cache-to: type=gha,mode=max,scope=smoke-frontend
+
+      - name: Smoke test production containers
+        run: |
+          set -euo pipefail
+
+          cleanup() {
+            exit_code=$?
+
+            if [ "$exit_code" -ne 0 ]; then
+              docker compose -f compose.production-smoke.yaml logs --no-color || true
+            fi
+
+            docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans || true
+            return "$exit_code"
+          }
+
+          trap cleanup EXIT
+
+          docker compose -f compose.production-smoke.yaml up --detach --wait --wait-timeout 120
+
+          curl --fail --silent --show-error http://127.0.0.1:18080/health
+          curl --fail --silent --show-error http://127.0.0.1:13001/api/health/live
+          curl --fail --silent --show-error http://127.0.0.1:13001/api/health/ready
+          curl --fail --silent --show-error http://127.0.0.1:18080/api/health/ready
+          curl --fail --silent --show-error http://127.0.0.1:18080/ | grep -q '<div id="root">'

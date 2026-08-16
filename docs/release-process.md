@@ -8,8 +8,11 @@ FitTrack uses GitHub Actions to verify the repository, publish immutable contain
 flowchart TB
     subgraph Quality[Quality gate]
         direction LR
-        Push[Push to main] --> Verify[Verify]
-        Verify --> Integration[Integration]
+        PR[Pull request] --> Checks[Actions lint and verification]
+        Checks --> Integration[Integration]
+        Checks --> SourceSmoke[Production smoke]
+        Integration --> Gate[Merge gate]
+        SourceSmoke --> Gate
     end
 
     subgraph Artifacts[Artifact publication]
@@ -26,11 +29,11 @@ flowchart TB
         Tag --> SemVer[SemVer tags]
     end
 
-    Integration --> Build
+    Gate --> Build
     Main --> ReleasePR
 ```
 
-The image workflow runs only after the `Test` workflow succeeds for a push to `main`. It checks out the exact tested SHA rather than the current branch tip, pushes immutable SHA tags, then smoke-tests those images before promoting the moving `main` tags. A pull request or push that changes only Markdown files skips the `Test` workflow and therefore does not publish images. Release Please creates or updates a release pull request after artifact publication; merging that pull request creates the version tag and GitHub Release, which promote the matching immutable image digests to SemVer tags.
+Pull requests build and smoke-test the final production targets before merge. The image workflow then runs only after the complete `Test` workflow succeeds for a push to `main`. It checks out the exact tested SHA rather than the current branch tip, pushes immutable SHA tags, smoke-tests those registry artifacts, and only then promotes the moving `main` tags. A pull request or push that changes only Markdown files skips the `Test` workflow and therefore does not publish images. Release Please creates or updates a release pull request after artifact publication; merging that pull request creates the version tag and GitHub Release, which promote the matching immutable image digests to SemVer tags.
 
 ## Published images
 

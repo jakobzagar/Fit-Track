@@ -53,9 +53,11 @@ npm run test:docker:down
 
 Never point integration tests at development or production data. Destructive test cleanup is guarded by `NODE_ENV=test` and requires a database name ending in `_test`.
 
-## Production container smoke test
+## Production container smoke tests
 
-The image-publishing workflow runs the production smoke stack after immutable SHA images are available. It is a deployment-artifact check, not a replacement for browser end-to-end or PostgreSQL integration tests.
+Pull requests run a production container smoke job after fast verification succeeds. It builds the final backend, migration, and frontend targets for the runner platform and rejects Dockerfile, migration startup, health-check, static-serving, or proxy regressions before merge. The job runs for every non-Markdown pull request; this keeps the quality gate explicit and avoids a separate changed-files dependency with incomplete runtime path rules.
+
+After a merge to `main`, the image-publishing workflow repeats the runtime checks against the immutable multi-platform SHA images pulled from GHCR. The first gate checks the proposed source before merge; the second proves that the published deployment artifacts work. Neither replaces browser end-to-end or PostgreSQL integration tests.
 
 The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same readiness request through Nginx `/api`, and the SPA entry document.
 
