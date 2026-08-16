@@ -1,0 +1,55 @@
+import {Router} from "express";
+import {authenticate} from "../../auth/middleware/auth.middleware.js";
+import {
+    getWorkouts,
+    getWorkoutById,
+    createWorkout,
+    deleteWorkout,
+    updateWorkout,
+    startWorkout,
+    finishWorkout,
+    cancelWorkout,
+    reopenWorkout,
+    getPreviousPerformances,
+} from "../controllers/workout.controller.js";
+import {validate} from "../../../common/middleware/validate.middleware.js";
+import {
+    createWorkoutSchema,
+    updateWorkoutSchema,
+    workoutIdSchema,
+} from "@fit-track/shared/workouts";
+
+const router = Router();
+
+router.use(authenticate);
+
+router.get("/", getWorkouts);
+
+router.get("/:workoutId", validate(workoutIdSchema, "params"), getWorkoutById);
+
+router.get(
+    "/:workoutId/previous-performances",
+    validate(workoutIdSchema, "params"),
+    getPreviousPerformances,
+);
+
+router.post("/", validate(createWorkoutSchema), createWorkout);
+
+router.post("/:workoutId/start", validate(workoutIdSchema, "params"), startWorkout);
+
+router.post("/:workoutId/finish", validate(workoutIdSchema, "params"), finishWorkout);
+
+router.post("/:workoutId/cancel", validate(workoutIdSchema, "params"), cancelWorkout);
+
+router.post("/:workoutId/reopen", validate(workoutIdSchema, "params"), reopenWorkout);
+
+router.delete("/:workoutId", validate(workoutIdSchema, "params"), deleteWorkout);
+
+router.patch(
+    "/:workoutId",
+    validate(workoutIdSchema, "params"),
+    validate(updateWorkoutSchema),
+    updateWorkout,
+);
+
+export default router;

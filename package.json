@@ -1,6 +1,6 @@
 {
     "name": "fit-track",
-    "version": "1.0.0",
+    "version": "0.2.0",
     "private": true,
     "workspaces": [
         "shared",
@@ -12,7 +12,7 @@
         "build:shared": "npm run build --workspace @fit-track/shared",
         "build:backend": "npm run build:shared && npm run build --workspace @fit-track/backend",
         "build:frontend": "npm run build:shared && npm run build --workspace @fit-track/frontend",
-        "dev:backend": "npm run build:shared && npm run dev --workspace @fit-track/backend",
+        "dev:backend": "npm run generate && npm run build:shared && npm run dev --workspace @fit-track/backend",
         "dev:frontend": "npm run build:shared && npm run dev --workspace @fit-track/frontend",
         "dev:docker": "docker compose --env-file .env.dev -f compose.dev.yaml up --build",
         "dev:docker:debug": "docker compose --env-file .env.dev -f compose.dev.yaml -f compose.debug.yaml up --build",
@@ -33,7 +33,7 @@
         "check": "npm run lint && npm run typecheck && npm run format:check",
         "verify": "npm run check && npm test && npm run build",
         "verify:shared": "npm run lint --workspace @fit-track/shared && npm run typecheck --workspace @fit-track/shared && prettier --check shared && npm run test --workspace @fit-track/shared && npm run build --workspace @fit-track/shared",
-        "verify:backend": "npm run generate && npm run build:shared && npm run lint --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/backend && prettier --check backend && npm run build --workspace @fit-track/backend",
+        "verify:backend": "npm run generate && npm run build:shared && npm run lint --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/backend && prettier --check backend && npm run test --workspace @fit-track/backend && npm run build --workspace @fit-track/backend",
         "verify:frontend": "npm run build:shared && npm run lint --workspace @fit-track/frontend && npm run typecheck --workspace @fit-track/frontend && prettier --check frontend && npm run test --workspace @fit-track/frontend && npm run build --workspace @fit-track/frontend",
         "verify:integration": "npm run verify && npm run test:integration"
     },

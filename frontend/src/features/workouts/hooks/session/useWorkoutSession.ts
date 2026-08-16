@@ -1,8 +1,8 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import type {NavigateFunction} from "react-router";
-import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/confirm-dialog.context";
+import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/context/confirm-dialog.context";
 import {getExercises} from "../../../exercises/api/exercises.api";
-import type {Exercise} from "../../../exercises/exercise.types";
+import type {Exercise} from "../../../exercises/types/exercise.types";
 import {
     cancelWorkout,
     finishWorkout,
@@ -10,7 +10,7 @@ import {
     getWorkoutById,
     startWorkout,
 } from "../../api/workouts.api";
-import type {PreviousPerformance, Workout} from "../../workout.types";
+import type {PreviousPerformance, Workout} from "../../types/workout.types";
 import {useUnsavedSessionGuard} from "./useUnsavedSessionGuard";
 import {useWorkoutSessionMutations} from "./useWorkoutSessionMutations";
 

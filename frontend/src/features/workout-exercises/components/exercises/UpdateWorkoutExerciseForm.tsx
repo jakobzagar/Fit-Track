@@ -1,16 +1,16 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import {z} from "zod";
-import type {WorkoutExercise} from "../../../workouts/workout.types.ts";
+import type {WorkoutExercise} from "../../../workouts/types/workout.types.ts";
 import {
     updateWorkoutExerciseSchema,
     type UpdateWorkoutExerciseInput,
-} from "../../schemas/workout.exercises.schemas.ts";
+} from "../../schemas/workout-exercises.schemas.ts";
 import {Button} from "../../../../components/ui/actions/Button.tsx";
 import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/forms/formAccessibility.ts";
+} from "../../../../components/ui/forms/utils/formAccessibility.ts";
 
 interface UpdateWorkoutExerciseFormProps {
     workoutExercise: WorkoutExercise;

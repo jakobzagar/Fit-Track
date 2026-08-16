@@ -1,11 +1,11 @@
-import {apiRequest} from "../../../lib/api.client.ts";
+import {apiRequest} from "../../../lib/api/api.client.ts";
 import type {
     DeleteWorkoutResponse,
     PreviousPerformancesResponse,
     WorkoutResponse,
     WorkoutsResponse,
     WorkoutBaseResponse,
-} from "../workout.types.ts";
+} from "../types/workout.types.ts";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
 import {
     deleteWorkoutResponseSchema,

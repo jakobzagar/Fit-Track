@@ -6,7 +6,7 @@ import {FieldError} from "../../../components/ui/forms/FieldError";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../components/ui/forms/formAccessibility";
+} from "../../../components/ui/forms/utils/formAccessibility";
 
 interface LoginFormProps {
     onSubmit: (data: LoginInput) => Promise<void>;

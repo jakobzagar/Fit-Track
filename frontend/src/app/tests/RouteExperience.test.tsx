@@ -2,7 +2,7 @@ import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {createMemoryRouter, Link, RouterProvider} from "react-router";
 import {describe, expect, test, vi} from "vitest";
-import {RouteExperience} from "../RouteExperience";
+import {RouteExperience} from "../routing/RouteExperience";
 
 describe("RouteExperience", () => {
     test("updates the page title and focuses the new page heading after navigation", async () => {

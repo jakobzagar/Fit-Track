@@ -1,5 +1,5 @@
 import {FormDialog} from "../../../../components/ui/dialogs/FormDialog";
-import type {Exercise} from "../../exercise.types";
+import type {Exercise} from "../../types/exercise.types";
 import type {CreateExerciseInput, UpdateExerciseInput} from "../../schemas/exercise.schemas";
 import {CreateExerciseForm} from "./CreateExerciseForm";
 import {UpdateExerciseForm} from "./UpdateExerciseForm";

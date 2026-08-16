@@ -1,12 +1,12 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
-import type {CreateWorkoutSetInput} from "../../schemas/workout.exercises.schemas.ts";
+import type {CreateWorkoutSetInput} from "../../schemas/workout-exercises.schemas.ts";
 import {parseNewWorkoutSet} from "../../schemas/workout-set-input.parser.ts";
 import {Button} from "../../../../components/ui/actions/Button.tsx";
 import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/forms/formAccessibility.ts";
+} from "../../../../components/ui/forms/utils/formAccessibility.ts";
 
 interface AddWorkoutSetFormProps {
     onSubmit: (data: CreateWorkoutSetInput) => Promise<void>;

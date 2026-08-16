@@ -82,6 +82,8 @@ Release Please treats the monorepo as one versioned product. Conventional Commit
 - `!` or a `BREAKING CHANGE` footer requests a major release;
 - `docs:`, `test:`, `ci:`, and `chore:` normally do not request a product release.
 
+The release pull request updates the root, frontend, backend, and shared `package.json` versions together with their `package-lock.json` entries. The manifest, Git tag, changelog, and every workspace therefore describe the same product version; workspace packages are not released independently.
+
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. The token allows Release Please-created changes and tags to trigger the normal workflows.
 
 After image publication on `main`, Release Please creates or updates a release pull request. Review the generated version and changelog, wait for checks, and squash-merge it. The merge is verified and published by SHA before Release Please creates the version tag and GitHub Release.

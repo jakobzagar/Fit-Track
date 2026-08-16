@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState, type ReactNode} from "react";
 import {ConfirmDialog} from "./ConfirmDialog";
-import {ConfirmDialogContext, type ConfirmDialogOptions} from "./confirm-dialog.context";
+import {ConfirmDialogContext, type ConfirmDialogOptions} from "./context/confirm-dialog.context";
 
 interface PendingDialog extends ConfirmDialogOptions {
     resolve: (confirmed: boolean) => void;

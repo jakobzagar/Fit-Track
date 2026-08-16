@@ -13,7 +13,7 @@ import {
     createTestUser,
     createTestWorkout,
     createTestWorkoutExercise,
-} from "../../../test/fixtures.js";
+} from "../../../test/support/fixtures.js";
 
 describe("workout sets", () => {
     it("assigns unique sequential numbers to concurrently added sets", async () => {

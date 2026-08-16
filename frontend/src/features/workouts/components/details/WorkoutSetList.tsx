@@ -1,8 +1,8 @@
 import {Button} from "../../../../components/ui/actions/Button";
 import {Icon} from "../../../../components/ui/display/Icon";
 import {UpdateWorkoutSetForm} from "../../../workout-exercises/components/sets/UpdateWorkoutSetForm";
-import type {UpdateWorkoutSetInput} from "../../../workout-exercises/schemas/workout.exercises.schemas";
-import type {WorkoutSet} from "../../workout.types";
+import type {UpdateWorkoutSetInput} from "../../../workout-exercises/schemas/workout-exercises.schemas";
+import type {WorkoutSet} from "../../types/workout.types";
 
 interface WorkoutSetListProps {
     workoutExerciseId: string;

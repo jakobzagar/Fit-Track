@@ -4,8 +4,10 @@
 @import "./forms.css";
 @import "./typography.css";
 @import "./dialogs.css";
-@import "./pages/landing.css";
 @import "./layout.css";
-@import "./pages/auth.css";
 @import "./responsive.css";
-@import "../features/workouts/workouts.css";
+@import "../features/auth/styles/auth.css";
+@import "../features/landing/styles/landing-page.css";
+@import "../features/landing/styles/landing-workout-preview.css";
+@import "../features/landing/styles/landing-features.css";
+@import "../features/workouts/styles/workouts.css";

@@ -9,7 +9,21 @@ import {
     createTestUser,
     createTestWorkout,
     createTestWorkoutExercise,
-} from "../../../test/fixtures.js";
+} from "../../../test/support/fixtures.js";
+
+async function expectLifecycleConstraint(promise: Promise<unknown>) {
+    await expect(promise).rejects.toMatchObject({
+        code: "P2039",
+        meta: {
+            driverAdapterError: {
+                cause: {
+                    code: "23514",
+                },
+            },
+        },
+    });
+    await expect(promise).rejects.toThrow(/Workout_lifecycle_timestamps_check/);
+}
 
 describe("workout lifecycle", () => {
     it("enforces one active workout per user in PostgreSQL", async () => {
@@ -30,25 +44,25 @@ describe("workout lifecycle", () => {
         const startedAt = new Date("2026-08-15T10:00:00.000Z");
         const completedAt = new Date("2026-08-15T11:00:00.000Z");
 
-        await expect(
+        await expectLifecycleConstraint(
             createTestWorkout(owner.user.id, {status: "ACTIVE", completedAt}),
-        ).rejects.toThrow();
-        await expect(
+        );
+        await expectLifecycleConstraint(
             createTestWorkout(owner.user.id, {status: "COMPLETED", startedAt}),
-        ).rejects.toThrow();
-        await expect(
+        );
+        await expectLifecycleConstraint(
             createTestWorkout(owner.user.id, {status: "DRAFT", completedAt}),
-        ).rejects.toThrow();
-        await expect(
+        );
+        await expectLifecycleConstraint(
             createTestWorkout(owner.user.id, {status: "DRAFT", startedAt}),
-        ).rejects.toThrow();
-        await expect(
+        );
+        await expectLifecycleConstraint(
             createTestWorkout(owner.user.id, {
                 status: "COMPLETED",
                 startedAt: completedAt,
                 completedAt: startedAt,
             }),
-        ).rejects.toThrow();
+        );
     });
 
     it("allows only one of two concurrent workout starts to become active", async () => {

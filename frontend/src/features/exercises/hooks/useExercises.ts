@@ -6,7 +6,7 @@ import {
     restoreExercise,
     updateExercise,
 } from "../api/exercises.api";
-import type {Exercise, ExercisesResponse} from "../exercise.types";
+import type {Exercise, ExercisesResponse} from "../types/exercise.types";
 import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas";
 
 export type ExerciseView = "active" | "archived";

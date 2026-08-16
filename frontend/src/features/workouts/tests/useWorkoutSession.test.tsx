@@ -3,7 +3,7 @@ import {act, render, waitFor} from "@testing-library/react";
 import {delay, http, HttpResponse} from "msw";
 import {createMemoryRouter, RouterProvider, useNavigate, useParams} from "react-router";
 import {describe, expect, test, vi} from "vitest";
-import {AppProviders} from "../../../app/providers";
+import {AppProviders} from "../../../app/providers/providers";
 import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
 import {

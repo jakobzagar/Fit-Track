@@ -1,6 +1,6 @@
 import {exerciseResponseSchema, exercisesResponseSchema} from "@fit-track/shared/exercises";
-import {apiRequest} from "../../../lib/api.client.ts";
-import type {ExerciseResponse, ExercisesResponse} from "../exercise.types.ts";
+import {apiRequest} from "../../../lib/api/api.client.ts";
+import type {ExerciseResponse, ExercisesResponse} from "../types/exercise.types.ts";
 import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas.ts";
 
 export function getExercises(status: "active" | "archived" = "active"): Promise<ExercisesResponse> {

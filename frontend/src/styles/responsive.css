@@ -1,79 +1,14 @@
 @media (max-width: 900px) {
-    .landing-hero {
-        grid-template-columns: 1fr;
-        gap: 30px;
-        padding-top: 70px;
-    }
-    .landing-preview {
-        width: min(580px, 100%);
-        margin: auto;
-        padding-left: 0;
-    }
     .content-grid {
         grid-template-columns: 1fr;
-    }
-
-    .auth-shell {
-        grid-template-columns: 1fr;
-    }
-
-    .auth-visual {
-        min-height: 250px;
-        border-right: 0;
-        border-bottom: 1px solid #252525;
-        padding: 26px 24px;
-    }
-
-    .auth-visual::after {
-        right: -40px;
-        bottom: -110px;
-        width: 250px;
-        border-width: 48px;
-    }
-
-    .auth-form-panel {
-        padding-block: 48px;
     }
 }
 
 @media (max-width: 680px) {
-    .landing-nav,
-    .landing-hero,
     .site-footer {
         width: calc(100% - 32px);
     }
-    .landing-nav {
-        height: 68px;
-    }
-    .landing-hero {
-        min-height: auto;
-        padding: 64px 0 70px;
-    }
-    .landing-hero h1 {
-        font-size: clamp(3.5rem, 18vw, 5rem);
-    }
-    .landing-lead {
-        font-size: 0.96rem;
-    }
-    .landing-actions {
-        display: grid;
-    }
-    .landing-preview {
-        padding-top: 15px;
-    }
-    .landing-dashboard-card {
-        padding: 18px;
-        transform: none;
-    }
-    .landing-card-topline h2 {
-        font-size: 1.35rem;
-    }
-    .landing-feature-grid {
-        grid-template-columns: 1fr;
-    }
-    .landing-features {
-        padding-block: 75px;
-    }
+
     .site-footer-main {
         flex-direction: column;
         gap: 42px;
@@ -124,15 +59,6 @@
         flex: 1 1 auto;
     }
 
-    .auth-form-panel {
-        padding-inline: 18px;
-    }
-
-    .auth-visual {
-        min-height: 210px;
-        padding-inline: 18px;
-    }
-
     .confirm-backdrop {
         align-items: end;
         padding: 0;
@@ -179,14 +105,6 @@
 
     .display-title {
         font-size: 2.25rem;
-    }
-
-    .landing-nav .landing-link-muted {
-        display: none;
-    }
-
-    .landing-button-small {
-        padding-inline: 12px;
     }
 }
 

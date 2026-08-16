@@ -6,9 +6,9 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 
 | Layer               | Location                                  | Primary responsibility                                                      |
 | ------------------- | ----------------------------------------- | --------------------------------------------------------------------------- |
-| Shared contract     | Beside schemas as `*.test.ts`             | Validation matrices, normalization, strict request and response shapes      |
-| Backend unit        | Beside the owning area as `*.test.ts`     | Middleware, cookie options, transaction retry, graceful shutdown            |
-| Backend integration | Owning modules as `*.integration.test.ts` | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency       |
+| Shared contract     | Domain `tests/` directories               | Validation matrices, normalization, strict request and response shapes      |
+| Backend unit        | Owning area `tests/` directories          | Middleware, cookie options, transaction retry, graceful shutdown            |
+| Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency       |
 | Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions |
 | Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy |
 
@@ -22,13 +22,13 @@ This command generates the Prisma client, then runs linting, type checking, form
 
 Useful narrower commands are:
 
-| Command                   | Purpose                                        |
-| ------------------------- | ---------------------------------------------- |
-| `npm test`                | Run all fast workspace tests                   |
-| `npm run check`           | Run lint, type checking, and formatting checks |
-| `npm run verify:shared`   | Verify the shared package                      |
-| `npm run verify:backend`  | Verify backend compilation and static checks   |
-| `npm run verify:frontend` | Verify frontend checks, tests, and build       |
+| Command                   | Purpose                                                   |
+| ------------------------- | --------------------------------------------------------- |
+| `npm test`                | Run all fast workspace tests                              |
+| `npm run check`           | Run lint, type checking, and formatting checks            |
+| `npm run verify:shared`   | Verify the shared package                                 |
+| `npm run verify:backend`  | Verify backend unit tests, compilation, and static checks |
+| `npm run verify:frontend` | Verify frontend checks, tests, and build                  |
 
 ## Isolated PostgreSQL verification
 

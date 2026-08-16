@@ -1,6 +1,6 @@
 {
     "name": "@fit-track/shared",
-    "version": "1.0.0",
+    "version": "0.2.0",
     "private": true,
     "type": "module",
     "main": "./dist/index.js",
@@ -11,28 +11,28 @@
             "import": "./dist/index.js"
         },
         "./auth": {
-            "types": "./dist/auth/auth.schemas.d.ts",
-            "import": "./dist/auth/auth.schemas.js"
+            "types": "./dist/auth/schemas/auth.schemas.d.ts",
+            "import": "./dist/auth/schemas/auth.schemas.js"
         },
         "./common": {
-            "types": "./dist/common/response.schemas.d.ts",
-            "import": "./dist/common/response.schemas.js"
+            "types": "./dist/common/schemas/response.schemas.d.ts",
+            "import": "./dist/common/schemas/response.schemas.js"
         },
         "./exercises": {
-            "types": "./dist/exercises/exercise.schemas.d.ts",
-            "import": "./dist/exercises/exercise.schemas.js"
+            "types": "./dist/exercises/schemas/exercise.schemas.d.ts",
+            "import": "./dist/exercises/schemas/exercise.schemas.js"
         },
         "./health": {
-            "types": "./dist/health/health.schemas.d.ts",
-            "import": "./dist/health/health.schemas.js"
+            "types": "./dist/health/schemas/health.schemas.d.ts",
+            "import": "./dist/health/schemas/health.schemas.js"
         },
         "./workouts": {
-            "types": "./dist/workouts/workout.schemas.d.ts",
-            "import": "./dist/workouts/workout.schemas.js"
+            "types": "./dist/workouts/schemas/workout.schemas.d.ts",
+            "import": "./dist/workouts/schemas/workout.schemas.js"
         },
         "./workout-exercises": {
-            "types": "./dist/workout-exercises/workout-exercise.schemas.d.ts",
-            "import": "./dist/workout-exercises/workout-exercise.schemas.js"
+            "types": "./dist/workout-exercises/schemas/workout-exercise.schemas.d.ts",
+            "import": "./dist/workout-exercises/schemas/workout-exercise.schemas.js"
         }
     },
     "files": [

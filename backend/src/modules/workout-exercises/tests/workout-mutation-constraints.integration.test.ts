@@ -10,7 +10,7 @@ import {
     createTestUser,
     createTestWorkout,
     createTestWorkoutExercise,
-} from "../../../test/fixtures.js";
+} from "../../../test/support/fixtures.js";
 
 describe("completed workout mutations", () => {
     it.each([

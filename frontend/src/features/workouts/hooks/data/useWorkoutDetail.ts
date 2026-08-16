@@ -1,9 +1,9 @@
 import {useCallback, useEffect, useRef, useState} from "react";
-import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/confirm-dialog.context";
+import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/context/confirm-dialog.context";
 import {getExercises} from "../../../exercises/api/exercises.api";
-import type {Exercise} from "../../../exercises/exercise.types";
+import type {Exercise} from "../../../exercises/types/exercise.types";
 import {getWorkoutById, reopenWorkout} from "../../api/workouts.api";
-import type {Workout} from "../../workout.types";
+import type {Workout} from "../../types/workout.types";
 import {useWorkoutExerciseMutations} from "./useWorkoutExerciseMutations";
 import {useWorkoutSetMutations} from "./useWorkoutSetMutations";
 

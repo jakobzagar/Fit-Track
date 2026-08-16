@@ -13,7 +13,7 @@ import {
     createTestUser,
     createTestWorkout,
     createTestWorkoutExercise,
-} from "../../../test/fixtures.js";
+} from "../../../test/support/fixtures.js";
 
 describe("POST /api/workouts/:workoutId/exercises", () => {
     it("assigns unique sequential positions to concurrently added exercises", async () => {

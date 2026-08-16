@@ -7,8 +7,8 @@ import type {
     CreateWorkoutSetInput,
     UpdateWorkoutExerciseInput,
     UpdateWorkoutSetInput,
-} from "../../../workout-exercises/schemas/workout.exercises.schemas";
-import type {WorkoutExercise, WorkoutSet} from "../../workout.types";
+} from "../../../workout-exercises/schemas/workout-exercises.schemas";
+import type {WorkoutExercise, WorkoutSet} from "../../types/workout.types";
 import {WorkoutSetList} from "./WorkoutSetList";
 
 interface WorkoutExerciseCardProps {

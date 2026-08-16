@@ -1,6 +1,6 @@
 import {authResponseSchema, messageResponseSchema} from "@fit-track/shared/auth";
-import {apiRequest} from "../../../lib/api.client.ts";
-import type {AuthResponse, MessageResponse} from "../auth.types.ts";
+import {apiRequest} from "../../../lib/api/api.client.ts";
+import type {AuthResponse, MessageResponse} from "../types/auth.types.ts";
 import type {LoginInput, RegisterInput} from "../schemas/auth.schemas.ts";
 
 export function register(data: RegisterInput): Promise<AuthResponse> {

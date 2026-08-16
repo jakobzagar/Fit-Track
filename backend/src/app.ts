@@ -8,11 +8,11 @@ import {errorMiddleware} from "./common/middleware/error.middleware.js";
 import {apiRateLimiter} from "./common/middleware/rate-limit.middleware.js";
 import {apiNotFound} from "./common/middleware/not-found.middleware.js";
 
-import authRoutes from "./modules/auth/auth.routes.js";
-import exerciseRoutes from "./modules/exercises/exercise.routes.js";
-import workoutRoutes from "./modules/workouts/workout.routes.js";
-import workoutExerciseRoutes from "./modules/workout-exercises/workout-exercise.routes.js";
-import healthRoutes from "./modules/health/health.routes.js";
+import authRoutes from "./modules/auth/routes/auth.routes.js";
+import exerciseRoutes from "./modules/exercises/routes/exercise.routes.js";
+import workoutRoutes from "./modules/workouts/routes/workout.routes.js";
+import workoutExerciseRoutes from "./modules/workout-exercises/routes/workout-exercise.routes.js";
+import healthRoutes from "./modules/health/routes/health.routes.js";
 
 export const app = express();
 

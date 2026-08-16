@@ -1,0 +1,51 @@
+.landing-preview {
+    position: relative;
+    padding: 32px 0 32px 30px;
+}
+
+.landing-preview-glow {
+    position: absolute;
+    inset: 10% -10% 10% 15%;
+    background: radial-gradient(circle, rgba(255, 100, 26, 0.18), transparent 68%);
+    filter: blur(15px);
+}
+
+.landing-dashboard-card {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border: 1px solid #303030;
+    border-radius: 18px;
+    background: linear-gradient(145deg, #181818, #0d0d0d);
+    padding: 28px;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+    transform: rotate(1.5deg);
+}
+
+.landing-dashboard-card::before {
+    position: absolute;
+    inset: 10px -10px -10px 10px;
+    z-index: -1;
+    border: 1px solid rgba(255, 100, 26, 0.15);
+    border-radius: 18px;
+    content: "";
+}
+
+@media (max-width: 900px) {
+    .landing-preview {
+        width: min(580px, 100%);
+        margin: auto;
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 680px) {
+    .landing-preview {
+        padding-top: 15px;
+    }
+
+    .landing-dashboard-card {
+        padding: 18px;
+        transform: none;
+    }
+}

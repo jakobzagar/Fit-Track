@@ -1,15 +1,15 @@
 import {useState, type Dispatch, type SetStateAction} from "react";
-import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/confirm-dialog.context";
+import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/context/confirm-dialog.context";
 import {
     addExerciseToWorkout,
     deleteWorkoutExercise,
     updateWorkoutExercise,
-} from "../../../workout-exercises/api/workout.exercises.api";
+} from "../../../workout-exercises/api/workout-exercises.api";
 import type {
     AddExerciseToWorkoutInput,
     UpdateWorkoutExerciseInput,
-} from "../../../workout-exercises/schemas/workout.exercises.schemas";
-import type {Workout, WorkoutExercise} from "../../workout.types";
+} from "../../../workout-exercises/schemas/workout-exercises.schemas";
+import type {Workout, WorkoutExercise} from "../../types/workout.types";
 
 export function useWorkoutExerciseMutations(
     workoutId: string | undefined,

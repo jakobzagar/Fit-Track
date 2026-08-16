@@ -51,11 +51,11 @@ Shared Zod schemas validate input at the API boundary and successful responses a
 
 ## Feature organization
 
-Backend modules live under `backend/src/modules/`. Small modules remain flat; larger modules use meaningful boundaries such as `services/`, `policies/`, and `tests/`. Workout lifecycle operations are separated from general workout CRUD because they coordinate status transitions and serializable transactions.
+Backend modules live under `backend/src/modules/`. Every existing responsibility uses a predictable directory such as `controllers/`, `middleware/`, `routes/`, `services/`, `policies/`, or `tests/`, even when that directory currently contains one file. Workout lifecycle operations are separated from general workout CRUD because they coordinate status transitions and serializable transactions.
 
-Frontend features live under `frontend/src/features/`. Feature APIs, schemas, hooks, pages, components, and local tests stay together. Reusable primitives live under `frontend/src/components/`, separated into layout and UI responsibilities.
+Frontend features live under `frontend/src/features/`. Feature APIs, schemas, hooks, pages, components, styles, types, and local tests stay together in responsibility directories. Reusable primitives live under `frontend/src/components/`, separated into layout and UI responsibilities with tests under their owning component area.
 
-This structure optimizes navigation without forcing every feature into an identical template.
+Shared domains follow the same convention with `schemas/` and `tests/` directories while preserving stable public package subpaths such as `@fit-track/shared/workouts`. Directories are created only for responsibilities that exist; entrypoints and conventional configuration files remain at their expected roots.
 
 ## PostgreSQL data model
 

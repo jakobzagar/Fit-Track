@@ -4,14 +4,14 @@ import {
     addSetToWorkoutExercise,
     setWorkoutSetCompletion,
     updateWorkoutSet,
-} from "../../../workout-exercises/api/workout.exercises.api";
+} from "../../../workout-exercises/api/workout-exercises.api";
 import type {
     AddExerciseToWorkoutInput,
     CreateWorkoutSetInput,
     UpdateWorkoutSetInput,
-} from "../../../workout-exercises/schemas/workout.exercises.schemas";
+} from "../../../workout-exercises/schemas/workout-exercises.schemas";
 import {getPreviousPerformances} from "../../api/workouts.api";
-import type {PreviousPerformance, Workout, WorkoutSet} from "../../workout.types";
+import type {PreviousPerformance, Workout, WorkoutSet} from "../../types/workout.types";
 
 export function useWorkoutSessionMutations(
     workoutId: string | undefined,

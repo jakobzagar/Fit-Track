@@ -1,6 +1,6 @@
 import type {RefObject} from "react";
 import {Button} from "../actions/Button";
-import type {ConfirmDialogOptions} from "./confirm-dialog.context";
+import type {ConfirmDialogOptions} from "./context/confirm-dialog.context";
 
 export function ConfirmDialog({
     dialog,

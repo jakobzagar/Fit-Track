@@ -4,7 +4,7 @@ import type {
     WorkoutExercise,
     WorkoutSet,
     WorkoutSummary,
-} from "../../features/workouts/workout.types";
+} from "../../features/workouts/types/workout.types";
 import {exercise, exerciseId, userId} from "./exercises";
 
 export {exercise, exerciseId, userId} from "./exercises";

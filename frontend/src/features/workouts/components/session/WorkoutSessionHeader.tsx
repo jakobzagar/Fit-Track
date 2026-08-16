@@ -1,5 +1,5 @@
 import {Link} from "react-router";
-import type {Workout} from "../../workout.types";
+import type {Workout} from "../../types/workout.types";
 
 interface WorkoutSessionHeaderProps {
     workout: Workout;

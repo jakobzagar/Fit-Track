@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {createAuthCookieOptions} from "../auth.cookie.js";
+import {createAuthCookieOptions} from "../cookies/auth.cookie.js";
 
 describe("authentication cookie options", () => {
     it("uses secure HTTP-only cookies in production", () => {

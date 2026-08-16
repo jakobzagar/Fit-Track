@@ -4,12 +4,12 @@ import {Feedback} from "../../../components/ui/feedback/Feedback";
 import {Icon} from "../../../components/ui/display/Icon";
 import {PageHeader} from "../../../components/ui/display/PageHeader";
 import {SkeletonGrid} from "../../../components/ui/display/SkeletonGrid";
-import {useConfirmDialog} from "../../../components/ui/dialogs/useConfirmDialog";
+import {useConfirmDialog} from "../../../components/ui/dialogs/hooks/useConfirmDialog";
 import {ExerciseFormDialog} from "../components/forms/ExerciseFormDialog";
 import {ExerciseEmptyState} from "../components/library/ExerciseEmptyState";
 import {ExerciseList} from "../components/library/ExerciseList";
 import {ExerciseStatusTabs} from "../components/library/ExerciseStatusTabs";
-import type {Exercise} from "../exercise.types";
+import type {Exercise} from "../types/exercise.types";
 import {useExercises, type ExerciseView} from "../hooks/useExercises";
 import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas";
 

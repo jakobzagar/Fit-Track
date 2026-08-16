@@ -6,7 +6,7 @@ import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/forms/formAccessibility.ts";
+} from "../../../../components/ui/forms/utils/formAccessibility.ts";
 
 interface CreateWorkoutFormProps {
     onSubmit: (data: CreateWorkoutInput) => Promise<void>;

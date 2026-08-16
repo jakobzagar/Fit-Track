@@ -17,7 +17,7 @@ import {
     createTestWorkout,
     createTestWorkoutExercise,
     testOrigin,
-} from "../../../test/fixtures.js";
+} from "../../../test/support/fixtures.js";
 
 describe("POST /api/workouts", () => {
     it("normalizes and creates a draft workout for the authenticated user", async () => {

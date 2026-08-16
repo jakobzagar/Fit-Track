@@ -7,7 +7,7 @@ import {
     createTestUser,
     createTestWorkout,
     createTestWorkoutExercise,
-} from "../../../test/fixtures.js";
+} from "../../../test/support/fixtures.js";
 
 describe("GET /api/workouts/:workoutId/previous-performances", () => {
     it("returns the latest completed performance and only its completed sets", async () => {

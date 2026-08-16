@@ -1,4 +1,4 @@
-import type {Exercise} from "../../exercise.types";
+import type {Exercise} from "../../types/exercise.types";
 import {ExerciseItem} from "./ExerciseItem";
 
 interface ExerciseListProps {

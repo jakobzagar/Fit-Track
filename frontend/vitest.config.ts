@@ -8,6 +8,7 @@ export default defineConfig({
     },
     test: {
         environment: "jsdom",
+        execArgv: ["--no-experimental-webstorage"],
         setupFiles: ["./src/test/setup.ts"],
         restoreMocks: true,
         env: {

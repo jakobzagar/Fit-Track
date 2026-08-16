@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
-import type {WorkoutSet} from "../../workouts/workout.types";
-import type {UpdateWorkoutSetInput} from "../schemas/workout.exercises.schemas";
+import type {WorkoutSet} from "../../workouts/types/workout.types";
+import type {UpdateWorkoutSetInput} from "../schemas/workout-exercises.schemas";
 import {parseEditedWorkoutSet} from "../schemas/workout-set-input.parser";
 
 interface WorkoutSetDraftOptions {

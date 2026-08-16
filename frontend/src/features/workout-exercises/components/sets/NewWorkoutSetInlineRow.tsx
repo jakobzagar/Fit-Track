@@ -1,5 +1,5 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
-import type {CreateWorkoutSetInput} from "../../schemas/workout.exercises.schemas.ts";
+import type {CreateWorkoutSetInput} from "../../schemas/workout-exercises.schemas.ts";
 import {Button} from "../../../../components/ui/actions/Button.tsx";
 import {parseNewWorkoutSet} from "../../schemas/workout-set-input.parser.ts";
 

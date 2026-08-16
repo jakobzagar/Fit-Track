@@ -1,4 +1,4 @@
-import type {WorkoutSummary} from "../../workout.types.ts";
+import type {WorkoutSummary} from "../../types/workout.types.ts";
 import {WorkoutItem} from "./WorkoutItem.tsx";
 
 interface WorkoutListProps {
