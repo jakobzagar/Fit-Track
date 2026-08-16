@@ -102,7 +102,7 @@ cp .env.dev.example .env.dev
 Replace the example passwords and `JWT_SECRET` in `.env.dev`, then start the application:
 
 ```bash
-docker compose --env-file .env.dev -f compose.dev.yaml up --build
+npm run dev:docker
 ```
 
 | Service    | Address                                        |
@@ -116,13 +116,13 @@ The migration container applies committed migrations before the backend starts. 
 Stop the stack without deleting the database volume:
 
 ```bash
-docker compose --env-file .env.dev -f compose.dev.yaml down --remove-orphans
+npm run dev:docker:down
 ```
 
 For pgAdmin, configure its values in `.env.dev` and start the optional tools profile:
 
 ```bash
-docker compose --env-file .env.dev -f compose.dev.yaml --profile tools up --build
+npm run dev:docker:tools
 ```
 
 Instructions for running Node.js and PostgreSQL directly are available in [Architecture and design decisions](docs/architecture.md#local-development-without-docker).

@@ -17,6 +17,7 @@
         "dev:docker": "docker compose --env-file .env.dev -f compose.dev.yaml up --build",
         "dev:docker:debug": "docker compose --env-file .env.dev -f compose.dev.yaml -f compose.debug.yaml up --build",
         "dev:docker:down": "docker compose --env-file .env.dev -f compose.dev.yaml down --remove-orphans",
+        "dev:docker:tools": "docker compose --env-file .env.dev -f compose.dev.yaml --profile tools up --build",
         "generate": "DATABASE_URL=${DATABASE_URL:-postgresql://unused:unused@localhost:5432/unused} npm run generate --workspace @fit-track/backend",
         "lint": "npm run generate && npm run build:shared && npm run lint --workspace @fit-track/shared && npm run lint --workspace @fit-track/backend && npm run lint --workspace @fit-track/frontend",
         "test": "npm run generate && npm run test --workspaces --if-present",
