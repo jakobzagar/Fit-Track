@@ -1,17 +1,6 @@
 import "dotenv/config";
-import {z, flattenError} from "zod";
-
-const envSchema = z.object({
-    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-
-    PORT: z.coerce.number().int().positive().default(3001),
-
-    DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-
-    JWT_SECRET: z.string().min(32, "JWT_SECRET must contain at least 32 characters"),
-
-    CLIENT_URL: z.url("CLIENT_URL must be a valid URL"),
-});
+import {flattenError} from "zod";
+import {envSchema} from "./env.schema.js";
 
 const parsedEnv = envSchema.safeParse(process.env);
 
@@ -26,5 +15,6 @@ export const env = {
     port: parsedEnv.data.PORT,
     databaseUrl: parsedEnv.data.DATABASE_URL,
     jwtSecret: parsedEnv.data.JWT_SECRET,
-    clientUrl: parsedEnv.data.CLIENT_URL,
+    clientOrigin: parsedEnv.data.CLIENT_URL,
+    trustProxyHops: parsedEnv.data.TRUST_PROXY_HOPS,
 };

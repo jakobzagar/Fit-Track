@@ -38,6 +38,7 @@ services:
       DATABASE_URL: postgresql://fit_track_smoke:fit_track_smoke_password@database:5432/fit_track_smoke
       JWT_SECRET: fit-track-production-smoke-secret-that-is-at-least-32-characters
       CLIENT_URL: http://localhost:${SMOKE_FRONTEND_PORT:-18080}
+      TRUST_PROXY_HOPS: "1"
     ports:
       - "127.0.0.1:${SMOKE_BACKEND_PORT:-13001}:3001"
     networks:

@@ -54,6 +54,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.dev}
       CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-3001}:3001"
     volumes:

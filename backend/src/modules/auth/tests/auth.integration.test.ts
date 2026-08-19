@@ -8,7 +8,7 @@ import {app} from "../../../app.js";
 import {env} from "../../../config/env.js";
 import {prisma} from "../../../db/prisma.js";
 
-const origin = env.clientUrl;
+const origin = env.clientOrigin;
 const password = "test-password";
 const registration = {
     name: "Test User",

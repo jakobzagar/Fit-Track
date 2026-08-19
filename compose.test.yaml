@@ -28,6 +28,7 @@ services:
       DATABASE_URL: postgresql://fit_track_test:fit_track_test_password@database:5432/fit_track_test
       JWT_SECRET: fit-track-test-secret-that-is-at-least-32-characters
       CLIENT_URL: http://localhost:5173
+      TRUST_PROXY_HOPS: "0"
     init: true
     command:
       - sh

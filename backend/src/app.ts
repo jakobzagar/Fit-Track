@@ -16,13 +16,13 @@ import healthRoutes from "./modules/health/routes/health.routes.js";
 
 export const app = express();
 
-app.set("trust proxy", env.nodeEnv === "production" ? 1 : false);
+app.set("trust proxy", env.trustProxyHops);
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(
     cors({
         origin: (origin, callback) =>
-            callback(null, origin === undefined || origin === env.clientUrl),
+            callback(null, origin === undefined || origin === env.clientOrigin),
         credentials: true,
     }),
 );

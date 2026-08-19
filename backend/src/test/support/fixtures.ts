@@ -4,7 +4,7 @@ import {app} from "../../app.js";
 import {env} from "../../config/env.js";
 import {prisma} from "../../db/prisma.js";
 
-export const testOrigin = env.clientUrl;
+export const testOrigin = env.clientOrigin;
 
 export const createTestUser = async (email: string) => {
     const user = await prisma.user.create({

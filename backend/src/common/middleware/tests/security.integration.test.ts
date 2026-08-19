@@ -6,10 +6,10 @@ import {env} from "../../../config/env.js";
 
 describe("HTTP security middleware", () => {
     it("allows the configured CORS origin with credentials", async () => {
-        const response = await request(app).get("/api/health/live").set("Origin", env.clientUrl);
+        const response = await request(app).get("/api/health/live").set("Origin", env.clientOrigin);
 
         expect(response.status).toBe(200);
-        expect(response.headers["access-control-allow-origin"]).toBe(env.clientUrl);
+        expect(response.headers["access-control-allow-origin"]).toBe(env.clientOrigin);
         expect(response.headers["access-control-allow-credentials"]).toBe("true");
         expect(response.headers.vary).toContain("Origin");
     });
@@ -39,7 +39,7 @@ describe("HTTP security middleware", () => {
         const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
         const response = await request(app)
             .post("/api/auth/register")
-            .set("Origin", env.clientUrl)
+            .set("Origin", env.clientOrigin)
             .send({
                 name: "a".repeat(101 * 1024),
                 email: "test@example.com",
@@ -57,7 +57,7 @@ describe("HTTP security middleware", () => {
         const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
         const response = await request(app)
             .post("/api/auth/register")
-            .set("Origin", env.clientUrl)
+            .set("Origin", env.clientOrigin)
             .set("Content-Type", "application/json")
             .send('{"name":');
 
