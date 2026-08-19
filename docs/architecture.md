@@ -163,6 +163,8 @@ The frontend separately parses actual JSON responses with shared strict schemas.
 
 Authentication uses a signed JWT in an HTTP-only cookie. Production cookies are marked `Secure` and use `SameSite=Lax`. State-changing requests must carry the configured frontend `Origin`, providing explicit CSRF protection in addition to cookie attributes.
 
+`CLIENT_URL` accepts only an HTTP or HTTPS origin. The configuration parser removes an optional trailing slash, then CORS and CSRF checks consume the same normalized value. `DATABASE_URL` must be a valid PostgreSQL URL with a host and database name.
+
 The Express application also provides:
 
 - Helmet security headers;
@@ -170,9 +172,9 @@ The Express application also provides:
 - 100 KB JSON and form payload limits;
 - general, login, and registration rate limiters;
 - sanitized unexpected error responses;
-- one trusted reverse-proxy hop in production.
+- an explicit `TRUST_PROXY_HOPS` count that defaults to no trusted proxy.
 
-Rate-limit counters currently use process memory. A multi-process runtime needs a shared store before treating those counters as global.
+The proxy count must match the only network path to the API because Express uses it to determine the client address from `X-Forwarded-For`. The development and production-smoke Compose stacks use one proxy hop; a directly started backend uses zero. Rate-limit counters currently use process memory. A multi-process runtime needs a shared store before treating those counters as global.
 
 ## Runtime lifecycle
 
@@ -209,6 +211,22 @@ Completed sessions are immutable during normal editing. A deliberate reopen acti
 
 The runtime backend image contains only compiled application files and production dependencies. A separate migration image includes the Prisma tooling and committed migrations. This increases the number of artifacts but makes schema changes an explicit one-off step rather than a side effect of every application start.
 
+## Environment configuration
+
+Environment files are separated by launch mode so Docker and direct-process settings cannot silently override each other:
+
+| Launch mode      | Local file      | Canonical template                 | Consumer                                   |
+| ---------------- | --------------- | ---------------------------------- | ------------------------------------------ |
+| Docker Compose   | `.env.dev`      | `.env.dev.example`                 | `compose.dev.yaml` interpolation           |
+| Direct backend   | `backend/.env`  | `backend/.env.example`             | Backend process through `dotenv`           |
+| Direct frontend  | `frontend/.env` | `frontend/.env.example`            | Vite development server and frontend build |
+| Automated tests  | None            | Workflow and Compose configuration | Test runners and isolated containers       |
+| Production smoke | None            | `compose.production-smoke.yaml`    | Temporary final-image verification stack   |
+
+The standard paths are the complete Compose stack or both directly started applications. Root `.env.dev` is not loaded by direct workspace processes, and application-level `.env` files are not inputs to Compose. If a single application is run separately for debugging, configure that process from its owning file instead of copying settings between files. Actual environment files remain ignored; only their `*.example` templates belong in version control.
+
+`TRUST_PROXY_HOPS` must describe the request path, not the deployment environment name. Use `0` for a client connecting directly to Express and `1` when exactly one controlled proxy, such as the development Vite server or production Nginx, sits in front of it. Increase it only after adding another trusted proxy hop and verifying the complete path.
+
 ## Local development without Docker
 
 Requirements are Node.js 24.18 or newer, npm 11 or newer, and a reachable PostgreSQL server.
@@ -219,7 +237,7 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-Set a valid `DATABASE_URL`, strong `JWT_SECRET`, and matching `CLIENT_URL` in `backend/.env`. Apply migrations from the repository root:
+Set a valid PostgreSQL `DATABASE_URL`, strong `JWT_SECRET`, matching origin-only `CLIENT_URL`, and `TRUST_PROXY_HOPS=0` in `backend/.env`. Apply migrations from the repository root:
 
 ```bash
 npm exec --workspace @fit-track/backend -- prisma migrate deploy

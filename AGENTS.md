@@ -20,6 +20,7 @@ FitTrack is a TypeScript monorepo for planning workouts and recording exercise s
 - Prefer shared schemas from `@fit-track/shared` when a contract is used by both applications.
 - Keep server-side authorization and validation authoritative. Client checks are user experience, not security boundaries.
 - Never commit credentials, generated secrets, `.env` files, database dumps, or user data.
+- Keep environment files scoped to their launch mode: root `.env.dev` is for Docker Compose, while `backend/.env` and `frontend/.env` are for direct local processes. Keep their tracked `*.example` templates authoritative.
 - Do not edit generated Prisma client files under `backend/generated/`.
 
 ## Documentation ownership

@@ -127,6 +127,8 @@ npm run dev:docker:tools
 
 Instructions for running Node.js and PostgreSQL directly are available in [Architecture and design decisions](docs/architecture.md#local-development-without-docker).
 
+Environment files are owned by their launch mode: the Docker stack reads only root `.env.dev`, while direct application processes read `backend/.env` and `frontend/.env`. See [Environment configuration](docs/architecture.md#environment-configuration) for the complete mapping and proxy guidance.
+
 ## Verification
 
 Run the fast workspace verification before opening a pull request:
