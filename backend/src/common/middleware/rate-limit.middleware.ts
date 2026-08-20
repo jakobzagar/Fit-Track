@@ -5,6 +5,10 @@ const rateLimitHeaders = {
     legacyHeaders: false,
 };
 
+function isHealthCheck(req: {baseUrl: string; path: string}) {
+    return `${req.baseUrl}${req.path}`.startsWith("/api/health/");
+}
+
 interface RateLimiterLimits {
     api?: number;
     login?: number;
@@ -17,7 +21,7 @@ export function createRateLimiters(limits: RateLimiterLimits = {}) {
         limit: limits.api ?? 300,
         identifier: "api",
         ...rateLimitHeaders,
-        skip: (req) => req.method === "OPTIONS",
+        skip: (req) => req.method === "OPTIONS" || isHealthCheck(req),
         message: {
             message: "Too many requests. Please try again later",
         },
