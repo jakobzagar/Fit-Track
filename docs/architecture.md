@@ -45,7 +45,7 @@ The diagram shows the successful path for a protected feature request. Express r
 | Service         | Ownership rules → Prisma transaction when required               | Enforce domain rules and persist a consistent result                                |
 | Final handler   | Not-found middleware → error middleware                          | Return stable responses for unknown routes and failures                             |
 
-Public health routes and login or registration omit JWT authentication. Login and registration use their own endpoint rate limiters in addition to the general limiter.
+Public health routes and login or registration omit JWT authentication. Health checks also bypass the general limiter so runtime probes remain independent of client traffic. Login and registration use their own endpoint rate limiters in addition to the general limiter.
 
 Shared Zod schemas validate input at the API boundary and successful responses at the frontend boundary. Inside the API, routes define middleware, controllers translate HTTP concerns, services contain lifecycle, ownership, and transaction rules, and Prisma owns persistence. The final not-found and error middleware convert unmatched routes, expected `AppError` instances, Prisma errors, malformed JSON, and unexpected failures into stable HTTP responses.
 
@@ -163,7 +163,7 @@ The frontend separately parses actual JSON responses with shared strict schemas.
 
 Authentication uses a signed JWT in an HTTP-only cookie. Production cookies are marked `Secure` and use `SameSite=Lax`. State-changing requests must carry the configured frontend `Origin`, providing explicit CSRF protection in addition to cookie attributes.
 
-`CLIENT_URL` accepts only an HTTP or HTTPS origin. The configuration parser removes an optional trailing slash, then CORS and CSRF checks consume the same normalized value. `DATABASE_URL` must be a valid PostgreSQL URL with a host and database name.
+`CLIENT_URL` accepts only an HTTP or HTTPS origin. The configuration parser removes an optional trailing slash, then CORS and CSRF checks consume the same normalized value. `DATABASE_URL` must be a valid PostgreSQL URL with a host and database name. Production connections require `sslmode=require`, `verify-ca`, or `verify-full` unless a controlled production-like environment explicitly sets `DATABASE_TLS_MODE=allow-insecure`; the production smoke stack uses that escape hatch only for its temporary local PostgreSQL container.
 
 The Express application also provides:
 
@@ -224,6 +224,8 @@ Environment files are separated by launch mode so Docker and direct-process sett
 | Production smoke | None            | `compose.production-smoke.yaml`    | Temporary final-image verification stack   |
 
 The standard paths are the complete Compose stack or both directly started applications. Root `.env.dev` is not loaded by direct workspace processes, and application-level `.env` files are not inputs to Compose. If a single application is run separately for debugging, configure that process from its owning file instead of copying settings between files. Actual environment files remain ignored; only their `*.example` templates belong in version control.
+
+The backend passes bounded pool settings directly to the PostgreSQL driver adapter. `DB_POOL_MAX` defaults to `5`, `DB_CONNECTION_TIMEOUT_MS` to `5000`, and `DB_IDLE_TIMEOUT_MS` to `30000`. Deployment capacity must keep `DB_POOL_MAX × maximum backend tasks` below the database connection budget, with headroom for migrations and administration. Production should override these values only after sizing them against the selected database instance.
 
 `TRUST_PROXY_HOPS` must describe the request path, not the deployment environment name. Use `0` for a client connecting directly to Express and `1` when exactly one controlled proxy, such as the development Vite server or production Nginx, sits in front of it. Increase it only after adding another trusted proxy hop and verifying the complete path.
 
