@@ -4,13 +4,13 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 
 ## Test layers
 
-| Layer               | Location                                  | Primary responsibility                                                      |
-| ------------------- | ----------------------------------------- | --------------------------------------------------------------------------- |
-| Shared contract     | Domain `tests/` directories               | Validation matrices, normalization, strict request and response shapes      |
-| Backend unit        | Owning area `tests/` directories          | Environment parsing, middleware, cookies, proxy trust, retries, shutdown    |
-| Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency       |
-| Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions |
-| Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy |
+| Layer               | Location                                  | Primary responsibility                                                            |
+| ------------------- | ----------------------------------------- | --------------------------------------------------------------------------------- |
+| Shared contract     | Domain `tests/` directories               | Validation matrices, normalization, strict request and response shapes            |
+| Backend unit        | Owning area `tests/` directories          | Environment parsing, logging, middleware, cookies, proxy trust, retries, shutdown |
+| Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency             |
+| Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions       |
+| Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy       |
 
 ## Fast verification
 

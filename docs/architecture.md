@@ -185,6 +185,12 @@ The backend exposes two health checks:
 
 On `SIGTERM` or `SIGINT`, the server stops accepting new connections, waits for HTTP connections to close, disconnects Prisma, and exits. A timeout force-closes remaining connections to prevent an indefinitely stuck shutdown.
 
+## Structured logging
+
+The backend uses Pino for application events and `pino-http` for one completion record per HTTP request. Every request receives a generated `X-Request-Id` response header. Completion records contain the request ID, method, path without query values, response status, and duration; successful health probes use the `debug` level to avoid noisy production logs. Authenticated request-scoped error records also include the user ID.
+
+Production writes newline-delimited JSON to standard output for collection by the runtime platform. Development uses `pino-pretty` for readable terminal output, while automated tests keep the application logger silent and test logging behavior with isolated capture streams. Passwords, tokens, authentication headers, cookies, and `Set-Cookie` values are redacted as defense in depth; request bodies and query values are not logged.
+
 ## Design decisions and trade-offs
 
 ### Shared Zod schemas
@@ -227,6 +233,8 @@ The standard paths are the complete Compose stack or both directly started appli
 
 The backend passes bounded pool settings directly to the PostgreSQL driver adapter. `DB_POOL_MAX` defaults to `5`, `DB_CONNECTION_TIMEOUT_MS` to `5000`, and `DB_IDLE_TIMEOUT_MS` to `30000`. Deployment capacity must keep `DB_POOL_MAX × maximum backend tasks` below the database connection budget, with headroom for migrations and administration. Production should override these values only after sizing them against the selected database instance.
 
+`LOG_LEVEL` accepts `trace`, `debug`, `info`, `warn`, `error`, or `fatal` and defaults to `info`. Local templates select `debug`; production should normally keep `info` unless a time-bounded diagnostic session requires more detail.
+
 `TRUST_PROXY_HOPS` must describe the request path, not the deployment environment name. Use `0` for a client connecting directly to Express and `1` when exactly one controlled proxy, such as the development Vite server or production Nginx, sits in front of it. Increase it only after adding another trusted proxy hop and verifying the complete path.
 
 ## Local development without Docker
@@ -256,7 +264,7 @@ The frontend requests relative `/api` paths. Vite forwards them to `API_PROXY_TA
 
 ## Known operational boundaries
 
-- Application logs use standard output and error but are not yet structured or correlated by request ID.
+- The repository does not configure an external log aggregation, metrics, or distributed-tracing destination.
 - The repository publishes containers but does not include a platform deployment definition.
 - Production containers are not started together by the normal fast verification command.
 - HTTPS termination, managed secrets, backups, monitoring, and deployment remain runtime responsibilities.

@@ -17,7 +17,7 @@ This project is built as a production-oriented TypeScript monorepo. Its focus is
 - **Recoverable workout lifecycle:** sessions can be started, cancelled, completed, reopened for corrections, and safely deleted.
 - **Real integration environment:** Supertest exercises the exported Express application against migrated PostgreSQL, not an in-memory database.
 - **Defensive HTTP defaults:** HTTP-only cookies, CSRF origin checks, restricted credentialed CORS, Helmet, payload limits, and rate limiting.
-- **Operational lifecycle:** separate liveness/readiness checks, graceful shutdown, append-only migrations, non-root containers, immutable image tags, production-container smoke checks, SBOM, and build provenance.
+- **Operational lifecycle:** structured request-correlated logs, separate liveness/readiness checks, graceful shutdown, append-only migrations, non-root containers, immutable image tags, production-container smoke checks, SBOM, and build provenance.
 
 ## Product capabilities
 
@@ -80,7 +80,7 @@ Read [Architecture and design decisions](docs/architecture.md) for request flow,
 | Area           | Technologies                                                                 |
 | -------------- | ---------------------------------------------------------------------------- |
 | Frontend       | React 19, TypeScript, Vite, React Router, Tailwind CSS, Zod                  |
-| Backend        | Node.js 24, Express 5, TypeScript, Prisma ORM, Zod                           |
+| Backend        | Node.js 24, Express 5, TypeScript, Prisma ORM, Zod, Pino                     |
 | Database       | PostgreSQL 17                                                                |
 | Authentication | JWT in HTTP-only cookies, bcrypt password hashing                            |
 | Testing        | Vitest, Supertest, Testing Library, MSW, axe-core                            |
@@ -170,7 +170,7 @@ More context and accepted trade-offs are documented in [Architecture and design 
 
 The API restricts credentialed CORS to the configured frontend origin, checks CSRF origins for state-changing requests, limits JSON bodies to 100 KB, uses Helmet security headers, and returns sanitized unexpected errors. Production cookies are secure and HTTP-only.
 
-The current rate limiter uses process-local memory and is suitable for the present single-process runtime. Multiple backend processes require a shared store if limits must be global. Production logs currently use standard output and error but are not yet structured or correlated by request ID.
+The current rate limiter uses process-local memory and is suitable for the present single-process runtime. Multiple backend processes require a shared store if limits must be global. The backend emits redacted JSON logs to standard output in production, attaches a generated request ID to each response, and uses readable pretty-printing only during local development.
 
 The repository contains optimized production containers and image-publishing automation, but it does not claim that platform concerns such as HTTPS termination, managed secrets, backups, monitoring, or deployment are already implemented.
 
