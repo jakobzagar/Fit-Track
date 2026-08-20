@@ -79,6 +79,9 @@ describe("workout exercise CSRF protection", () => {
             .send({exerciseId: exercise.id});
 
         expect(response.status).toBe(403);
+        expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Invalid request origin",
+        });
         expect(await prisma.workoutExercise.count()).toBe(0);
     });
 });

@@ -80,6 +80,9 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
         ).send({exerciseId: exercise.id});
 
         expect(response.status).toBe(409);
+        expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Exercise already added to workout",
+        });
     });
 
     it("rejects an archived exercise", async () => {
@@ -94,6 +97,7 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
         ).send({exerciseId: archived.id});
 
         expect(response.status).toBe(404);
+        expect(messageResponseSchema.parse(response.body)).toEqual({message: "Exercise not found"});
     });
 
     it("rejects an exercise owned by another user", async () => {
@@ -109,6 +113,7 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
         ).send({exerciseId: foreign.id});
 
         expect(response.status).toBe(404);
+        expect(messageResponseSchema.parse(response.body)).toEqual({message: "Exercise not found"});
     });
 
     it("does not add to another user's workout", async () => {
@@ -259,6 +264,9 @@ describe("workout exercise updates and deletion", () => {
         ).send({notes: "Blocked"});
 
         expect(response.status).toBe(404);
+        expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Workout exercise not found",
+        });
     });
 
     it("does not delete another user's workout exercise", async () => {
@@ -275,5 +283,8 @@ describe("workout exercise updates and deletion", () => {
         );
 
         expect(response.status).toBe(404);
+        expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Workout exercise not found",
+        });
     });
 });

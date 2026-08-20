@@ -62,6 +62,9 @@ describe("POST /api/workouts", () => {
             .send({name: "Push day"});
 
         expect(response.status).toBe(401);
+        expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Authentication required",
+        });
         expect(await prisma.workout.count()).toBe(0);
     });
 });
@@ -163,6 +166,9 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         ).send({});
 
         expect(response.status).toBe(400);
+        expect(validationErrorResponseSchema.parse(response.body).message).toBe(
+            "Validation failed",
+        );
     });
 
     it("does not update another user's workout", async () => {
@@ -177,6 +183,7 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         ).send({name: "Changed"});
 
         expect(response.status).toBe(404);
+        expect(messageResponseSchema.parse(response.body)).toEqual({message: "Workout not found"});
     });
 
     it("deletes an owned workout and its nested records", async () => {
@@ -205,6 +212,7 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         const response = await authenticated("delete", `/api/workouts/${workout.id}`, owner.cookie);
 
         expect(response.status).toBe(404);
+        expect(messageResponseSchema.parse(response.body)).toEqual({message: "Workout not found"});
         expect(await prisma.workout.count()).toBe(1);
     });
 
@@ -246,6 +254,9 @@ describe("workout CSRF protection", () => {
             .send({name: "Blocked"});
 
         expect(response.status).toBe(403);
+        expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Invalid request origin",
+        });
         expect(await prisma.workout.count()).toBe(0);
     });
 });

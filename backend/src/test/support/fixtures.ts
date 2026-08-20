@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import request from "supertest";
+import type {WorkoutStatus} from "@fit-track/shared/workouts";
 import {app} from "../../app.js";
 import {env} from "../../config/env.js";
 import {prisma} from "../../db/prisma.js";
@@ -25,7 +26,7 @@ export const createTestWorkout = (
     userId: string,
     overrides: {
         name?: string;
-        status?: "DRAFT" | "ACTIVE" | "COMPLETED";
+        status?: WorkoutStatus;
         performedAt?: Date;
         startedAt?: Date | null;
         completedAt?: Date | null;

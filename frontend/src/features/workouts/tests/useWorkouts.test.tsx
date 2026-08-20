@@ -1,7 +1,8 @@
 import {act, renderHook, waitFor} from "@testing-library/react";
-import {delay, http, HttpResponse} from "msw";
+import {http, HttpResponse} from "msw";
 import {describe, expect, test} from "vitest";
 import {API_URL} from "../../../test/constants";
+import {createDeferred} from "../../../test/deferred";
 import {server} from "../../../test/mocks/server";
 import {createWorkoutBase, createWorkoutSummary} from "../../../test/fixtures/workouts";
 import {useWorkouts} from "../hooks/data/useWorkouts";
@@ -56,26 +57,35 @@ describe("useWorkouts", () => {
 
     test("keeps the newest result when load requests overlap", async () => {
         let attempts = 0;
+        const firstRequestStarted = createDeferred();
+        const releaseFirstRequest = createDeferred();
+        const firstRequestCompleted = createDeferred();
         const older = createWorkoutSummary({name: "Older response"});
         const newer = createWorkoutSummary({name: "Newer response"});
         server.use(
             http.get(`${API_URL}/workouts`, async () => {
                 attempts += 1;
                 if (attempts === 1) {
-                    await delay(50);
+                    firstRequestStarted.resolve();
+                    await releaseFirstRequest.promise;
+                    firstRequestCompleted.resolve();
                     return HttpResponse.json({workouts: [older]});
                 }
                 return HttpResponse.json({workouts: [newer]});
             }),
         );
         const {result} = renderHook(() => useWorkouts());
-        await waitFor(() => expect(attempts).toBe(1));
+        await firstRequestStarted.promise;
 
         act(() => result.current.retry());
 
         await waitFor(() => expect(result.current.workouts[0]?.name).toBe("Newer response"));
-        await act(() => delay(60));
+        await act(async () => {
+            releaseFirstRequest.resolve();
+            await firstRequestCompleted.promise;
+        });
         expect(result.current.workouts[0]?.name).toBe("Newer response");
+        expect(attempts).toBe(2);
     });
 
     test("keeps the existing workout when an update fails", async () => {

@@ -1,10 +1,11 @@
 import {act, renderHook, waitFor} from "@testing-library/react";
-import {http, HttpResponse, delay} from "msw";
+import {http, HttpResponse} from "msw";
 import {describe, expect, test} from "vitest";
 import {API_URL} from "../../../test/constants";
+import {createDeferred} from "../../../test/deferred";
 import {exercise as activeExercise} from "../../../test/fixtures/exercises";
 import {server} from "../../../test/mocks/server";
-import {useExercises} from "../hooks/useExercises";
+import {useExercises, type ExerciseView} from "../hooks/useExercises";
 
 describe("useExercises", () => {
     test("keeps exercises sorted by name after creating and renaming one", async () => {
@@ -117,10 +118,17 @@ describe("useExercises", () => {
     });
 
     test("loads the latest view after a rapid status change", async () => {
+        const activeRequestStarted = createDeferred();
+        const releaseActiveRequest = createDeferred();
+        const activeRequestCompleted = createDeferred();
         server.use(
             http.get(`${API_URL}/exercises`, async ({request}) => {
                 const status = new URL(request.url).searchParams.get("status");
-                if (status === "active") await delay(40);
+                if (status === "active") {
+                    activeRequestStarted.resolve();
+                    await releaseActiveRequest.promise;
+                    activeRequestCompleted.resolve();
+                }
                 return HttpResponse.json({
                     exercises:
                         status === "archived"
@@ -130,11 +138,17 @@ describe("useExercises", () => {
             }),
         );
         const {result, rerender} = renderHook(({view}) => useExercises(view), {
-            initialProps: {view: "active" as "active" | "archived"},
+            initialProps: {view: "active" as ExerciseView},
         });
+        await activeRequestStarted.promise;
         rerender({view: "archived"});
 
         await waitFor(() => expect(result.current.isLoading).toBe(false));
         await waitFor(() => expect(result.current.exercises[0]?.name).toBe("Archived press"));
+        await act(async () => {
+            releaseActiveRequest.resolve();
+            await activeRequestCompleted.promise;
+        });
+        expect(result.current.exercises[0]?.name).toBe("Archived press");
     });
 });

@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {messageResponseSchema} from "@fit-track/shared/common";
+import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
 import {
     addSetToWorkoutExerciseResponseSchema,
     deleteWorkoutSetResponseSchema,
@@ -77,6 +77,9 @@ describe("workout sets", () => {
         ).send({weight: 50});
 
         expect(response.status).toBe(400);
+        expect(validationErrorResponseSchema.parse(response.body).message).toBe(
+            "Validation failed",
+        );
     });
 
     it("does not add a set to another user's workout", async () => {
@@ -93,6 +96,9 @@ describe("workout sets", () => {
         ).send({reps: 10});
 
         expect(response.status).toBe(404);
+        expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Workout exercise not found",
+        });
     });
 
     it("updates values but prevents clearing both reps and duration", async () => {
@@ -157,6 +163,12 @@ describe("workout sets", () => {
 
         expect(update.status).toBe(404);
         expect(deletion.status).toBe(404);
+        expect(messageResponseSchema.parse(update.body)).toEqual({
+            message: "Workout set not found",
+        });
+        expect(messageResponseSchema.parse(deletion.body)).toEqual({
+            message: "Workout set not found",
+        });
         await expect(
             prisma.workoutSet.findUniqueOrThrow({where: {id: set.id}}),
         ).resolves.toMatchObject({reps: 10});
@@ -185,6 +197,12 @@ describe("workout sets", () => {
 
         expect(wrongExercise.status).toBe(404);
         expect(wrongWorkout.status).toBe(404);
+        expect(messageResponseSchema.parse(wrongExercise.body)).toEqual({
+            message: "Workout set not found",
+        });
+        expect(messageResponseSchema.parse(wrongWorkout.body)).toEqual({
+            message: "Workout set not found",
+        });
         await expect(
             prisma.workoutSet.findUniqueOrThrow({where: {id: set.id}}),
         ).resolves.toMatchObject({reps: 10});
@@ -268,6 +286,12 @@ describe("workout set completion", () => {
 
         expect(foreign.status).toBe(404);
         expect(mismatched.status).toBe(404);
+        expect(messageResponseSchema.parse(foreign.body)).toEqual({
+            message: "Workout set not found",
+        });
+        expect(messageResponseSchema.parse(mismatched.body)).toEqual({
+            message: "Workout set not found",
+        });
         const sets = await prisma.workoutSet.findMany({
             where: {id: {in: [foreignSet.id, ownerSet.id]}},
         });

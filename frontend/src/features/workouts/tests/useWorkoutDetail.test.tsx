@@ -1,7 +1,8 @@
 import {act, renderHook, waitFor} from "@testing-library/react";
-import {delay, http, HttpResponse} from "msw";
+import {http, HttpResponse} from "msw";
 import {describe, expect, test, vi} from "vitest";
 import {API_URL} from "../../../test/constants";
+import {createDeferred} from "../../../test/deferred";
 import {server} from "../../../test/mocks/server";
 import {
     createWorkout,
@@ -22,9 +23,16 @@ function mockLoadRequests(workout = createWorkout()) {
 describe("useWorkoutDetail", () => {
     test("ignores a stale response after the workout ID changes", async () => {
         const nextWorkoutId = "123e4567-e89b-42d3-a456-426614174099";
+        const oldRequestStarted = createDeferred();
+        const releaseOldRequest = createDeferred();
+        const oldRequestCompleted = createDeferred();
         server.use(
             http.get(`${API_URL}/workouts/:id`, async ({params}) => {
-                if (params.id === workoutId) await delay(50);
+                if (params.id === workoutId) {
+                    oldRequestStarted.resolve();
+                    await releaseOldRequest.promise;
+                    oldRequestCompleted.resolve();
+                }
                 return HttpResponse.json({
                     workout: createWorkout({
                         id: String(params.id),
@@ -38,10 +46,14 @@ describe("useWorkoutDetail", () => {
             initialProps: {id: workoutId},
         });
 
+        await oldRequestStarted.promise;
         rerender({id: nextWorkoutId});
 
         await waitFor(() => expect(result.current.workout?.name).toBe("Current workout"));
-        await act(() => delay(60));
+        await act(async () => {
+            releaseOldRequest.resolve();
+            await oldRequestCompleted.promise;
+        });
         expect(result.current.workout?.name).toBe("Current workout");
     });
 

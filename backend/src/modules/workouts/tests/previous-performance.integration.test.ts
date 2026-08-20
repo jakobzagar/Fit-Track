@@ -1,5 +1,8 @@
+import request from "supertest";
 import {describe, expect, it} from "vitest";
+import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
 import {previousPerformancesResponseSchema} from "@fit-track/shared/workouts";
+import {app} from "../../../app.js";
 import {
     authenticated,
     createTestExercise,
@@ -7,6 +10,7 @@ import {
     createTestUser,
     createTestWorkout,
     createTestWorkoutExercise,
+    testOrigin,
 } from "../../../test/support/fixtures.js";
 
 describe("GET /api/workouts/:workoutId/previous-performances", () => {
@@ -50,5 +54,76 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
             workoutId: previous.id,
         });
         expect(body.previousPerformances[0]?.sets.map((set) => set.id)).toEqual([completedSet.id]);
+    });
+
+    it("returns an empty list when no previous completed performance exists", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const current = await createTestWorkout(owner.user.id);
+
+        const response = await authenticated(
+            "get",
+            `/api/workouts/${current.id}/previous-performances`,
+            owner.cookie,
+        );
+
+        expect(response.status).toBe(200);
+        expect(previousPerformancesResponseSchema.parse(response.body)).toEqual({
+            previousPerformances: [],
+        });
+    });
+
+    it("does not expose previous performances through another user's workout", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const other = await createTestUser("other@example.com");
+        const foreignWorkout = await createTestWorkout(other.user.id);
+
+        const response = await authenticated(
+            "get",
+            `/api/workouts/${foreignWorkout.id}/previous-performances`,
+            owner.cookie,
+        );
+
+        expect(response.status).toBe(404);
+        expect(messageResponseSchema.parse(response.body)).toEqual({message: "Workout not found"});
+    });
+
+    it("returns not found for a missing workout", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const missingWorkoutId = "123e4567-e89b-42d3-a456-426614174099";
+
+        const response = await authenticated(
+            "get",
+            `/api/workouts/${missingWorkoutId}/previous-performances`,
+            owner.cookie,
+        );
+
+        expect(response.status).toBe(404);
+        expect(messageResponseSchema.parse(response.body)).toEqual({message: "Workout not found"});
+    });
+
+    it("validates the workout ID", async () => {
+        const owner = await createTestUser("owner@example.com");
+
+        const response = await authenticated(
+            "get",
+            "/api/workouts/not-a-uuid/previous-performances",
+            owner.cookie,
+        );
+
+        expect(response.status).toBe(400);
+        expect(validationErrorResponseSchema.parse(response.body).message).toBe(
+            "Validation failed",
+        );
+    });
+
+    it("requires authentication", async () => {
+        const response = await request(app)
+            .get("/api/workouts/123e4567-e89b-42d3-a456-426614174099/previous-performances")
+            .set("Origin", testOrigin);
+
+        expect(response.status).toBe(401);
+        expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Authentication required",
+        });
     });
 });

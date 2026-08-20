@@ -1,10 +1,11 @@
 import {useEffect} from "react";
 import {act, render, waitFor} from "@testing-library/react";
-import {delay, http, HttpResponse} from "msw";
+import {http, HttpResponse} from "msw";
 import {createMemoryRouter, RouterProvider, useNavigate, useParams} from "react-router";
 import {describe, expect, test, vi} from "vitest";
 import {AppProviders} from "../../../app/providers/providers";
 import {API_URL} from "../../../test/constants";
+import {createDeferred} from "../../../test/deferred";
 import {server} from "../../../test/mocks/server";
 import {
     createWorkout,
@@ -63,9 +64,16 @@ function mockLoadRequests() {
 describe("useWorkoutSession", () => {
     test("ignores stale session data after navigating to another workout", async () => {
         const nextWorkoutId = "123e4567-e89b-42d3-a456-426614174099";
+        const oldRequestStarted = createDeferred();
+        const releaseOldRequest = createDeferred();
+        const oldRequestCompleted = createDeferred();
         server.use(
             http.get(`${API_URL}/workouts/:id`, async ({params}) => {
-                if (params.id === workoutId) await delay(50);
+                if (params.id === workoutId) {
+                    oldRequestStarted.resolve();
+                    await releaseOldRequest.promise;
+                    oldRequestCompleted.resolve();
+                }
                 return HttpResponse.json({
                     workout: createWorkout({
                         id: String(params.id),
@@ -80,10 +88,14 @@ describe("useWorkoutSession", () => {
         );
         const hook = renderSessionHook();
 
+        await oldRequestStarted.promise;
         await act(() => hook.router.navigate(`/workouts/${nextWorkoutId}/session`));
 
         await waitFor(() => expect(hook.current?.workout?.name).toBe("Current session"));
-        await act(() => delay(60));
+        await act(async () => {
+            releaseOldRequest.resolve();
+            await oldRequestCompleted.promise;
+        });
         expect(hook.current?.workout?.name).toBe("Current session");
         expect(hook.router.state.location.pathname).toBe(`/workouts/${nextWorkoutId}/session`);
     });
