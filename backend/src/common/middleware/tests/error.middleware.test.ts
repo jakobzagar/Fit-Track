@@ -2,13 +2,14 @@ import express from "express";
 import request from "supertest";
 import {describe, expect, it, vi} from "vitest";
 import {messageResponseSchema} from "@fit-track/shared/common";
+import {logger} from "../../../observability/logging/logger.js";
 import {errorMiddleware} from "../error.middleware.js";
 
 describe("unexpected API errors", () => {
     it("returns a sanitized response without exposing the error or stack trace", async () => {
         const app = express();
         const error = new Error("database password leaked in stack");
-        const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+        const loggerError = vi.spyOn(logger, "error");
         app.get("/failure", () => {
             throw error;
         });
@@ -22,6 +23,6 @@ describe("unexpected API errors", () => {
         });
         expect(JSON.stringify(response.body)).not.toContain(error.message);
         expect(JSON.stringify(response.body)).not.toContain("stack");
-        expect(consoleError).toHaveBeenCalledWith(error);
+        expect(loggerError).toHaveBeenCalledWith({err: error}, "unhandled request error");
     });
 });

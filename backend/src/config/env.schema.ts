@@ -88,6 +88,8 @@ const databaseConnectionTimeoutSchema = z.coerce.number().int().min(100).max(60_
 
 const databaseIdleTimeoutSchema = z.coerce.number().int().min(1_000).max(300_000).default(30_000);
 
+const logLevelSchema = z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info");
+
 const secureDatabaseSslModes = new Set(["require", "verify-ca", "verify-full"]);
 
 function getDatabaseSslMode(databaseUrl: string) {
@@ -109,6 +111,8 @@ export const envSchema = z
         DB_POOL_MAX: databasePoolMaxSchema,
         DB_CONNECTION_TIMEOUT_MS: databaseConnectionTimeoutSchema,
         DB_IDLE_TIMEOUT_MS: databaseIdleTimeoutSchema,
+
+        LOG_LEVEL: logLevelSchema,
 
         JWT_SECRET: z.string().min(32, "JWT_SECRET must contain at least 32 characters"),
 

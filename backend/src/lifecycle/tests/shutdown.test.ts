@@ -12,10 +12,12 @@ function createDependencies() {
     };
     const disconnect = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const exit = vi.fn<(code: number) => void>();
-    const log = vi.fn();
-    const logError = vi.fn();
+    const logger = {
+        info: vi.fn(),
+        error: vi.fn(),
+    };
 
-    return {server, disconnect, exit, log, logError};
+    return {server, disconnect, exit, logger};
 }
 
 describe("graceful shutdown", () => {
@@ -30,6 +32,16 @@ describe("graceful shutdown", () => {
         expect(dependencies.exit).toHaveBeenCalledOnce();
         expect(dependencies.exit).toHaveBeenCalledWith(0);
         expect(dependencies.server.closeAllConnections).not.toHaveBeenCalled();
+        expect(dependencies.logger.info).toHaveBeenNthCalledWith(
+            1,
+            {signal: "SIGTERM"},
+            "graceful shutdown started",
+        );
+        expect(dependencies.logger.info).toHaveBeenNthCalledWith(
+            2,
+            {signal: "SIGTERM"},
+            "graceful shutdown complete",
+        );
     });
 
     it("exits with failure when closing the HTTP server fails", async () => {
@@ -41,7 +53,10 @@ describe("graceful shutdown", () => {
         await shutdown("SIGTERM");
 
         expect(dependencies.disconnect).not.toHaveBeenCalled();
-        expect(dependencies.logError).toHaveBeenCalledWith("Graceful shutdown failed", error);
+        expect(dependencies.logger.error).toHaveBeenCalledWith(
+            {err: error, signal: "SIGTERM"},
+            "graceful shutdown failed",
+        );
         expect(dependencies.exit).toHaveBeenCalledWith(1);
     });
 
@@ -54,7 +69,10 @@ describe("graceful shutdown", () => {
         await shutdown("SIGTERM");
 
         expect(dependencies.server.close).toHaveBeenCalledOnce();
-        expect(dependencies.logError).toHaveBeenCalledWith("Graceful shutdown failed", error);
+        expect(dependencies.logger.error).toHaveBeenCalledWith(
+            {err: error, signal: "SIGTERM"},
+            "graceful shutdown failed",
+        );
         expect(dependencies.exit).toHaveBeenCalledWith(1);
     });
 
@@ -69,7 +87,10 @@ describe("graceful shutdown", () => {
 
         expect(dependencies.server.closeAllConnections).toHaveBeenCalledOnce();
         expect(dependencies.disconnect).not.toHaveBeenCalled();
-        expect(dependencies.logError).toHaveBeenCalledWith("Graceful shutdown timed out");
+        expect(dependencies.logger.error).toHaveBeenCalledWith(
+            {signal: "SIGTERM", timeoutMs: 10_000},
+            "graceful shutdown timed out",
+        );
         expect(dependencies.exit).toHaveBeenCalledWith(1);
     });
 

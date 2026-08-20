@@ -1,5 +1,6 @@
 import type {NextFunction, Request, Response} from "express";
 import {Prisma} from "../../../generated/prisma/client.js";
+import {logger} from "../../observability/logging/logger.js";
 import {AppError} from "../errors/app.error.js";
 
 function isRequestBodyError(error: unknown): error is {type: string} {
@@ -11,7 +12,7 @@ function isRequestBodyError(error: unknown): error is {type: string} {
     );
 }
 
-export function errorMiddleware(error: unknown, _req: Request, res: Response, _next: NextFunction) {
+export function errorMiddleware(error: unknown, req: Request, res: Response, _next: NextFunction) {
     if (error instanceof AppError) {
         res.status(error.statusCode).json({
             message: error.message,
@@ -50,7 +51,8 @@ export function errorMiddleware(error: unknown, _req: Request, res: Response, _n
         return;
     }
 
-    console.error(error);
+    const requestLogger = req.log ?? logger;
+    requestLogger.error({err: error}, "unhandled request error");
 
     res.status(500).json({
         message: "Internal server error",

@@ -27,6 +27,9 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
         }
 
         res.locals.userId = decoded.userId;
+        if (req.log) {
+            req.log = req.log.child({userId: decoded.userId});
+        }
         next();
     } catch {
         res.status(401).json({

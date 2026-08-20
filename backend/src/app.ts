@@ -7,6 +7,7 @@ import {verifyCsrfOrigin} from "./common/middleware/csrf.middleware.js";
 import {errorMiddleware} from "./common/middleware/error.middleware.js";
 import {apiRateLimiter} from "./common/middleware/rate-limit.middleware.js";
 import {apiNotFound} from "./common/middleware/not-found.middleware.js";
+import {httpLogger} from "./observability/logging/http-logger.middleware.js";
 
 import authRoutes from "./modules/auth/routes/auth.routes.js";
 import exerciseRoutes from "./modules/exercises/routes/exercise.routes.js";
@@ -18,6 +19,7 @@ export const app = express();
 
 app.set("trust proxy", env.trustProxyHops);
 app.disable("x-powered-by");
+app.use(httpLogger);
 app.use(helmet());
 app.use(
     cors({

@@ -102,6 +102,15 @@ describe("backend environment schema", () => {
         });
     });
 
+    it("uses an info log level by default and accepts an explicit level", () => {
+        expect(envSchema.parse(validEnv).LOG_LEVEL).toBe("info");
+        expect(envSchema.parse({...validEnv, LOG_LEVEL: "debug"}).LOG_LEVEL).toBe("debug");
+    });
+
+    it("rejects an unsupported log level", () => {
+        expect(envSchema.safeParse({...validEnv, LOG_LEVEL: "verbose"}).success).toBe(false);
+    });
+
     it("parses explicit database pool settings", () => {
         const result = envSchema.parse({
             ...validEnv,
