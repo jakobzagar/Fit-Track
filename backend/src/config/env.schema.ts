@@ -80,16 +80,56 @@ const proxyHopsSchema = z
     .pipe(z.number().int().min(0).max(3))
     .default(0);
 
-export const envSchema = z.object({
-    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+const databaseTlsModeSchema = z.enum(["require", "allow-insecure"]).optional();
 
-    PORT: z.coerce.number().int().positive().default(3001),
+const databasePoolMaxSchema = z.coerce.number().int().min(1).max(50).default(5);
 
-    DATABASE_URL: databaseUrlSchema,
+const databaseConnectionTimeoutSchema = z.coerce.number().int().min(100).max(60_000).default(5_000);
 
-    JWT_SECRET: z.string().min(32, "JWT_SECRET must contain at least 32 characters"),
+const databaseIdleTimeoutSchema = z.coerce.number().int().min(1_000).max(300_000).default(30_000);
 
-    CLIENT_URL: clientOriginSchema,
+const secureDatabaseSslModes = new Set(["require", "verify-ca", "verify-full"]);
 
-    TRUST_PROXY_HOPS: proxyHopsSchema,
-});
+function getDatabaseSslMode(databaseUrl: string) {
+    try {
+        return new URL(databaseUrl).searchParams.get("sslmode");
+    } catch {
+        return null;
+    }
+}
+
+export const envSchema = z
+    .object({
+        NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+        PORT: z.coerce.number().int().positive().default(3001),
+
+        DATABASE_URL: databaseUrlSchema,
+        DATABASE_TLS_MODE: databaseTlsModeSchema,
+        DB_POOL_MAX: databasePoolMaxSchema,
+        DB_CONNECTION_TIMEOUT_MS: databaseConnectionTimeoutSchema,
+        DB_IDLE_TIMEOUT_MS: databaseIdleTimeoutSchema,
+
+        JWT_SECRET: z.string().min(32, "JWT_SECRET must contain at least 32 characters"),
+
+        CLIENT_URL: clientOriginSchema,
+
+        TRUST_PROXY_HOPS: proxyHopsSchema,
+    })
+    .superRefine((value, ctx) => {
+        const requiresTls =
+            value.DATABASE_TLS_MODE === "require" ||
+            (value.NODE_ENV === "production" && value.DATABASE_TLS_MODE !== "allow-insecure");
+
+        if (
+            requiresTls &&
+            !secureDatabaseSslModes.has(getDatabaseSslMode(value.DATABASE_URL) ?? "")
+        ) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["DATABASE_URL"],
+                message:
+                    "DATABASE_URL must require TLS in production with sslmode=require, verify-ca, or verify-full",
+            });
+        }
+    });

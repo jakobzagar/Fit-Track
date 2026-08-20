@@ -4,7 +4,7 @@ import {envSchema} from "../env.schema.js";
 const validEnv = {
     NODE_ENV: "production",
     PORT: "3001",
-    DATABASE_URL: "postgresql://user:password@database:5432/fit_track",
+    DATABASE_URL: "postgresql://user:password@database:5432/fit_track?sslmode=require",
     JWT_SECRET: "fit-track-test-secret-that-is-at-least-32-characters",
     CLIENT_URL: "https://fittrack.example",
 };
@@ -47,8 +47,9 @@ describe("backend environment schema", () => {
     );
 
     it.each([
-        "postgres://user:password@database:5432/fit_track",
-        "postgresql://user:password@database:5432/fit_track?schema=public",
+        "postgres://user:password@database:5432/fit_track?sslmode=require",
+        "postgresql://user:password@database:5432/fit_track?schema=public&sslmode=verify-ca",
+        "postgresql://user:password@database:5432/fit_track?sslmode=verify-full",
     ])("accepts a valid PostgreSQL DATABASE_URL: %s", (databaseUrl) => {
         expect(envSchema.safeParse({...validEnv, DATABASE_URL: databaseUrl}).success).toBe(true);
     });
@@ -61,5 +62,69 @@ describe("backend environment schema", () => {
         "postgresql://user:password@database:5432/fit_track#fragment",
     ])("rejects an invalid PostgreSQL DATABASE_URL: %s", (databaseUrl) => {
         expect(envSchema.safeParse({...validEnv, DATABASE_URL: databaseUrl}).success).toBe(false);
+    });
+
+    it.each([
+        "postgresql://user:password@database:5432/fit_track",
+        "postgresql://user:password@database:5432/fit_track?sslmode=disable",
+        "postgresql://user:password@database:5432/fit_track?sslmode=prefer",
+    ])("rejects a production database connection without required TLS: %s", (databaseUrl) => {
+        expect(envSchema.safeParse({...validEnv, DATABASE_URL: databaseUrl}).success).toBe(false);
+    });
+
+    it("allows an explicit insecure database only for controlled production-like environments", () => {
+        const result = envSchema.parse({
+            ...validEnv,
+            DATABASE_URL: "postgresql://user:password@database:5432/fit_track",
+            DATABASE_TLS_MODE: "allow-insecure",
+        });
+
+        expect(result.DATABASE_TLS_MODE).toBe("allow-insecure");
+    });
+
+    it("allows local development without database TLS", () => {
+        expect(
+            envSchema.safeParse({
+                ...validEnv,
+                NODE_ENV: "development",
+                DATABASE_URL: "postgresql://user:password@localhost:5432/fit_track",
+            }).success,
+        ).toBe(true);
+    });
+
+    it("uses bounded database pool defaults", () => {
+        const result = envSchema.parse(validEnv);
+
+        expect(result).toMatchObject({
+            DB_POOL_MAX: 5,
+            DB_CONNECTION_TIMEOUT_MS: 5_000,
+            DB_IDLE_TIMEOUT_MS: 30_000,
+        });
+    });
+
+    it("parses explicit database pool settings", () => {
+        const result = envSchema.parse({
+            ...validEnv,
+            DB_POOL_MAX: "8",
+            DB_CONNECTION_TIMEOUT_MS: "3000",
+            DB_IDLE_TIMEOUT_MS: "45000",
+        });
+
+        expect(result).toMatchObject({
+            DB_POOL_MAX: 8,
+            DB_CONNECTION_TIMEOUT_MS: 3_000,
+            DB_IDLE_TIMEOUT_MS: 45_000,
+        });
+    });
+
+    it.each([
+        ["DB_POOL_MAX", "0"],
+        ["DB_POOL_MAX", "51"],
+        ["DB_CONNECTION_TIMEOUT_MS", "99"],
+        ["DB_CONNECTION_TIMEOUT_MS", "60001"],
+        ["DB_IDLE_TIMEOUT_MS", "999"],
+        ["DB_IDLE_TIMEOUT_MS", "300001"],
+    ])("rejects an unsafe database setting %s=%s", (name, value) => {
+        expect(envSchema.safeParse({...validEnv, [name]: value}).success).toBe(false);
     });
 });

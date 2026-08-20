@@ -36,6 +36,10 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://fit_track_smoke:fit_track_smoke_password@database:5432/fit_track_smoke
+      DATABASE_TLS_MODE: allow-insecure
+      DB_POOL_MAX: 5
+      DB_CONNECTION_TIMEOUT_MS: 5000
+      DB_IDLE_TIMEOUT_MS: 30000
       JWT_SECRET: fit-track-production-smoke-secret-that-is-at-least-32-characters
       CLIENT_URL: http://localhost:${SMOKE_FRONTEND_PORT:-18080}
       TRUST_PROXY_HOPS: "1"
