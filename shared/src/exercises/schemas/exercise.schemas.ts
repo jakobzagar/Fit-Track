@@ -1,28 +1,53 @@
 import {z} from "zod";
 
-export const createExerciseSchema = z.object({
-    name: z.string().trim().min(1, "Name is required"),
-    muscleGroup: z.string().trim().min(1, "Muscle group is required"),
-    equipment: z.string().trim().min(1, "Equipment is required").optional(),
-});
+const exerciseNameSchema = z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(100, "Name is too long");
+const muscleGroupSchema = z
+    .string()
+    .trim()
+    .min(1, "Muscle group is required")
+    .max(100, "Muscle group is too long");
+const equipmentSchema = z
+    .string()
+    .trim()
+    .min(1, "Equipment is required")
+    .max(100, "Equipment is too long");
+
+export const createExerciseSchema = z
+    .object({
+        name: exerciseNameSchema,
+        muscleGroup: muscleGroupSchema,
+        equipment: equipmentSchema.optional(),
+    })
+    .strict();
 
 export const updateExerciseSchema = z
     .object({
-        name: z.string().trim().min(1, "Name is required").optional(),
-        muscleGroup: z.string().trim().min(1, "Muscle group is required").optional(),
-        equipment: z.string().trim().min(1, "Equipment is required").nullable().optional(),
+        name: exerciseNameSchema.optional(),
+        muscleGroup: muscleGroupSchema.optional(),
+        equipment: equipmentSchema.nullable().optional(),
     })
+    .strict()
     .refine((data) => Object.keys(data).length > 0, {
         message: "At least one field is required",
     });
 
-export const exerciseIdSchema = z.object({
-    exerciseId: z.uuid("Invalid exercise ID"),
-});
+export const exerciseIdSchema = z
+    .object({
+        exerciseId: z.uuid("Invalid exercise ID"),
+    })
+    .strict();
 
-export const getExercisesQuerySchema = z.object({
-    status: z.enum(["active", "archived"]).default("active"),
-});
+export const exerciseStatusSchema = z.enum(["active", "archived"]);
+
+export const getExercisesQuerySchema = z
+    .object({
+        status: exerciseStatusSchema.default("active"),
+    })
+    .strict();
 
 export const exerciseSchema = z
     .object({
@@ -52,6 +77,7 @@ export const exercisesResponseSchema = z
 export type CreateExerciseInput = z.infer<typeof createExerciseSchema>;
 export type UpdateExerciseInput = z.infer<typeof updateExerciseSchema>;
 export type ExerciseIdParams = z.infer<typeof exerciseIdSchema>;
+export type ExerciseStatus = z.infer<typeof exerciseStatusSchema>;
 export type GetExercisesQuery = z.infer<typeof getExercisesQuerySchema>;
 export type Exercise = z.infer<typeof exerciseSchema>;
 export type ExerciseResponse = z.infer<typeof exerciseResponseSchema>;

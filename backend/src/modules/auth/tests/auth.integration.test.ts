@@ -95,6 +95,21 @@ describe("POST /api/auth/register", () => {
         });
         expect(await prisma.user.count()).toBe(0);
     });
+
+    it("rejects unknown registration fields instead of silently removing them", async () => {
+        const response = await post("/api/auth/register").send({
+            ...registration,
+            role: "admin",
+        });
+
+        expect(response.status).toBe(400);
+        const body = validationErrorResponseSchema.parse(response.body);
+
+        expect(body.message).toBe("Validation failed");
+        expect(body.errors).toEqual({});
+        expect(body.formErrors).toEqual([expect.stringContaining("role")]);
+        expect(await prisma.user.count()).toBe(0);
+    });
 });
 
 describe("POST /api/auth/login", () => {

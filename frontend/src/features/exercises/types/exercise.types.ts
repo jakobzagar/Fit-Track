@@ -1,1 +1,6 @@
-export type {Exercise, ExerciseResponse, ExercisesResponse} from "@fit-track/shared/exercises";
+export type {
+    Exercise,
+    ExerciseResponse,
+    ExercisesResponse,
+    ExerciseStatus,
+} from "@fit-track/shared/exercises";

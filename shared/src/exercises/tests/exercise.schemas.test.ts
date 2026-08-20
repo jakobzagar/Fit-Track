@@ -4,6 +4,7 @@ import {
     createExerciseSchema,
     exerciseSchema,
     exerciseIdSchema,
+    exerciseStatusSchema,
     getExercisesQuerySchema,
     updateExerciseSchema,
 } from "../schemas/exercise.schemas.js";
@@ -34,7 +35,11 @@ describe("createExerciseSchema", () => {
         ["name", {name: " ", muscleGroup: "Chest"}],
         ["muscle group", {name: "Bench press", muscleGroup: " "}],
         ["equipment", {name: "Bench press", muscleGroup: "Chest", equipment: " "}],
-    ])("rejects an empty %s", (_field, input) => {
+        ["long name", {name: "a".repeat(101), muscleGroup: "Chest"}],
+        ["long muscle group", {name: "Bench press", muscleGroup: "a".repeat(101)}],
+        ["long equipment", {name: "Bench press", muscleGroup: "Chest", equipment: "a".repeat(101)}],
+        ["unknown field", {name: "Bench press", muscleGroup: "Chest", ownerId: "unexpected"}],
+    ])("rejects an invalid %s", (_field, input) => {
         expect(createExerciseSchema.safeParse(input).success).toBe(false);
     });
 });
@@ -53,6 +58,12 @@ describe("updateExerciseSchema", () => {
     test("rejects an empty update", () => {
         expect(updateExerciseSchema.safeParse({}).success).toBe(false);
     });
+
+    test("rejects an unknown update field", () => {
+        expect(
+            updateExerciseSchema.safeParse({name: "Incline press", ownerId: "unexpected"}).success,
+        ).toBe(false);
+    });
 });
 
 describe("exercise request parameters", () => {
@@ -61,7 +72,18 @@ describe("exercise request parameters", () => {
     });
 
     test("accepts archived status", () => {
+        expect(exerciseStatusSchema.safeParse("archived").success).toBe(true);
         expect(getExercisesQuerySchema.safeParse({status: "archived"}).success).toBe(true);
+    });
+
+    test("rejects unknown query and parameter fields", () => {
+        expect(getExercisesQuerySchema.safeParse({status: "active", page: 1}).success).toBe(false);
+        expect(
+            exerciseIdSchema.safeParse({
+                exerciseId: "123e4567-e89b-42d3-a456-426614174000",
+                nestedId: "unexpected",
+            }).success,
+        ).toBe(false);
     });
 
     test("rejects an invalid exercise ID", () => {

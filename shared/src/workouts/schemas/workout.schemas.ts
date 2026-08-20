@@ -1,38 +1,58 @@
 import {z} from "zod";
+import {messageResponseSchema} from "../../common/schemas/response.schemas.js";
 
-export const createWorkoutSchema = z.object({
-    name: z.string().trim().min(1, "Workout name is required").max(100, "Workout name is too long"),
-    performedAt: z.iso.date("Invalid workout date").optional(),
-    notes: z.string().trim().max(1000, "Notes are too long").nullable().optional(),
-});
+const workoutNameSchema = z
+    .string()
+    .trim()
+    .min(1, "Workout name is required")
+    .max(100, "Workout name is too long");
+const workoutDateSchema = z.iso.date("Invalid workout date");
+const workoutNotesSchema = z.string().trim().max(1000, "Notes are too long").nullable();
+
+export const createWorkoutSchema = z
+    .object({
+        name: workoutNameSchema,
+        performedAt: workoutDateSchema.optional(),
+        notes: workoutNotesSchema.optional(),
+    })
+    .strict();
 
 export const updateWorkoutSchema = z
     .object({
-        name: z
-            .string()
-            .trim()
-            .min(1, "Workout name is required")
-            .max(100, "Workout name is too long")
-            .optional(),
-        performedAt: z.iso.date("Invalid workout date").optional(),
-        notes: z.string().trim().max(1000, "Notes are too long").nullable().optional(),
+        name: workoutNameSchema.optional(),
+        performedAt: workoutDateSchema.optional(),
+        notes: workoutNotesSchema.optional(),
     })
+    .strict()
     .refine((data) => Object.keys(data).length > 0, {
         message: "At least one field is required",
     });
 
-export const workoutIdSchema = z.object({
-    workoutId: z.uuid("Invalid workout ID"),
-});
+export const workoutIdSchema = z
+    .object({
+        workoutId: z.uuid("Invalid workout ID"),
+    })
+    .strict();
 
 export const workoutStatusSchema = z.enum(["DRAFT", "ACTIVE", "COMPLETED"]);
+
+const workoutSetWeightSchema = z.number().nonnegative().max(999999.99).multipleOf(0.01);
+
+const serializedWorkoutSetWeightSchema = z.union([
+    workoutSetWeightSchema,
+    z
+        .string()
+        .regex(/^\d+(?:\.\d{1,2})?$/, "Invalid serialized weight")
+        .transform(Number)
+        .pipe(workoutSetWeightSchema),
+]);
 
 export const workoutSetSchema = z
     .object({
         id: z.uuid(),
         setNumber: z.number().int().positive(),
         reps: z.number().int().positive().nullable(),
-        weight: z.coerce.number().nonnegative().nullable(),
+        weight: serializedWorkoutSetWeightSchema.nullable(),
         durationSeconds: z.number().int().positive().nullable(),
         completedAt: z.iso.datetime().nullable(),
         workoutExerciseId: z.uuid(),
@@ -120,11 +140,7 @@ export const workoutBaseResponseSchema = z
     })
     .strict();
 
-export const deleteWorkoutResponseSchema = z
-    .object({
-        message: z.string(),
-    })
-    .strict();
+export const deleteWorkoutResponseSchema = messageResponseSchema;
 
 export type CreateWorkoutInput = z.infer<typeof createWorkoutSchema>;
 export type UpdateWorkoutInput = z.infer<typeof updateWorkoutSchema>;

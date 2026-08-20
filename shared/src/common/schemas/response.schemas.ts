@@ -10,6 +10,7 @@ export const validationErrorResponseSchema = z
     .object({
         message: z.literal("Validation failed"),
         errors: z.record(z.string(), z.array(z.string())),
+        formErrors: z.array(z.string()).optional(),
     })
     .strict();
 

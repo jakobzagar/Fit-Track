@@ -6,10 +6,10 @@ import {
     restoreExercise,
     updateExercise,
 } from "../api/exercises.api";
-import type {Exercise, ExercisesResponse} from "../types/exercise.types";
+import type {Exercise, ExercisesResponse, ExerciseStatus} from "../types/exercise.types";
 import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas";
 
-export type ExerciseView = "active" | "archived";
+export type ExerciseView = ExerciseStatus;
 
 function sortExercisesByName(exercises: Exercise[]) {
     return [...exercises].sort((left, right) => left.name.localeCompare(right.name));

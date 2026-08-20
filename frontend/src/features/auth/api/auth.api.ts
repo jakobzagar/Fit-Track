@@ -1,4 +1,5 @@
-import {authResponseSchema, messageResponseSchema} from "@fit-track/shared/auth";
+import {authResponseSchema} from "@fit-track/shared/auth";
+import {messageResponseSchema} from "@fit-track/shared/common";
 import {apiRequest} from "../../../lib/api/api.client.ts";
 import type {AuthResponse, MessageResponse} from "../types/auth.types.ts";
 import type {LoginInput, RegisterInput} from "../schemas/auth.schemas.ts";

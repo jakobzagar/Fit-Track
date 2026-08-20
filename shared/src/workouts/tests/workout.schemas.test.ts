@@ -2,10 +2,13 @@ import {describe, expect, test} from "vitest";
 
 import {
     createWorkoutSchema,
+    deleteWorkoutResponseSchema,
     updateWorkoutSchema,
+    workoutIdSchema,
     workoutSetSchema,
     workoutStatusSchema,
 } from "../schemas/workout.schemas.js";
+import {messageResponseSchema} from "../../common/schemas/response.schemas.js";
 
 describe("createWorkoutSchema", () => {
     test("accepts and trims a valid workout", () => {
@@ -31,6 +34,7 @@ describe("createWorkoutSchema", () => {
             {name: "Push day", performedAt: "2026-07-26T10:00:00.000Z"},
         ],
         ["notes over 1000 characters", {name: "Push day", notes: "a".repeat(1001)}],
+        ["an unknown field", {name: "Push day", userId: "unexpected"}],
     ])("rejects %s", (_case, input) => {
         expect(createWorkoutSchema.safeParse(input).success).toBe(false);
     });
@@ -43,6 +47,23 @@ describe("updateWorkoutSchema", () => {
 
     test("rejects an empty update", () => {
         expect(updateWorkoutSchema.safeParse({}).success).toBe(false);
+    });
+
+    test("rejects an unknown update field", () => {
+        expect(updateWorkoutSchema.safeParse({name: "Push day", status: "ACTIVE"}).success).toBe(
+            false,
+        );
+    });
+});
+
+describe("workout request parameters", () => {
+    test("rejects an unknown parameter", () => {
+        expect(
+            workoutIdSchema.safeParse({
+                workoutId: "123e4567-e89b-42d3-a456-426614174000",
+                userId: "hidden",
+            }).success,
+        ).toBe(false);
     });
 });
 
@@ -69,6 +90,23 @@ describe("workout response values", () => {
         expect(result.weight).toBe(82.5);
     });
 
+    test.each([true, false, "", " ", "82.500", "not-a-number", "1000000.00"])(
+        "rejects an invalid serialized weight: %j",
+        (weight) => {
+            expect(
+                workoutSetSchema.safeParse({
+                    id: "123e4567-e89b-42d3-a456-426614174000",
+                    setNumber: 1,
+                    reps: 8,
+                    weight,
+                    durationSeconds: null,
+                    completedAt: null,
+                    workoutExerciseId: "123e4567-e89b-42d3-a456-426614174001",
+                }).success,
+            ).toBe(false);
+        },
+    );
+
     test("rejects additional set response fields", () => {
         expect(
             workoutSetSchema.safeParse({
@@ -82,5 +120,9 @@ describe("workout response values", () => {
                 internalValue: true,
             }).success,
         ).toBe(false);
+    });
+
+    test("reuses the common message response contract", () => {
+        expect(deleteWorkoutResponseSchema).toBe(messageResponseSchema);
     });
 });

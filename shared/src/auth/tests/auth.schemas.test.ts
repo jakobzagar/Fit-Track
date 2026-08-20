@@ -33,10 +33,27 @@ describe("registerSchema", () => {
     test.each([
         ["an empty name", {name: "   ", email: "jakob@example.com", password: "password123"}],
         ["an invalid email", {name: "Jakob", email: "invalid", password: "password123"}],
+        [
+            "an email over 254 characters",
+            {name: "Jakob", email: `a@${"b".repeat(249)}.com`, password: "password123"},
+        ],
         ["a short password", {name: "Jakob", email: "jakob@example.com", password: "short"}],
         [
             "a password over 72 characters",
             {name: "Jakob", email: "jakob@example.com", password: "a".repeat(73)},
+        ],
+        [
+            "a password over 72 UTF-8 bytes",
+            {name: "Jakob", email: "jakob@example.com", password: "é".repeat(37)},
+        ],
+        [
+            "an unknown field",
+            {
+                name: "Jakob",
+                email: "jakob@example.com",
+                password: "password123",
+                role: "admin",
+            },
         ],
     ])("rejects %s", (_case, input) => {
         expect(registerSchema.safeParse(input).success).toBe(false);
@@ -56,8 +73,28 @@ describe("loginSchema", () => {
     test.each([
         ["an empty password", ""],
         ["a password over 72 characters", "a".repeat(73)],
+        ["a password over 72 UTF-8 bytes", "é".repeat(37)],
     ])("rejects %s", (_case, password) => {
         expect(loginSchema.safeParse({email: "jakob@example.com", password}).success).toBe(false);
+    });
+
+    test("accepts a password at the bcrypt byte boundary", () => {
+        expect(
+            loginSchema.safeParse({email: "jakob@example.com", password: "a".repeat(72)}).success,
+        ).toBe(true);
+        expect(
+            loginSchema.safeParse({email: "jakob@example.com", password: "é".repeat(36)}).success,
+        ).toBe(true);
+    });
+
+    test("rejects an unknown field", () => {
+        expect(
+            loginSchema.safeParse({
+                email: "jakob@example.com",
+                password: "password123",
+                rememberMe: true,
+            }).success,
+        ).toBe(false);
     });
 });
 

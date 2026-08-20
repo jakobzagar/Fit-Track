@@ -20,6 +20,20 @@ describe("common response schemas", () => {
         });
     });
 
+    test("accepts form-level validation errors", () => {
+        expect(
+            validationErrorResponseSchema.parse({
+                message: "Validation failed",
+                errors: {},
+                formErrors: ["Unrecognized key: role"],
+            }),
+        ).toEqual({
+            message: "Validation failed",
+            errors: {},
+            formErrors: ["Unrecognized key: role"],
+        });
+    });
+
     test("rejects malformed validation errors", () => {
         expect(
             validationErrorResponseSchema.safeParse({
