@@ -143,7 +143,7 @@ The Docker command applies committed migrations to a temporary `fit_track_test` 
 
 ## Version and release integrity
 
-- Treat `1.0.0` as the first production release baseline; earlier `0.x` releases are pre-production history and remain in the changelog.
+- Treat `1.0.0` as the first production release baseline and the beginning of the maintained changelog; earlier `0.x` releases remain available only as pre-production Git tags and repository history.
 - Keep the version identical in the root, backend, frontend, and shared `package.json` files; the root and workspace entries in `package-lock.json`; `.github/release-please/manifest.json`; and the current `CHANGELOG.md` heading.
 - Never use a repository-wide text replacement to update versions because dependency entries in `package-lock.json` have independent versions. After the baseline, let Release Please generate coordinated version changes and review its diff before merging.
 - The `v1.0.0` tag is a one-time bootstrap exception: create it from the exact merged baseline commit only after that commit's `Test` and `Build and Push to GHCR` workflows succeed. The tag triggers `Release Images`, which must pass before the baseline is considered published.
