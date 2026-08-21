@@ -137,7 +137,7 @@ Do not manually create or move release tags during the normal process. Publish a
 
 ### One-time 1.0.0 production baseline
 
-Version `1.0.0` is the first production baseline; existing `0.x` tags remain as pre-production history. Its preparation PR intentionally aligns the root package, all three workspaces, root and workspace lockfile entries, Release Please manifest, and changelog at `1.0.0`.
+Version `1.0.0` is the first production release and maintained version baseline. Its preparation PR intentionally aligns the root package, all three workspaces, root and workspace lockfile entries, Release Please manifest, and changelog at `1.0.0`.
 
 Because this baseline is established before Release Please owns the `1.x` line, publish it with this one-time bootstrap sequence:
 

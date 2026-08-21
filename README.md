@@ -178,7 +178,7 @@ The repository contains optimized production containers and image-publishing aut
 
 `main` is the protected integration branch. Contributors work on short-lived branches, open pull requests, and merge only after `Actions lint`, `Verify`, `Integration`, and `Production container smoke` succeed. Failed checks leave `main` unchanged and are corrected by pushing another commit to the same pull-request branch.
 
-FitTrack uses `1.0.0` as its first production release baseline; the earlier `0.x` releases represent pre-production milestones. The root package, all workspaces, package lock, Release Please manifest, and changelog carry the same product version.
+FitTrack uses `1.0.0` as its first production release and maintained version baseline. The root package, all workspaces, package lock, Release Please manifest, and changelog carry the same product version.
 
 Successful commits on `main` publish three multi-platform images from the same tested revision:
 
