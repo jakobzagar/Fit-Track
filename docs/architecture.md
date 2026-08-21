@@ -37,13 +37,13 @@ sequenceDiagram
 
 The diagram shows the successful path for a protected feature request. Express runs these layers in order:
 
-| Scope           | Middleware                                                       | Responsibility                                                                      |
-| --------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Application     | Helmet → CORS → general rate limiter                             | Security headers, allowed browser origin, request throttling                        |
-| Application     | JSON and URL-encoded parsers → cookie parser → CSRF origin check | Parse bodies up to 100 KB, read the auth cookie, protect state-changing requests    |
-| Protected route | JWT authentication → Zod validation → controller                 | Establish the user identity, validate path/query/body data, translate HTTP concerns |
-| Service         | Ownership rules → Prisma transaction when required               | Enforce domain rules and persist a consistent result                                |
-| Final handler   | Not-found middleware → error middleware                          | Return stable responses for unknown routes and failures                             |
+| Scope           | Middleware                                                       | Responsibility                                                                         |
+| --------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Application     | Helmet → CORS → API no-store → general rate limiter              | Security headers, allowed browser origin, private-response caching, request throttling |
+| Application     | JSON and URL-encoded parsers → cookie parser → CSRF origin check | Parse bodies up to 100 KB, read the auth cookie, protect state-changing requests       |
+| Protected route | JWT authentication → Zod validation → controller                 | Establish the user identity, validate path/query/body data, translate HTTP concerns    |
+| Service         | Ownership rules → Prisma transaction when required               | Enforce domain rules and persist a consistent result                                   |
+| Final handler   | Not-found middleware → error middleware                          | Return stable responses for unknown routes and failures                                |
 
 Public health routes and login or registration omit JWT authentication. Health checks also bypass the general limiter so runtime probes remain independent of client traffic. Login and registration use their own endpoint rate limiters in addition to the general limiter.
 
@@ -169,12 +169,15 @@ The Express application also provides:
 
 - Helmet security headers;
 - credentialed CORS limited to `CLIENT_URL`;
+- `Cache-Control: no-store` on every API response so authenticated data, authentication results, and API errors are not retained by browsers or shared caches;
 - 100 KB JSON and form payload limits;
 - general, login, and registration rate limiters;
 - sanitized unexpected error responses;
 - an explicit `TRUST_PROXY_HOPS` count that defaults to no trusted proxy.
 
 The proxy count must match the only network path to the API because Express uses it to determine the client address from `X-Forwarded-For`. The development and production-smoke Compose stacks use one proxy hop; a directly started backend uses zero. Rate-limit counters currently use process memory. A multi-process runtime needs a shared store before treating those counters as global.
+
+The production frontend applies its browser security policy at the static-serving boundary. Its Content Security Policy permits only same-origin application resources and API connections, blocks embedding and plugins, and does not allow inline scripts. The synchronous theme initializer is therefore a normal static file loaded before the React bundle. Referrer, permissions, content-type, framing, and cross-origin isolation headers complement the CSP. Hashed Vite assets remain immutable for one year, while `index.html` and the stable theme initializer require revalidation. A different static-serving platform must preserve these header and cache policies; they are runtime controls and cannot be encoded reliably in the static files themselves.
 
 ## Runtime lifecycle
 

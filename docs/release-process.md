@@ -216,8 +216,10 @@ After the images are pushed with immutable SHA tags, the image workflow starts t
 - frontend `/health`;
 - backend `/api/health/live`;
 - backend `/api/health/ready`;
-- the Nginx-served SPA entry point;
-- a browser-equivalent request through Nginx `/api` to backend readiness.
+- the Nginx-served SPA entry point and external theme initializer;
+- frontend CSP and related browser security headers;
+- frontend revalidation and backend `no-store` cache policies;
+- browser-equivalent requests through Nginx `/api` to the backend.
 
 The stack uses host ports `13001` and `18080` by default so it does not collide with local development. To run the stack locally, first build the three local image tags and then start it:
 

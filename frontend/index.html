@@ -6,18 +6,7 @@
         <link rel="icon" type="image/png" href="/brand/fittrack-mark.png" />
         <meta name="theme-color" content="#080808" />
         <title>FitTrack</title>
-        <script>
-            const savedTheme = localStorage.getItem("fittrack-theme");
-            const theme =
-                savedTheme === "light" || savedTheme === "dark"
-                    ? savedTheme
-                    : matchMedia("(prefers-color-scheme: light)").matches
-                      ? "light"
-                      : "dark";
-            document.documentElement.dataset.theme = theme;
-            document.querySelector('meta[name="theme-color"]').content =
-                theme === "light" ? "#f5f3ef" : "#080808";
-        </script>
+        <script src="/theme-init.js"></script>
     </head>
     <body>
         <div id="root"></div>

@@ -59,7 +59,7 @@ Pull requests run a production container smoke job after fast verification succe
 
 After a merge to `main`, the image-publishing workflow repeats the runtime checks against the immutable multi-platform SHA images pulled from GHCR. The first gate checks the proposed source before merge; the second proves that the published deployment artifacts work. Neither replaces browser end-to-end or PostgreSQL integration tests.
 
-The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same readiness request through Nginx `/api`, and the SPA entry document.
+The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same requests through Nginx `/api`, the SPA entry document and external theme initializer, frontend security headers, static revalidation policy, and API `no-store` behavior.
 
 For a local run, build `fit-track-backend:smoke`, `fit-track-frontend:smoke`, and `fit-track-migration:smoke` first; the exact commands are in the [release and container process](release-process.md#production-runtime). Remove the stack afterward with `docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans`.
 

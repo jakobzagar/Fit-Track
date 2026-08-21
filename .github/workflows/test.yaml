@@ -186,8 +186,21 @@ jobs:
 
           docker compose -f compose.production-smoke.yaml up --detach --wait --wait-timeout 120
 
+          assert_header() {
+            curl --fail --silent --show-error --head "$1" | grep --fixed-strings --ignore-case --quiet "$2"
+          }
+
           curl --fail --silent --show-error http://127.0.0.1:18080/health
           curl --fail --silent --show-error http://127.0.0.1:13001/api/health/live
           curl --fail --silent --show-error http://127.0.0.1:13001/api/health/ready
           curl --fail --silent --show-error http://127.0.0.1:18080/api/health/ready
           curl --fail --silent --show-error http://127.0.0.1:18080/ | grep -q '<div id="root">'
+          curl --fail --silent --show-error http://127.0.0.1:18080/theme-init.js | grep -q 'fittrack-theme'
+
+          assert_header http://127.0.0.1:18080/ "Content-Security-Policy: default-src 'self';"
+          assert_header http://127.0.0.1:18080/ "Referrer-Policy: strict-origin-when-cross-origin"
+          assert_header http://127.0.0.1:18080/ "Permissions-Policy: camera=(), geolocation=(), microphone=()"
+          assert_header http://127.0.0.1:18080/ "X-Content-Type-Options: nosniff"
+          assert_header http://127.0.0.1:18080/theme-init.js "Cache-Control: no-cache"
+          assert_header http://127.0.0.1:13001/api/health/live "Cache-Control: no-store"
+          assert_header http://127.0.0.1:18080/api/health/live "Cache-Control: no-store"

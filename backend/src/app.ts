@@ -8,6 +8,7 @@ import {errorMiddleware} from "./common/middleware/error.middleware.js";
 import {apiRateLimiter} from "./common/middleware/rate-limit.middleware.js";
 import {apiNotFound} from "./common/middleware/not-found.middleware.js";
 import {httpLogger} from "./observability/logging/http-logger.middleware.js";
+import {preventApiResponseCaching} from "./common/middleware/cache-control.middleware.js";
 
 import authRoutes from "./modules/auth/routes/auth.routes.js";
 import exerciseRoutes from "./modules/exercises/routes/exercise.routes.js";
@@ -28,6 +29,7 @@ app.use(
         credentials: true,
     }),
 );
+app.use("/api", preventApiResponseCaching);
 app.use(apiRateLimiter);
 app.use(express.json({limit: "100kb"}));
 app.use(

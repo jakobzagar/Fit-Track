@@ -172,6 +172,7 @@ describe("GET /api/auth/me", () => {
         const body = authResponseSchema.parse(response.body);
 
         expect(response.status).toBe(200);
+        expect(response.headers["cache-control"]).toBe("no-store");
         expect(body.user).toMatchObject({id: user.id, email: user.email});
         expect(body.user).not.toHaveProperty("passwordHash");
     });
