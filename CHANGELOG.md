@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0](https://github.com/jakobzagar/Fit-Track/compare/v0.2.0...v0.3.0) (2026-08-21)
+
+
+### Features
+
+* add structured backend logging ([d43d1be](https://github.com/jakobzagar/Fit-Track/commit/d43d1bee37450ede2e8791733144f584e48b1102))
+
+
+### Bug Fixes
+
+* enforce workout lifecycle invariants ([74022ac](https://github.com/jakobzagar/Fit-Track/commit/74022acd2317ff069e31c6f0242dfc1b26851bed))
+* harden database connection defaults ([c8fabb3](https://github.com/jakobzagar/Fit-Track/commit/c8fabb335c37e6a14bea969605c9674e0532456f))
+* harden shared validation contracts ([4151125](https://github.com/jakobzagar/Fit-Track/commit/4151125133356592738937643a56bfa316b5a75d))
+* keep health checks available under load ([5613245](https://github.com/jakobzagar/Fit-Track/commit/56132450a5a317d18e46abaf10ff46131bd644d1))
+* validate runtime environment configuration ([4e76680](https://github.com/jakobzagar/Fit-Track/commit/4e7668044605afa39ab6f8223e30603c7f8aa071))
+
 ## [0.2.0](https://github.com/jakobzagar/Fit-Track/compare/v0.1.0...v0.2.0) (2026-08-12)
 
 
