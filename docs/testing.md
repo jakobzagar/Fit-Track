@@ -61,7 +61,16 @@ After a merge to `main`, the image-publishing workflow repeats the runtime check
 
 The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same requests through Nginx `/api`, the SPA entry document and external theme initializer, frontend security headers, static revalidation policy, and API `no-store` behavior.
 
-For a local run, build `fit-track-backend:smoke`, `fit-track-frontend:smoke`, and `fit-track-migration:smoke` first; the exact commands are in the [release and container process](release-process.md#production-runtime). Remove the stack afterward with `docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans`.
+For a local run, build and start the same final targets:
+
+```bash
+docker build --target production --tag fit-track-backend:smoke -f backend/Dockerfile .
+docker build --target migration --tag fit-track-migration:smoke -f backend/Dockerfile .
+docker build --target production --tag fit-track-frontend:smoke -f frontend/Dockerfile .
+docker compose -f compose.production-smoke.yaml up --detach --wait --wait-timeout 120
+```
+
+Clean up afterward with `docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans`. Set `SMOKE_BACKEND_PORT` or `SMOKE_FRONTEND_PORT` when the defaults `13001` and `18080` are unavailable.
 
 ## Contract testing
 
@@ -118,4 +127,4 @@ The protected `main` branch requires these exact GitHub Actions job names:
 - `Integration` applies committed migrations and tests the API against PostgreSQL;
 - `Production container smoke` builds and exercises the final runtime targets.
 
-A pull request cannot merge while any required check is pending, failing, or missing. A failure does not remove commits from the source branch and does not change `main`; push the correction to the same branch and GitHub reruns the workflow for the updated pull request. The complete contributor flow and repository ruleset are documented in the [release and container process](release-process.md#protected-main-workflow).
+The complete merge policy, correction flow, and repository ruleset belong in the [release and container process](release-process.md#protected-main-workflow).

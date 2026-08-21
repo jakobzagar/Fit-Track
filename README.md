@@ -64,7 +64,7 @@ fit-track/
 ├── backend/           Express API, domain services, tests, and Prisma layer
 │   └── prisma/        Database schema and append-only migrations
 ├── shared/            Framework-independent Zod schemas and TypeScript contracts
-├── docs/              Architecture, testing, and release documentation
+├── docs/              Architecture, testing, release, and AWS planning
 ├── compose.dev.yaml   Complete local development stack
 └── compose.test.yaml  Isolated verification stack with temporary PostgreSQL
 ```
@@ -172,13 +172,13 @@ The API restricts credentialed CORS to the configured frontend origin, checks CS
 
 The current rate limiter uses process-local memory and is suitable for the present single-process runtime. Multiple backend processes require a shared store if limits must be global. The backend emits redacted JSON logs to standard output in production, attaches a generated request ID to each response, and uses readable pretty-printing only during local development.
 
-The repository contains optimized production containers and image-publishing automation, but it does not claim that platform concerns such as HTTPS termination, managed secrets, backups, monitoring, or deployment are already implemented.
+The planned deployment target is AWS, with ECS for backend and migration workloads, RDS PostgreSQL, and S3/CloudFront for the static frontend. That infrastructure is not implemented in this repository yet, so HTTPS termination, managed secrets, backups, monitoring, and deployment remain explicit pre-production work described in the [AWS deployment plan](docs/aws-deployment-plan.md).
 
 ## Delivery
 
 `main` is the protected integration branch. Contributors work on short-lived branches, open pull requests, and merge only after `Actions lint`, `Verify`, `Integration`, and `Production container smoke` succeed. Failed checks leave `main` unchanged and are corrected by pushing another commit to the same pull-request branch.
 
-FitTrack uses `1.0.0` as its first production release and maintained version baseline. The root package, all workspaces, package lock, Release Please manifest, and changelog carry the same product version.
+FitTrack uses `1.0.0` as its planned first production release and maintained version baseline. The root package, all workspaces, package lock, Release Please manifest, and changelog carry the same product version.
 
 Successful commits on `main` publish three multi-platform images from the same tested revision:
 
@@ -195,6 +195,7 @@ See [Release and container process](docs/release-process.md#protected-main-workf
 - [Architecture and design decisions](docs/architecture.md)
 - [Testing strategy](docs/testing.md)
 - [Release and container process](docs/release-process.md)
+- [AWS deployment plan](docs/aws-deployment-plan.md)
 
 ## Author
 

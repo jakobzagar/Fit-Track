@@ -271,7 +271,9 @@ The frontend requests relative `/api` paths. Vite forwards them to `API_PROXY_TA
 
 ## Known operational boundaries
 
+The repository's current production artifacts and planned AWS topology are summarized in the [AWS deployment plan](aws-deployment-plan.md).
+
 - The repository does not configure an external log aggregation, metrics, or distributed-tracing destination.
 - The repository publishes containers but does not include a platform deployment definition.
 - Production containers are not started together by the normal fast verification command.
-- HTTPS termination, managed secrets, backups, monitoring, and deployment remain runtime responsibilities.
+- HTTPS termination, managed secrets, backup automation, monitoring, and deployment are not configured yet.

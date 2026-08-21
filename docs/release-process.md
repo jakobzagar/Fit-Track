@@ -87,6 +87,8 @@ Release Please pull requests use the same protected path. Never merge a stale re
 
 Images are built for `linux/amd64` and `linux/arm64`. Each build publishes an SBOM and max-level provenance attestation.
 
+The current request topology and container behavior are documented in [architecture](architecture.md); exact production-smoke coverage and local commands belong in the [testing strategy](testing.md#production-container-smoke-tests). The future AWS topology is separate from these currently verified artifacts and is described in the [AWS deployment plan](aws-deployment-plan.md).
+
 ## Image tags
 
 After a successful build and production smoke test, every image receives:
@@ -139,6 +141,8 @@ Do not manually create or move release tags during the normal process. Publish a
 
 Version `1.0.0` is the first production release and maintained version baseline. Its preparation PR intentionally aligns the root package, all three workspaces, root and workspace lockfile entries, Release Please manifest, and changelog at `1.0.0`.
 
+Before the manual release step below, those files describe a prepared baseline rather than an already published tag or GitHub Release.
+
 Because this baseline is established before Release Please owns the `1.x` line, publish it with this one-time bootstrap sequence:
 
 1. merge the baseline PR only after `Actions lint`, `Verify`, `Integration`, and `Production container smoke` pass;
@@ -157,77 +161,12 @@ git commit --allow-empty \
   -m "Release-As: 2.0.0"
 ```
 
-## Local workflow validation
+## Workflow validation
 
-Install the optional local tools:
+Run `npm run actions:lint` after changing a workflow or local action. Local simulation cannot reproduce every GitHub-hosted runner behavior, so the pull request checks remain authoritative. Never commit local workflow secrets or credentials.
 
-```bash
-brew install act actionlint
-```
+## Dependency update automation
 
-Then run:
+Dependabot checks GitHub Actions and the root npm workspace weekly. Minor and patch npm updates are grouped by production or development responsibility, while major updates remain individually reviewable.
 
-```bash
-npm run actions:lint
-npm run actions:list
-npm run actions:check
-npm run actions:verify
-```
-
-`actionlint` is the authoritative static YAML check. `act` approximates a GitHub-hosted runner but does not reproduce service containers and all runner behavior exactly. Use `npm run test:docker` for the local PostgreSQL integration lifecycle and confirm runner-specific changes with a real GitHub Actions run.
-
-If a future local workflow simulation requires a secret, pass it interactively with `act -s SECRET_NAME`. Do not commit `.secrets`, `.vars`, `.input`, environment files, or credentials.
-
-## Production runtime
-
-The frontend production image runs unprivileged Nginx on port `8080`; the backend production image runs as the unprivileged `node` user on port `3001` and checks `/api/health/live`.
-
-```mermaid
-flowchart LR
-    Browser([Browser]) --> Nginx
-
-    subgraph Frontend[Frontend container]
-        Nginx[Nginx :8080]
-        Assets[React build]
-    end
-
-    subgraph Backend[Backend container]
-        API[Express API :3001]
-    end
-
-    Nginx --> API
-    Nginx --> Assets
-    API --> Database[(PostgreSQL)]
-```
-
-Nginx gives the browser one public origin. It serves the React build and forwards only `/api` requests to the API; PostgreSQL is never exposed to the browser.
-
-| Request path          | Nginx behavior                                                                                                  |
-| --------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `/assets/`            | Serves hashed Vite assets with immutable one-year caching.                                                      |
-| `/` and client routes | Serves the React single-page application with an `index.html` fallback.                                         |
-| `/api/`               | Proxies to the `fittrack_backend` upstream at `backend:3001`, forwarding host, client IP, and protocol headers. |
-| `/health`             | Returns a no-cache Nginx health response without writing an access log.                                         |
-
-Nginx enforces a 100 KB request body limit, disables version tokens, enables gzip for suitable text assets, and applies connect, send, and read proxy timeouts. A production runtime must preserve the internal `backend:3001` hostname or provide an equivalent route.
-
-After the images are pushed with immutable SHA tags, the image workflow starts the production smoke stack. It starts an ephemeral PostgreSQL database, applies committed migrations with the final migration image, and starts the final backend and Nginx images. The check proves:
-
-- frontend `/health`;
-- backend `/api/health/live`;
-- backend `/api/health/ready`;
-- the Nginx-served SPA entry point and external theme initializer;
-- frontend CSP and related browser security headers;
-- frontend revalidation and backend `no-store` cache policies;
-- browser-equivalent requests through Nginx `/api` to the backend.
-
-The stack uses host ports `13001` and `18080` by default so it does not collide with local development. To run the stack locally, first build the three local image tags and then start it:
-
-```bash
-docker build --target production --tag fit-track-backend:smoke -f backend/Dockerfile .
-docker build --target migration --tag fit-track-migration:smoke -f backend/Dockerfile .
-docker build --target production --tag fit-track-frontend:smoke -f frontend/Dockerfile .
-docker compose -f compose.production-smoke.yaml up --detach --wait --wait-timeout 120
-```
-
-Clean up afterward with `docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans`. Set `SMOKE_BACKEND_PORT` or `SMOKE_FRONTEND_PORT` when the default host ports are unavailable.
+Docker coverage is also weekly. The `docker` ecosystem scans the root, backend, and frontend Dockerfile directories; the separate `docker-compose` ecosystem scans the root Compose definitions. Dependabot pull requests are not auto-merged: they follow the same protected `main` pull-request path and required checks as contributor changes.

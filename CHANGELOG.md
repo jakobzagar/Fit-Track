@@ -6,4 +6,4 @@
 
 - establish the first production release baseline with aligned workspace versions, protected pull-request delivery, isolated verification, and immutable container promotion
 
-All notable changes to FitTrack are documented in this file by Release Please.
+Release Please owns this file after the initial `1.0.0` baseline.
