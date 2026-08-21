@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.0](https://github.com/jakobzagar/Fit-Track/compare/v0.2.0...v1.0.0) (2026-08-21)
+
+### Production baseline
+
+- establish the first production release baseline with aligned workspace versions, protected pull-request delivery, isolated verification, and immutable container promotion
+
 ## [0.2.0](https://github.com/jakobzagar/Fit-Track/compare/v0.1.0...v0.2.0) (2026-08-12)
 
 

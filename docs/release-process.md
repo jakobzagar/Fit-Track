@@ -127,7 +127,7 @@ Release Please treats the monorepo as one versioned product. Conventional Commit
 - `!` or a `BREAKING CHANGE` footer requests a major release;
 - `docs:`, `test:`, `ci:`, and `chore:` normally do not request a product release.
 
-The release pull request updates the root, frontend, backend, and shared `package.json` versions together with their `package-lock.json` entries. The manifest, Git tag, changelog, and every workspace therefore describe the same product version; workspace packages are not released independently.
+The release pull request updates the root, frontend, backend, and shared `package.json` versions together with their `package-lock.json` entries. The manifest, Git tag, changelog, and every workspace therefore describe the same product version; workspace packages are not released independently. Review these exact entries in a release pull request and never update dependency versions through a repository-wide replacement.
 
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. The token allows Release Please-created changes and tags to trigger the normal workflows.
 
@@ -135,12 +135,26 @@ After image publication on `main`, Release Please creates or updates a release p
 
 Do not manually create or move release tags during the normal process. Publish a new patch version when a released artifact needs correction.
 
+### One-time 1.0.0 production baseline
+
+Version `1.0.0` is the first production baseline; existing `0.x` tags remain as pre-production history. Its preparation PR intentionally aligns the root package, all three workspaces, root and workspace lockfile entries, Release Please manifest, and changelog at `1.0.0`.
+
+Because this baseline is established before Release Please owns the `1.x` line, publish it with this one-time bootstrap sequence:
+
+1. merge the baseline PR only after `Actions lint`, `Verify`, `Integration`, and `Production container smoke` pass;
+2. wait for the merge commit's `Test` workflow and subsequent `Build and Push to GHCR` workflow to succeed;
+3. confirm that backend, frontend, and migration images exist with `sha-<merge-commit>` tags;
+4. create GitHub Release `v1.0.0` targeting that exact commit on `main` and use the `1.0.0` changelog section as its notes;
+5. wait for `Release Images` to validate the tag and promote the same immutable image digests to `1.0.0`, `1.0`, `1`, and `latest`.
+
+Never create the tag before immutable images for its commit have passed their registry smoke test. Once `v1.0.0` exists, this exception is complete: Release Please discovers the manifest and tag as the current release and owns every later version through its normal protected PR flow. A `fix:` then proposes `1.0.1`, a `feat:` proposes `1.1.0`, and a breaking change proposes `2.0.0`.
+
 To intentionally override the proposed next version, use a `Release-As` footer:
 
 ```bash
 git commit --allow-empty \
-  -m "chore: prepare release 1.0.0" \
-  -m "Release-As: 1.0.0"
+  -m "chore: prepare release 2.0.0" \
+  -m "Release-As: 2.0.0"
 ```
 
 ## Local workflow validation

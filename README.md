@@ -178,13 +178,15 @@ The repository contains optimized production containers and image-publishing aut
 
 `main` is the protected integration branch. Contributors work on short-lived branches, open pull requests, and merge only after `Actions lint`, `Verify`, `Integration`, and `Production container smoke` succeed. Failed checks leave `main` unchanged and are corrected by pushing another commit to the same pull-request branch.
 
+FitTrack uses `1.0.0` as its first production release baseline; the earlier `0.x` releases represent pre-production milestones. The root package, all workspaces, package lock, Release Please manifest, and changelog carry the same product version.
+
 Successful commits on `main` publish three multi-platform images from the same tested revision:
 
 - `fit-track-backend`
 - `fit-track-frontend`
 - `fit-track-migration`
 
-Images receive immutable `sha-<commit>` tags, SBOM attestations, and build provenance. Each immutable image set is smoke-tested before its moving `main` tags are promoted. Release Please manages product versions and promotes existing images without rebuilding them.
+Images receive immutable `sha-<commit>` tags, SBOM attestations, and build provenance. Each immutable image set is smoke-tested before its moving `main` tags are promoted. After the one-time `v1.0.0` production-baseline bootstrap, Release Please manages later product versions and promotes existing images without rebuilding them.
 
 See [Release and container process](docs/release-process.md#protected-main-workflow) for the branch workflow, repository ruleset, migration ordering, image tags, local workflow checks, and release operations.
 

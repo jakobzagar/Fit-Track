@@ -141,6 +141,15 @@ The Docker command applies committed migrations to a temporary `fit_track_test` 
 - After a pull request is merged, update local `main` with `git pull --ff-only` and delete the merged local branch.
 - Keep the repository ruleset for `main` active with pull requests required, required status checks, resolved conversations, an up-to-date branch, and force pushes and branch deletion blocked. Do not configure a routine bypass.
 
+## Version and release integrity
+
+- Treat `1.0.0` as the first production release baseline; earlier `0.x` releases are pre-production history and remain in the changelog.
+- Keep the version identical in the root, backend, frontend, and shared `package.json` files; the root and workspace entries in `package-lock.json`; `.github/release-please/manifest.json`; and the current `CHANGELOG.md` heading.
+- Never use a repository-wide text replacement to update versions because dependency entries in `package-lock.json` have independent versions. After the baseline, let Release Please generate coordinated version changes and review its diff before merging.
+- The `v1.0.0` tag is a one-time bootstrap exception: create it from the exact merged baseline commit only after that commit's `Test` and `Build and Push to GHCR` workflows succeed. The tag triggers `Release Images`, which must pass before the baseline is considered published.
+- After `v1.0.0`, let Release Please update version files, the manifest, and changelog. Normal releases must come from its protected release PR; do not manually create or move later version tags.
+- Future `fix:` commits advance the production line to `1.0.1`, `1.0.2`, and so on; future `feat:` commits advance it to `1.1.0`, while breaking changes request the next major version.
+
 ## Commit conventions
 
 - Follow the repository's existing Conventional Commits style: `<type>: <imperative summary>`.
