@@ -130,6 +130,17 @@ The Docker command applies committed migrations to a temporary `fit_track_test` 
 - Treat all client input as untrusted and keep Zod validation in place.
 - Do not weaken authorization, security middleware, or production defaults to make local development easier.
 
+## Branch and pull request workflow
+
+- Treat `main` as a protected, merge-only branch. Do not push feature, fix, documentation, or release commits directly to it after branch protection is enabled.
+- Start each logical change from an up-to-date `main`, create a short-lived branch such as `feat/workout-pagination`, `fix/session-timeout`, or `docs/testing-guide`, and keep unrelated work on separate branches.
+- Push commits to that branch and open a pull request targeting `main`. Additional fixes belong on the same branch and automatically update the existing pull request.
+- Do not merge until the branch is up to date with `main`, review conversations are resolved, and the required `Actions lint`, `Verify`, `Integration`, and `Production container smoke` checks pass.
+- A failed check leaves `main` unchanged. Diagnose the failure, commit the correction on the pull-request branch, push it, and wait for the checks to rerun; do not bypass or weaken a check to force a merge.
+- Release Please pull requests follow the same gate. Update a stale release pull request with the latest `main` commits and wait for all required checks before merging it.
+- After a pull request is merged, update local `main` with `git pull --ff-only` and delete the merged local branch.
+- Keep the repository ruleset for `main` active with pull requests required, required status checks, resolved conversations, an up-to-date branch, and force pushes and branch deletion blocked. Do not configure a routine bypass.
+
 ## Commit conventions
 
 - Follow the repository's existing Conventional Commits style: `<type>: <imperative summary>`.

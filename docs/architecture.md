@@ -217,6 +217,10 @@ Completed sessions are immutable during normal editing. A deliberate reopen acti
 
 The runtime backend image contains only compiled application files and production dependencies. A separate migration image includes the Prisma tooling and committed migrations. This increases the number of artifacts but makes schema changes an explicit one-off step rather than a side effect of every application start.
 
+### Protected integration branch
+
+`main` represents reviewed, releasable integration state rather than an everyday development workspace. Short-lived branches and pull requests isolate unfinished changes, while required workflow, verification, database integration, and final-container checks prevent a failing revision from entering `main`. This adds pull-request overhead for a solo maintainer but keeps the tested source revision aligned with the artifacts produced after merge. The operational flow and repository ruleset are defined in the [release and container process](release-process.md#protected-main-workflow).
+
 ## Environment configuration
 
 Environment files are separated by launch mode so Docker and direct-process settings cannot silently override each other:

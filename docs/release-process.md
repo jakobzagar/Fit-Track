@@ -33,7 +33,49 @@ flowchart TB
     Main --> ReleasePR
 ```
 
-Pull requests build and smoke-test the final production targets before merge. The image workflow then runs only after the complete `Test` workflow succeeds for a push to `main`. It checks out the exact tested SHA rather than the current branch tip, pushes immutable SHA tags, smoke-tests those registry artifacts, and only then promotes the moving `main` tags. A pull request or push that changes only Markdown files skips the `Test` workflow and therefore does not publish images. Release Please creates or updates a release pull request after artifact publication; merging that pull request creates the version tag and GitHub Release, which promote the matching immutable image digests to SemVer tags.
+Every pull request builds and smoke-tests the final production targets before merge, including documentation-only pull requests. The image workflow then runs only after the complete `Test` workflow succeeds for a non-documentation push to `main`. It checks out the exact tested SHA rather than the current branch tip, pushes immutable SHA tags, smoke-tests those registry artifacts, and only then promotes the moving `main` tags. A push to `main` that changes only Markdown files skips post-merge testing and image publication because its pull request was already fully checked. Release Please creates or updates a release pull request after artifact publication; merging that pull request creates the version tag and GitHub Release, which promote the matching immutable image digests to SemVer tags.
+
+## Protected main workflow
+
+`main` is the stable integration branch. After branch protection is enabled, all feature, fix, documentation, and release changes reach it through pull requests rather than direct pushes.
+
+For each logical change:
+
+```bash
+git switch main
+git pull --ff-only
+git switch -c feat/workout-pagination
+
+# Edit the relevant files, then run the narrowest checks while iterating.
+npm run verify
+
+git add -- <changed-files>
+git commit -m "feat: add workout pagination"
+git push -u origin feat/workout-pagination
+```
+
+Open a pull request from the pushed branch into `main`. The first push creates the remote tracking branch; later corrections use the same local branch and normally require only `git push`. Each push updates the existing pull request and reruns its checks, so a new branch or pull request is not needed for every commit.
+
+The repository ruleset for `main` should:
+
+- require a pull request before merging;
+- require the branch to be up to date with `main` before merging;
+- require all review conversations to be resolved;
+- require the exact `Actions lint`, `Verify`, `Integration`, and `Production container smoke` status checks;
+- block force pushes and deletion of `main`;
+- provide no routine bypass for repository administrators or automation.
+
+A solo-maintainer repository may use zero required approving reviews while still requiring the pull request itself and all automated checks. Increase the approval count when another regular reviewer is available.
+
+If any required check fails, `main` remains unchanged. Fix the problem on the pull-request branch, commit it, push again, and wait for the new check run. Do not merge by bypassing, dismissing, or weakening the required check. After merge, synchronize and clean up locally:
+
+```bash
+git switch main
+git pull --ff-only
+git branch -d feat/workout-pagination
+```
+
+Release Please pull requests use the same protected path. Never merge a stale release pull request: first allow it to incorporate the latest commits from `main`, review its proposed version and changelog, and wait for all four required checks to pass.
 
 ## Published images
 

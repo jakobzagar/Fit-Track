@@ -55,7 +55,7 @@ Never point integration tests at development or production data. Destructive tes
 
 ## Production container smoke tests
 
-Pull requests run a production container smoke job after fast verification succeeds. It builds the final backend, migration, and frontend targets for the runner platform and rejects Dockerfile, migration startup, health-check, static-serving, or proxy regressions before merge. The job runs for every non-Markdown pull request; this keeps the quality gate explicit and avoids a separate changed-files dependency with incomplete runtime path rules.
+Pull requests run a production container smoke job after fast verification succeeds. It builds the final backend, migration, and frontend targets for the runner platform and rejects Dockerfile, migration startup, health-check, static-serving, or proxy regressions before merge. The job runs for every pull request, including documentation-only changes, so the protected-branch checks are always reported and cannot remain pending because a workflow was skipped by a path filter.
 
 After a merge to `main`, the image-publishing workflow repeats the runtime checks against the immutable multi-platform SHA images pulled from GHCR. The first gate checks the proposed source before merge; the second proves that the published deployment artifacts work. Neither replaces browser end-to-end or PostgreSQL integration tests.
 
@@ -108,3 +108,14 @@ Pure presentational pass-through components do not receive standalone tests unle
 Observable behavior changes require tests at the layer that owns the behavior. Bug fixes add a regression case that reproduces the failure. Refactors should preserve existing expectations rather than weakening assertions to make tests pass.
 
 When backend persistence, authorization, security middleware, concurrency, or migrations change, both `npm run verify` and `npm run test:docker` are required before handoff.
+
+## Pull request quality gate
+
+The protected `main` branch requires these exact GitHub Actions job names:
+
+- `Actions lint` validates workflow syntax;
+- `Verify` runs linting, type checking, formatting, fast tests, and production builds;
+- `Integration` applies committed migrations and tests the API against PostgreSQL;
+- `Production container smoke` builds and exercises the final runtime targets.
+
+A pull request cannot merge while any required check is pending, failing, or missing. A failure does not remove commits from the source branch and does not change `main`; push the correction to the same branch and GitHub reruns the workflow for the updated pull request. The complete contributor flow and repository ruleset are documented in the [release and container process](release-process.md#protected-main-workflow).

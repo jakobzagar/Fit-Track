@@ -176,6 +176,8 @@ The repository contains optimized production containers and image-publishing aut
 
 ## Delivery
 
+`main` is the protected integration branch. Contributors work on short-lived branches, open pull requests, and merge only after `Actions lint`, `Verify`, `Integration`, and `Production container smoke` succeed. Failed checks leave `main` unchanged and are corrected by pushing another commit to the same pull-request branch.
+
 Successful commits on `main` publish three multi-platform images from the same tested revision:
 
 - `fit-track-backend`
@@ -184,7 +186,7 @@ Successful commits on `main` publish three multi-platform images from the same t
 
 Images receive immutable `sha-<commit>` tags, SBOM attestations, and build provenance. Each immutable image set is smoke-tested before its moving `main` tags are promoted. Release Please manages product versions and promotes existing images without rebuilding them.
 
-See [Release and container process](docs/release-process.md) for migration ordering, image tags, local workflow checks, and release operations.
+See [Release and container process](docs/release-process.md#protected-main-workflow) for the branch workflow, repository ruleset, migration ordering, image tags, local workflow checks, and release operations.
 
 ## Documentation
 
