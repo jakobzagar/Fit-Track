@@ -1,7 +1,7 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import type {WorkoutSet} from "@fit-track/shared/workouts";
 import type {UpdateWorkoutSetInput} from "@fit-track/shared/workout-exercises";
-import {parseEditedWorkoutSet} from "../../schemas/workout-set-input.parser.ts";
+import {parseEditedWorkoutSet} from "../../workout-set-input.parser.ts";
 import {Button} from "../../../../components/ui/actions/Button.tsx";
 import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
 import {

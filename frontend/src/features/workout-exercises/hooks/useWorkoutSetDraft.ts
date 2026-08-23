@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import type {WorkoutSet} from "@fit-track/shared/workouts";
 import type {UpdateWorkoutSetInput} from "@fit-track/shared/workout-exercises";
-import {parseEditedWorkoutSet} from "../schemas/workout-set-input.parser";
+import {parseEditedWorkoutSet} from "../workout-set-input.parser";
 
 interface WorkoutSetDraftOptions {
     workoutSet: WorkoutSet;

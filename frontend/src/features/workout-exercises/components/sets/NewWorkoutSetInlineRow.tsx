@@ -1,7 +1,7 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import type {CreateWorkoutSetInput} from "@fit-track/shared/workout-exercises";
 import {Button} from "../../../../components/ui/actions/Button.tsx";
-import {parseNewWorkoutSet} from "../../schemas/workout-set-input.parser.ts";
+import {parseNewWorkoutSet} from "../../workout-set-input.parser.ts";
 
 interface NewWorkoutSetInlineRowProps {
     setNumber: number;

@@ -1,5 +1,5 @@
 import {describe, expect, test} from "vitest";
-import {parseEditedWorkoutSet, parseNewWorkoutSet} from "../schemas/workout-set-input.parser";
+import {parseEditedWorkoutSet, parseNewWorkoutSet} from "../workout-set-input.parser";
 
 describe("workout set input parsing", () => {
     test("normalizes create and edit values", () => {
