@@ -5,8 +5,8 @@ import {WorkoutSetInlineRow} from "../../../workout-exercises/components/sets/Wo
 import type {
     CreateWorkoutSetInput,
     UpdateWorkoutSetInput,
-} from "../../../workout-exercises/schemas/workout-exercises.schemas";
-import type {PreviousPerformance, WorkoutExercise, WorkoutSet} from "../../types/workout.types";
+} from "@fit-track/shared/workout-exercises";
+import type {PreviousPerformance, WorkoutExercise, WorkoutSet} from "@fit-track/shared/workouts";
 import {formatWorkoutDate} from "../../utils/workout-date";
 
 interface WorkoutSessionExerciseCardProps {

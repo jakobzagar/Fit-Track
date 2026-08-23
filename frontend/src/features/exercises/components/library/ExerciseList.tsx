@@ -1,4 +1,4 @@
-import type {Exercise} from "../../types/exercise.types";
+import type {Exercise} from "@fit-track/shared/exercises";
 import {ExerciseItem} from "./ExerciseItem";
 
 interface ExerciseListProps {

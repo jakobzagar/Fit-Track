@@ -1,7 +1,7 @@
 import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
-import type {WorkoutExercise} from "../../workouts/types/workout.types";
+import type {WorkoutExercise} from "@fit-track/shared/workouts";
 import {UpdateWorkoutExerciseForm} from "../components/exercises/UpdateWorkoutExerciseForm";
 
 const workoutExercise: WorkoutExercise = {

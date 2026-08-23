@@ -2,8 +2,11 @@ import {useState} from "react";
 import {WorkoutFormDialog} from "../components/forms/WorkoutFormDialog.tsx";
 import {WorkoutEmptyState} from "../components/list/WorkoutEmptyState.tsx";
 import {WorkoutList} from "../components/list/WorkoutList.tsx";
-import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
-import type {WorkoutSummary} from "../types/workout.types.ts";
+import type {
+    CreateWorkoutInput,
+    UpdateWorkoutInput,
+    WorkoutSummary,
+} from "@fit-track/shared/workouts";
 import {Feedback} from "../../../components/ui/feedback/Feedback.tsx";
 import {PageHeader} from "../../../components/ui/display/PageHeader.tsx";
 import {SkeletonGrid} from "../../../components/ui/display/SkeletonGrid.tsx";

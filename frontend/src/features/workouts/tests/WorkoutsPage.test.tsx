@@ -6,7 +6,7 @@ import {server} from "../../../test/mocks/server";
 import {renderWithProviders} from "../../../test/render";
 import {createWorkoutSummary} from "../../../test/fixtures/workouts";
 import {WorkoutsPage} from "../pages/WorkoutsPage";
-import type {WorkoutSummary} from "../types/workout.types";
+import type {WorkoutSummary} from "@fit-track/shared/workouts";
 
 const summary = createWorkoutSummary({status: "DRAFT"});
 const {_count: _count, ...workout} = summary;

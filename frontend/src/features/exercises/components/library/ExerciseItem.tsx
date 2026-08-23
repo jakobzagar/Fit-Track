@@ -1,6 +1,6 @@
 import {Button} from "../../../../components/ui/actions/Button";
 import {Card} from "../../../../components/ui/display/Card";
-import type {Exercise} from "../../types/exercise.types.ts";
+import type {Exercise} from "@fit-track/shared/exercises";
 import {Icon} from "../../../../components/ui/display/Icon";
 
 interface ExerciseItemProps {

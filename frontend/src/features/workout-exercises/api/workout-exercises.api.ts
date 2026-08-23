@@ -8,20 +8,18 @@ import {
 } from "@fit-track/shared/workout-exercises";
 import {apiRequest} from "../../../lib/api/api.client.ts";
 import type {
+    AddExerciseToWorkoutInput,
     AddExerciseToWorkoutResponse,
     AddSetToWorkoutExerciseResponse,
+    CreateWorkoutSetInput,
     DeleteWorkoutExerciseResponse,
     DeleteWorkoutSetResponse,
-    WorkoutExerciseResponse,
-    WorkoutSetResponse,
-} from "../types/workout-exercises.types.ts";
-import type {
-    AddExerciseToWorkoutInput,
-    CreateWorkoutSetInput,
+    SetWorkoutSetCompletionInput,
     UpdateWorkoutExerciseInput,
     UpdateWorkoutSetInput,
-    SetWorkoutSetCompletionInput,
-} from "../schemas/workout-exercises.schemas.ts";
+    WorkoutExerciseResponse,
+    WorkoutSetResponse,
+} from "@fit-track/shared/workout-exercises";
 
 export function addExerciseToWorkout(
     workoutId: string,

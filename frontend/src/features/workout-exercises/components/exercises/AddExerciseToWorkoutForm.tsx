@@ -1,10 +1,10 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import {z} from "zod";
-import type {Exercise} from "../../../exercises/types/exercise.types.ts";
+import type {Exercise} from "@fit-track/shared/exercises";
 import {
     addExerciseToWorkoutSchema,
     type AddExerciseToWorkoutInput,
-} from "../../schemas/workout-exercises.schemas.ts";
+} from "@fit-track/shared/workout-exercises";
 import {Button} from "../../../../components/ui/actions/Button.tsx";
 import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
 import {

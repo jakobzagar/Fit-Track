@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState, type ReactNode} from "react";
 import {getMe, logout} from "../api/auth.api";
-import type {User} from "../types/auth.types";
+import type {User} from "@fit-track/shared/auth";
 import {AuthContext} from "./auth.context";
 import {ApiError} from "../../../common/errors/api.error";
 import {Feedback} from "../../../components/ui/feedback/Feedback";

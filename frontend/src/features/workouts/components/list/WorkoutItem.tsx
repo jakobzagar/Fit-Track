@@ -1,7 +1,7 @@
 import {Link} from "react-router";
 import {Button} from "../../../../components/ui/actions/Button.tsx";
 import {Card} from "../../../../components/ui/display/Card.tsx";
-import type {WorkoutSummary} from "../../types/workout.types.ts";
+import type {WorkoutSummary} from "@fit-track/shared/workouts";
 import {Icon} from "../../../../components/ui/display/Icon.tsx";
 import {formatWorkoutDate} from "../../utils/workout-date.ts";
 

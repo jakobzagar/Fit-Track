@@ -9,9 +9,9 @@ import {ExerciseFormDialog} from "../components/forms/ExerciseFormDialog";
 import {ExerciseEmptyState} from "../components/library/ExerciseEmptyState";
 import {ExerciseList} from "../components/library/ExerciseList";
 import {ExerciseStatusTabs} from "../components/library/ExerciseStatusTabs";
-import type {Exercise} from "../types/exercise.types";
+import type {Exercise} from "@fit-track/shared/exercises";
 import {useExercises, type ExerciseView} from "../hooks/useExercises";
-import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas";
+import type {CreateExerciseInput, UpdateExerciseInput} from "@fit-track/shared/exercises";
 
 export function ExercisesPage() {
     const confirm = useConfirmDialog();

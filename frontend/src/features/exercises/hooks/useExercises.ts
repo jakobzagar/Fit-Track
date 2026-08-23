@@ -6,8 +6,13 @@ import {
     restoreExercise,
     updateExercise,
 } from "../api/exercises.api";
-import type {Exercise, ExercisesResponse, ExerciseStatus} from "../types/exercise.types";
-import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas";
+import type {
+    CreateExerciseInput,
+    Exercise,
+    ExercisesResponse,
+    ExerciseStatus,
+    UpdateExerciseInput,
+} from "@fit-track/shared/exercises";
 
 export type ExerciseView = ExerciseStatus;
 

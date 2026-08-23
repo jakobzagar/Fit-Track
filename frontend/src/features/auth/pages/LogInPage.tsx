@@ -4,7 +4,7 @@ import {BrandMark} from "../../../components/ui/display/BrandMark";
 import {Feedback} from "../../../components/ui/feedback/Feedback";
 import {LoginForm} from "../components/LogInForm";
 import {login} from "../api/auth.api";
-import type {LoginInput} from "../schemas/auth.schemas";
+import type {LoginInput} from "@fit-track/shared/auth";
 import {useAuth} from "../hooks/useAuth.ts";
 import {ThemeToggle} from "../../../components/ui/actions/ThemeToggle";
 

@@ -8,8 +8,8 @@ import {
 import type {
     CreateWorkoutSetInput,
     UpdateWorkoutSetInput,
-} from "../../../workout-exercises/schemas/workout-exercises.schemas";
-import type {Workout, WorkoutSet} from "../../types/workout.types";
+} from "@fit-track/shared/workout-exercises";
+import type {Workout, WorkoutSet} from "@fit-track/shared/workouts";
 
 export function useWorkoutSetMutations(
     workoutId: string | undefined,

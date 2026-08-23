@@ -1,4 +1,4 @@
-import type {WorkoutSummary} from "../../types/workout.types.ts";
+import type {WorkoutSummary} from "@fit-track/shared/workouts";
 import {WorkoutItem} from "./WorkoutItem.tsx";
 
 interface WorkoutListProps {

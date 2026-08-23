@@ -4,7 +4,7 @@ import {
     updateWorkoutSetSchema,
     type CreateWorkoutSetInput,
     type UpdateWorkoutSetInput,
-} from "./workout-exercises.schemas";
+} from "@fit-track/shared/workout-exercises";
 
 export interface WorkoutSetInputValues {
     reps: string;

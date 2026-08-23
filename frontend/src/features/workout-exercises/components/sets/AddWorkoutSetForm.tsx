@@ -1,5 +1,5 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
-import type {CreateWorkoutSetInput} from "../../schemas/workout-exercises.schemas.ts";
+import type {CreateWorkoutSetInput} from "@fit-track/shared/workout-exercises";
 import {parseNewWorkoutSet} from "../../schemas/workout-set-input.parser.ts";
 import {Button} from "../../../../components/ui/actions/Button.tsx";
 import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";

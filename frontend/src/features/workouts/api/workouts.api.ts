@@ -1,19 +1,20 @@
 import {apiRequest} from "../../../lib/api/api.client.ts";
 import type {
+    CreateWorkoutInput,
     DeleteWorkoutResponse,
     PreviousPerformancesResponse,
+    UpdateWorkoutInput,
+    WorkoutBaseResponse,
     WorkoutResponse,
     WorkoutsResponse,
-    WorkoutBaseResponse,
-} from "../types/workout.types.ts";
-import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
+} from "@fit-track/shared/workouts";
 import {
     deleteWorkoutResponseSchema,
     workoutBaseResponseSchema,
     workoutResponseSchema,
     workoutsResponseSchema,
     previousPerformancesResponseSchema,
-} from "../schemas/workout.response.schemas.ts";
+} from "@fit-track/shared/workouts";
 
 export function getWorkouts(): Promise<WorkoutsResponse> {
     return apiRequest("/workouts", workoutsResponseSchema);

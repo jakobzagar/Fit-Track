@@ -1,6 +1,5 @@
 import {FormDialog} from "../../../../components/ui/dialogs/FormDialog";
-import type {Exercise} from "../../types/exercise.types";
-import type {CreateExerciseInput, UpdateExerciseInput} from "../../schemas/exercise.schemas";
+import type {CreateExerciseInput, Exercise, UpdateExerciseInput} from "@fit-track/shared/exercises";
 import {CreateExerciseForm} from "./CreateExerciseForm";
 import {UpdateExerciseForm} from "./UpdateExerciseForm";
 

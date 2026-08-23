@@ -4,7 +4,7 @@ import type {
     WorkoutExercise,
     WorkoutSet,
     WorkoutSummary,
-} from "../../features/workouts/types/workout.types";
+} from "@fit-track/shared/workouts";
 import {exercise, exerciseId, userId} from "./exercises";
 
 export {exercise, exerciseId, userId} from "./exercises";

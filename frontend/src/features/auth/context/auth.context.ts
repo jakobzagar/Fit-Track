@@ -1,5 +1,5 @@
 import {createContext, type Dispatch, type SetStateAction} from "react";
-import type {User} from "../types/auth.types";
+import type {User} from "@fit-track/shared/auth";
 
 export interface AuthContextValue {
     user: User | null;

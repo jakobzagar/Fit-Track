@@ -1,6 +1,6 @@
 import {z} from "zod";
 import {useId, useRef, useState, type SubmitEvent} from "react";
-import {loginSchema, type LoginInput} from "../schemas/auth.schemas.ts";
+import {loginSchema, type LoginInput} from "@fit-track/shared/auth";
 import {Button} from "../../../components/ui/actions/Button";
 import {FieldError} from "../../../components/ui/forms/FieldError";
 import {

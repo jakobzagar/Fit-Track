@@ -9,9 +9,9 @@ import type {
     AddExerciseToWorkoutInput,
     CreateWorkoutSetInput,
     UpdateWorkoutSetInput,
-} from "../../../workout-exercises/schemas/workout-exercises.schemas";
+} from "@fit-track/shared/workout-exercises";
 import {getPreviousPerformances} from "../../api/workouts.api";
-import type {PreviousPerformance, Workout, WorkoutSet} from "../../types/workout.types";
+import type {PreviousPerformance, Workout, WorkoutSet} from "@fit-track/shared/workouts";
 
 export function useWorkoutSessionMutations(
     workoutId: string | undefined,

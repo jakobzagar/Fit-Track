@@ -1,6 +1,6 @@
 import {z} from "zod";
 import {useId, useRef, useState, type SubmitEvent} from "react";
-import {createExerciseSchema, type CreateExerciseInput} from "../../schemas/exercise.schemas";
+import {createExerciseSchema, type CreateExerciseInput} from "@fit-track/shared/exercises";
 import {Button} from "../../../../components/ui/actions/Button";
 import {FieldError} from "../../../../components/ui/forms/FieldError";
 import {

@@ -4,7 +4,7 @@ import {BrandMark} from "../../../components/ui/display/BrandMark";
 import {Feedback} from "../../../components/ui/feedback/Feedback";
 import {RegisterForm} from "../components/RegisterForm";
 import {register} from "../api/auth.api";
-import type {RegisterInput} from "../schemas/auth.schemas";
+import type {RegisterInput} from "@fit-track/shared/auth";
 import {useAuth} from "../hooks/useAuth.ts";
 import {ThemeToggle} from "../../../components/ui/actions/ThemeToggle";
 
