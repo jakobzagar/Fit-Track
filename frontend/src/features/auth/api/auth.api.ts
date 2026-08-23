@@ -8,6 +8,7 @@ export function register(data: RegisterInput): Promise<AuthResponse> {
     return apiRequest("/auth/register", authResponseSchema, {
         method: "POST",
         body: data,
+        auth: "optional",
     });
 }
 
@@ -15,6 +16,7 @@ export function login(data: LoginInput): Promise<AuthResponse> {
     return apiRequest("/auth/login", authResponseSchema, {
         method: "POST",
         body: data,
+        auth: "optional",
     });
 }
 
@@ -25,5 +27,5 @@ export function logout(): Promise<MessageResponse> {
 }
 
 export function getMe(): Promise<AuthResponse> {
-    return apiRequest("/auth/me", authResponseSchema);
+    return apiRequest("/auth/me", authResponseSchema, {auth: "optional"});
 }

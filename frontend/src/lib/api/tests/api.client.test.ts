@@ -4,6 +4,7 @@ import {describe, expect, test, vi} from "vitest";
 import {ApiError} from "../../../common/errors/api.error";
 import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
+import {onSessionExpired} from "../../auth/session-expiration";
 import {apiRequest} from "../api.client";
 
 const responseSchema = z.object({value: z.string()});
@@ -38,6 +39,53 @@ describe("apiRequest", () => {
             message: "Access denied",
             status: 403,
         });
+    });
+
+    test("expires the session when an authenticated request returns 401", async () => {
+        const listener = vi.fn();
+        const unsubscribe = onSessionExpired(listener);
+        server.use(
+            http.get(`${API_URL}/example`, () =>
+                HttpResponse.json({message: "Authentication required"}, {status: 401}),
+            ),
+        );
+
+        await expect(apiRequest("/example", responseSchema)).rejects.toMatchObject({status: 401});
+
+        unsubscribe();
+        expect(listener).toHaveBeenCalledOnce();
+    });
+
+    test("does not expire the session for an expected 401", async () => {
+        const listener = vi.fn();
+        const unsubscribe = onSessionExpired(listener);
+        server.use(
+            http.get(`${API_URL}/example`, () =>
+                HttpResponse.json({message: "Invalid credentials"}, {status: 401}),
+            ),
+        );
+
+        await expect(
+            apiRequest("/example", responseSchema, {auth: "optional"}),
+        ).rejects.toMatchObject({status: 401});
+
+        unsubscribe();
+        expect(listener).not.toHaveBeenCalled();
+    });
+
+    test.each([403, 500])("does not expire the session for a %i response", async (status) => {
+        const listener = vi.fn();
+        const unsubscribe = onSessionExpired(listener);
+        server.use(
+            http.get(`${API_URL}/example`, () =>
+                HttpResponse.json({message: "Request failed"}, {status}),
+            ),
+        );
+
+        await expect(apiRequest("/example", responseSchema)).rejects.toMatchObject({status});
+
+        unsubscribe();
+        expect(listener).not.toHaveBeenCalled();
     });
 
     test("rejects an invalid successful response", async () => {

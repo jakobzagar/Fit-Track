@@ -2,10 +2,12 @@ import {z} from "zod";
 import {messageResponseSchema} from "@fit-track/shared/common";
 import {env} from "../../config/env.ts";
 import {ApiError} from "../../common/errors/api.error.ts";
+import {notifySessionExpired} from "../auth/session-expiration.ts";
 
 interface ApiOptions {
     method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
     body?: unknown;
+    auth?: "required" | "optional";
 }
 
 async function readResponseBody(response: Response): Promise<unknown> {
@@ -36,6 +38,10 @@ export async function apiRequest<T>(
 
     if (!response.ok) {
         const parsedError = messageResponseSchema.safeParse(result);
+
+        if (response.status === 401 && options.auth !== "optional") {
+            notifySessionExpired();
+        }
 
         throw new ApiError(
             parsedError.success ? parsedError.data.message : "Request failed",

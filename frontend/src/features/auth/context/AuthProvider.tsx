@@ -5,6 +5,7 @@ import {AuthContext} from "./auth.context";
 import {ApiError} from "../../../common/errors/api.error";
 import {Feedback} from "../../../components/ui/feedback/Feedback";
 import {Button} from "../../../components/ui/actions/Button";
+import {onSessionExpired} from "../../../lib/auth/session-expiration";
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -25,6 +26,8 @@ export function AuthProvider({children}: AuthProviderProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [sessionError, setSessionError] = useState(false);
     const requestIdRef = useRef(0);
+
+    useEffect(() => onSessionExpired(() => setUser(null)), []);
 
     async function signOut() {
         await logout();
