@@ -5,7 +5,7 @@ import {Feedback} from "../../../components/ui/feedback/Feedback";
 import {LoginForm} from "../components/LogInForm";
 import {login} from "../api/auth.api";
 import type {LoginInput} from "@fit-track/shared/auth";
-import {useAuth} from "../hooks/useAuth.ts";
+import {useAuth} from "../hooks/useAuth";
 import {ThemeToggle} from "../../../components/ui/actions/ThemeToggle";
 
 export function LoginPage() {

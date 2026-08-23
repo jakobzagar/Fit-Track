@@ -1,8 +1,8 @@
 import {z} from "zod";
 import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
-import {env} from "../../config/env.ts";
-import {ApiError} from "../../common/errors/api.error.ts";
-import {notifySessionExpired} from "../auth/session-expiration.ts";
+import {env} from "../../config/env";
+import {ApiError} from "../../common/errors/api.error";
+import {notifySessionExpired} from "../auth/session-expiration";
 
 interface ApiOptions {
     method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";

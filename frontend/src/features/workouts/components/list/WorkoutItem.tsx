@@ -1,9 +1,9 @@
 import {Link} from "react-router";
-import {Button} from "../../../../components/ui/actions/Button.tsx";
-import {Card} from "../../../../components/ui/display/Card.tsx";
+import {Button} from "../../../../components/ui/actions/Button";
+import {Card} from "../../../../components/ui/display/Card";
 import type {WorkoutSummary} from "@fit-track/shared/workouts";
-import {Icon} from "../../../../components/ui/display/Icon.tsx";
-import {formatWorkoutDate} from "../../utils/workout-date.ts";
+import {Icon} from "../../../../components/ui/display/Icon";
+import {formatWorkoutDate} from "../../utils/workout-date";
 
 interface WorkoutItemProps {
     workout: WorkoutSummary;

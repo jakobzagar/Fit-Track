@@ -1,4 +1,4 @@
-import {apiRequest} from "../../../lib/api/api.client.ts";
+import {apiRequest} from "../../../lib/api/api.client";
 import type {
     CreateWorkoutInput,
     DeleteWorkoutResponse,

@@ -1,6 +1,6 @@
 import {authResponseSchema} from "@fit-track/shared/auth";
 import {messageResponseSchema} from "@fit-track/shared/common";
-import {apiRequest} from "../../../lib/api/api.client.ts";
+import {apiRequest} from "../../../lib/api/api.client";
 import type {AuthResponse, LoginInput, RegisterInput} from "@fit-track/shared/auth";
 import type {MessageResponse} from "@fit-track/shared/common";
 

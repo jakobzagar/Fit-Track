@@ -23,6 +23,17 @@ export default defineConfig([
             },
         },
         rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        {
+                            regex: "^\\.\\.?/.*\\.tsx?$",
+                            message: "Use extensionless relative TypeScript imports.",
+                        },
+                    ],
+                },
+            ],
             "@typescript-eslint/no-misused-promises": [
                 "error",
                 {

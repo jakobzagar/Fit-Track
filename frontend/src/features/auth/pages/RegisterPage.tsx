@@ -5,7 +5,7 @@ import {Feedback} from "../../../components/ui/feedback/Feedback";
 import {RegisterForm} from "../components/RegisterForm";
 import {register} from "../api/auth.api";
 import type {RegisterInput} from "@fit-track/shared/auth";
-import {useAuth} from "../hooks/useAuth.ts";
+import {useAuth} from "../hooks/useAuth";
 import {ThemeToggle} from "../../../components/ui/actions/ThemeToggle";
 
 export function RegisterPage() {

@@ -5,13 +5,13 @@ import {
     updateWorkoutExerciseSchema,
     type UpdateWorkoutExerciseInput,
 } from "@fit-track/shared/workout-exercises";
-import {Button} from "../../../../components/ui/actions/Button.tsx";
-import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
+import {Button} from "../../../../components/ui/actions/Button";
+import {FieldError} from "../../../../components/ui/forms/FieldError";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/forms/utils/formAccessibility.ts";
-import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors.ts";
+} from "../../../../components/ui/forms/utils/formAccessibility";
+import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors";
 
 interface UpdateWorkoutExerciseFormProps {
     workoutExercise: WorkoutExercise;

@@ -1,13 +1,13 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import type {CreateWorkoutSetInput} from "@fit-track/shared/workout-exercises";
-import {parseNewWorkoutSet} from "../../workout-set-input.parser.ts";
-import {Button} from "../../../../components/ui/actions/Button.tsx";
-import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
+import {parseNewWorkoutSet} from "../../workout-set-input.parser";
+import {Button} from "../../../../components/ui/actions/Button";
+import {FieldError} from "../../../../components/ui/forms/FieldError";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/forms/utils/formAccessibility.ts";
-import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors.ts";
+} from "../../../../components/ui/forms/utils/formAccessibility";
+import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors";
 
 interface AddWorkoutSetFormProps {
     onSubmit: (data: CreateWorkoutSetInput) => Promise<void>;

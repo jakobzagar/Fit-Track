@@ -1,19 +1,19 @@
 import {useState} from "react";
-import {WorkoutFormDialog} from "../components/forms/WorkoutFormDialog.tsx";
-import {WorkoutEmptyState} from "../components/list/WorkoutEmptyState.tsx";
-import {WorkoutList} from "../components/list/WorkoutList.tsx";
+import {WorkoutFormDialog} from "../components/forms/WorkoutFormDialog";
+import {WorkoutEmptyState} from "../components/list/WorkoutEmptyState";
+import {WorkoutList} from "../components/list/WorkoutList";
 import type {
     CreateWorkoutInput,
     UpdateWorkoutInput,
     WorkoutSummary,
 } from "@fit-track/shared/workouts";
-import {Feedback} from "../../../components/ui/feedback/Feedback.tsx";
-import {PageHeader} from "../../../components/ui/display/PageHeader.tsx";
-import {SkeletonGrid} from "../../../components/ui/display/SkeletonGrid.tsx";
-import {useConfirmDialog} from "../../../components/ui/dialogs/hooks/useConfirmDialog.ts";
-import {Button} from "../../../components/ui/actions/Button.tsx";
-import {Icon} from "../../../components/ui/display/Icon.tsx";
-import {useWorkouts} from "../hooks/data/useWorkouts.ts";
+import {Feedback} from "../../../components/ui/feedback/Feedback";
+import {PageHeader} from "../../../components/ui/display/PageHeader";
+import {SkeletonGrid} from "../../../components/ui/display/SkeletonGrid";
+import {useConfirmDialog} from "../../../components/ui/dialogs/hooks/useConfirmDialog";
+import {Button} from "../../../components/ui/actions/Button";
+import {Icon} from "../../../components/ui/display/Icon";
+import {useWorkouts} from "../hooks/data/useWorkouts";
 
 export function WorkoutsPage() {
     const confirm = useConfirmDialog();

@@ -5,14 +5,14 @@ import {
     type UpdateWorkoutInput,
     type WorkoutSummary,
 } from "@fit-track/shared/workouts";
-import {Button} from "../../../../components/ui/actions/Button.tsx";
-import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
+import {Button} from "../../../../components/ui/actions/Button";
+import {FieldError} from "../../../../components/ui/forms/FieldError";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/forms/utils/formAccessibility.ts";
-import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors.ts";
-import {workoutDateInputValue} from "../../utils/workout-date.ts";
+} from "../../../../components/ui/forms/utils/formAccessibility";
+import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors";
+import {workoutDateInputValue} from "../../utils/workout-date";
 
 interface UpdateWorkoutFormProps {
     workout: WorkoutSummary;

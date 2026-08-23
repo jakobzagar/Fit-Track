@@ -1,14 +1,14 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import type {WorkoutSet} from "@fit-track/shared/workouts";
 import type {UpdateWorkoutSetInput} from "@fit-track/shared/workout-exercises";
-import {parseEditedWorkoutSet} from "../../workout-set-input.parser.ts";
-import {Button} from "../../../../components/ui/actions/Button.tsx";
-import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
+import {parseEditedWorkoutSet} from "../../workout-set-input.parser";
+import {Button} from "../../../../components/ui/actions/Button";
+import {FieldError} from "../../../../components/ui/forms/FieldError";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/forms/utils/formAccessibility.ts";
-import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors.ts";
+} from "../../../../components/ui/forms/utils/formAccessibility";
+import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors";
 
 interface UpdateWorkoutSetFormProps {
     workoutSet: WorkoutSet;
