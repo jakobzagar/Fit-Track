@@ -95,8 +95,8 @@ Update the narrowest owner and link to it from summaries. Do not copy detailed p
 
 - `main` is protected. Normal changes use a short-lived branch and pull request; later pushes update the same PR.
 - Merge only after the branch is current, conversations are resolved, and `Actions lint`, `Verify`, `Integration`, and `Production container smoke` pass.
-- Use Conventional Commits without scopes: `feat:`, `fix:`, `test:`, `docs:`, `ci:`, `build:`, or `chore:` followed by a concise imperative summary.
-- Treat `fix:` as patch, `feat:` as minor, and `!` or `BREAKING CHANGE` as major release input. Use `Release-As` only for an intentional override.
+- Use Conventional Commits without scopes: `feat:`, `fix:`, `perf:`, `test:`, `docs:`, `ci:`, `build:`, or `chore:` followed by a concise imperative summary.
+- Treat `fix:` and `perf:` as patch, `feat:` as minor, and `!` or `BREAKING CHANGE` as major release input. Use `Release-As` only for an intentional override.
 - Do not manually edit product versions or the changelog during ordinary work. Release Please owns coordinated releases after the documented `v1.0.0` bootstrap.
 - Inspect recent history before committing, keep unrelated concerns separate, and include directly related tests with behavior changes.
 

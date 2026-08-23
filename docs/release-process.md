@@ -125,6 +125,7 @@ The development Compose stack follows the same principle: PostgreSQL becomes hea
 Release Please treats the monorepo as one versioned product. Conventional Commit types drive the proposed version:
 
 - `fix:` requests a patch release;
+- `perf:` requests a patch release and records the change under performance improvements;
 - `feat:` requests a minor release;
 - `!` or a `BREAKING CHANGE` footer requests a major release;
 - `docs:`, `test:`, `ci:`, and `chore:` normally do not request a product release.
@@ -151,7 +152,7 @@ Because this baseline is established before Release Please owns the `1.x` line, 
 4. create GitHub Release `v1.0.0` targeting that exact commit on `main` and use the `1.0.0` changelog section as its notes;
 5. wait for `Release Images` to validate the tag and promote the same immutable image digests to `1.0.0`, `1.0`, `1`, and `latest`.
 
-Never create the tag before immutable images for its commit have passed their registry smoke test. Once `v1.0.0` exists, this exception is complete: Release Please discovers the manifest and tag as the current release and owns every later version through its normal protected PR flow. A `fix:` then proposes `1.0.1`, a `feat:` proposes `1.1.0`, and a breaking change proposes `2.0.0`.
+Never create the tag before immutable images for its commit have passed their registry smoke test. Once `v1.0.0` exists, this exception is complete: Release Please discovers the manifest and tag as the current release and owns every later version through its normal protected PR flow. A `fix:` or `perf:` then proposes `1.0.1`, a `feat:` proposes `1.1.0`, and a breaking change proposes `2.0.0`.
 
 To intentionally override the proposed next version, use a `Release-As` footer:
 
