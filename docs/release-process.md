@@ -165,6 +165,8 @@ git commit --allow-empty \
 
 Run `npm run actions:lint` after changing a workflow or local action. Local simulation cannot reproduce every GitHub-hosted runner behavior, so the pull request checks remain authoritative. Never commit local workflow secrets or credentials.
 
+Portable release-tag validation and image-promotion policy lives under `scripts/release/`. The workflow supplies the checked-out Git references, authenticated registry session, revision, version, and image names; the scripts validate all release artifacts before moving any image tags.
+
 ## Dependency update automation
 
 Dependabot checks GitHub Actions and the root npm workspace weekly. Minor and patch npm updates are grouped by production or development responsibility, while major updates remain individually reviewable.
