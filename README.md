@@ -17,7 +17,7 @@ This project is built as a production-oriented TypeScript monorepo. Its focus is
 - **Recoverable workout lifecycle:** sessions can be started, cancelled, completed, reopened for corrections, and safely deleted.
 - **Real integration environment:** Supertest exercises the exported Express application against migrated PostgreSQL, not an in-memory database.
 - **Defensive HTTP defaults:** HTTP-only cookies, CSRF origin checks, restricted credentialed CORS, Helmet, payload limits, and rate limiting.
-- **Operational lifecycle:** structured request-correlated logs, separate liveness/readiness checks, graceful shutdown, append-only migrations, non-root containers, immutable image tags, production-container smoke checks, SBOM, and build provenance.
+- **Operational lifecycle:** structured request-correlated logs, separate liveness/readiness checks, graceful shutdown, append-only migrations, non-root containers, Git-addressed image tags, digest-pinned smoke checks, SBOM, and build provenance.
 
 ## Product capabilities
 
@@ -186,7 +186,7 @@ Successful commits on `main` publish three multi-platform images from the same t
 - `fit-track-frontend`
 - `fit-track-migration`
 
-Images receive immutable `sha-<commit>` tags, SBOM attestations, and build provenance. Each immutable image set is smoke-tested before its moving `main` tags are promoted. After the one-time `v1.0.0` production-baseline bootstrap, Release Please manages later product versions and promotes existing images without rebuilding them.
+Images receive Git-addressed `sha-<commit>` tags, SBOM attestations, and build provenance. A rerun may replace a SHA tag, while smoke tests pin the exact digest returned by each successful build before promoting it to the moving `main` tag. After the one-time `v1.0.0` production-baseline bootstrap, Release Please manages later product versions and promotes existing image digests without rebuilding them.
 
 See [Release and container process](docs/release-process.md#protected-main-workflow) for the branch workflow, repository ruleset, migration ordering, image tags, local workflow checks, and release operations.
 
