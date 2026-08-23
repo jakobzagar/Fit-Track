@@ -1,6 +1,6 @@
 import {http, HttpResponse} from "msw";
 import {Route, Routes} from "react-router";
-import {screen} from "@testing-library/react";
+import {screen, waitFor} from "@testing-library/react";
 import {describe, expect, test} from "vitest";
 import {API_URL} from "../../../test/constants";
 import {renderWithProviders} from "../../../test/render";
@@ -100,5 +100,31 @@ describe("RegisterPage", () => {
 
         expect(await screen.findByRole("alert")).toHaveTextContent("Email is already registered");
         expect(screen.getByRole("heading", {name: "Create account"})).toBeInTheDocument();
+    });
+
+    test("shows server validation errors beside registration fields", async () => {
+        server.use(
+            http.post(`${API_URL}/auth/register`, () =>
+                HttpResponse.json(
+                    {
+                        message: "Validation failed",
+                        errors: {
+                            email: ["This email domain is not allowed"],
+                        },
+                    },
+                    {status: 400},
+                ),
+            ),
+        );
+        const {user} = renderAuthPage("/register");
+
+        await user.type(screen.getByLabelText("Name"), "Jakob");
+        await user.type(screen.getByLabelText("Email"), "jakob@example.com");
+        await user.type(screen.getByLabelText("Password"), "password123");
+        await user.click(screen.getByRole("button", {name: "Register"}));
+
+        expect(await screen.findByText("This email domain is not allowed")).toBeInTheDocument();
+        expect(screen.getByLabelText("Email")).toHaveAttribute("aria-invalid", "true");
+        await waitFor(() => expect(screen.getByLabelText("Email")).toHaveFocus());
     });
 });

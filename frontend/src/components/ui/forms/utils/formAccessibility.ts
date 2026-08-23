@@ -8,7 +8,7 @@ export function invalidFieldProps(error: string | undefined, errorId: string) {
 }
 
 export function focusFirstInvalidField(formRef: RefObject<HTMLFormElement | null>) {
-    queueMicrotask(() => {
+    window.setTimeout(() => {
         formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
-    });
+    }, 0);
 }

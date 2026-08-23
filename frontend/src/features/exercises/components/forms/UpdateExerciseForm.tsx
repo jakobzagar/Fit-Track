@@ -8,6 +8,7 @@ import {
     focusFirstInvalidField,
     invalidFieldProps,
 } from "../../../../components/ui/forms/utils/formAccessibility";
+import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors";
 
 interface UpdateExerciseFormProps {
     exercise: Exercise;
@@ -57,7 +58,12 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
 
         try {
             await onSubmit(result.data);
-        } catch {
+        } catch (error) {
+            const serverErrors = apiValidationErrors(error);
+            if (serverErrors) {
+                setErrors(serverErrors);
+                focusFirstInvalidField(formRef);
+            }
             return;
         } finally {
             setIsSubmitting(false);

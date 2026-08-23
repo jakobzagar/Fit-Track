@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {messageResponseSchema} from "@fit-track/shared/common";
+import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
 import {env} from "../../config/env.ts";
 import {ApiError} from "../../common/errors/api.error.ts";
 import {notifySessionExpired} from "../auth/session-expiration.ts";
@@ -37,10 +37,18 @@ export async function apiRequest<T>(
     const result = await readResponseBody(response);
 
     if (!response.ok) {
+        const parsedValidationError = validationErrorResponseSchema.safeParse(result);
         const parsedError = messageResponseSchema.safeParse(result);
 
         if (response.status === 401 && options.auth !== "optional") {
             notifySessionExpired();
+        }
+
+        if (response.status === 400 && parsedValidationError.success) {
+            throw new ApiError(parsedValidationError.data.message, response.status, {
+                fieldErrors: parsedValidationError.data.errors,
+                formErrors: parsedValidationError.data.formErrors,
+            });
         }
 
         throw new ApiError(

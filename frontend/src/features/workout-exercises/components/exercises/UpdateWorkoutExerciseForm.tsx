@@ -11,6 +11,7 @@ import {
     focusFirstInvalidField,
     invalidFieldProps,
 } from "../../../../components/ui/forms/utils/formAccessibility.ts";
+import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors.ts";
 
 interface UpdateWorkoutExerciseFormProps {
     workoutExercise: WorkoutExercise;
@@ -59,7 +60,12 @@ export function UpdateWorkoutExerciseForm({
 
         try {
             await onSubmit(result.data);
-        } catch {
+        } catch (error) {
+            const serverErrors = apiValidationErrors(error);
+            if (serverErrors) {
+                setErrors(serverErrors);
+                focusFirstInvalidField(formRef);
+            }
             return;
         } finally {
             setIsSubmitting(false);

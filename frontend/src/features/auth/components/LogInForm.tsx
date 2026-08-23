@@ -7,6 +7,7 @@ import {
     focusFirstInvalidField,
     invalidFieldProps,
 } from "../../../components/ui/forms/utils/formAccessibility";
+import {apiValidationErrors} from "../../../components/ui/forms/utils/apiValidationErrors";
 
 interface LoginFormProps {
     onSubmit: (data: LoginInput) => Promise<void>;
@@ -51,7 +52,12 @@ export function LoginForm({onSubmit}: LoginFormProps) {
 
         try {
             await onSubmit(result.data);
-        } catch {
+        } catch (error) {
+            const serverErrors = apiValidationErrors(error);
+            if (serverErrors) {
+                setErrors(serverErrors);
+                focusFirstInvalidField(formRef);
+            }
             return;
         } finally {
             setIsSubmitting(false);

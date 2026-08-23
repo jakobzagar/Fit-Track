@@ -7,6 +7,7 @@ import {
     focusFirstInvalidField,
     invalidFieldProps,
 } from "../../../components/ui/forms/utils/formAccessibility";
+import {apiValidationErrors} from "../../../components/ui/forms/utils/apiValidationErrors";
 
 interface RegisterFormProps {
     onSubmit: (data: RegisterInput) => Promise<void>;
@@ -55,7 +56,12 @@ export function RegisterForm({onSubmit}: RegisterFormProps) {
 
         try {
             await onSubmit(result.data);
-        } catch {
+        } catch (error) {
+            const serverErrors = apiValidationErrors(error);
+            if (serverErrors) {
+                setErrors(serverErrors);
+                focusFirstInvalidField(formRef);
+            }
             return;
         } finally {
             setIsSubmitting(false);

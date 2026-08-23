@@ -41,6 +41,37 @@ describe("apiRequest", () => {
         });
     });
 
+    test("preserves structured validation errors", async () => {
+        server.use(
+            http.post(`${API_URL}/example`, () =>
+                HttpResponse.json(
+                    {
+                        message: "Validation failed",
+                        errors: {
+                            name: ["Name is already in use"],
+                            notes: ["Notes are too long"],
+                        },
+                        formErrors: ["Check the submitted values"],
+                    },
+                    {status: 400},
+                ),
+            ),
+        );
+
+        await expect(
+            apiRequest("/example", responseSchema, {method: "POST", body: {name: "Squat"}}),
+        ).rejects.toMatchObject({
+            name: "ApiError",
+            message: "Validation failed",
+            status: 400,
+            fieldErrors: {
+                name: ["Name is already in use"],
+                notes: ["Notes are too long"],
+            },
+            formErrors: ["Check the submitted values"],
+        });
+    });
+
     test("expires the session when an authenticated request returns 401", async () => {
         const listener = vi.fn();
         const unsubscribe = onSessionExpired(listener);

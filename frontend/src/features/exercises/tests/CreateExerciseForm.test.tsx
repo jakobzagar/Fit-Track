@@ -1,6 +1,7 @@
-import {render, screen} from "@testing-library/react";
+import {render, screen, waitFor} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
+import {ApiError} from "../../../common/errors/api.error";
 import {CreateExerciseForm} from "../components/forms/CreateExerciseForm";
 
 describe("CreateExerciseForm", () => {
@@ -29,5 +30,27 @@ describe("CreateExerciseForm", () => {
         expect(onSubmit).toHaveBeenCalledWith({name: "Pull-up", muscleGroup: "Back"});
         expect(screen.getByLabelText("Name")).toHaveValue("");
         expect(screen.getByLabelText("Muscle group")).toHaveValue("");
+    });
+
+    test("shows server validation errors beside their fields", async () => {
+        const user = userEvent.setup();
+        const onSubmit = vi.fn().mockRejectedValue(
+            new ApiError("Validation failed", 400, {
+                fieldErrors: {
+                    name: ["An exercise with this name already exists"],
+                    equipment: ["Equipment is not supported"],
+                },
+            }),
+        );
+        render(<CreateExerciseForm onSubmit={onSubmit} />);
+
+        await user.type(screen.getByLabelText("Name"), "Pull-up");
+        await user.type(screen.getByLabelText("Muscle group"), "Back");
+        await user.click(screen.getByRole("button", {name: "Create exercise"}));
+
+        expect(screen.getByText("An exercise with this name already exists")).toBeInTheDocument();
+        expect(screen.getByText("Equipment is not supported")).toBeInTheDocument();
+        expect(screen.getByLabelText("Name")).toHaveAttribute("aria-invalid", "true");
+        await waitFor(() => expect(screen.getByLabelText("Name")).toHaveFocus());
     });
 });
