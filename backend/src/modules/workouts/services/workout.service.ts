@@ -81,67 +81,83 @@ export async function getPreviousPerformancesService(userId: string, workoutId: 
         throw new AppError("Workout not found", 404);
     }
 
-    const previousPerformances = await Promise.all(
-        workout.workoutExercises.map(async ({exerciseId}) => {
-            const previousWorkoutExercise = await prisma.workoutExercise.findFirst({
+    const exerciseIds = workout.workoutExercises.map(({exerciseId}) => exerciseId);
+    if (exerciseIds.length === 0) return [];
+
+    const candidates = await prisma.workoutExercise.findMany({
+        where: {
+            exerciseId: {
+                in: exerciseIds,
+            },
+            workoutId: {
+                not: workoutId,
+            },
+            workout: {
+                userId,
+                status: "COMPLETED",
+                completedAt: {
+                    not: null,
+                },
+            },
+            sets: {
+                some: {
+                    completedAt: {
+                        not: null,
+                    },
+                },
+            },
+        },
+        orderBy: [
+            {
+                workout: {
+                    completedAt: "desc",
+                },
+            },
+            {
+                id: "desc",
+            },
+        ],
+        select: {
+            exerciseId: true,
+            workoutId: true,
+            workout: {
+                select: {
+                    performedAt: true,
+                },
+            },
+            sets: {
                 where: {
-                    exerciseId,
-                    workoutId: {
-                        not: workoutId,
-                    },
-                    workout: {
-                        userId,
-                        status: "COMPLETED",
-                    },
-                    sets: {
-                        some: {
-                            completedAt: {
-                                not: null,
-                            },
-                        },
+                    completedAt: {
+                        not: null,
                     },
                 },
                 orderBy: {
-                    workout: {
-                        completedAt: "desc",
-                    },
+                    setNumber: "asc",
                 },
-                select: {
-                    workoutId: true,
-                    workout: {
-                        select: {
-                            performedAt: true,
-                        },
-                    },
-                    sets: {
-                        where: {
-                            completedAt: {
-                                not: null,
-                            },
-                        },
-                        orderBy: {
-                            setNumber: "asc",
-                        },
-                    },
-                },
-            });
+            },
+        },
+    });
 
-            if (!previousWorkoutExercise) {
-                return null;
-            }
+    const latestByExerciseId = new Map<string, (typeof candidates)[number]>();
+    for (const candidate of candidates) {
+        if (!latestByExerciseId.has(candidate.exerciseId)) {
+            latestByExerciseId.set(candidate.exerciseId, candidate);
+        }
+    }
 
-            return {
-                exerciseId,
-                workoutId: previousWorkoutExercise.workoutId,
-                performedAt: previousWorkoutExercise.workout.performedAt,
-                sets: previousWorkoutExercise.sets,
-            };
-        }),
-    );
-
-    return previousPerformances.filter(
-        (performance): performance is NonNullable<typeof performance> => performance !== null,
-    );
+    return exerciseIds.flatMap((exerciseId) => {
+        const performance = latestByExerciseId.get(exerciseId);
+        return performance
+            ? [
+                  {
+                      exerciseId,
+                      workoutId: performance.workoutId,
+                      performedAt: performance.workout.performedAt,
+                      sets: performance.sets,
+                  },
+              ]
+            : [];
+    });
 }
 
 export async function createWorkoutService(userId: string, data: CreateWorkoutInput) {

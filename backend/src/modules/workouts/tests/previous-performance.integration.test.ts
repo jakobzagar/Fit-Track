@@ -56,6 +56,50 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
         expect(body.previousPerformances[0]?.sets.map((set) => set.id)).toEqual([completedSet.id]);
     });
 
+    it("returns one latest performance for each exercise in current workout order", async () => {
+        const owner = await createTestUser("multiple-exercises@example.com");
+        const squat = await createTestExercise(owner.user.id, {name: "Squat"});
+        const benchPress = await createTestExercise(owner.user.id, {name: "Bench press"});
+        const current = await createTestWorkout(owner.user.id, {name: "Current"});
+        await createTestWorkoutExercise(current.id, benchPress.id, 1);
+        await createTestWorkoutExercise(current.id, squat.id, 2);
+
+        const older = await createTestWorkout(owner.user.id, {
+            name: "Older",
+            status: "COMPLETED",
+            startedAt: new Date("2026-07-10T09:00:00.000Z"),
+            completedAt: new Date("2026-07-10T10:00:00.000Z"),
+        });
+        const olderSquat = await createTestWorkoutExercise(older.id, squat.id, 1);
+        const olderBenchPress = await createTestWorkoutExercise(older.id, benchPress.id, 2);
+        await createTestSet(olderSquat.id, 1, {completedAt: new Date()});
+        await createTestSet(olderBenchPress.id, 1, {completedAt: new Date()});
+
+        const latest = await createTestWorkout(owner.user.id, {
+            name: "Latest",
+            status: "COMPLETED",
+            startedAt: new Date("2026-07-20T09:00:00.000Z"),
+            completedAt: new Date("2026-07-20T10:00:00.000Z"),
+        });
+        const latestSquat = await createTestWorkoutExercise(latest.id, squat.id);
+        await createTestSet(latestSquat.id, 1, {completedAt: new Date()});
+
+        const response = await authenticated(
+            "get",
+            `/api/workouts/${current.id}/previous-performances`,
+            owner.cookie,
+        );
+        const body = previousPerformancesResponseSchema.parse(response.body);
+
+        expect(response.status).toBe(200);
+        expect(
+            body.previousPerformances.map(({exerciseId, workoutId}) => ({exerciseId, workoutId})),
+        ).toEqual([
+            {exerciseId: benchPress.id, workoutId: older.id},
+            {exerciseId: squat.id, workoutId: latest.id},
+        ]);
+    });
+
     it("returns an empty list when no previous completed performance exists", async () => {
         const owner = await createTestUser("owner@example.com");
         const current = await createTestWorkout(owner.user.id);
