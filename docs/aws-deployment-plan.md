@@ -8,30 +8,42 @@ There is no live production environment or AWS infrastructure definition yet. Th
 
 HTTPS, DNS, secrets, networking, monitoring, backups, and AWS deployment automation still need to be configured before production launch.
 
+## Production-readiness gap
+
+| Capability            | Verified today                                                                                | Required before AWS launch                                                    |
+| --------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Application artifacts | Multi-platform backend, frontend, and migration images published from one tested Git revision | Import or publish artifacts to the selected AWS delivery path                 |
+| Database changes      | Append-only Prisma migrations and a dedicated one-off migration image                         | RDS instance, backup policy, restore test, and migration task orchestration   |
+| Runtime health        | Separate liveness/readiness checks and graceful shutdown                                      | ECS health checks, deployment rollback policy, and capacity settings          |
+| Security              | Application-level cookies, CSRF, CORS, headers, limits, and log redaction                     | TLS, managed secrets, IAM roles, private networking, and security-group rules |
+| Observability         | Structured request-correlated logs on standard output                                         | Central log retention, metrics, alarms, dashboards, and incident ownership    |
+| Frontend delivery     | Verified Nginx container with explicit security and cache headers                             | Frontend ECS service, ALB target group, health check, and capacity settings   |
+
+This table is intentionally a gap analysis, not a claim that planned infrastructure already exists.
+
 ## Planned AWS architecture
 
 ```mermaid
 flowchart LR
-    User([User]) --> CloudFront[CloudFront]
-    CloudFront --> S3[(Private S3 frontend)]
-    CloudFront -->|/api/*| ALB[Application Load Balancer]
-    ALB --> ECS[ECS backend service]
+    User([User]) --> ALB[Application Load Balancer]
+    ALB -->|Default route| Frontend[ECS frontend service<br/>Nginx]
+    ALB -->|/api and /api/*| Backend[ECS backend service]
     Migration[ECS migration task] --> RDS[(RDS PostgreSQL)]
-    ECS --> RDS
+    Backend --> RDS
 ```
 
 The intended layout is:
 
-- a private S3 bucket stores the built React frontend;
-- CloudFront serves the frontend, HTTPS, SPA routes, security headers, and cache policies;
-- `/api/*` requests are routed through an Application Load Balancer to the ECS backend service;
-- ECS backend tasks run without public IP addresses in private application subnets;
+- a public Application Load Balancer terminates HTTPS and is the single application entry point;
+- its default listener rule forwards browser and SPA requests to the frontend ECS service running the existing Nginx image;
+- higher-priority `/api` and `/api/*` rules forward API requests directly to the backend ECS service;
+- frontend and backend ECS tasks run without public IP addresses in private application subnets;
 - RDS PostgreSQL runs without public access in private database subnets;
 - one ECS migration task runs before each matching backend revision;
 - secrets are injected at runtime rather than stored in images or the repository.
 
-The VPC should span at least two Availability Zones. The load balancer uses public subnets, while ECS and RDS use private subnets. Private ECS tasks need controlled outbound access for image pulls, logs, and secrets.
+The VPC should span at least two Availability Zones. The load balancer uses public subnets, while both ECS services and RDS use private subnets. Each ECS service has its own target group and health check. Private ECS tasks need controlled outbound access for image pulls, logs, and secrets.
 
-The planned static frontend replaces the Nginx frontend container in AWS. Until that path exists and is tested, Nginx remains the repository's verified frontend artifact. AWS deployment must preserve the existing [migration ordering and readiness gate](release-process.md#migration-ordering).
+Keeping the verified Nginx image avoids introducing a second static-serving Implementation for AWS. Its SPA fallback, browser security headers, and cache policy therefore remain part of the deployed frontend behavior. AWS deployment must also preserve the existing [migration ordering and readiness gate](release-process.md#migration-ordering).
 
 Exact task sizes, replica counts, database capacity, backups, and infrastructure-as-code remain future decisions. They must be selected and verified when the AWS environment is implemented, not described as current repository capabilities.

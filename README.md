@@ -2,11 +2,29 @@
 
 ![FitTrack](frontend/public/brand/fittrack-logo.png)
 
-FitTrack is a full-stack workout planning and tracking application. Users can maintain a personal exercise library, build ordered workouts, record live sessions, compare previous performance, and correct completed training records through an explicit lifecycle.
+FitTrack is a production-minded full-stack workout planning and tracking application, designed and built independently as a portfolio project. Users can maintain a personal exercise library, build ordered workouts, record live sessions, compare previous performance, and correct completed training records through an explicit lifecycle.
 
-This project is built as a production-oriented TypeScript monorepo. Its focus is not only the user interface, but also contract safety, authorization, transactional consistency, isolated integration testing, container delivery, and maintainable feature boundaries.
+The repository demonstrates more than a CRUD interface: it treats runtime contracts, authorization, concurrent mutations, database invariants, isolated integration testing, container delivery, and operational failure modes as first-class engineering concerns.
 
 > **Status:** the core workout workflow is complete. Current work focuses on reliability, documentation, delivery, and operational readiness rather than adding unrelated features. A public demo is not available yet; the complete application runs locally with Docker Compose.
+
+## Portfolio overview
+
+| Area              | Evidence in the project                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Product thinking  | Explicit draft → active → completed workout lifecycle, safe cancellation and reopening, exercise history, and previous-performance context |
+| Full-stack design | React client, Express application, PostgreSQL persistence, and shared runtime contracts in one TypeScript monorepo                         |
+| Data integrity    | Ownership-scoped queries, relational constraints, append-only migrations, serializable transactions, retry handling, and concurrency tests |
+| Security          | HTTP-only cookies, CSRF origin checks, credentialed CORS, request limits, rate limiting, security headers, and redacted structured logs    |
+| Quality strategy  | Contract, unit, frontend, PostgreSQL integration, accessibility, and final-container smoke coverage                                        |
+| Delivery          | Protected pull-request checks, multi-platform containers, digest-pinned verification, SBOM, provenance, and coordinated releases           |
+
+### Suggested review path
+
+1. Scan the [workout lifecycle](#workout-lifecycle) and [engineering highlights](#engineering-highlights).
+2. Review the [architecture and data model](docs/architecture.md), including the documented trade-offs.
+3. Inspect the [testing strategy](docs/testing.md) to see how each risk is verified.
+4. Review the [release process](docs/release-process.md) for build-once, digest-based container promotion.
 
 ## Engineering highlights
 
@@ -172,7 +190,7 @@ The API restricts credentialed CORS to the configured frontend origin, checks CS
 
 The current rate limiter uses process-local memory and is suitable for the present single-process runtime. Multiple backend processes require a shared store if limits must be global. The backend emits redacted JSON logs to standard output in production, attaches a generated request ID to each response, and uses readable pretty-printing only during local development.
 
-The planned deployment target is AWS, with ECS for backend and migration workloads, RDS PostgreSQL, and S3/CloudFront for the static frontend. That infrastructure is not implemented in this repository yet, so HTTPS termination, managed secrets, backups, monitoring, and deployment remain explicit pre-production work described in the [AWS deployment plan](docs/aws-deployment-plan.md).
+The planned deployment target is AWS, with an Application Load Balancer routing to separate frontend and backend ECS services, an ECS migration task, and RDS PostgreSQL. That infrastructure is not implemented in this repository yet, so HTTPS termination, managed secrets, backups, monitoring, and deployment remain explicit pre-production work described in the [AWS deployment plan](docs/aws-deployment-plan.md).
 
 ## Delivery
 
@@ -192,6 +210,7 @@ See [Release and container process](docs/release-process.md#protected-main-workf
 
 ## Documentation
 
+- [Domain language](CONTEXT.md)
 - [Architecture and design decisions](docs/architecture.md)
 - [Testing strategy](docs/testing.md)
 - [Release and container process](docs/release-process.md)
@@ -199,4 +218,4 @@ See [Release and container process](docs/release-process.md#protected-main-workf
 
 ## Author
 
-Created by [Jakob Zagar](https://github.com/jakobzagar) as an independent portfolio project.
+Designed and implemented by [Jakob Zagar](https://github.com/jakobzagar) as an independent portfolio project.

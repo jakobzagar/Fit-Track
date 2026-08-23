@@ -2,6 +2,19 @@
 
 FitTrack separates tests by responsibility so failures point to the correct boundary. The suite uses Vitest throughout, Testing Library and MSW in the frontend, and Supertest with PostgreSQL in backend integration tests.
 
+## Risk-to-evidence map
+
+| Engineering risk                    | Verification evidence                                                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Frontend and backend contract drift | Shared strict Zod matrices, backend response parsing, and frontend runtime response parsing                      |
+| Cross-user data exposure            | Integration tests for owned resources, nested-resource mismatches, and previous-performance isolation            |
+| Invalid lifecycle transitions       | Service and integration coverage for start, cancel, finish, reopen, and delete behavior                          |
+| Concurrent ordering corruption      | PostgreSQL integration tests for simultaneous exercise/set insertion, movement, and lifecycle transitions        |
+| Browser regressions                 | Testing Library interactions, MSW network behavior, route/session tests, and axe-core accessibility smoke checks |
+| Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
+
+Tests cross the same Interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private Implementation details.
+
 ## Test layers
 
 | Layer               | Location                                  | Primary responsibility                                                            |

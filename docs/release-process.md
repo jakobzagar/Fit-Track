@@ -2,6 +2,12 @@
 
 FitTrack uses GitHub Actions to verify the repository, publish digest-addressed container artifacts, and manage one product version across all workspaces.
 
+The process follows three principles:
+
+- **gate source before merge:** static checks, fast tests, PostgreSQL integration, and final-container smoke tests must pass;
+- **build once, promote by digest:** release tags point to already verified image content rather than rebuilding from a version tag;
+- **migrate before application rollout:** a dedicated migration artifact must succeed before the matching backend revision starts.
+
 ## Pipeline overview
 
 ```mermaid
