@@ -1,7 +1,7 @@
 import {Button} from "../../../../components/ui/actions/Button";
 import {Icon} from "../../../../components/ui/display/Icon";
-import {UpdateWorkoutSetForm} from "../../../workout-exercises/components/sets/UpdateWorkoutSetForm";
-import type {UpdateWorkoutSetInput} from "@fit-track/shared/workout-exercises";
+import {UpdateWorkoutSetForm} from "../../workout-exercises/components/sets/UpdateWorkoutSetForm";
+import type {UpdateWorkoutSetInput} from "@fit-track/shared/workouts";
 import type {WorkoutSet} from "@fit-track/shared/workouts";
 
 interface WorkoutSetListProps {

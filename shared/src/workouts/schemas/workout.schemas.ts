@@ -1,5 +1,7 @@
 import {z} from "zod";
 import {messageResponseSchema} from "../../common/schemas/response.schemas.js";
+import {workoutExerciseSchema} from "./workout-exercise.schemas.js";
+import {workoutSetSchema} from "./workout-set.schemas.js";
 
 const workoutNameSchema = z
     .string()
@@ -35,50 +37,6 @@ export const workoutIdSchema = z
     .strict();
 
 export const workoutStatusSchema = z.enum(["DRAFT", "ACTIVE", "COMPLETED"]);
-
-const workoutSetWeightSchema = z.number().nonnegative().max(999999.99).multipleOf(0.01);
-
-const serializedWorkoutSetWeightSchema = z.union([
-    workoutSetWeightSchema,
-    z
-        .string()
-        .regex(/^\d+(?:\.\d{1,2})?$/, "Invalid serialized weight")
-        .transform(Number)
-        .pipe(workoutSetWeightSchema),
-]);
-
-export const workoutSetSchema = z
-    .object({
-        id: z.uuid(),
-        setNumber: z.number().int().positive(),
-        reps: z.number().int().positive().nullable(),
-        weight: serializedWorkoutSetWeightSchema.nullable(),
-        durationSeconds: z.number().int().positive().nullable(),
-        completedAt: z.iso.datetime().nullable(),
-        workoutExerciseId: z.uuid(),
-    })
-    .strict();
-
-export const workoutExerciseDetailsSchema = z
-    .object({
-        id: z.uuid(),
-        name: z.string(),
-        muscleGroup: z.string(),
-        equipment: z.string().nullable(),
-    })
-    .strict();
-
-export const workoutExerciseSchema = z
-    .object({
-        id: z.uuid(),
-        position: z.number().int().positive(),
-        notes: z.string().nullable(),
-        workoutId: z.uuid(),
-        exerciseId: z.uuid(),
-        exercise: workoutExerciseDetailsSchema,
-        sets: z.array(workoutSetSchema),
-    })
-    .strict();
 
 export const workoutBaseSchema = z
     .object({
@@ -146,9 +104,6 @@ export type CreateWorkoutInput = z.infer<typeof createWorkoutSchema>;
 export type UpdateWorkoutInput = z.infer<typeof updateWorkoutSchema>;
 export type WorkoutIdParams = z.infer<typeof workoutIdSchema>;
 export type WorkoutStatus = z.infer<typeof workoutStatusSchema>;
-export type WorkoutSet = z.infer<typeof workoutSetSchema>;
-export type WorkoutExerciseDetails = z.infer<typeof workoutExerciseDetailsSchema>;
-export type WorkoutExercise = z.infer<typeof workoutExerciseSchema>;
 export type WorkoutBase = z.infer<typeof workoutBaseSchema>;
 export type WorkoutSummary = z.infer<typeof workoutSummarySchema>;
 export type Workout = z.infer<typeof workoutSchema>;

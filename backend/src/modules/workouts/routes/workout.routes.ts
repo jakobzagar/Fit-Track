@@ -1,5 +1,6 @@
 import {Router} from "express";
 import {authenticate} from "../../auth/middleware/auth.middleware.js";
+import workoutExerciseRoutes from "../workout-exercises/routes/workout-exercise.routes.js";
 import {
     getWorkouts,
     getWorkoutById,
@@ -22,6 +23,7 @@ import {
 const router = Router();
 
 router.use(authenticate);
+router.use(workoutExerciseRoutes);
 
 router.get("/", getWorkouts);
 

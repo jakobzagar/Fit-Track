@@ -1,5 +1,5 @@
 import {useNavigate, useParams} from "react-router";
-import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/exercises/AddExerciseToWorkoutForm";
+import {AddExerciseToWorkoutForm} from "../workout-exercises/components/exercises/AddExerciseToWorkoutForm";
 import {Button} from "../../../components/ui/actions/Button";
 import {Card} from "../../../components/ui/display/Card";
 import {Feedback} from "../../../components/ui/feedback/Feedback";

@@ -4,11 +4,11 @@ import {
     addExerciseToWorkout,
     deleteWorkoutExercise,
     updateWorkoutExercise,
-} from "../../../workout-exercises/api/workout-exercises.api";
+} from "../../workout-exercises/api/workout-exercises.api";
 import type {
     AddExerciseToWorkoutInput,
     UpdateWorkoutExerciseInput,
-} from "@fit-track/shared/workout-exercises";
+} from "@fit-track/shared/workouts";
 import type {Workout, WorkoutExercise} from "@fit-track/shared/workouts";
 
 export function useWorkoutExerciseMutations(

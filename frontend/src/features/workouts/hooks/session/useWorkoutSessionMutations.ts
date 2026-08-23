@@ -4,12 +4,12 @@ import {
     addSetToWorkoutExercise,
     setWorkoutSetCompletion,
     updateWorkoutSet,
-} from "../../../workout-exercises/api/workout-exercises.api";
+} from "../../workout-exercises/api/workout-exercises.api";
 import type {
     AddExerciseToWorkoutInput,
     CreateWorkoutSetInput,
     UpdateWorkoutSetInput,
-} from "@fit-track/shared/workout-exercises";
+} from "@fit-track/shared/workouts";
 import {getPreviousPerformances} from "../../api/workouts.api";
 import type {PreviousPerformance, Workout, WorkoutSet} from "@fit-track/shared/workouts";
 

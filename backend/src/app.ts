@@ -13,7 +13,6 @@ import {preventApiResponseCaching} from "./common/middleware/cache-control.middl
 import authRoutes from "./modules/auth/routes/auth.routes.js";
 import exerciseRoutes from "./modules/exercises/routes/exercise.routes.js";
 import workoutRoutes from "./modules/workouts/routes/workout.routes.js";
-import workoutExerciseRoutes from "./modules/workout-exercises/routes/workout-exercise.routes.js";
 import healthRoutes from "./modules/health/routes/health.routes.js";
 
 export const app = express();
@@ -45,7 +44,6 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/exercises", exerciseRoutes);
 app.use("/api/workouts", workoutRoutes);
-app.use("/api/workouts", workoutExerciseRoutes);
 
 app.use("/api", apiNotFound);
 app.use(errorMiddleware);

@@ -1,6 +1,6 @@
 # Architecture and design decisions
 
-This document explains how FitTrack is organized, where trust boundaries sit, and why the project uses its current design. For setup and the product overview, start with the [main README](../README.md).
+This document explains how FitTrack is organized, where trust boundaries sit, and why the project uses its current design. For setup and the product overview, start with the [main README](../README.md); for canonical product terminology, see the [domain language](../CONTEXT.md).
 
 ## Workspace responsibilities
 
@@ -51,11 +51,27 @@ Shared Zod schemas validate input at the API boundary and successful responses a
 
 ## Feature organization
 
-Backend modules live under `backend/src/modules/`. Every existing responsibility uses a predictable directory such as `controllers/`, `middleware/`, `routes/`, `services/`, `policies/`, or `tests/`, even when that directory currently contains one file. Workout lifecycle operations are separated from general workout CRUD because they coordinate status transitions and serializable transactions.
+Backend modules live under `backend/src/modules/`. Every existing responsibility uses a predictable directory such as `controllers/`, `middleware/`, `routes/`, `services/`, `policies/`, or `tests/`, even when that directory currently contains one file. Workout lifecycle operations are separated from general workout CRUD because they coordinate status transitions and serializable transactions. Workout exercise and set mutations remain nested under `modules/workouts/workout-exercises/`; the application mounts only the workout router, which owns the nested routes.
 
-Frontend features live under `frontend/src/features/`. Feature APIs, schemas, hooks, pages, components, styles, types, and local tests stay together in responsibility directories. Reusable primitives live under `frontend/src/components/`, separated into layout and UI responsibilities with tests under their owning component area.
+Frontend features live under `frontend/src/features/`. Feature APIs, schemas, hooks, pages, components, styles, types, and local tests stay together in responsibility directories. Workout exercise and set interactions live under `features/workouts/workout-exercises/` because they have no independent page or user flow outside a workout. Reusable primitives live under `frontend/src/components/`, separated into layout and UI responsibilities with tests under their owning component area.
 
-Shared domains follow the same convention with `schemas/` and `tests/` directories while preserving stable public package subpaths such as `@fit-track/shared/workouts`. Directories are created only for responsibilities that exist; entrypoints and conventional configuration files remain at their expected roots.
+Shared domains follow the same convention with `schemas/` and `tests/` directories while preserving stable public package subpaths. The workout contract Implementation is split into workout, workout-exercise, and workout-set schema files, while `@fit-track/shared/workouts` is their single public Interface. Directories are created only for responsibilities that exist; entrypoints and conventional configuration files remain at their expected roots.
+
+The same ownership model is visible in every workspace:
+
+```text
+Workout Module
+├── Workout
+├── WorkoutExercise
+└── WorkoutSet
+
+shared/src/workouts/                              public contract Interface
+backend/src/modules/workouts/                     authoritative Implementation
+frontend/src/features/workouts/                   user-facing Implementation
+└── workout-exercises/                            nested exercise and set behavior
+```
+
+The `Workout` Module is the external Seam because callers act on exercises and sets only in the context of an owned workout. A single shared Interface gives callers Leverage without exposing the schema file layout. Keeping routes, domain rules, UI flows, and tests near that Seam improves Locality: a nested-workout change has one predictable home in each workspace.
 
 ## PostgreSQL data model
 

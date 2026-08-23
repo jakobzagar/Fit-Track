@@ -4,11 +4,8 @@ import {
     addSetToWorkoutExercise,
     deleteWorkoutSet,
     updateWorkoutSet,
-} from "../../../workout-exercises/api/workout-exercises.api";
-import type {
-    CreateWorkoutSetInput,
-    UpdateWorkoutSetInput,
-} from "@fit-track/shared/workout-exercises";
+} from "../../workout-exercises/api/workout-exercises.api";
+import type {CreateWorkoutSetInput, UpdateWorkoutSetInput} from "@fit-track/shared/workouts";
 import type {Workout, WorkoutSet} from "@fit-track/shared/workouts";
 
 export function useWorkoutSetMutations(

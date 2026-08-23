@@ -1,11 +1,8 @@
 import {Button} from "../../../../components/ui/actions/Button";
 import {Card} from "../../../../components/ui/display/Card";
-import {NewWorkoutSetInlineRow} from "../../../workout-exercises/components/sets/NewWorkoutSetInlineRow";
-import {WorkoutSetInlineRow} from "../../../workout-exercises/components/sets/WorkoutSetInlineRow";
-import type {
-    CreateWorkoutSetInput,
-    UpdateWorkoutSetInput,
-} from "@fit-track/shared/workout-exercises";
+import {NewWorkoutSetInlineRow} from "../../workout-exercises/components/sets/NewWorkoutSetInlineRow";
+import {WorkoutSetInlineRow} from "../../workout-exercises/components/sets/WorkoutSetInlineRow";
+import type {CreateWorkoutSetInput, UpdateWorkoutSetInput} from "@fit-track/shared/workouts";
 import type {PreviousPerformance, WorkoutExercise, WorkoutSet} from "@fit-track/shared/workouts";
 import {formatWorkoutDate} from "../../utils/workout-date";
 

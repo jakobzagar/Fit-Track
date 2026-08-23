@@ -7,7 +7,7 @@ import {
     workoutIdSchema,
     workoutSetSchema,
     workoutStatusSchema,
-} from "../schemas/workout.schemas.js";
+} from "../index.js";
 import {messageResponseSchema} from "../../common/schemas/response.schemas.js";
 
 describe("createWorkoutSchema", () => {

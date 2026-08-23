@@ -1,13 +1,13 @@
 import {Button} from "../../../../components/ui/actions/Button";
 import {Card} from "../../../../components/ui/display/Card";
 import {Icon} from "../../../../components/ui/display/Icon";
-import {AddWorkoutSetForm} from "../../../workout-exercises/components/sets/AddWorkoutSetForm";
-import {UpdateWorkoutExerciseForm} from "../../../workout-exercises/components/exercises/UpdateWorkoutExerciseForm";
+import {AddWorkoutSetForm} from "../../workout-exercises/components/sets/AddWorkoutSetForm";
+import {UpdateWorkoutExerciseForm} from "../../workout-exercises/components/exercises/UpdateWorkoutExerciseForm";
 import type {
     CreateWorkoutSetInput,
     UpdateWorkoutExerciseInput,
     UpdateWorkoutSetInput,
-} from "@fit-track/shared/workout-exercises";
+} from "@fit-track/shared/workouts";
 import type {WorkoutExercise, WorkoutSet} from "@fit-track/shared/workouts";
 import {WorkoutSetList} from "./WorkoutSetList";
 
