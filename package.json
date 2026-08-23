@@ -24,6 +24,7 @@
         "test:integration": "npm run test:integration --workspace @fit-track/backend",
         "test:docker": "docker compose -f compose.test.yaml up --build --remove-orphans --abort-on-container-exit --exit-code-from tests tests",
         "test:docker:down": "docker compose -f compose.test.yaml down --volumes --remove-orphans",
+        "smoke:production": "bash scripts/smoke/production-containers.sh",
         "typecheck": "npm run generate && npm run build:shared && npm run typecheck --workspace @fit-track/shared && npm run typecheck --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/frontend",
         "format": "prettier --write .",
         "format:check": "prettier --check .",

@@ -67,10 +67,10 @@ For a local run, build and start the same final targets:
 docker build --target production --tag fit-track-backend:smoke -f backend/Dockerfile .
 docker build --target migration --tag fit-track-migration:smoke -f backend/Dockerfile .
 docker build --target production --tag fit-track-frontend:smoke -f frontend/Dockerfile .
-docker compose -f compose.production-smoke.yaml up --detach --wait --wait-timeout 120
+npm run smoke:production
 ```
 
-Clean up afterward with `docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans`. Set `SMOKE_BACKEND_PORT` or `SMOKE_FRONTEND_PORT` when the defaults `13001` and `18080` are unavailable.
+The smoke script prints container logs on failure and always removes its temporary containers, network, and volumes. Set `SMOKE_BACKEND_PORT` or `SMOKE_FRONTEND_PORT` when the defaults `13001` and `18080` are unavailable.
 
 ## Contract testing
 
