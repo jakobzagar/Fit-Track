@@ -89,7 +89,7 @@ fit-track/
 
 The React application sends `/api` requests to the Express API, which persists data in PostgreSQL. Shared Zod contracts keep both applications aligned at the HTTP boundary; API responses return along the same path.
 
-Frontend code is organized around user-facing features, while reusable layout and UI primitives remain outside feature modules. Existing files are placed in predictable responsibility directories such as `api/`, `components/`, `hooks/`, `schemas/`, `styles/`, `tests/`, and `types/`; empty placeholder directories are not created.
+Frontend code is organized around user-facing features, while reusable layout and UI primitives remain outside feature modules. Feature APIs, components, hooks, pages, styles, utilities, and local tests stay with the feature that owns them; empty placeholder directories are not created.
 
 Read [Architecture and design decisions](docs/architecture.md) for request flow, backend layers, data model, security boundaries, and trade-offs.
 
