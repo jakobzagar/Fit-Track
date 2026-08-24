@@ -1,5 +1,5 @@
 name: Build production images
-description: Build and push the backend, frontend, and migration images for one revision
+description: Build and push the backend, frontend, and migration images for a single revision
 
 inputs:
   revision:
