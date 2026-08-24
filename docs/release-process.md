@@ -5,7 +5,7 @@ FitTrack uses GitHub Actions to verify the repository, publish digest-addressed 
 The process follows three principles:
 
 - **gate source before merge:** static checks, fast tests, PostgreSQL integration, and final-container smoke tests must pass;
-- **build once, promote by digest:** release tags point to already verified image content rather than rebuilding from a version tag;
+- **test exact release content:** every moving or version tag is created from the digest that passed smoke testing in the same workflow run;
 - **migrate before application rollout:** a dedicated migration artifact must succeed before the matching backend revision starts.
 
 ## Pipeline overview
@@ -33,14 +33,16 @@ flowchart TB
         direction LR
         ReleasePR[Release Please PR] --> Merge[Merge release PR]
         Merge --> Tag[Version tag]
-        Tag --> SemVer[SemVer tags]
+        Tag --> ReleaseBuild[Build three images]
+        ReleaseBuild --> ReleaseSmoke[Smoke exact digests]
+        ReleaseSmoke --> ReleaseTags[Exact version and latest tags]
     end
 
     Gate --> Build
     Main --> ReleasePR
 ```
 
-Every pull request builds and smoke-tests the final production targets before merge, including documentation-only pull requests. The image workflow then runs only after the complete `Test` workflow succeeds for a non-documentation push to `main`. It checks out the exact tested SHA rather than the current branch tip, publishes Git-addressed SHA tags, smoke-tests the exact digests returned by that build, and only then promotes those digests to the moving `main` tags. A workflow rerun may replace a SHA tag, so the tag identifies its Git revision while the digest identifies immutable image content. A push to `main` that changes only Markdown files skips post-merge testing and image publication because its pull request was already fully checked. Release Please creates or updates a release pull request after artifact publication; merging that pull request creates the version tag and GitHub Release, which promote the matching content digests to SemVer tags.
+Every pull request builds and smoke-tests the final production targets before merge, including documentation-only pull requests. The image workflow then runs only after the complete `Test` workflow succeeds for a non-documentation push to `main`. It checks out the exact tested SHA rather than the current branch tip, publishes Git-addressed SHA tags, smoke-tests the exact digests returned by that build, and only then promotes those digests to the moving `main` tags. A push to `main` that changes only Markdown files skips post-merge testing and image publication because its pull request was already fully checked. Release Please creates or updates a release pull request after artifact publication. Its version tag starts one self-contained workflow that rebuilds that tagged revision, smoke-tests the returned digests, and promotes those same references to the exact version and `latest` tags.
 
 ## Protected main workflow
 
@@ -103,14 +105,12 @@ After a successful build and production smoke test, every image receives:
 - Git-addressed `sha-<commit>`;
 - moving `main`.
 
-A release promotes the already-built SHA digest without rebuilding it and adds:
+A release rebuilds the tagged revision, smoke-tests the exact build digests, and adds these tags to the same content:
 
 - exact version, for example `1.2.3`;
-- minor line, for example `1.2`;
-- major line, for example `1`;
 - moving `latest`.
 
-Only an `image@sha256:<digest>` reference is technically immutable. The `sha-<commit>` tag records the Git revision and can be replaced by a rerun; the successful publishing run pins its returned digest for smoke testing and `main` promotion.
+Only an `image@sha256:<digest>` reference is technically immutable. The `sha-<commit>` image tag records the Git revision and can be replaced by a rerun. Neither publication workflow trusts that movable tag as its promotion input: each uses the digest returned by its own build for both smoke testing and subsequent tagging.
 
 Prefer a content digest for deployments and migration jobs; a Git-addressed SHA or exact version is the human-readable release reference. Never apply migrations from `main` or `latest` because those tags can move.
 
@@ -118,7 +118,7 @@ Prefer a content digest for deployments and migration jobs; a Git-addressed SHA 
 
 Committed Prisma migrations are append-only deployment artifacts. A release should follow this order:
 
-1. select matching backend and migration image digests from the same Git-addressed SHA;
+1. select backend and migration references from the same exact release version or release workflow digests;
 2. run the migration image once with the target `DATABASE_URL`;
 3. stop if `prisma migrate deploy` fails;
 4. start or update the matching backend image;
@@ -157,9 +157,9 @@ Because this baseline is established before Release Please owns the `1.x` line, 
 
 1. merge the baseline PR only after `Actions lint`, `Verify`, `Integration`, and `Production container smoke` pass;
 2. wait for the merge commit's `Test` workflow and subsequent `Build and Push to GHCR` workflow to succeed;
-3. confirm that backend, frontend, and migration images exist with `sha-<merge-commit>` tags;
+3. confirm that the backend, frontend, and migration `sha-<merge-commit>` images passed the publishing workflow's digest-pinned smoke test;
 4. create GitHub Release `v1.0.0` targeting that exact commit on `main` and use the `1.0.0` changelog section as its notes;
-5. wait for `Release Images` to validate the tag and promote the same content digests to `1.0.0`, `1.0`, `1`, and `latest`.
+5. wait for `Release Images` to validate the tag, rebuild and smoke-test that revision, and tag those exact digests as `1.0.0` and `latest`.
 
 Never create the tag before the SHA images for its commit have passed their digest-pinned registry smoke test. Once `v1.0.0` exists, this exception is complete: Release Please discovers the manifest and tag as the current release and owns every later version through its normal protected PR flow. A `fix:` or `perf:` then proposes `1.0.1`, a `feat:` proposes `1.1.0`, and a breaking change proposes `2.0.0`.
 
@@ -175,7 +175,7 @@ git commit --allow-empty \
 
 Run `npm run actions:lint` after changing a workflow or local action. Local simulation cannot reproduce every GitHub-hosted runner behavior, so the pull request checks remain authoritative. Never commit local workflow secrets or credentials.
 
-Portable release-tag validation and image-promotion policy lives under `scripts/release/`. The workflow supplies the checked-out Git references, authenticated registry session, revision, version, and image names; the scripts validate all release artifacts before moving any image tags.
+Portable release-tag validation and image-promotion policy lives under `scripts/release/`. Before any image build, the validator requires the tag version to match every workspace package, the root lockfile and its workspace entries, the Release Please manifest, and the changelog. The workflow then supplies the authenticated registry session, version, and exact digest references returned by its build. The promotion script rejects mutable source references and conflicting exact-version tags before moving any image tags.
 
 ## Dependency update automation
 

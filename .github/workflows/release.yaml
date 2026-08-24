@@ -35,11 +35,11 @@ jobs:
           git fetch origin main:refs/remotes/origin/main --no-tags
           bash scripts/release/validate.sh "$GITHUB_REF_NAME" origin/main >> "$GITHUB_OUTPUT"
 
-  promote-images:
-    name: Promote images
+  release-images:
+    name: Build, test, and release images
     needs: validate-release
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
 
     permissions:
       contents: read
@@ -55,6 +55,11 @@ jobs:
       - name: Checkout release
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        with:
+          platforms: arm64
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
@@ -65,15 +70,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build and push production images
+        id: images
+        uses: ./.github/actions/build-production-images
+        with:
+          revision: ${{ needs.validate-release.outputs.revision }}
+
+      - name: Smoke test release images
+        env:
+          BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}@${{ steps.images.outputs.backend-digest }}
+          FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}@${{ steps.images.outputs.frontend-digest }}
+          MIGRATION_IMAGE: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}@${{ steps.images.outputs.migration-digest }}
+        run: npm run smoke:production
+
       - name: Promote release images
         shell: bash
         env:
           VERSION: ${{ needs.validate-release.outputs.version }}
-          REVISION: ${{ needs.validate-release.outputs.revision }}
+          BACKEND_REF: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}@${{ steps.images.outputs.backend-digest }}
+          FRONTEND_REF: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}@${{ steps.images.outputs.frontend-digest }}
+          MIGRATION_REF: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}@${{ steps.images.outputs.migration-digest }}
         run: |
           bash scripts/release/promote-images.sh \
             "$VERSION" \
-            "$REVISION" \
-            "$REGISTRY/$BACKEND_IMAGE" \
-            "$REGISTRY/$FRONTEND_IMAGE" \
-            "$REGISTRY/$MIGRATION_IMAGE"
+            "$BACKEND_REF" \
+            "$FRONTEND_REF" \
+            "$MIGRATION_REF"

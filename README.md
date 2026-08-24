@@ -24,7 +24,7 @@ The repository demonstrates more than a CRUD interface: it treats runtime contra
 1. Scan the [workout lifecycle](#workout-lifecycle) and [engineering highlights](#engineering-highlights).
 2. Review the [architecture and data model](docs/architecture.md), including the documented trade-offs.
 3. Inspect the [testing strategy](docs/testing.md) to see how each risk is verified.
-4. Review the [release process](docs/release-process.md) for build-once, digest-based container promotion.
+4. Review the [release process](docs/release-process.md) for digest-pinned container verification and promotion.
 
 ## Engineering highlights
 
@@ -204,7 +204,7 @@ Successful commits on `main` publish three multi-platform images from the same t
 - `fit-track-frontend`
 - `fit-track-migration`
 
-Images receive Git-addressed `sha-<commit>` tags, SBOM attestations, and build provenance. A rerun may replace a SHA tag, while smoke tests pin the exact digest returned by each successful build before promoting it to the moving `main` tag. After the one-time `v1.0.0` production-baseline bootstrap, Release Please manages later product versions and promotes existing image digests without rebuilding them.
+Images receive Git-addressed `sha-<commit>` tags, SBOM attestations, and build provenance. A rerun may replace a SHA tag, while smoke tests pin the exact digest returned by each successful build before promoting it to the moving `main` tag. After the one-time `v1.0.0` production-baseline bootstrap, Release Please manages later product versions; each release rebuilds the tagged revision, smoke-tests its exact digests, and only then assigns the exact version and `latest` tags.
 
 See [Release and container process](docs/release-process.md#protected-main-workflow) for the branch workflow, repository ruleset, migration ordering, image tags, local workflow checks, and release operations.
 

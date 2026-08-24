@@ -55,53 +55,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
-        id: backend
-        uses: ./.github/actions/build-container
+      - name: Build and push production images
+        id: images
+        uses: ./.github/actions/build-production-images
         with:
-          image: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
-          dockerfile: backend/Dockerfile
-          cache-scope: backend
           revision: ${{ github.event.workflow_run.head_sha }}
-          tags: |
-            type=raw,value=sha-${{ github.event.workflow_run.head_sha }}
-
-      - name: Build and push frontend image
-        id: frontend
-        uses: ./.github/actions/build-container
-        with:
-          image: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}
-          dockerfile: frontend/Dockerfile
-          cache-scope: frontend
-          revision: ${{ github.event.workflow_run.head_sha }}
-          tags: |
-            type=raw,value=sha-${{ github.event.workflow_run.head_sha }}
-
-      - name: Build and push migration image
-        id: migration
-        uses: ./.github/actions/build-container
-        with:
-          image: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}
-          dockerfile: backend/Dockerfile
-          target: migration
-          cache-scope: migration
-          revision: ${{ github.event.workflow_run.head_sha }}
-          tags: |
-            type=raw,value=sha-${{ github.event.workflow_run.head_sha }}
 
       - name: Smoke test production containers
         env:
-          BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}@${{ steps.backend.outputs.digest }}
-          FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}@${{ steps.frontend.outputs.digest }}
-          MIGRATION_IMAGE: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}@${{ steps.migration.outputs.digest }}
+          BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}@${{ steps.images.outputs.backend-digest }}
+          FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}@${{ steps.images.outputs.frontend-digest }}
+          MIGRATION_IMAGE: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}@${{ steps.images.outputs.migration-digest }}
         run: npm run smoke:production
 
       - name: Promote images to main
         shell: bash
         env:
-          BACKEND_DIGEST: ${{ steps.backend.outputs.digest }}
-          FRONTEND_DIGEST: ${{ steps.frontend.outputs.digest }}
-          MIGRATION_DIGEST: ${{ steps.migration.outputs.digest }}
+          BACKEND_DIGEST: ${{ steps.images.outputs.backend-digest }}
+          FRONTEND_DIGEST: ${{ steps.images.outputs.frontend-digest }}
+          MIGRATION_DIGEST: ${{ steps.images.outputs.migration-digest }}
         run: |
           docker buildx imagetools create \
             --tag "$REGISTRY/$BACKEND_IMAGE:main" \

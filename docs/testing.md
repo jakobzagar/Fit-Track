@@ -12,6 +12,7 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 | Concurrent ordering corruption      | PostgreSQL integration tests for simultaneous exercise/set insertion, reordering, and lifecycle transitions      |
 | Browser regressions                 | Testing Library interactions, MSW network behavior, route/session tests, and axe-core accessibility smoke checks |
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
+| Release version drift               | Release validation checks the tag against packages, lockfile, manifest, and changelog                            |
 
 Tests cross the same Interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private Implementation details.
 
@@ -23,6 +24,7 @@ Tests cross the same Interface used by production callers wherever practical. Th
 | Backend unit        | Owning area `tests/` directories          | Environment parsing, logging, middleware, cookies, proxy trust, retries, shutdown |
 | Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency             |
 | Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions       |
+| Release             | `scripts/release/tests/`                  | Coordinated version validation across release artifacts                           |
 | Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy       |
 
 ## Fast verification
@@ -38,6 +40,7 @@ Useful narrower commands are:
 | Command                   | Purpose                                                   |
 | ------------------------- | --------------------------------------------------------- |
 | `npm test`                | Run all fast workspace tests                              |
+| `npm run test:release`    | Test coordinated release-version validation               |
 | `npm run check`           | Run lint, type checking, and formatting checks            |
 | `npm run verify:shared`   | Verify the shared package                                 |
 | `npm run verify:backend`  | Verify backend unit tests, compilation, and static checks |
@@ -70,7 +73,7 @@ Never point integration tests at development or production data. Destructive tes
 
 Pull requests run a production container smoke job after fast verification succeeds. It builds the final backend, migration, and frontend targets for the runner platform and rejects Dockerfile, migration startup, health-check, static-serving, or proxy regressions before merge. The job runs for every pull request, including documentation-only changes, so the protected-branch checks are always reported and cannot remain pending because a workflow was skipped by a path filter.
 
-After a merge to `main`, the image-publishing workflow repeats the runtime checks against the exact multi-platform content digests returned by the GHCR build. A rerun may replace the Git-addressed SHA tags, but each successful run smoke-tests its own digest-pinned artifacts before promoting them to `main`. The first gate checks the proposed source before merge; the second proves that the published deployment artifacts work. Neither replaces browser end-to-end or PostgreSQL integration tests.
+After a merge to `main`, the image-publishing workflow repeats the runtime checks against the exact multi-platform content digests returned by the GHCR build before promoting them to `main`. A release-tag workflow independently builds the tagged revision and runs the same suite before assigning the exact version and `latest` tags to its build digests. A rerun may replace a Git-addressed SHA tag, but neither workflow uses that movable tag as its promotion input. The pull-request gate checks proposed source; the registry runs prove that the published deployment artifacts work. None replaces browser end-to-end or PostgreSQL integration tests.
 
 The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same requests through Nginx `/api`, the SPA entry document and external theme initializer, frontend security headers, static revalidation policy, and API `no-store` behavior.
 
