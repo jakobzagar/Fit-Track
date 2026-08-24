@@ -121,7 +121,7 @@ export function WorkoutDetailPage() {
             <div>
                 <h2 className="section-title">Exercises</h2>
                 <p className="section-caption">
-                    {workout.workoutExercises.length} movements in this workout
+                    {workout.workoutExercises.length} exercises in this workout
                 </p>
             </div>
 

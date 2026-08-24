@@ -80,7 +80,7 @@ export function WorkoutSessionPage() {
 
             {workout.workoutExercises.length === 0 && (
                 <Card className="py-12 text-center">
-                    <p className="font-bold text-cream">This session needs a movement.</p>
+                    <p className="font-bold text-cream">This workout needs an exercise.</p>
                     <p className="mt-2 text-sm text-dim">
                         Add an exercise above, then log your first set.
                     </p>

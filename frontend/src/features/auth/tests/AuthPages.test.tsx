@@ -99,7 +99,7 @@ describe("RegisterPage", () => {
         await user.click(screen.getByRole("button", {name: "Register"}));
 
         expect(await screen.findByRole("alert")).toHaveTextContent("Email is already registered");
-        expect(screen.getByRole("heading", {name: "Create account"})).toBeInTheDocument();
+        expect(screen.getByRole("heading", {name: "Register"})).toBeInTheDocument();
     });
 
     test("shows server validation errors beside registration fields", async () => {

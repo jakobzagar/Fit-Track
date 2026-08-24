@@ -21,7 +21,7 @@ export function ExerciseFormDialog({
             title={exercise ? "Edit exercise" : "Add exercise"}
             description={
                 exercise
-                    ? "Keep the movement consistent so workout history remains useful."
+                    ? "Keep the exercise consistent so workout history remains useful."
                     : "Use a clear name you will recognize immediately during a session."
             }
             onClose={onClose}

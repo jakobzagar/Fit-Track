@@ -4,7 +4,7 @@ import {Outlet, useLocation} from "react-router";
 function getRouteTitle(pathname: string) {
     if (pathname === "/") return "FitTrack · Train with purpose";
     if (pathname === "/login") return "Sign in · FitTrack";
-    if (pathname === "/register") return "Create account · FitTrack";
+    if (pathname === "/register") return "Register · FitTrack";
     if (pathname === "/workouts") return "Workouts · FitTrack";
     if (pathname === "/exercises") return "Exercises · FitTrack";
     if (/^\/workouts\/[^/]+\/session$/.test(pathname)) return "Active workout · FitTrack";

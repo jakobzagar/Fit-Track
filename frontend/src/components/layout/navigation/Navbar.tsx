@@ -3,7 +3,7 @@ import {useNavigate} from "react-router";
 import {useAuth} from "../../../features/auth/hooks/useAuth";
 import {BrandMark} from "../../ui/display/BrandMark";
 import {DesktopNavigation, MobileNavigation} from "./NavigationLinks";
-import {NavbarAccount} from "./NavbarAccount";
+import {NavbarUser} from "./NavbarUser";
 
 export function Navbar() {
     const navigate = useNavigate();
@@ -32,7 +32,7 @@ export function Navbar() {
                     <BrandMark />
 
                     <DesktopNavigation />
-                    <NavbarAccount
+                    <NavbarUser
                         name={user?.name}
                         isLoggingOut={isLoggingOut}
                         onLogout={() => void handleLogout()}

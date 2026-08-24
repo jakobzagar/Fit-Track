@@ -45,7 +45,7 @@ export function RegisterPage() {
                 <div className="auth-form-wrap">
                     <p className="eyebrow">Start training</p>
                     <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-cream">
-                        Create account
+                        Register
                     </h2>
                     <p className="mb-8 mt-3 text-sm text-dim">Set up your private training log.</p>
                     {error && (

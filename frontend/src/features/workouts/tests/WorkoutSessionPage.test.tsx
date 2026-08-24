@@ -240,7 +240,7 @@ describe("WorkoutSessionPage", () => {
             }),
         );
         const {user} = renderPage();
-        await screen.findByText("This session needs a movement.");
+        await screen.findByText("This workout needs an exercise.");
         await user.selectOptions(screen.getByLabelText("Exercise"), exercise.id);
         await user.click(screen.getByRole("button", {name: "Add exercise"}));
 

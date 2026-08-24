@@ -77,8 +77,8 @@ export function ExercisesPage() {
         <section className="page-stack">
             <PageHeader
                 eyebrow="Exercise library"
-                title="Movements"
-                description="Build a clean library of the movements you train. Keep names consistent so your history stays useful."
+                title="Exercises"
+                description="Build a clean library of the exercises you train. Keep names consistent so your history stays useful."
                 action={
                     view === "active" ? (
                         <Button type="button" onClick={openCreateForm}>
@@ -101,7 +101,7 @@ export function ExercisesPage() {
                 <div className="mb-4">
                     <h2 className="section-title">Your exercises</h2>
                     <p className="section-caption">
-                        {exerciseData.exercises.length} {view} movements
+                        {exerciseData.exercises.length} {view} exercises
                     </p>
                 </div>
                 {exerciseData.exercises.length === 0 ? (

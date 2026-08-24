@@ -32,7 +32,7 @@ describe("accessibility smoke tests", () => {
     test.each([
         ["landing", <LandingPage />, "Train with"],
         ["login", <LoginPage />, "Sign in"],
-        ["register", <RegisterPage />, "Create account"],
+        ["register", <RegisterPage />, "Register"],
     ])("has no detectable violations on the %s page", async (_name, page, heading) => {
         const {container} = renderWithProviders(page);
         await screen.findByRole("heading", {name: new RegExp(heading, "i")});
@@ -41,7 +41,7 @@ describe("accessibility smoke tests", () => {
 
     test.each([
         ["workouts", <WorkoutsPage />, "Workouts"],
-        ["exercises", <ExercisesPage />, "Movements"],
+        ["exercises", <ExercisesPage />, "Exercises"],
     ])("has no detectable violations on the %s page", async (_name, page, heading) => {
         server.use(
             http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts: []})),

@@ -35,6 +35,6 @@ describe("LandingPage", () => {
             "href",
             "/workouts",
         );
-        expect(screen.queryByRole("link", {name: "Create account"})).not.toBeInTheDocument();
+        expect(screen.queryByRole("link", {name: "Register"})).not.toBeInTheDocument();
     });
 });

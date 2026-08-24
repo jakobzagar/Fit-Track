@@ -29,7 +29,7 @@ The user's single workout currently being performed. A user cannot have more tha
 _Avoid_: Open workout, current routine
 
 **Completed workout**:
-A historical workout record that is read-only until deliberately reopened.
+A historical workout record that cannot be edited unless deliberately reopened, but can be deleted without reopening.
 _Avoid_: Archived workout, finished routine
 
 **Previous performance**:

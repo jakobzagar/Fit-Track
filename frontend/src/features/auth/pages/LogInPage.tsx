@@ -62,7 +62,7 @@ export function LoginPage() {
                             className="font-bold text-flame hover:text-flame-bright"
                             to="/register"
                         >
-                            Create an account
+                            Register
                         </Link>
                     </p>
                 </div>

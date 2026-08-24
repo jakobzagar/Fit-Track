@@ -19,10 +19,7 @@ describe("Footer", () => {
     test("offers authentication links to a visitor", () => {
         renderFooter(null);
         expect(screen.getByRole("link", {name: "Log in"})).toHaveAttribute("href", "/login");
-        expect(screen.getByRole("link", {name: "Create account"})).toHaveAttribute(
-            "href",
-            "/register",
-        );
+        expect(screen.getByRole("link", {name: "Register"})).toHaveAttribute("href", "/register");
     });
 
     test("offers the dashboard to an authenticated user", () => {

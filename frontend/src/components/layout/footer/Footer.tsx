@@ -28,13 +28,13 @@ export function Footer({variant = "app"}: FooterProps) {
                             <Link to="/exercises">Exercises</Link>
                         </div>
                         <div>
-                            <p>Account</p>
+                            <p>User</p>
                             {user ? (
                                 <Link to="/workouts">Dashboard</Link>
                             ) : (
                                 <>
                                     <Link to="/login">Log in</Link>
-                                    <Link to="/register">Create account</Link>
+                                    <Link to="/register">Register</Link>
                                 </>
                             )}
                         </div>

@@ -18,7 +18,7 @@ export function ExerciseEmptyState({view, onCreate}: ExerciseEmptyStateProps) {
             </p>
             <p className="mt-2 text-sm text-dim">
                 {isActive
-                    ? "Add your first movement to start building workouts."
+                    ? "Add your first exercise to start building workouts."
                     : "Exercises you archive will appear here."}
             </p>
             {isActive && (

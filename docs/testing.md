@@ -9,7 +9,7 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 | Frontend and backend contract drift | Shared strict Zod matrices, backend response parsing, and frontend runtime response parsing                      |
 | Cross-user data exposure            | Integration tests for owned resources, nested-resource mismatches, and previous-performance isolation            |
 | Invalid lifecycle transitions       | Service and integration coverage for start, cancel, finish, reopen, and delete behavior                          |
-| Concurrent ordering corruption      | PostgreSQL integration tests for simultaneous exercise/set insertion, movement, and lifecycle transitions        |
+| Concurrent ordering corruption      | PostgreSQL integration tests for simultaneous exercise/set insertion, reordering, and lifecycle transitions      |
 | Browser regressions                 | Testing Library interactions, MSW network behavior, route/session tests, and axe-core accessibility smoke checks |
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
 
