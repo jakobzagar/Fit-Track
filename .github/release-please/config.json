@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/googleapis/release-please/v17.6.1/schemas/config.json",
-    "release-type": "simple",
+    "release-type": "node",
     "include-component-in-tag": false,
     "include-v-in-tag": true,
     "pull-request-title-pattern": "chore: release ${version}",
@@ -30,11 +30,6 @@
             "extra-files": [
                 {
                     "type": "json",
-                    "path": "package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
                     "path": "backend/package.json",
                     "jsonpath": "$.version"
                 },
@@ -47,16 +42,6 @@
                     "type": "json",
                     "path": "shared/package.json",
                     "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "package-lock.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "package-lock.json",
-                    "jsonpath": "$.packages[''].version"
                 },
                 {
                     "type": "json",
