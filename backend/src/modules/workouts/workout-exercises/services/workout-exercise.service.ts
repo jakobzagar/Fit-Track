@@ -1,6 +1,7 @@
 import {AppError} from "../../../../common/errors/app.error.js";
 import {runSerializableTransaction} from "../../../../db/transaction.js";
 import {assertWorkoutIsMutable} from "../../policies/workout-edit.policy.js";
+import {loadOwnedMutableWorkoutExercise} from "./owned-workout-resource.loader.js";
 import type {
     AddExerciseToWorkoutInput,
     UpdateWorkoutExerciseInput,
@@ -92,26 +93,12 @@ export async function updateWorkoutExerciseService(
     data: UpdateWorkoutExerciseInput,
 ) {
     return runSerializableTransaction(async (tx) => {
-        const workoutExercise = await tx.workoutExercise.findFirst({
-            where: {
-                id: workoutExerciseId,
-                workoutId,
-                workout: {
-                    userId,
-                },
-            },
-            include: {
-                workout: {
-                    select: {status: true},
-                },
-            },
-        });
-
-        if (!workoutExercise) {
-            throw new AppError("Workout exercise not found", 404);
-        }
-
-        assertWorkoutIsMutable(workoutExercise.workout.status);
+        const workoutExercise = await loadOwnedMutableWorkoutExercise(
+            tx,
+            userId,
+            workoutId,
+            workoutExerciseId,
+        );
 
         if (data.position !== undefined && data.position !== workoutExercise.position) {
             const exerciseCount = await tx.workoutExercise.count({
@@ -203,26 +190,12 @@ export async function deleteWorkoutExerciseService(
     workoutExerciseId: string,
 ) {
     return runSerializableTransaction(async (tx) => {
-        const workoutExercise = await tx.workoutExercise.findFirst({
-            where: {
-                id: workoutExerciseId,
-                workoutId,
-                workout: {
-                    userId,
-                },
-            },
-            include: {
-                workout: {
-                    select: {status: true},
-                },
-            },
-        });
-
-        if (!workoutExercise) {
-            throw new AppError("Workout exercise not found", 404);
-        }
-
-        assertWorkoutIsMutable(workoutExercise.workout.status);
+        const workoutExercise = await loadOwnedMutableWorkoutExercise(
+            tx,
+            userId,
+            workoutId,
+            workoutExerciseId,
+        );
 
         await tx.workoutExercise.delete({
             where: {

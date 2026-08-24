@@ -1,6 +1,10 @@
 import {AppError} from "../../../../common/errors/app.error.js";
 import {runSerializableTransaction} from "../../../../db/transaction.js";
-import {assertWorkoutIsMutable} from "../../policies/workout-edit.policy.js";
+import {
+    loadOwnedActiveWorkoutSet,
+    loadOwnedMutableWorkoutExercise,
+    loadOwnedMutableWorkoutSet,
+} from "./owned-workout-resource.loader.js";
 import type {
     CreateWorkoutSetInput,
     SetWorkoutSetCompletionInput,
@@ -14,26 +18,7 @@ export async function addSetToWorkoutExerciseService(
     data: CreateWorkoutSetInput,
 ) {
     return runSerializableTransaction(async (tx) => {
-        const workoutExercise = await tx.workoutExercise.findFirst({
-            where: {
-                id: workoutExerciseId,
-                workoutId,
-                workout: {
-                    userId,
-                },
-            },
-            include: {
-                workout: {
-                    select: {status: true},
-                },
-            },
-        });
-
-        if (!workoutExercise) {
-            throw new AppError("Workout exercise not found", 404);
-        }
-
-        assertWorkoutIsMutable(workoutExercise.workout.status);
+        await loadOwnedMutableWorkoutExercise(tx, userId, workoutId, workoutExerciseId);
 
         const lastSet = await tx.workoutSet.findFirst({
             where: {
@@ -69,31 +54,13 @@ export async function updateWorkoutSetService(
     data: UpdateWorkoutSetInput,
 ) {
     return runSerializableTransaction(async (tx) => {
-        const existingSet = await tx.workoutSet.findFirst({
-            where: {
-                id: setId,
-                workoutExerciseId,
-                workoutExercise: {
-                    workoutId,
-                    workout: {
-                        userId,
-                    },
-                },
-            },
-            include: {
-                workoutExercise: {
-                    select: {
-                        workout: {select: {status: true}},
-                    },
-                },
-            },
-        });
-
-        if (!existingSet) {
-            throw new AppError("Workout set not found", 404);
-        }
-
-        assertWorkoutIsMutable(existingSet.workoutExercise.workout.status);
+        const existingSet = await loadOwnedMutableWorkoutSet(
+            tx,
+            userId,
+            workoutId,
+            workoutExerciseId,
+            setId,
+        );
 
         const reps = data.reps !== undefined ? data.reps : existingSet.reps;
         const durationSeconds =
@@ -125,31 +92,13 @@ export async function deleteWorkoutSetService(
     setId: string,
 ) {
     return runSerializableTransaction(async (tx) => {
-        const workoutSet = await tx.workoutSet.findFirst({
-            where: {
-                id: setId,
-                workoutExerciseId,
-                workoutExercise: {
-                    workoutId,
-                    workout: {
-                        userId,
-                    },
-                },
-            },
-            include: {
-                workoutExercise: {
-                    select: {
-                        workout: {select: {status: true}},
-                    },
-                },
-            },
-        });
-
-        if (!workoutSet) {
-            throw new AppError("Workout set not found", 404);
-        }
-
-        assertWorkoutIsMutable(workoutSet.workoutExercise.workout.status);
+        const workoutSet = await loadOwnedMutableWorkoutSet(
+            tx,
+            userId,
+            workoutId,
+            workoutExerciseId,
+            setId,
+        );
 
         await tx.workoutSet.delete({
             where: {
@@ -195,37 +144,13 @@ export async function setWorkoutSetCompletionService(
     data: SetWorkoutSetCompletionInput,
 ) {
     return runSerializableTransaction(async (tx) => {
-        const workoutSet = await tx.workoutSet.findFirst({
-            where: {
-                id: setId,
-                workoutExerciseId,
-                workoutExercise: {
-                    workoutId,
-                    workout: {
-                        userId,
-                    },
-                },
-            },
-            include: {
-                workoutExercise: {
-                    select: {
-                        workout: {
-                            select: {
-                                status: true,
-                            },
-                        },
-                    },
-                },
-            },
-        });
-
-        if (!workoutSet) {
-            throw new AppError("Workout set not found", 404);
-        }
-
-        if (workoutSet.workoutExercise.workout.status !== "ACTIVE") {
-            throw new AppError("Sets can only be completed during an active workout", 409);
-        }
+        const workoutSet = await loadOwnedActiveWorkoutSet(
+            tx,
+            userId,
+            workoutId,
+            workoutExerciseId,
+            setId,
+        );
 
         const reps = data.reps !== undefined ? data.reps : workoutSet.reps;
         const durationSeconds =
