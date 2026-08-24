@@ -78,6 +78,8 @@ assert_header "$frontend_url/theme-init.js" 200 "Cache-Control: no-cache"
 assert_header "$frontend_url$asset_path" 200 "Cache-Control: public, max-age=31536000, immutable"
 assert_header "$backend_url/api/health/live" 200 "Cache-Control: no-store"
 assert_header "$frontend_url/api/health/live" 200 "Cache-Control: no-store"
+assert_header "$backend_url/api" 404 "Cache-Control: no-store"
+assert_header "$frontend_url/api" 404 "Cache-Control: no-store"
 assert_header "$backend_url/api/not-found" 404 "Cache-Control: no-store"
 assert_header "$frontend_url/api/not-found" 404 "Cache-Control: no-store"
 
