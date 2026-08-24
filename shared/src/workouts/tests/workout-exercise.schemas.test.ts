@@ -9,6 +9,7 @@ import {
     setWorkoutSetCompletionSchema,
     updateWorkoutExerciseSchema,
     updateWorkoutSetSchema,
+    workoutExerciseDetailsSchema,
     workoutSetIdParamsSchema,
     workoutSetResponseSchema,
 } from "../index.js";
@@ -132,6 +133,20 @@ describe("workout set parameters", () => {
 });
 
 describe("workout exercise responses", () => {
+    test("projects only the exercise fields embedded in a workout", () => {
+        const details = {
+            id: "123e4567-e89b-42d3-a456-426614174000",
+            name: "Bench press",
+            muscleGroup: "Chest",
+            equipment: "Barbell",
+        };
+
+        expect(workoutExerciseDetailsSchema.parse(details)).toEqual(details);
+        expect(
+            workoutExerciseDetailsSchema.safeParse({...details, isArchived: false}).success,
+        ).toBe(false);
+    });
+
     test("rejects additional response fields", () => {
         expect(
             deleteWorkoutSetResponseSchema.safeParse({message: "Set deleted", deletedId: "hidden"})
