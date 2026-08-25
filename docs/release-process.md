@@ -182,3 +182,9 @@ Portable release-tag validation and image-promotion policy lives under `scripts/
 Dependabot checks GitHub Actions and the root npm workspace weekly. Minor and patch npm updates are grouped by production or development responsibility, while major updates remain individually reviewable.
 
 Docker coverage is also weekly. The `docker` ecosystem scans the root, backend, and frontend Dockerfile directories; the separate `docker-compose` ecosystem scans the root Compose definitions. Dependabot pull requests are not auto-merged: they follow the same protected `main` pull-request path and required checks as contributor changes.
+
+## Repository security settings
+
+The GitHub repository keeps the dependency graph, Dependabot alerts, secret scanning, and push protection enabled. Secret scanning reports supported credentials found in repository history, while push protection rejects supported secrets before they enter the repository. These repository-level controls are configured under **Settings** → **Advanced Security** and are not duplicated as custom workflow steps.
+
+Do not bypass push protection for a real credential. Remove and rotate it before retrying the push. A confirmed false positive may be bypassed only with the matching GitHub reason so the decision remains visible in repository security history. Review secret-scanning and Dependabot alerts under **Security** before a production release.

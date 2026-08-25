@@ -11,6 +11,7 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 | Invalid lifecycle transitions       | Service and integration coverage for start, cancel, finish, reopen, and delete behavior                          |
 | Concurrent ordering corruption      | PostgreSQL integration tests for simultaneous exercise/set insertion, reordering, and lifecycle transitions      |
 | Browser regressions                 | Testing Library interactions, MSW network behavior, route/session tests, and axe-core accessibility smoke checks |
+| Static security flaws               | GitHub-managed CodeQL analysis for JavaScript and TypeScript data flows                                          |
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
 | Release version drift               | Release validation checks the tag against packages, lockfile, manifest, and changelog                            |
 
@@ -24,6 +25,7 @@ Tests cross the same Interface used by production callers wherever practical. Th
 | Backend unit        | Owning area `tests/` directories          | Environment parsing, logging, middleware, cookies, proxy trust, retries, shutdown |
 | Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency             |
 | Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions       |
+| Code scanning       | GitHub CodeQL default setup               | JavaScript and TypeScript security queries on repository changes                  |
 | Release             | `scripts/release/tests/`                  | Coordinated version validation across release artifacts                           |
 | Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy       |
 
@@ -127,6 +129,20 @@ Frontend tests run in jsdom. `renderWithProviders` supplies application provider
 Testing Library queries use accessible roles and labels. `user-event` is preferred for realistic interaction. axe-core provides accessibility smoke coverage for representative pages and dialogs.
 
 Pure presentational pass-through components do not receive standalone tests unless they own meaningful semantics or accessibility behavior.
+
+## Code scanning
+
+CodeQL should use GitHub's default setup so its configuration remains visible and maintainable in repository settings rather than adding another workflow file. A repository administrator enables it once:
+
+1. open the repository's **Settings**;
+2. under **Security and quality**, select **Advanced Security**;
+3. under **Code Security**, find **CodeQL analysis** and select **Set up** → **Default**;
+4. keep **JavaScript/TypeScript** enabled and begin with the **Default** query suite;
+5. review the generated configuration and select **Enable CodeQL**.
+
+The first run validates the generated configuration. Results and remediation details appear under **Security** → **Code scanning**. JavaScript and TypeScript analysis does not require PostgreSQL, private environment files, or a custom build command.
+
+After the first successful run, add the exact CodeQL status reported by GitHub—normally similar to `CodeQL / Analyze (javascript-typescript)`—to the protected `main` ruleset. Do not guess the status name before GitHub creates it. The [official default-setup guide](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/configure-code-scanning/configure-code-scanning) owns current eligibility and UI details.
 
 ## Regression policy
 
