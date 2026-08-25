@@ -12,6 +12,7 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 | Concurrent ordering corruption      | PostgreSQL integration tests for simultaneous exercise/set insertion, reordering, and lifecycle transitions      |
 | Browser regressions                 | Testing Library interactions, MSW network behavior, route/session tests, and axe-core accessibility smoke checks |
 | Static security flaws               | GitHub-managed CodeQL analysis for JavaScript and TypeScript data flows                                          |
+| Vulnerable dependency introduction  | Pull-request dependency review for high and critical runtime advisories                                          |
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
 | Release version drift               | Release validation checks the tag against packages, lockfile, manifest, and changelog                            |
 
@@ -26,6 +27,7 @@ Tests cross the same Interface used by production callers wherever practical. Th
 | Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency             |
 | Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions       |
 | Code scanning       | GitHub CodeQL default setup               | JavaScript and TypeScript security queries on repository changes                  |
+| Dependency review   | `Test` workflow pull-request job          | Added and updated dependencies compared with the pull-request base                |
 | Release             | `scripts/release/tests/`                  | Coordinated version validation across release artifacts                           |
 | Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy       |
 
@@ -144,6 +146,14 @@ The first run validates the generated configuration. Results and remediation det
 
 After the first successful run, add the exact CodeQL status reported by GitHub—normally similar to `CodeQL / Analyze (javascript-typescript)`—to the protected `main` ruleset. Do not guess the status name before GitHub creates it. The [official default-setup guide](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/configure-code-scanning/configure-code-scanning) owns current eligibility and UI details.
 
+## Dependency review
+
+The `Dependency review` job runs only on pull requests and compares dependency changes with the pull-request base through GitHub's dependency graph. It blocks newly introduced `high` or `critical` vulnerabilities in runtime dependencies and reports the first patched version when GitHub Advisory Database data provides one. Development-only findings remain visible without blocking the pull request; this keeps known build-tool findings separate from production exposure.
+
+This check complements rather than replaces Dependabot alerts: dependency review prevents vulnerable changes from entering `main`, while Dependabot reports vulnerabilities already present in the dependency graph. It uses only the read-only workflow token, does not post pull-request comments, and requires no external account or repository secret.
+
+Public repositories have the dependency graph available on GitHub.com. For an eligible private repository, enable the dependency graph before requiring the check. After the first successful pull-request run, add the exact `Dependency review` status to the protected `main` ruleset. The [official dependency-review documentation](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependency-review) owns current eligibility and behavior.
+
 ## Regression policy
 
 Observable behavior changes require tests at the layer that owns the behavior. Bug fixes add a regression case that reproduces the failure. Refactors should preserve existing expectations rather than weakening assertions to make tests pass.
@@ -155,6 +165,7 @@ When backend persistence, authorization, security middleware, concurrency, or mi
 The protected `main` branch requires these exact GitHub Actions job names:
 
 - `Actions lint` validates workflow syntax;
+- `Dependency review` rejects newly introduced high or critical runtime vulnerabilities;
 - `Verify` runs linting, type checking, formatting, fast tests, and production builds;
 - `Integration` applies committed migrations and tests the API against PostgreSQL;
 - `Production container smoke` builds and exercises the final runtime targets.
