@@ -10,7 +10,8 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 | Cross-user data exposure            | Integration tests for owned resources, nested-resource mismatches, and previous-performance isolation            |
 | Invalid lifecycle transitions       | Service and integration coverage for start, cancel, finish, reopen, and delete behavior                          |
 | Concurrent ordering corruption      | PostgreSQL integration tests for simultaneous exercise/set insertion, reordering, and lifecycle transitions      |
-| Browser regressions                 | Testing Library interactions, MSW network behavior, route/session tests, and axe-core accessibility smoke checks |
+| Browser component regressions       | Testing Library interactions, MSW network behavior, route/session tests, and axe-core accessibility smoke checks |
+| Critical user-journey regressions   | Playwright Chromium journeys through the real frontend, API, and migrated PostgreSQL                             |
 | Static security flaws               | GitHub-managed CodeQL analysis for JavaScript and TypeScript data flows                                          |
 | Vulnerable dependency introduction  | Pull-request dependency review for high and critical runtime advisories                                          |
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
@@ -26,6 +27,7 @@ Tests cross the same Interface used by production callers wherever practical. Th
 | Backend unit        | Owning area `tests/` directories          | Environment parsing, logging, middleware, cookies, proxy trust, retries, shutdown |
 | Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency             |
 | Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions       |
+| Browser E2E         | `frontend/e2e/`                           | Critical cross-application journeys in Chromium against isolated PostgreSQL       |
 | Code scanning       | GitHub CodeQL default setup               | JavaScript and TypeScript security queries on repository changes                  |
 | Dependency review   | `Test` workflow pull-request job          | Added and updated dependencies compared with the pull-request base                |
 | Release             | `scripts/release/tests/`                  | Coordinated version validation across release artifacts                           |
@@ -49,6 +51,7 @@ Useful narrower commands are:
 | `npm run verify:shared`   | Verify the shared package                                 |
 | `npm run verify:backend`  | Verify backend unit tests, compilation, and static checks |
 | `npm run verify:frontend` | Verify frontend checks, tests, and build                  |
+| `npm run test:e2e`        | Run isolated critical Chromium journeys                   |
 
 ## Isolated PostgreSQL verification
 
@@ -77,7 +80,7 @@ Never point integration tests at development or production data. Destructive tes
 
 Pull requests run a production container smoke job after fast verification succeeds. It builds the final backend, migration, and frontend targets for the runner platform and rejects Dockerfile, migration startup, health-check, static-serving, or proxy regressions before merge. The job runs for every pull request, including documentation-only changes, so the protected-branch checks are always reported and cannot remain pending because a workflow was skipped by a path filter.
 
-After a merge to `main`, the image-publishing workflow repeats the runtime checks against the exact multi-platform content digests returned by the GHCR build before promoting them to `main`. A release-tag workflow independently builds the tagged revision and runs the same suite before assigning the exact version and `latest` tags to its build digests. A rerun may replace a Git-addressed SHA tag, but neither workflow uses that movable tag as its promotion input. The pull-request gate checks proposed source; the registry runs prove that the published deployment artifacts work. None replaces browser end-to-end or PostgreSQL integration tests.
+After a merge to `main`, the image-publishing workflow repeats the runtime checks against the exact multi-platform content digests returned by the GHCR build before promoting them to `main`. A release-tag workflow independently builds the tagged revision and runs the same suite before assigning the exact version and `latest` tags to its build digests. A rerun may replace a Git-addressed SHA tag, but neither workflow uses that movable tag as its promotion input. The pull-request gate checks proposed source; the registry runs prove that the published deployment artifacts work. Production smoke complements rather than replaces browser E2E and PostgreSQL integration tests.
 
 The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same requests through Nginx `/api`, the SPA entry document and external theme initializer, frontend security headers, static revalidation policy, and API `no-store` behavior.
 
@@ -91,6 +94,33 @@ npm run smoke:production
 ```
 
 The smoke script prints container logs on failure and always removes its temporary containers, network, and volumes. Set `SMOKE_BACKEND_PORT` or `SMOKE_FRONTEND_PORT` when the defaults `13001` and `18080` are unavailable.
+
+## Browser end-to-end tests
+
+Playwright owns a deliberately small set of critical user journeys through the public browser Interface. Chromium drives the real React application through its Vite `/api` proxy, Express handles real HTTP and cookies, and Prisma uses a freshly migrated PostgreSQL database. MSW and direct database fixtures are not part of this layer.
+
+The suite currently proves that:
+
+- a new user can create an exercise and workout, start it, add and complete a set, finish, log out, log back in, and observe the persisted completed workout;
+- an authenticated page returns to sign-in when the browser cookie expires and the next protected request receives `401`.
+
+Install the version-matched Chromium binary once after installing dependencies:
+
+```bash
+npm exec --workspace @fit-track/frontend -- playwright install chromium
+```
+
+Run the complete isolated environment:
+
+```bash
+npm run test:e2e
+```
+
+`scripts/e2e/run.sh` starts only the PostgreSQL service from `compose.e2e.yaml`, applies every migration, and delegates backend/frontend process lifecycle to Playwright. The database uses `tmpfs`, its name ends in `_test`, and the cleanup trap removes the container and network after success, failure, or interruption. Override `E2E_DATABASE_PORT`, `E2E_BACKEND_PORT`, or `E2E_FRONTEND_PORT` when the defaults `15433`, `13002`, or `15173` are unavailable.
+
+For interactive diagnosis, run `npm run test:e2e:ui`. Playwright keeps traces, screenshots, and videos only for failures. CI uses one Chromium worker for deterministic database access and uploads `frontend/playwright-report/` plus `frontend/test-results/` when the job fails.
+
+Browser E2E tests cover cross-application journeys, not the exhaustive validation and authorization matrix. Backend integration tests remain the owner of endpoint edge cases, cross-user isolation, concurrency, and persistence invariants; frontend tests remain the owner of detailed component states and accessibility behavior.
 
 ## Contract testing
 
@@ -168,6 +198,7 @@ The protected `main` branch requires these exact GitHub Actions job names:
 - `Dependency review` rejects newly introduced high or critical runtime vulnerabilities;
 - `Verify` runs linting, type checking, formatting, fast tests, and production builds;
 - `Integration` applies committed migrations and tests the API against PostgreSQL;
+- `Browser E2E` runs critical Chromium journeys against an isolated migrated PostgreSQL database;
 - `Production container smoke` builds and exercises the final runtime targets.
 
 The complete merge policy, correction flow, and repository ruleset belong in the [release and container process](release-process.md#protected-main-workflow).

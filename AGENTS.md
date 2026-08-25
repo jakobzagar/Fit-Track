@@ -25,13 +25,14 @@ Never commit credentials, `.env` files, database dumps, generated secrets, or us
 
 ## Validation
 
-| Change                                      | Required local validation                                                          |
-| ------------------------------------------- | ---------------------------------------------------------------------------------- |
-| TypeScript behavior or configuration        | Narrow tests while iterating, then `npm run verify`                                |
-| API, authorization, persistence, migrations | `npm run verify` and `npm run test:docker`                                         |
-| Docker, Nginx, health checks, startup       | `npm run verify` and the production-container smoke procedure in `docs/testing.md` |
-| GitHub Actions workflow or local action     | `npm run actions:lint` plus the relevant repository checks                         |
-| Markdown or non-workflow YAML only          | Prettier on changed files, link/content review, and `git diff --check`             |
+| Change                                       | Required local validation                                                          |
+| -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| TypeScript behavior or configuration         | Narrow tests while iterating, then `npm run verify`                                |
+| API, authorization, persistence, migrations  | `npm run verify` and `npm run test:docker`                                         |
+| Browser end-to-end behavior or configuration | `npm run verify` and `npm run test:e2e`                                            |
+| Docker, Nginx, health checks, startup        | `npm run verify` and the production-container smoke procedure in `docs/testing.md` |
+| GitHub Actions workflow or local action      | `npm run actions:lint` plus the relevant repository checks                         |
+| Markdown or non-workflow YAML only           | Prettier on changed files, link/content review, and `git diff --check`             |
 
 Useful commands:
 
@@ -39,6 +40,7 @@ Useful commands:
 npm run verify
 npm run test:docker
 npm run test:docker:down
+npm run test:e2e
 npm run actions:lint
 ```
 
@@ -61,6 +63,7 @@ npm run actions:lint
 - Add tests for observable behavior changes and regression tests for bug fixes.
 - Put shared schema matrices beside their domain under `shared`, backend integration tests in the owning module, and frontend tests beside the owning feature or component.
 - Use Supertest against the exported Express app, Testing Library with accessible queries, `user-event` for interactions, and MSW for frontend HTTP boundaries.
+- Use Playwright through accessible browser locators for critical cross-application journeys; keep exhaustive API cases in backend integration tests.
 - Preserve the test database guard: destructive cleanup requires `NODE_ENV=test` and a database name ending in `_test`.
 - Do not weaken assertions or rewrite expected behavior merely to make a failing test pass.
 
@@ -94,7 +97,7 @@ Update the narrowest owner and link to it from summaries. Do not copy detailed p
 ## Git and releases
 
 - `main` is protected. Normal changes use a short-lived branch and pull request; later pushes update the same PR.
-- Merge only after the branch is current, conversations are resolved, and `Actions lint`, `Verify`, `Integration`, and `Production container smoke` pass.
+- Merge only after the branch is current, conversations are resolved, and `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` pass.
 - Use Conventional Commits without scopes: `feat:`, `fix:`, `perf:`, `test:`, `docs:`, `ci:`, `build:`, or `chore:` followed by a concise imperative summary.
 - Treat `fix:` and `perf:` as patch, `feat:` as minor, and `!` or `BREAKING CHANGE` as major release input. Use `Release-As` only for an intentional override.
 - Do not manually edit product versions or the changelog during ordinary work. Release Please owns coordinated releases after the documented `v1.0.0` bootstrap.

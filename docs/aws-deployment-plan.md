@@ -15,6 +15,7 @@ HTTPS, DNS, secrets, networking, monitoring, backups, and AWS deployment automat
 | Application artifacts | Multi-platform backend, frontend, and migration images published from one tested Git revision | Import or publish artifacts to the selected AWS delivery path                 |
 | Database changes      | Append-only Prisma migrations and a dedicated one-off migration image                         | RDS instance, backup policy, restore test, and migration task orchestration   |
 | Runtime health        | Separate liveness/readiness checks and graceful shutdown                                      | ECS health checks, deployment rollback policy, and capacity settings          |
+| End-to-end behavior   | Critical Chromium journeys against the real API and an isolated migrated PostgreSQL database  | Repeat the critical journeys against the deployed AWS entry point             |
 | Security              | Application-level cookies, CSRF, CORS, headers, limits, and log redaction                     | TLS, managed secrets, IAM roles, private networking, and security-group rules |
 | Observability         | Structured request-correlated logs on standard output                                         | Central log retention, metrics, alarms, dashboards, and incident ownership    |
 | Frontend delivery     | Verified Nginx container with explicit security and cache headers                             | Frontend ECS service, ALB target group, health check, and capacity settings   |

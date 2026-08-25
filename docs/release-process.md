@@ -15,9 +15,13 @@ flowchart TB
     subgraph Quality[Quality gate]
         direction LR
         PR[Pull request] --> Checks[Actions lint and verification]
+        PR --> DependencyReview[Dependency review]
         Checks --> Integration[Integration]
+        Checks --> BrowserE2E[Browser E2E]
         Checks --> SourceSmoke[Production smoke]
+        DependencyReview --> Gate
         Integration --> Gate[Merge gate]
+        BrowserE2E --> Gate
         SourceSmoke --> Gate
     end
 
@@ -70,7 +74,7 @@ The repository ruleset for `main` should:
 - require a pull request before merging;
 - require the branch to be up to date with `main` before merging;
 - require all review conversations to be resolved;
-- require the exact `Actions lint`, `Verify`, `Integration`, and `Production container smoke` status checks;
+- require the exact `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` status checks;
 - block force pushes and deletion of `main`;
 - provide no routine bypass for repository administrators or automation.
 
@@ -84,7 +88,7 @@ git pull --ff-only
 git branch -d feat/workout-pagination
 ```
 
-Release Please pull requests use the same protected path. Never merge a stale release pull request: first allow it to incorporate the latest commits from `main`, review its proposed version and changelog, and wait for all four required checks to pass.
+Release Please pull requests use the same protected path. Never merge a stale release pull request: first allow it to incorporate the latest commits from `main`, review its proposed version and changelog, and wait for all six required checks to pass.
 
 ## Published images
 
@@ -155,7 +159,7 @@ Before the manual release step below, those files describe a prepared baseline r
 
 Because this baseline is established before Release Please owns the `1.x` line, publish it with this one-time bootstrap sequence:
 
-1. merge the baseline PR only after `Actions lint`, `Verify`, `Integration`, and `Production container smoke` pass;
+1. merge the baseline PR only after `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` pass;
 2. wait for the merge commit's `Test` workflow and subsequent `Build and Push to GHCR` workflow to succeed;
 3. confirm that the backend, frontend, and migration `sha-<merge-commit>` images passed the publishing workflow's digest-pinned smoke test;
 4. create GitHub Release `v1.0.0` targeting that exact commit on `main` and use the `1.0.0` changelog section as its notes;

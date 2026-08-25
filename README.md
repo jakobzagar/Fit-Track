@@ -16,7 +16,7 @@ The repository demonstrates more than a CRUD interface: it treats runtime contra
 | Full-stack design | React client, Express application, PostgreSQL persistence, and shared runtime contracts in one TypeScript monorepo                         |
 | Data integrity    | Ownership-scoped queries, relational constraints, append-only migrations, serializable transactions, retry handling, and concurrency tests |
 | Security          | HTTP-only cookies, CSRF origin checks, credentialed CORS, request limits, rate limiting, security headers, and redacted structured logs    |
-| Quality strategy  | Contract, unit, frontend, PostgreSQL integration, accessibility, and final-container smoke coverage                                        |
+| Quality strategy  | Contract, unit, frontend, PostgreSQL integration, real-browser E2E, accessibility, and final-container smoke coverage                      |
 | Delivery          | Protected pull-request checks, multi-platform containers, digest-pinned verification, SBOM, provenance, and coordinated releases           |
 
 ### Suggested review path
@@ -34,6 +34,7 @@ The repository demonstrates more than a CRUD interface: it treats runtime contra
 - **Transactional ordering:** workout exercise positions and set numbers remain contiguous after concurrent moves and deletions.
 - **Recoverable workout lifecycle:** sessions can be started, cancelled, completed, reopened for corrections, and safely deleted.
 - **Real integration environment:** Supertest exercises the exported Express application against migrated PostgreSQL, not an in-memory database.
+- **Critical browser journeys:** Playwright drives Chromium through registration, workout completion, persisted login state, and expired-session recovery against the real API and PostgreSQL.
 - **Defensive HTTP defaults:** HTTP-only cookies, CSRF origin checks, restricted credentialed CORS, Helmet, payload limits, and rate limiting.
 - **Operational lifecycle:** structured request-correlated logs, separate liveness/readiness checks, graceful shutdown, append-only migrations, non-root containers, Git-addressed image tags, digest-pinned smoke checks, SBOM, and build provenance.
 
@@ -84,7 +85,8 @@ fit-track/
 ├── shared/            Framework-independent Zod schemas and TypeScript contracts
 ├── docs/              Architecture, testing, release, and AWS planning
 ├── compose.dev.yaml   Complete local development stack
-└── compose.test.yaml  Isolated verification stack with temporary PostgreSQL
+├── compose.test.yaml  Isolated backend integration stack with temporary PostgreSQL
+└── compose.e2e.yaml   Isolated browser-test PostgreSQL
 ```
 
 The React application sends `/api` requests to the Express API, which persists data in PostgreSQL. Shared Zod contracts keep both applications aligned at the HTTP boundary; API responses return along the same path.
@@ -101,7 +103,7 @@ Read [Architecture and design decisions](docs/architecture.md) for request flow,
 | Backend        | Node.js 24, Express 5, TypeScript, Prisma ORM, Zod, Pino                     |
 | Database       | PostgreSQL 17                                                                |
 | Authentication | JWT in HTTP-only cookies, bcrypt password hashing                            |
-| Testing        | Vitest, Supertest, Testing Library, MSW, axe-core                            |
+| Testing        | Vitest, Supertest, Testing Library, MSW, axe-core, Playwright                |
 | Delivery       | Docker Compose, multi-stage containers, GitHub Actions, GHCR, Release Please |
 
 ## Quick start
@@ -163,12 +165,19 @@ Run the complete isolated suite for backend behavior, persistence, authorization
 npm run test:docker
 ```
 
+Run the critical real-browser journeys against an isolated migrated database:
+
+```bash
+npm run test:e2e
+```
+
 | Layer               | Responsibility                                                                   |
 | ------------------- | -------------------------------------------------------------------------------- |
 | Shared contracts    | Validation boundaries, normalization, and strict response shapes                 |
 | Backend unit        | Middleware, transaction retry logic, cookies, and graceful shutdown              |
 | Backend integration | HTTP behavior against migrated PostgreSQL, ownership, lifecycle, and concurrency |
 | Frontend            | User interactions, state transitions, API failures, routing, and accessibility   |
+| Browser E2E         | Critical user journeys through Chromium, the real API, and migrated PostgreSQL   |
 | Production smoke    | Final container startup, migrations, Nginx static serving, and Nginx → API proxy |
 
 See [Testing strategy](docs/testing.md) for suite boundaries, database safety, commands, and test conventions.
@@ -194,7 +203,7 @@ The planned deployment target is AWS, with an Application Load Balancer routing 
 
 ## Delivery
 
-`main` is the protected integration branch. Contributors work on short-lived branches, open pull requests, and merge only after `Actions lint`, `Verify`, `Integration`, and `Production container smoke` succeed. Failed checks leave `main` unchanged and are corrected by pushing another commit to the same pull-request branch.
+`main` is the protected integration branch. Contributors work on short-lived branches, open pull requests, and merge only after `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` succeed. Failed checks leave `main` unchanged and are corrected by pushing another commit to the same pull-request branch.
 
 FitTrack uses `1.0.0` as its planned first production release and maintained version baseline. The root package, all workspaces, package lock, Release Please manifest, and changelog carry the same product version.
 
