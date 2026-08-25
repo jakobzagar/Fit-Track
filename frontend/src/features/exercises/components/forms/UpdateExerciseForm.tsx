@@ -7,11 +7,11 @@ import {
 } from "@fit-track/shared/exercises";
 import {Button} from "../../../../components/ui/actions/Button";
 import {FieldError} from "../../../../components/ui/forms/FieldError";
+import {useApiValidationErrorHandler} from "../../../../components/ui/forms/hooks/useApiValidationErrorHandler";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
 } from "../../../../components/ui/forms/utils/formAccessibility";
-import {apiValidationErrors} from "../../../../components/ui/forms/utils/apiValidationErrors";
 
 interface UpdateExerciseFormProps {
     exercise: Exercise;
@@ -33,6 +33,7 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
     const [equipment, setEquipment] = useState(exercise.equipment ?? "");
     const [errors, setErrors] = useState<EditExerciseErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleApiValidationError = useApiValidationErrorHandler(formRef, setErrors);
 
     async function handleSubmit(event: SubmitEvent) {
         event.preventDefault();
@@ -62,11 +63,7 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
         try {
             await onSubmit(result.data);
         } catch (error) {
-            const serverErrors = apiValidationErrors(error);
-            if (serverErrors) {
-                setErrors(serverErrors);
-                focusFirstInvalidField(formRef);
-            }
+            handleApiValidationError(error);
             return;
         } finally {
             setIsSubmitting(false);

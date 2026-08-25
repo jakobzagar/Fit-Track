@@ -72,7 +72,7 @@ describe("apiRequest", () => {
         });
     });
 
-    test("expires the session when an authenticated request returns 401", async () => {
+    test("expires the session by default when a request returns 401", async () => {
         const listener = vi.fn();
         const unsubscribe = onSessionExpired(listener);
         server.use(
@@ -87,7 +87,7 @@ describe("apiRequest", () => {
         expect(listener).toHaveBeenCalledOnce();
     });
 
-    test("does not expire the session for an expected 401", async () => {
+    test("ignores an expected 401 when configured", async () => {
         const listener = vi.fn();
         const unsubscribe = onSessionExpired(listener);
         server.use(
@@ -97,7 +97,7 @@ describe("apiRequest", () => {
         );
 
         await expect(
-            apiRequest("/example", responseSchema, {auth: "optional"}),
+            apiRequest("/example", responseSchema, {onUnauthorized: "ignore"}),
         ).rejects.toMatchObject({status: 401});
 
         unsubscribe();

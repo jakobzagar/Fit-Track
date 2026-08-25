@@ -4,11 +4,11 @@ import type {UpdateWorkoutSetInput} from "@fit-track/shared/workouts";
 import {parseEditedWorkoutSet} from "../../workout-set-input.parser";
 import {Button} from "../../../../../components/ui/actions/Button";
 import {FieldError} from "../../../../../components/ui/forms/FieldError";
+import {useApiValidationErrorHandler} from "../../../../../components/ui/forms/hooks/useApiValidationErrorHandler";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
 } from "../../../../../components/ui/forms/utils/formAccessibility";
-import {apiValidationErrors} from "../../../../../components/ui/forms/utils/apiValidationErrors";
 
 interface UpdateWorkoutSetFormProps {
     workoutSet: WorkoutSet;
@@ -35,6 +35,7 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
     );
     const [errors, setErrors] = useState<UpdateWorkoutSetErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleApiValidationError = useApiValidationErrorHandler(formRef, setErrors);
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -53,11 +54,7 @@ export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWor
         try {
             await onSubmit(result.data);
         } catch (error) {
-            const serverErrors = apiValidationErrors(error);
-            if (serverErrors) {
-                setErrors(serverErrors);
-                focusFirstInvalidField(formRef);
-            }
+            handleApiValidationError(error);
             return;
         } finally {
             setIsSubmitting(false);

@@ -7,7 +7,7 @@ import {notifySessionExpired} from "../auth/session-expiration";
 interface ApiOptions {
     method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
     body?: unknown;
-    auth?: "required" | "optional";
+    onUnauthorized?: "expire-session" | "ignore";
 }
 
 async function readResponseBody(response: Response): Promise<unknown> {
@@ -40,7 +40,7 @@ export async function apiRequest<T>(
         const parsedValidationError = validationErrorResponseSchema.safeParse(result);
         const parsedError = messageResponseSchema.safeParse(result);
 
-        if (response.status === 401 && options.auth !== "optional") {
+        if (response.status === 401 && options.onUnauthorized !== "ignore") {
             notifySessionExpired();
         }
 
