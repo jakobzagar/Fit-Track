@@ -12,6 +12,8 @@ coverage/
 .eslintcache
 .cache/
 .vite/
+frontend/playwright-report/
+frontend/test-results/
 
 # Environment
 .env
