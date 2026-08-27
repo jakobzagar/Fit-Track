@@ -68,18 +68,14 @@ export function useWorkoutSessionMutations(
     async function addSet(workoutExerciseId: string, data: CreateWorkoutSetInput) {
         if (!workoutId) return;
         setError("");
-        const {workoutExerciseSet} = await addSetToWorkoutExercise(
-            workoutId,
-            workoutExerciseId,
-            data,
-        );
+        const {workoutSet} = await addSetToWorkoutExercise(workoutId, workoutExerciseId, data);
         setWorkout((current) =>
             current
                 ? {
                       ...current,
                       workoutExercises: current.workoutExercises.map((item) =>
                           item.id === workoutExerciseId
-                              ? {...item, sets: [...item.sets, workoutExerciseSet]}
+                              ? {...item, sets: [...item.sets, workoutSet]}
                               : item,
                       ),
                   }
@@ -102,31 +98,35 @@ export function useWorkoutSessionMutations(
         }
     }
 
-    async function saveSet(workoutExerciseId: string, setId: string, data: UpdateWorkoutSetInput) {
+    async function saveSet(
+        workoutExerciseId: string,
+        workoutSetId: string,
+        data: UpdateWorkoutSetInput,
+    ) {
         if (!workoutId) return;
-        const {workoutExerciseSet} = await updateWorkoutSet(
+        const {workoutSet} = await updateWorkoutSet(
             workoutId,
             workoutExerciseId,
-            setId,
+            workoutSetId,
             data,
         );
-        replaceSet(workoutExerciseId, workoutExerciseSet);
+        replaceSet(workoutExerciseId, workoutSet);
     }
 
     async function toggleSet(
         workoutExerciseId: string,
-        setId: string,
+        workoutSetId: string,
         completed: boolean,
         data: UpdateWorkoutSetInput,
     ) {
         if (!workoutId) return;
-        const {workoutExerciseSet} = await setWorkoutSetCompletion(
+        const {workoutSet} = await setWorkoutSetCompletion(
             workoutId,
             workoutExerciseId,
-            setId,
+            workoutSetId,
             {...data, completed},
         );
-        replaceSet(workoutExerciseId, workoutExerciseSet);
+        replaceSet(workoutExerciseId, workoutSet);
     }
 
     return {

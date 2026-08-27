@@ -23,7 +23,7 @@ interface WorkoutExerciseCardProps {
     onDeleteExercise: (workoutExerciseId: string) => void;
     onEditSet: (set: WorkoutSet | null) => void;
     onUpdateSet: (data: UpdateWorkoutSetInput) => Promise<void>;
-    onDeleteSet: (workoutExerciseId: string, setId: string) => void;
+    onDeleteSet: (workoutExerciseId: string, workoutSetId: string) => void;
     onAddSet: (data: CreateWorkoutSetInput) => Promise<void>;
 }
 

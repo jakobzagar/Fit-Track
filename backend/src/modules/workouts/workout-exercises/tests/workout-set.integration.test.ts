@@ -56,12 +56,15 @@ describe("workout sets", () => {
         ).send({durationSeconds: 60});
 
         expect(first.status).toBe(201);
-        expect(
-            addSetToWorkoutExerciseResponseSchema.parse(first.body).workoutExerciseSet,
-        ).toMatchObject({setNumber: 1, reps: 10, weight: 82.5});
-        expect(
-            addSetToWorkoutExerciseResponseSchema.parse(second.body).workoutExerciseSet,
-        ).toMatchObject({setNumber: 2, durationSeconds: 60});
+        expect(addSetToWorkoutExerciseResponseSchema.parse(first.body).workoutSet).toMatchObject({
+            setNumber: 1,
+            reps: 10,
+            weight: 82.5,
+        });
+        expect(addSetToWorkoutExerciseResponseSchema.parse(second.body).workoutSet).toMatchObject({
+            setNumber: 2,
+            durationSeconds: 60,
+        });
     });
 
     it("validates new set values", async () => {
@@ -116,7 +119,7 @@ describe("workout sets", () => {
         const invalid = await authenticated("patch", path, owner.cookie).send({reps: null});
 
         expect(updated.status).toBe(200);
-        expect(workoutSetResponseSchema.parse(updated.body).workoutExerciseSet).toMatchObject({
+        expect(workoutSetResponseSchema.parse(updated.body).workoutSet).toMatchObject({
             reps: 12,
             weight: 90,
         });
@@ -229,11 +232,9 @@ describe("workout set completion", () => {
 
         expect(completed.status).toBe(200);
         expect(
-            workoutSetResponseSchema.parse(completed.body).workoutExerciseSet.completedAt,
+            workoutSetResponseSchema.parse(completed.body).workoutSet.completedAt,
         ).not.toBeNull();
-        expect(
-            workoutSetResponseSchema.parse(reopened.body).workoutExerciseSet.completedAt,
-        ).toBeNull();
+        expect(workoutSetResponseSchema.parse(reopened.body).workoutSet.completedAt).toBeNull();
     });
 
     it("rejects completion outside an active workout", async () => {

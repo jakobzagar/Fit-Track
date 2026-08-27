@@ -70,7 +70,7 @@ describe("useWorkoutDetail", () => {
         let caught: unknown;
         await act(async () => {
             try {
-                await result.current.addExercise({exerciseId: exercise.id});
+                await result.current.addExerciseToWorkout({exerciseId: exercise.id});
             } catch (error) {
                 caught = error;
             }
@@ -87,7 +87,7 @@ describe("useWorkoutDetail", () => {
         const {result} = renderHook(() => useWorkoutDetail(workoutId, confirm));
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-        await act(() => result.current.removeExercise(workoutExerciseId));
+        await act(() => result.current.removeWorkoutExercise(workoutExerciseId));
 
         expect(confirm).toHaveBeenCalledOnce();
         expect(result.current.workout?.workoutExercises).toHaveLength(1);
@@ -114,7 +114,7 @@ describe("useWorkoutDetail", () => {
         const {result} = renderHook(() => useWorkoutDetail(workoutId, vi.fn()));
         await waitFor(() => expect(result.current.isLoading).toBe(false));
         act(() => result.current.setEditingWorkoutExercise(second));
-        await act(() => result.current.updateExercise({position: 1}));
+        await act(() => result.current.updateWorkoutExercise({position: 1}));
 
         expect(result.current.workout?.workoutExercises.map((item) => item.id)).toEqual([
             second.id,
@@ -139,7 +139,7 @@ describe("useWorkoutDetail", () => {
         let caught: unknown;
         await act(async () => {
             try {
-                await result.current.updateExercise({position: 2});
+                await result.current.updateWorkoutExercise({position: 2});
             } catch (error) {
                 caught = error;
             }
@@ -163,7 +163,7 @@ describe("useWorkoutDetail", () => {
         );
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-        await act(() => result.current.removeExercise(workoutExerciseId));
+        await act(() => result.current.removeWorkoutExercise(workoutExerciseId));
 
         expect(result.current.workout?.workoutExercises).toHaveLength(1);
         expect(result.current.deletingWorkoutExerciseId).toBeNull();

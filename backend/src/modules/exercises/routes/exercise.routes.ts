@@ -6,7 +6,7 @@ import {
     getExerciseById,
     createExercise,
     updateExerciseById,
-    deleteExerciseById,
+    archiveExercise,
     restoreExerciseById,
 } from "../controllers/exercise.controller.js";
 import {
@@ -26,7 +26,7 @@ router.get("/:exerciseId", validate(exerciseIdSchema, "params"), getExerciseById
 
 router.post("/", validate(createExerciseSchema), createExercise);
 
-router.delete("/:exerciseId", validate(exerciseIdSchema, "params"), deleteExerciseById);
+router.delete("/:exerciseId", validate(exerciseIdSchema, "params"), archiveExercise);
 
 router.patch("/:exerciseId/restore", validate(exerciseIdSchema, "params"), restoreExerciseById);
 

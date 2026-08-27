@@ -49,21 +49,21 @@ router.delete(
 );
 
 router.patch(
-    "/:workoutId/exercises/:workoutExerciseId/sets/:setId",
+    "/:workoutId/exercises/:workoutExerciseId/sets/:workoutSetId",
     validate(workoutSetIdParamsSchema, "params"),
     validate(updateWorkoutSetSchema),
     updateWorkoutSet,
 );
 
 router.patch(
-    "/:workoutId/exercises/:workoutExerciseId/sets/:setId/completion",
+    "/:workoutId/exercises/:workoutExerciseId/sets/:workoutSetId/completion",
     validate(workoutSetIdParamsSchema, "params"),
     validate(setWorkoutSetCompletionSchema),
     setWorkoutSetCompletion,
 );
 
 router.delete(
-    "/:workoutId/exercises/:workoutExerciseId/sets/:setId",
+    "/:workoutId/exercises/:workoutExerciseId/sets/:workoutSetId",
     validate(workoutSetIdParamsSchema, "params"),
     deleteWorkoutSet,
 );

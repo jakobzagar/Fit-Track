@@ -10,13 +10,17 @@ import {ExerciseEmptyState} from "../components/library/ExerciseEmptyState";
 import {ExerciseList} from "../components/library/ExerciseList";
 import {ExerciseStatusTabs} from "../components/library/ExerciseStatusTabs";
 import type {Exercise} from "@fit-track/shared/exercises";
-import {useExercises, type ExerciseView} from "../hooks/useExercises";
-import type {CreateExerciseInput, UpdateExerciseInput} from "@fit-track/shared/exercises";
+import {useExercises} from "../hooks/useExercises";
+import type {
+    CreateExerciseInput,
+    ExerciseStatus,
+    UpdateExerciseInput,
+} from "@fit-track/shared/exercises";
 
 export function ExercisesPage() {
     const confirm = useConfirmDialog();
-    const [view, setView] = useState<ExerciseView>("active");
-    const exerciseData = useExercises(view);
+    const [status, setStatus] = useState<ExerciseStatus>("active");
+    const exerciseData = useExercises(status);
     const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
@@ -30,9 +34,9 @@ export function ExercisesPage() {
         setIsFormOpen(false);
     }
 
-    function changeView(nextView: ExerciseView) {
-        if (nextView === view) return;
-        setView(nextView);
+    function changeStatus(nextStatus: ExerciseStatus) {
+        if (nextStatus === status) return;
+        setStatus(nextStatus);
         setEditingExercise(null);
     }
 
@@ -80,7 +84,7 @@ export function ExercisesPage() {
                 title="Exercises"
                 description="Build a clean library of the exercises you train. Keep names consistent so your history stays useful."
                 action={
-                    view === "active" ? (
+                    status === "active" ? (
                         <Button type="button" onClick={openCreateForm}>
                             <Icon name="plus" size={16} />
                             Add exercise
@@ -95,17 +99,17 @@ export function ExercisesPage() {
                 </Feedback>
             )}
 
-            <ExerciseStatusTabs view={view} onChange={changeView} />
+            <ExerciseStatusTabs status={status} onChange={changeStatus} />
 
             <div>
                 <div className="mb-4">
                     <h2 className="section-title">Your exercises</h2>
                     <p className="section-caption">
-                        {exerciseData.exercises.length} {view} exercises
+                        {exerciseData.exercises.length} {status} exercises
                     </p>
                 </div>
                 {exerciseData.exercises.length === 0 ? (
-                    <ExerciseEmptyState view={view} onCreate={openCreateForm} />
+                    <ExerciseEmptyState status={status} onCreate={openCreateForm} />
                 ) : (
                     <ExerciseList
                         exercises={exerciseData.exercises}
@@ -114,14 +118,14 @@ export function ExercisesPage() {
                             setEditingExercise(exercise);
                             setIsFormOpen(true);
                         }}
-                        archivingExerciseId={exerciseData.archivingExerciseId}
-                        isArchivedView={view === "archived"}
+                        updatingExerciseStatusId={exerciseData.updatingExerciseStatusId}
+                        isArchivedView={status === "archived"}
                         onRestore={(id) => void confirmStatusChange(id, "restore")}
                     />
                 )}
             </div>
 
-            {isFormOpen && view === "active" && (
+            {isFormOpen && status === "active" && (
                 <ExerciseFormDialog
                     exercise={editingExercise}
                     onCreate={createExercise}

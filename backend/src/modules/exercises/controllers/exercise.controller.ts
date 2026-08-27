@@ -3,7 +3,7 @@ import {
     getExercisesService,
     getExerciseByIdService,
     createExerciseService,
-    deleteExerciseByIdService,
+    archiveExerciseService,
     updateExerciseByIdService,
     restoreExerciseByIdService,
 } from "../services/exercise.service.js";
@@ -44,10 +44,10 @@ export async function createExercise(_req: Request, res: Response) {
     });
 }
 
-export async function deleteExerciseById(_req: Request, res: Response) {
+export async function archiveExercise(_req: Request, res: Response) {
     const params = res.locals.params as ExerciseIdParams;
 
-    const exercise = await deleteExerciseByIdService(res.locals.userId, params.exerciseId);
+    const exercise = await archiveExerciseService(res.locals.userId, params.exerciseId);
 
     res.status(200).json({
         exercise,

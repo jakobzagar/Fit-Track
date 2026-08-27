@@ -17,8 +17,8 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
     const requestIdRef = useRef(0);
     const exerciseMutations = useWorkoutExerciseMutations(workoutId, confirm, setWorkout);
     const setMutations = useWorkoutSetMutations(workoutId, confirm, setWorkout);
-    const {setEditingExercise, setError: setExerciseError} = exerciseMutations;
-    const {setEditingSet, setError: setSetError} = setMutations;
+    const {setEditingWorkoutExercise, setError: setExerciseError} = exerciseMutations;
+    const {setEditingWorkoutSet, setError: setSetError} = setMutations;
 
     const load = useCallback(async () => {
         if (!workoutId) return;
@@ -45,8 +45,8 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
             if (!isCurrent) return;
             setWorkout(null);
             setExercises([]);
-            setEditingExercise(null);
-            setEditingSet(null);
+            setEditingWorkoutExercise(null);
+            setEditingWorkoutSet(null);
             setExerciseError("");
             setSetError("");
             setLoadError("");
@@ -59,7 +59,7 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
             isCurrent = false;
             requestIdRef.current += 1;
         };
-    }, [load, setEditingExercise, setEditingSet, setExerciseError, setSetError]);
+    }, [load, setEditingWorkoutExercise, setEditingWorkoutSet, setExerciseError, setSetError]);
 
     async function reopen() {
         if (!workoutId) return false;
@@ -82,22 +82,22 @@ export function useWorkoutDetail(workoutId: string | undefined, confirm: Confirm
     return {
         workout,
         exercises,
-        editingWorkoutExercise: exerciseMutations.editingExercise,
-        editingWorkoutSet: setMutations.editingSet,
-        deletingWorkoutExerciseId: exerciseMutations.deletingExerciseId,
-        deletingWorkoutSetId: setMutations.deletingSetId,
+        editingWorkoutExercise: exerciseMutations.editingWorkoutExercise,
+        editingWorkoutSet: setMutations.editingWorkoutSet,
+        deletingWorkoutExerciseId: exerciseMutations.deletingWorkoutExerciseId,
+        deletingWorkoutSetId: setMutations.deletingWorkoutSetId,
         isLoading,
         isReopening,
         loadError,
         mutationError: lifecycleError || exerciseMutations.error || setMutations.error,
-        setEditingWorkoutExercise: exerciseMutations.setEditingExercise,
-        setEditingWorkoutSet: setMutations.setEditingSet,
-        addExercise: exerciseMutations.add,
-        addSet: setMutations.add,
-        updateExercise: exerciseMutations.update,
-        removeExercise: exerciseMutations.remove,
-        updateSet: setMutations.update,
-        removeSet: setMutations.remove,
+        setEditingWorkoutExercise: exerciseMutations.setEditingWorkoutExercise,
+        setEditingWorkoutSet: setMutations.setEditingWorkoutSet,
+        addExerciseToWorkout: exerciseMutations.addExerciseToWorkout,
+        addWorkoutSet: setMutations.addWorkoutSet,
+        updateWorkoutExercise: exerciseMutations.updateWorkoutExercise,
+        removeWorkoutExercise: exerciseMutations.removeWorkoutExercise,
+        updateWorkoutSet: setMutations.updateWorkoutSet,
+        removeWorkoutSet: setMutations.removeWorkoutSet,
         reopen,
         retry: () => {
             setIsLoading(true);

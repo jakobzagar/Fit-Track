@@ -157,7 +157,7 @@ describe("WorkoutDetailPage", () => {
                 `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets`,
                 async ({request}) => {
                     expect(await request.json()).toEqual({reps: 8, weight: 80});
-                    return HttpResponse.json({workoutExerciseSet: workoutSet}, {status: 201});
+                    return HttpResponse.json({workoutSet: workoutSet}, {status: 201});
                 },
             ),
             http.delete(
@@ -241,7 +241,7 @@ describe("WorkoutDetailPage", () => {
                 async ({request}) => {
                     expect(await request.json()).toMatchObject({reps: 10, weight: 80});
                     return HttpResponse.json({
-                        workoutExerciseSet: {...workoutSet, reps: 10},
+                        workoutSet: {...workoutSet, reps: 10},
                     });
                 },
             ),

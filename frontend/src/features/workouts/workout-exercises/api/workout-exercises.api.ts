@@ -77,11 +77,11 @@ export function deleteWorkoutExercise(
 export function updateWorkoutSet(
     workoutId: string,
     workoutExerciseId: string,
-    setId: string,
+    workoutSetId: string,
     data: UpdateWorkoutSetInput,
 ): Promise<WorkoutSetResponse> {
     return apiRequest(
-        `/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${setId}`,
+        `/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${workoutSetId}`,
         workoutSetResponseSchema,
         {
             method: "PATCH",
@@ -93,10 +93,10 @@ export function updateWorkoutSet(
 export function deleteWorkoutSet(
     workoutId: string,
     workoutExerciseId: string,
-    setId: string,
+    workoutSetId: string,
 ): Promise<DeleteWorkoutSetResponse> {
     return apiRequest(
-        `/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${setId}`,
+        `/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${workoutSetId}`,
         deleteWorkoutSetResponseSchema,
         {
             method: "DELETE",
@@ -107,11 +107,11 @@ export function deleteWorkoutSet(
 export function setWorkoutSetCompletion(
     workoutId: string,
     workoutExerciseId: string,
-    setId: string,
+    workoutSetId: string,
     data: SetWorkoutSetCompletionInput,
 ): Promise<WorkoutSetResponse> {
     return apiRequest(
-        `/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${setId}/completion`,
+        `/workouts/${workoutId}/exercises/${workoutExerciseId}/sets/${workoutSetId}/completion`,
         workoutSetResponseSchema,
         {
             method: "PATCH",

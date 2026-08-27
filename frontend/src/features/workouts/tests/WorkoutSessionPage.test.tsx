@@ -115,7 +115,7 @@ describe("WorkoutSessionPage", () => {
                         completed: true,
                     });
                     return HttpResponse.json({
-                        workoutExerciseSet: {
+                        workoutSet: {
                             ...workoutSet,
                             completedAt: "2026-07-26T10:20:00.000Z",
                         },
@@ -220,7 +220,7 @@ describe("WorkoutSessionPage", () => {
                 `${API_URL}/workouts/${workoutId}/exercises/${workoutExerciseId}/sets`,
                 async ({request}) => {
                     expect(await request.json()).toEqual({reps: 8, weight: 80});
-                    return HttpResponse.json({workoutExerciseSet: copiedSet}, {status: 201});
+                    return HttpResponse.json({workoutSet: copiedSet}, {status: 201});
                 },
             ),
         );

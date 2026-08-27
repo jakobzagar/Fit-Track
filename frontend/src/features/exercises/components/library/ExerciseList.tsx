@@ -5,7 +5,7 @@ interface ExerciseListProps {
     exercises: Exercise[];
     onArchive: (exerciseId: string) => void;
     onEdit: (exercise: Exercise) => void;
-    archivingExerciseId: string | null;
+    updatingExerciseStatusId: string | null;
     isArchivedView?: boolean;
     onRestore?: (exerciseId: string) => void;
 }
@@ -14,7 +14,7 @@ export function ExerciseList({
     exercises,
     onArchive,
     onEdit,
-    archivingExerciseId,
+    updatingExerciseStatusId,
     isArchivedView = false,
     onRestore,
 }: ExerciseListProps) {
@@ -26,7 +26,7 @@ export function ExerciseList({
                     exercise={exercise}
                     onArchive={onArchive}
                     onEdit={onEdit}
-                    isArchiving={archivingExerciseId === exercise.id}
+                    isUpdatingStatus={updatingExerciseStatusId === exercise.id}
                     isArchivedView={isArchivedView}
                     onRestore={onRestore}
                 />

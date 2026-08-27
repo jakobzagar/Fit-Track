@@ -10,7 +10,7 @@ interface WorkoutSetInlineRowProps {
     disabled: boolean;
     onSave: (data: UpdateWorkoutSetInput) => Promise<void>;
     onToggleCompletion: (completed: boolean, data: UpdateWorkoutSetInput) => Promise<void>;
-    onDirtyChange?: (setId: string, isDirty: boolean) => void;
+    onDirtyChange?: (workoutSetId: string, isDirty: boolean) => void;
 }
 
 export function WorkoutSetInlineRow(props: WorkoutSetInlineRowProps) {

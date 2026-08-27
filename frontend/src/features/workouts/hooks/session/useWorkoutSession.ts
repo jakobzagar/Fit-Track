@@ -95,11 +95,11 @@ export function useWorkoutSession(
         };
     }, [load, setCopyingExerciseId]);
 
-    const onDirtyChange = useCallback((setId: string, dirty: boolean) => {
+    const onDirtyChange = useCallback((workoutSetId: string, dirty: boolean) => {
         setDirtySetIds((current) => {
             const next = new Set(current);
-            if (dirty) next.add(setId);
-            else next.delete(setId);
+            if (dirty) next.add(workoutSetId);
+            else next.delete(workoutSetId);
             return next;
         });
     }, []);

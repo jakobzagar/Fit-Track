@@ -13,9 +13,13 @@ interface WorkoutSessionExerciseCardProps {
     isCopying: boolean;
     onAddSet: (data: CreateWorkoutSetInput) => Promise<void>;
     onCopyLastSet: (lastSet: WorkoutSet) => void;
-    onSaveSet: (setId: string, data: UpdateWorkoutSetInput) => Promise<void>;
-    onToggleSet: (setId: string, completed: boolean, data: UpdateWorkoutSetInput) => Promise<void>;
-    onDirtyChange: (setId: string, isDirty: boolean) => void;
+    onSaveSet: (workoutSetId: string, data: UpdateWorkoutSetInput) => Promise<void>;
+    onToggleSet: (
+        workoutSetId: string,
+        completed: boolean,
+        data: UpdateWorkoutSetInput,
+    ) => Promise<void>;
+    onDirtyChange: (workoutSetId: string, isDirty: boolean) => void;
 }
 
 export function WorkoutSessionExerciseCard({

@@ -1,15 +1,15 @@
 import {Button} from "../../../../components/ui/actions/Button";
 import {Card} from "../../../../components/ui/display/Card";
 import {Icon} from "../../../../components/ui/display/Icon";
-import type {ExerciseView} from "../../hooks/useExercises";
+import type {ExerciseStatus} from "@fit-track/shared/exercises";
 
 interface ExerciseEmptyStateProps {
-    view: ExerciseView;
+    status: ExerciseStatus;
     onCreate: () => void;
 }
 
-export function ExerciseEmptyState({view, onCreate}: ExerciseEmptyStateProps) {
-    const isActive = view === "active";
+export function ExerciseEmptyState({status, onCreate}: ExerciseEmptyStateProps) {
+    const isActive = status === "active";
 
     return (
         <Card className="py-14 text-center">

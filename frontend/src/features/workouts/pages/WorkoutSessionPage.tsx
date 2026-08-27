@@ -96,9 +96,11 @@ export function WorkoutSessionPage() {
                     isCopying={copyingExerciseId === workoutExercise.id}
                     onAddSet={(data) => handleAddSet(workoutExercise.id, data)}
                     onCopyLastSet={(lastSet) => void handleCopyLastSet(workoutExercise.id, lastSet)}
-                    onSaveSet={(setId, data) => handleSaveSet(workoutExercise.id, setId, data)}
-                    onToggleSet={(setId, completed, data) =>
-                        handleToggleSet(workoutExercise.id, setId, completed, data)
+                    onSaveSet={(workoutSetId, data) =>
+                        handleSaveSet(workoutExercise.id, workoutSetId, data)
+                    }
+                    onToggleSet={(workoutSetId, completed, data) =>
+                        handleToggleSet(workoutExercise.id, workoutSetId, completed, data)
                     }
                     onDirtyChange={handleDirtyChange}
                 />

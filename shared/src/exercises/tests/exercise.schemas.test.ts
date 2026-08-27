@@ -2,6 +2,7 @@ import {describe, expect, test} from "vitest";
 
 import {
     createExerciseSchema,
+    exerciseSummarySchema,
     exerciseSchema,
     exerciseIdSchema,
     exerciseStatusSchema,
@@ -92,6 +93,20 @@ describe("exercise request parameters", () => {
 });
 
 describe("exercise responses", () => {
+    test("projects the exercise fields embedded in a workout", () => {
+        const summary = {
+            id: validExercise.id,
+            name: validExercise.name,
+            muscleGroup: validExercise.muscleGroup,
+            equipment: validExercise.equipment,
+        };
+
+        expect(exerciseSummarySchema.parse(summary)).toEqual(summary);
+        expect(exerciseSummarySchema.safeParse({...summary, isArchived: false}).success).toBe(
+            false,
+        );
+    });
+
     test("rejects additional exercise fields", () => {
         expect(exerciseSchema.safeParse({...validExercise, internalNote: "hidden"}).success).toBe(
             false,

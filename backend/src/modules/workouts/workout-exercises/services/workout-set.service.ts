@@ -50,7 +50,7 @@ export async function updateWorkoutSetService(
     userId: string,
     workoutId: string,
     workoutExerciseId: string,
-    setId: string,
+    workoutSetId: string,
     data: UpdateWorkoutSetInput,
 ) {
     return runSerializableTransaction(async (tx) => {
@@ -59,7 +59,7 @@ export async function updateWorkoutSetService(
             userId,
             workoutId,
             workoutExerciseId,
-            setId,
+            workoutSetId,
         );
 
         const reps = data.reps !== undefined ? data.reps : existingSet.reps;
@@ -72,7 +72,7 @@ export async function updateWorkoutSetService(
 
         return tx.workoutSet.update({
             where: {
-                id: setId,
+                id: workoutSetId,
             },
             data: {
                 ...(data.reps !== undefined && {reps: data.reps}),
@@ -89,7 +89,7 @@ export async function deleteWorkoutSetService(
     userId: string,
     workoutId: string,
     workoutExerciseId: string,
-    setId: string,
+    workoutSetId: string,
 ) {
     return runSerializableTransaction(async (tx) => {
         const workoutSet = await loadOwnedMutableWorkoutSet(
@@ -97,12 +97,12 @@ export async function deleteWorkoutSetService(
             userId,
             workoutId,
             workoutExerciseId,
-            setId,
+            workoutSetId,
         );
 
         await tx.workoutSet.delete({
             where: {
-                id: setId,
+                id: workoutSetId,
             },
         });
 
@@ -140,7 +140,7 @@ export async function setWorkoutSetCompletionService(
     userId: string,
     workoutId: string,
     workoutExerciseId: string,
-    setId: string,
+    workoutSetId: string,
     data: SetWorkoutSetCompletionInput,
 ) {
     return runSerializableTransaction(async (tx) => {
@@ -149,7 +149,7 @@ export async function setWorkoutSetCompletionService(
             userId,
             workoutId,
             workoutExerciseId,
-            setId,
+            workoutSetId,
         );
 
         const reps = data.reps !== undefined ? data.reps : workoutSet.reps;
@@ -173,7 +173,7 @@ export async function setWorkoutSetCompletionService(
 
         return tx.workoutSet.update({
             where: {
-                id: setId,
+                id: workoutSetId,
             },
             data: {
                 ...(data.reps !== undefined && {reps: data.reps}),

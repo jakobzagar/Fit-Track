@@ -1,16 +1,9 @@
 import {z} from "zod";
 import {messageResponseSchema} from "../../common/schemas/response.schemas.js";
-import {exerciseSchema} from "../../exercises/schemas/exercise.schemas.js";
+import {exerciseSummarySchema} from "../../exercises/schemas/exercise.schemas.js";
 import {workoutSetSchema} from "./workout-set.schemas.js";
 
 const workoutExerciseNotesSchema = z.string().trim().max(1000, "Notes are too long").nullable();
-
-export const workoutExerciseDetailsSchema = exerciseSchema.pick({
-    id: true,
-    name: true,
-    muscleGroup: true,
-    equipment: true,
-});
 
 export const workoutExerciseSchema = z
     .object({
@@ -19,7 +12,7 @@ export const workoutExerciseSchema = z
         notes: z.string().nullable(),
         workoutId: z.uuid(),
         exerciseId: z.uuid(),
-        exercise: workoutExerciseDetailsSchema,
+        exercise: exerciseSummarySchema,
         sets: z.array(workoutSetSchema),
     })
     .strict();
@@ -49,7 +42,7 @@ export const workoutExerciseParamsSchema = z
     .strict();
 
 export const workoutSetIdParamsSchema = workoutExerciseParamsSchema.extend({
-    setId: z.uuid("Invalid set ID"),
+    workoutSetId: z.uuid("Invalid workout set ID"),
 });
 
 export const addExerciseToWorkoutResponseSchema = z
@@ -66,7 +59,6 @@ export const workoutExerciseResponseSchema = z
 
 export const deleteWorkoutExerciseResponseSchema = messageResponseSchema;
 
-export type WorkoutExerciseDetails = z.infer<typeof workoutExerciseDetailsSchema>;
 export type WorkoutExercise = z.infer<typeof workoutExerciseSchema>;
 export type AddExerciseToWorkoutInput = z.infer<typeof addExerciseToWorkoutSchema>;
 export type UpdateWorkoutExerciseInput = z.infer<typeof updateWorkoutExerciseSchema>;

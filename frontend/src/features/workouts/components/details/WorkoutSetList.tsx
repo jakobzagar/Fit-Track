@@ -12,7 +12,7 @@ interface WorkoutSetListProps {
     deletingSetId: string | null;
     onEdit: (set: WorkoutSet | null) => void;
     onUpdate: (data: UpdateWorkoutSetInput) => Promise<void>;
-    onDelete: (workoutExerciseId: string, setId: string) => void;
+    onDelete: (workoutExerciseId: string, workoutSetId: string) => void;
 }
 
 export function WorkoutSetList({

@@ -27,12 +27,12 @@ export function WorkoutDetailPage() {
         mutationError,
         setEditingWorkoutExercise,
         setEditingWorkoutSet,
-        addExercise: handleAddExercise,
-        addSet: handleAddSet,
-        updateExercise: handleUpdateWorkoutExercise,
-        removeExercise: handleDeleteWorkoutExercise,
-        updateSet: handleUpdateWorkoutSet,
-        removeSet: handleDeleteWorkoutSet,
+        addExerciseToWorkout: handleAddExercise,
+        addWorkoutSet: handleAddSet,
+        updateWorkoutExercise: handleUpdateWorkoutExercise,
+        removeWorkoutExercise: handleDeleteWorkoutExercise,
+        updateWorkoutSet: handleUpdateWorkoutSet,
+        removeWorkoutSet: handleDeleteWorkoutSet,
         reopen,
         retry,
     } = useWorkoutDetail(workoutId, confirm);
@@ -143,8 +143,8 @@ export function WorkoutDetailPage() {
                             onDeleteExercise={(id) => void handleDeleteWorkoutExercise(id)}
                             onEditSet={setEditingWorkoutSet}
                             onUpdateSet={handleUpdateWorkoutSet}
-                            onDeleteSet={(workoutExerciseId, setId) =>
-                                void handleDeleteWorkoutSet(workoutExerciseId, setId)
+                            onDeleteSet={(workoutExerciseId, workoutSetId) =>
+                                void handleDeleteWorkoutSet(workoutExerciseId, workoutSetId)
                             }
                             onAddSet={(data) => handleAddSet(workoutExercise.id, data)}
                         />

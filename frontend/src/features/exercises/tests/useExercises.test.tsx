@@ -5,7 +5,8 @@ import {API_URL} from "../../../test/constants";
 import {createDeferred} from "../../../test/deferred";
 import {exercise as activeExercise} from "../../../test/fixtures/exercises";
 import {server} from "../../../test/mocks/server";
-import {useExercises, type ExerciseView} from "../hooks/useExercises";
+import type {ExerciseStatus} from "@fit-track/shared/exercises";
+import {useExercises} from "../hooks/useExercises";
 
 describe("useExercises", () => {
     test("keeps exercises sorted by name after creating and renaming one", async () => {
@@ -113,7 +114,7 @@ describe("useExercises", () => {
         await act(() => result.current.archive(activeExercise.id));
 
         expect(result.current.exercises).toHaveLength(1);
-        expect(result.current.archivingExerciseId).toBeNull();
+        expect(result.current.updatingExerciseStatusId).toBeNull();
         expect(result.current.mutationError).toBe("Exercise in use");
     });
 
@@ -137,11 +138,11 @@ describe("useExercises", () => {
                 });
             }),
         );
-        const {result, rerender} = renderHook(({view}) => useExercises(view), {
-            initialProps: {view: "active" as ExerciseView},
+        const {result, rerender} = renderHook(({status}) => useExercises(status), {
+            initialProps: {status: "active" as ExerciseStatus},
         });
         await activeRequestStarted.promise;
-        rerender({view: "archived"});
+        rerender({status: "archived"});
 
         await waitFor(() => expect(result.current.isLoading).toBe(false));
         await waitFor(() => expect(result.current.exercises[0]?.name).toBe("Archived press"));

@@ -72,7 +72,7 @@ export const setWorkoutSetCompletionSchema = workoutSetValuesSchema.extend({
 
 export const workoutSetResponseSchema = z
     .object({
-        workoutExerciseSet: workoutSetSchema,
+        workoutSet: workoutSetSchema,
     })
     .strict();
 

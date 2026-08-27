@@ -6,7 +6,7 @@ interface WorkoutSetDraftOptions {
     workoutSet: WorkoutSet;
     onSave: (data: UpdateWorkoutSetInput) => Promise<void>;
     onToggleCompletion: (completed: boolean, data: UpdateWorkoutSetInput) => Promise<void>;
-    onDirtyChange?: (setId: string, isDirty: boolean) => void;
+    onDirtyChange?: (workoutSetId: string, isDirty: boolean) => void;
 }
 
 function valuesFrom(workoutSet: WorkoutSet) {

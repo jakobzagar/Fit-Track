@@ -40,7 +40,7 @@ export async function addSetToWorkoutExercise(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutExerciseParams;
     const body = res.locals.body as CreateWorkoutSetInput;
 
-    const workoutExerciseSet = await addSetToWorkoutExerciseService(
+    const workoutSet = await addSetToWorkoutExerciseService(
         res.locals.userId,
         params.workoutId,
         params.workoutExerciseId,
@@ -48,7 +48,7 @@ export async function addSetToWorkoutExercise(_req: Request, res: Response) {
     );
 
     res.status(201).json({
-        workoutExerciseSet,
+        workoutSet,
     });
 }
 
@@ -86,16 +86,16 @@ export async function updateWorkoutSet(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutSetIdParams;
     const body = res.locals.body as UpdateWorkoutSetInput;
 
-    const workoutExerciseSet = await updateWorkoutSetService(
+    const workoutSet = await updateWorkoutSetService(
         res.locals.userId,
         params.workoutId,
         params.workoutExerciseId,
-        params.setId,
+        params.workoutSetId,
         body,
     );
 
     res.status(200).json({
-        workoutExerciseSet,
+        workoutSet,
     });
 }
 
@@ -106,7 +106,7 @@ export async function deleteWorkoutSet(_req: Request, res: Response) {
         res.locals.userId,
         params.workoutId,
         params.workoutExerciseId,
-        params.setId,
+        params.workoutSetId,
     );
 
     res.status(200).json({
@@ -118,15 +118,15 @@ export async function setWorkoutSetCompletion(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutSetIdParams;
     const body = res.locals.body as SetWorkoutSetCompletionInput;
 
-    const workoutExerciseSet = await setWorkoutSetCompletionService(
+    const workoutSet = await setWorkoutSetCompletionService(
         res.locals.userId,
         params.workoutId,
         params.workoutExerciseId,
-        params.setId,
+        params.workoutSetId,
         body,
     );
 
     res.status(200).json({
-        workoutExerciseSet,
+        workoutSet,
     });
 }

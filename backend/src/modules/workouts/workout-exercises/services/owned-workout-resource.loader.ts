@@ -36,11 +36,11 @@ async function loadOwnedWorkoutSet(
     userId: string,
     workoutId: string,
     workoutExerciseId: string,
-    setId: string,
+    workoutSetId: string,
 ) {
     const workoutSet = await tx.workoutSet.findFirst({
         where: {
-            id: setId,
+            id: workoutSetId,
             workoutExerciseId,
             workoutExercise: {
                 workoutId,
@@ -70,9 +70,15 @@ export async function loadOwnedMutableWorkoutSet(
     userId: string,
     workoutId: string,
     workoutExerciseId: string,
-    setId: string,
+    workoutSetId: string,
 ) {
-    const workoutSet = await loadOwnedWorkoutSet(tx, userId, workoutId, workoutExerciseId, setId);
+    const workoutSet = await loadOwnedWorkoutSet(
+        tx,
+        userId,
+        workoutId,
+        workoutExerciseId,
+        workoutSetId,
+    );
 
     assertWorkoutIsMutable(workoutSet.workoutExercise.workout.status);
     return workoutSet;
@@ -83,9 +89,15 @@ export async function loadOwnedActiveWorkoutSet(
     userId: string,
     workoutId: string,
     workoutExerciseId: string,
-    setId: string,
+    workoutSetId: string,
 ) {
-    const workoutSet = await loadOwnedWorkoutSet(tx, userId, workoutId, workoutExerciseId, setId);
+    const workoutSet = await loadOwnedWorkoutSet(
+        tx,
+        userId,
+        workoutId,
+        workoutExerciseId,
+        workoutSetId,
+    );
 
     if (workoutSet.workoutExercise.workout.status !== "ACTIVE") {
         throw new AppError("Sets can only be completed during an active workout", 409);

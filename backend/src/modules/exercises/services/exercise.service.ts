@@ -58,7 +58,7 @@ export async function createExerciseService(userId: string, data: CreateExercise
     });
 }
 
-export async function deleteExerciseByIdService(userId: string, exerciseId: string) {
+export async function archiveExerciseService(userId: string, exerciseId: string) {
     const exercise = await prisma.exercise.findFirst({
         where: {
             id: exerciseId,

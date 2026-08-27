@@ -7,7 +7,7 @@ interface ExerciseItemProps {
     exercise: Exercise;
     onArchive: (exerciseId: string) => void;
     onEdit: (exercise: Exercise) => void;
-    isArchiving: boolean;
+    isUpdatingStatus: boolean;
     isArchivedView?: boolean;
     onRestore?: (exerciseId: string) => void;
 }
@@ -16,7 +16,7 @@ export function ExerciseItem({
     exercise,
     onArchive,
     onEdit,
-    isArchiving,
+    isUpdatingStatus,
     isArchivedView = false,
     onRestore,
 }: ExerciseItemProps) {
@@ -46,11 +46,11 @@ export function ExerciseItem({
                         size="sm"
                         variant="secondary"
                         type="button"
-                        disabled={isArchiving}
+                        disabled={isUpdatingStatus}
                         onClick={() => onRestore?.(exercise.id)}
                     >
                         <Icon name="arrow" size={14} />
-                        {isArchiving ? "Restoring..." : "Restore"}
+                        {isUpdatingStatus ? "Restoring..." : "Restore"}
                     </Button>
                 ) : (
                     <>
@@ -58,7 +58,7 @@ export function ExerciseItem({
                             size="sm"
                             variant="secondary"
                             type="button"
-                            disabled={isArchiving}
+                            disabled={isUpdatingStatus}
                             onClick={() => onEdit(exercise)}
                         >
                             <Icon name="edit" size={14} />
@@ -68,11 +68,11 @@ export function ExerciseItem({
                             size="sm"
                             variant="danger"
                             type="button"
-                            disabled={isArchiving}
+                            disabled={isUpdatingStatus}
                             onClick={() => onArchive(exercise.id)}
                         >
                             <Icon name="trash" size={16} />
-                            {isArchiving ? "Archiving..." : "Archive"}
+                            {isUpdatingStatus ? "Archiving..." : "Archive"}
                         </Button>
                     </>
                 )}
