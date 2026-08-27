@@ -43,15 +43,17 @@ This command generates the Prisma client, then runs linting, type checking, form
 
 Useful narrower commands are:
 
-| Command                   | Purpose                                                   |
-| ------------------------- | --------------------------------------------------------- |
-| `npm test`                | Run all fast workspace tests                              |
-| `npm run test:release`    | Test coordinated release-version validation               |
-| `npm run check`           | Run lint, type checking, and formatting checks            |
-| `npm run verify:shared`   | Verify the shared package                                 |
-| `npm run verify:backend`  | Verify backend unit tests, compilation, and static checks |
-| `npm run verify:frontend` | Verify frontend checks, tests, and build                  |
-| `npm run test:e2e`        | Run isolated critical Chromium journeys                   |
+| Command                      | Purpose                                                   |
+| ---------------------------- | --------------------------------------------------------- |
+| `npm test`                   | Run application and release-validation tests              |
+| `npm run test:application`   | Run all fast workspace tests                              |
+| `npm run test:release`       | Test coordinated release-version validation               |
+| `npm run verify:application` | Check, test, and build application workspaces             |
+| `npm run check`              | Run lint, type checking, and formatting checks            |
+| `npm run verify:shared`      | Verify the shared package                                 |
+| `npm run verify:backend`     | Verify backend unit tests, compilation, and static checks |
+| `npm run verify:frontend`    | Verify frontend checks, tests, and build                  |
+| `npm run test:e2e`           | Run isolated critical Chromium journeys                   |
 
 ## Isolated PostgreSQL verification
 
@@ -64,9 +66,11 @@ The Docker stack:
 1. creates a temporary PostgreSQL database on `tmpfs`;
 2. waits for PostgreSQL readiness;
 3. applies every committed migration with `prisma migrate deploy`;
-4. runs the complete fast verification;
+4. checks, tests, and builds the application workspaces;
 5. runs backend integration tests sequentially;
 6. returns the test container's exit code.
+
+Release artifact validation is intentionally separate because it does not require PostgreSQL or the application test image. Run it directly with `npm run test:release`; the full `npm run verify` command includes it.
 
 Remove an interrupted stack before retrying:
 
