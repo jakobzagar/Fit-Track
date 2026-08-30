@@ -70,11 +70,7 @@ test("user completes a workout and sees it after signing in again", async ({page
 test("expired session returns the user to sign in", async ({page, context}) => {
     await registerUser(page, "expired-session");
     await context.clearCookies({name: "token"});
-
-    await page
-        .getByRole("navigation", {name: "Main navigation"})
-        .getByRole("link", {name: "Exercises"})
-        .click();
+    await page.goto("/exercises");
 
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole("heading", {name: "Sign in"})).toBeVisible();
