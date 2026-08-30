@@ -24,6 +24,7 @@ export PORT="$e2e_backend_port"
 export DATABASE_URL="postgresql://fit_track_e2e:fit_track_e2e_password@127.0.0.1:${e2e_database_port}/fit_track_e2e_test"
 export JWT_SECRET="fit-track-e2e-secret-that-is-at-least-32-characters"
 export CLIENT_ORIGIN="http://127.0.0.1:${e2e_frontend_port}"
+export VITE_API_BASE_PATH="/api"
 export API_PROXY_TARGET="http://127.0.0.1:${e2e_backend_port}"
 export TRUST_PROXY_HOPS=0
 export LOG_LEVEL=warn
