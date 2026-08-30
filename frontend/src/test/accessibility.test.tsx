@@ -10,7 +10,7 @@ import {RegisterPage} from "../features/auth/pages/RegisterPage";
 import {WorkoutsPage} from "../features/workouts/pages/WorkoutsPage";
 import {ExercisesPage} from "../features/exercises/pages/ExercisesPage";
 import {WorkoutDetailPage} from "../features/workouts/pages/WorkoutDetailPage";
-import {WorkoutSessionPage} from "../features/workouts/pages/WorkoutSessionPage";
+import {ActiveWorkoutPage} from "../features/workouts/pages/ActiveWorkoutPage";
 import {API_URL} from "./constants";
 import {server} from "./mocks/server";
 import {createWorkout, createWorkoutSummary, exercise, workoutId} from "./fixtures/workouts";
@@ -89,7 +89,7 @@ describe("accessibility smoke tests", () => {
             ),
         );
         const router = createMemoryRouter(
-            [{path: "/workouts/:workoutId/session", element: <WorkoutSessionPage />}],
+            [{path: "/workouts/:workoutId/session", element: <ActiveWorkoutPage />}],
             {initialEntries: [`/workouts/${workoutId}/session`]},
         );
         const {container} = render(

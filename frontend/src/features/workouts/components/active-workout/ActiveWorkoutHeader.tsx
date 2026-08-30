@@ -1,19 +1,19 @@
 import {Link} from "react-router";
 import type {Workout} from "@fit-track/shared/workouts";
 
-interface WorkoutSessionHeaderProps {
+interface ActiveWorkoutHeaderProps {
     workout: Workout;
     completedSetCount: number;
     onExit: () => void;
 }
 
-export function WorkoutSessionHeader({
+export function ActiveWorkoutHeader({
     workout,
     completedSetCount,
     onExit,
-}: WorkoutSessionHeaderProps) {
+}: ActiveWorkoutHeaderProps) {
     return (
-        <header className="session-header flex flex-col justify-between gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:gap-5 sm:pb-7">
+        <header className="active-workout-header flex flex-col justify-between gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:gap-5 sm:pb-7">
             <div>
                 <p className="eyebrow">Live session</p>
                 <h1 className="mt-2 text-3xl font-black tracking-[-0.055em] text-cream sm:mt-3 sm:text-5xl">

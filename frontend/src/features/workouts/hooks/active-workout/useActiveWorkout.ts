@@ -11,10 +11,10 @@ import {
     startWorkout,
 } from "../../api/workouts.api";
 import type {PreviousPerformance, Workout} from "@fit-track/shared/workouts";
-import {useUnsavedSessionGuard} from "./useUnsavedSessionGuard";
-import {useWorkoutSessionMutations} from "./useWorkoutSessionMutations";
+import {useUnsavedWorkoutGuard} from "./useUnsavedWorkoutGuard";
+import {useActiveWorkoutMutations} from "./useActiveWorkoutMutations";
 
-export function useWorkoutSession(
+export function useActiveWorkout(
     workoutId: string | undefined,
     navigate: NavigateFunction,
     confirm: ConfirmDialogFunction,
@@ -28,20 +28,20 @@ export function useWorkoutSession(
     const [error, setError] = useState("");
     const [dirtySetIds, setDirtySetIds] = useState<Set<string>>(() => new Set());
     const requestIdRef = useRef(0);
-    const mutations = useWorkoutSessionMutations(
+    const mutations = useActiveWorkoutMutations(
         workoutId,
         setWorkout,
         setPreviousPerformances,
         setError,
     );
     const {setCopyingExerciseId} = mutations;
-    useUnsavedSessionGuard({
+    useUnsavedWorkoutGuard({
         dirtySetCount: dirtySetIds.size,
         isFinishing: isFinishing || isCancelling,
         confirm,
     });
 
-    const load = useCallback(async () => {
+    const loadActiveWorkout = useCallback(async () => {
         if (!workoutId) return;
         const requestId = ++requestIdRef.current;
         try {
@@ -87,15 +87,15 @@ export function useWorkoutSession(
             setIsCancelling(false);
             setCopyingExerciseId(null);
             setIsLoading(true);
-            void load();
+            void loadActiveWorkout();
         });
         return () => {
             isCurrent = false;
             requestIdRef.current += 1;
         };
-    }, [load, setCopyingExerciseId]);
+    }, [loadActiveWorkout, setCopyingExerciseId]);
 
-    const onDirtyChange = useCallback((workoutSetId: string, dirty: boolean) => {
+    const setWorkoutSetDirty = useCallback((workoutSetId: string, dirty: boolean) => {
         setDirtySetIds((current) => {
             const next = new Set(current);
             if (dirty) next.add(workoutSetId);
@@ -109,7 +109,7 @@ export function useWorkoutSession(
         [previousPerformances],
     );
 
-    async function finish() {
+    async function finishActiveWorkout() {
         if (!workoutId) return;
         setError("");
         if (dirtySetIds.size > 0) {
@@ -128,7 +128,7 @@ export function useWorkoutSession(
         }
     }
 
-    async function cancel() {
+    async function cancelActiveWorkout() {
         if (!workoutId) return;
         setError("");
         if (dirtySetIds.size > 0) {
@@ -157,7 +157,7 @@ export function useWorkoutSession(
         }
     }
 
-    function exit() {
+    function exitActiveWorkout() {
         if (dirtySetIds.size > 0) {
             void navigate(`/workouts/${workout?.id}`);
             return;
@@ -171,10 +171,10 @@ export function useWorkoutSession(
         });
     }
 
-    function retry() {
+    function retryLoad() {
         setIsLoading(true);
         setError("");
-        void load();
+        void loadActiveWorkout();
     }
     const completedSetCount =
         workout?.workoutExercises.reduce(
@@ -192,15 +192,15 @@ export function useWorkoutSession(
         isCancelling,
         copyingExerciseId: mutations.copyingExerciseId,
         error,
-        addExercise: mutations.addExercise,
-        addSet: mutations.addSet,
-        copyLastSet: mutations.copyLastSet,
-        saveSet: mutations.saveSet,
-        toggleSet: mutations.toggleSet,
-        finish,
-        cancel,
-        exit,
-        retry,
-        onDirtyChange,
+        addExerciseToWorkout: mutations.addExerciseToWorkout,
+        addWorkoutSet: mutations.addWorkoutSet,
+        copyPreviousSet: mutations.copyPreviousSet,
+        saveWorkoutSet: mutations.saveWorkoutSet,
+        toggleWorkoutSetCompletion: mutations.toggleWorkoutSetCompletion,
+        finishActiveWorkout,
+        cancelActiveWorkout,
+        exitActiveWorkout,
+        retryLoad,
+        setWorkoutSetDirty,
     };
 }

@@ -6,7 +6,7 @@ import type {CreateWorkoutSetInput, UpdateWorkoutSetInput} from "@fit-track/shar
 import type {PreviousPerformance, WorkoutExercise, WorkoutSet} from "@fit-track/shared/workouts";
 import {formatWorkoutDate} from "../../utils/workout-date";
 
-interface WorkoutSessionExerciseCardProps {
+interface ActiveWorkoutExerciseCardProps {
     workoutExercise: WorkoutExercise;
     previous?: PreviousPerformance;
     disabled: boolean;
@@ -22,7 +22,7 @@ interface WorkoutSessionExerciseCardProps {
     onDirtyChange: (workoutSetId: string, isDirty: boolean) => void;
 }
 
-export function WorkoutSessionExerciseCard({
+export function ActiveWorkoutExerciseCard({
     workoutExercise,
     previous,
     disabled,
@@ -32,7 +32,7 @@ export function WorkoutSessionExerciseCard({
     onSaveSet,
     onToggleSet,
     onDirtyChange,
-}: WorkoutSessionExerciseCardProps) {
+}: ActiveWorkoutExerciseCardProps) {
     const lastSet = workoutExercise.sets.at(-1);
     const completedCount = workoutExercise.sets.filter((set) => set.completedAt !== null).length;
 

@@ -6,7 +6,7 @@ import {RegisterPage} from "../../features/auth/pages/RegisterPage";
 import {ExercisesPage} from "../../features/exercises/pages/ExercisesPage";
 import {WorkoutsPage} from "../../features/workouts/pages/WorkoutsPage";
 import {WorkoutDetailPage} from "../../features/workouts/pages/WorkoutDetailPage";
-import {WorkoutSessionPage} from "../../features/workouts/pages/WorkoutSessionPage";
+import {ActiveWorkoutPage} from "../../features/workouts/pages/ActiveWorkoutPage";
 import {LandingPage} from "../../features/landing/pages/LandingPage";
 import {GuestRoute} from "../../features/auth/components/GuestRoute";
 import {RouteExperience} from "./RouteExperience";
@@ -57,7 +57,7 @@ function createAppRouter() {
                                 {path: "/workouts/:workoutId", element: <WorkoutDetailPage />},
                                 {
                                     path: "/workouts/:workoutId/session",
-                                    element: <WorkoutSessionPage />,
+                                    element: <ActiveWorkoutPage />,
                                 },
                             ],
                         },

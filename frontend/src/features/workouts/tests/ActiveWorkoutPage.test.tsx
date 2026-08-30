@@ -15,12 +15,12 @@ import {
     workoutId,
     workoutSet,
 } from "../../../test/fixtures/workouts";
-import {WorkoutSessionPage} from "../pages/WorkoutSessionPage";
+import {ActiveWorkoutPage} from "../pages/ActiveWorkoutPage";
 
 function renderPage() {
     const router = createMemoryRouter(
         [
-            {path: "/workouts/:workoutId/session", element: <WorkoutSessionPage />},
+            {path: "/workouts/:workoutId/session", element: <ActiveWorkoutPage />},
             {path: "/workouts/:workoutId", element: <h1>Workout detail</h1>},
             {path: "/workouts", element: <h1>Workouts</h1>},
         ],
@@ -48,7 +48,7 @@ function mockLoadRequests(workout = createWorkout()) {
     );
 }
 
-describe("WorkoutSessionPage", () => {
+describe("ActiveWorkoutPage", () => {
     test("starts a draft workout and renders the live session", async () => {
         const draft = createWorkout({status: "DRAFT", startedAt: null});
         mockLoadRequests(draft);

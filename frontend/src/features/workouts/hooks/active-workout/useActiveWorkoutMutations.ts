@@ -1,6 +1,6 @@
 import {useState, type Dispatch, type SetStateAction} from "react";
 import {
-    addExerciseToWorkout,
+    addExerciseToWorkout as requestAddExerciseToWorkout,
     addSetToWorkoutExercise,
     setWorkoutSetCompletion,
     updateWorkoutSet,
@@ -13,7 +13,7 @@ import type {
 import {getPreviousPerformances} from "../../api/workouts.api";
 import type {PreviousPerformance, Workout, WorkoutSet} from "@fit-track/shared/workouts";
 
-export function useWorkoutSessionMutations(
+export function useActiveWorkoutMutations(
     workoutId: string | undefined,
     setWorkout: Dispatch<SetStateAction<Workout | null>>,
     setPreviousPerformances: Dispatch<SetStateAction<PreviousPerformance[]>>,
@@ -41,11 +41,11 @@ export function useWorkoutSessionMutations(
         );
     }
 
-    async function addExercise(data: AddExerciseToWorkoutInput) {
+    async function addExerciseToWorkout(data: AddExerciseToWorkoutInput) {
         if (!workoutId) return;
         setError("");
         try {
-            const {workoutExercise} = await addExerciseToWorkout(workoutId, data);
+            const {workoutExercise} = await requestAddExerciseToWorkout(workoutId, data);
             setWorkout((current) =>
                 current
                     ? {
@@ -65,7 +65,7 @@ export function useWorkoutSessionMutations(
         }
     }
 
-    async function addSet(workoutExerciseId: string, data: CreateWorkoutSetInput) {
+    async function addWorkoutSet(workoutExerciseId: string, data: CreateWorkoutSetInput) {
         if (!workoutId) return;
         setError("");
         const {workoutSet} = await addSetToWorkoutExercise(workoutId, workoutExerciseId, data);
@@ -83,10 +83,10 @@ export function useWorkoutSessionMutations(
         );
     }
 
-    async function copyLastSet(workoutExerciseId: string, lastSet: WorkoutSet) {
+    async function copyPreviousSet(workoutExerciseId: string, lastSet: WorkoutSet) {
         setCopyingExerciseId(workoutExerciseId);
         try {
-            await addSet(workoutExerciseId, {
+            await addWorkoutSet(workoutExerciseId, {
                 ...(lastSet.reps !== null && {reps: lastSet.reps}),
                 ...(lastSet.weight !== null && {weight: lastSet.weight}),
                 ...(lastSet.durationSeconds !== null && {durationSeconds: lastSet.durationSeconds}),
@@ -98,7 +98,7 @@ export function useWorkoutSessionMutations(
         }
     }
 
-    async function saveSet(
+    async function saveWorkoutSet(
         workoutExerciseId: string,
         workoutSetId: string,
         data: UpdateWorkoutSetInput,
@@ -113,7 +113,7 @@ export function useWorkoutSessionMutations(
         replaceSet(workoutExerciseId, workoutSet);
     }
 
-    async function toggleSet(
+    async function toggleWorkoutSetCompletion(
         workoutExerciseId: string,
         workoutSetId: string,
         completed: boolean,
@@ -132,10 +132,10 @@ export function useWorkoutSessionMutations(
     return {
         copyingExerciseId,
         setCopyingExerciseId,
-        addExercise,
-        addSet,
-        copyLastSet,
-        saveSet,
-        toggleSet,
+        addExerciseToWorkout,
+        addWorkoutSet,
+        copyPreviousSet,
+        saveWorkoutSet,
+        toggleWorkoutSetCompletion,
     };
 }

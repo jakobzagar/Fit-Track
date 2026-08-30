@@ -5,12 +5,12 @@ import {Card} from "../../../components/ui/display/Card";
 import {Feedback} from "../../../components/ui/feedback/Feedback";
 import {LoadingState} from "../../../components/ui/display/LoadingState";
 import {useConfirmDialog} from "../../../components/ui/dialogs/hooks/useConfirmDialog";
-import {WorkoutSessionActionBar} from "../components/session/WorkoutSessionActionBar";
-import {WorkoutSessionExerciseCard} from "../components/session/WorkoutSessionExerciseCard";
-import {WorkoutSessionHeader} from "../components/session/WorkoutSessionHeader";
-import {useWorkoutSession} from "../hooks/session/useWorkoutSession";
+import {ActiveWorkoutActionBar} from "../components/active-workout/ActiveWorkoutActionBar";
+import {ActiveWorkoutExerciseCard} from "../components/active-workout/ActiveWorkoutExerciseCard";
+import {ActiveWorkoutHeader} from "../components/active-workout/ActiveWorkoutHeader";
+import {useActiveWorkout} from "../hooks/active-workout/useActiveWorkout";
 
-export function WorkoutSessionPage() {
+export function ActiveWorkoutPage() {
     const confirm = useConfirmDialog();
     const {workoutId} = useParams();
     const navigate = useNavigate();
@@ -24,17 +24,17 @@ export function WorkoutSessionPage() {
         isCancelling,
         copyingExerciseId,
         error,
-        addExercise: handleAddExercise,
-        addSet: handleAddSet,
-        copyLastSet: handleCopyLastSet,
-        saveSet: handleSaveSet,
-        toggleSet: handleToggleSet,
-        finish: handleFinish,
-        cancel: handleCancel,
-        exit: handleExit,
-        retry,
-        onDirtyChange: handleDirtyChange,
-    } = useWorkoutSession(workoutId, navigate, confirm);
+        addExerciseToWorkout: handleAddExercise,
+        addWorkoutSet: handleAddSet,
+        copyPreviousSet: handleCopyLastSet,
+        saveWorkoutSet: handleSaveSet,
+        toggleWorkoutSetCompletion: handleToggleSet,
+        finishActiveWorkout: handleFinish,
+        cancelActiveWorkout: handleCancel,
+        exitActiveWorkout: handleExit,
+        retryLoad,
+        setWorkoutSetDirty: handleDirtyChange,
+    } = useActiveWorkout(workoutId, navigate, confirm);
 
     if (isLoading) {
         if (!workoutId) return <Feedback>Workout ID is missing</Feedback>;
@@ -44,7 +44,7 @@ export function WorkoutSessionPage() {
         return (
             <div className="page-stack">
                 <Feedback>{error}</Feedback>
-                <Button className="w-fit" variant="secondary" onClick={retry}>
+                <Button className="w-fit" variant="secondary" onClick={retryLoad}>
                     Try again
                 </Button>
             </div>
@@ -54,7 +54,7 @@ export function WorkoutSessionPage() {
 
     return (
         <section className="mx-auto max-w-4xl space-y-6">
-            <WorkoutSessionHeader
+            <ActiveWorkoutHeader
                 workout={workout}
                 completedSetCount={completedSetCount}
                 onExit={handleExit}
@@ -88,7 +88,7 @@ export function WorkoutSessionPage() {
             )}
 
             {workout.workoutExercises.map((workoutExercise) => (
-                <WorkoutSessionExerciseCard
+                <ActiveWorkoutExerciseCard
                     key={workoutExercise.id}
                     workoutExercise={workoutExercise}
                     previous={previousByExerciseId.get(workoutExercise.exerciseId)}
@@ -106,7 +106,7 @@ export function WorkoutSessionPage() {
                 />
             ))}
 
-            <WorkoutSessionActionBar
+            <ActiveWorkoutActionBar
                 completedSetCount={completedSetCount}
                 isFinishing={isFinishing}
                 isCancelling={isCancelling}

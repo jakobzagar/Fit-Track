@@ -2,7 +2,7 @@ import {render, waitFor} from "@testing-library/react";
 import {createMemoryRouter, RouterProvider} from "react-router";
 import {describe, expect, test, vi} from "vitest";
 import type {ConfirmDialogFunction} from "../../../components/ui/dialogs/context/confirm-dialog.context";
-import {useUnsavedSessionGuard} from "../hooks/session/useUnsavedSessionGuard";
+import {useUnsavedWorkoutGuard} from "../hooks/active-workout/useUnsavedWorkoutGuard";
 
 function renderGuard({
     dirtySetCount = 0,
@@ -10,7 +10,7 @@ function renderGuard({
     confirm = vi.fn().mockResolvedValue(false),
 } = {}) {
     function Harness() {
-        useUnsavedSessionGuard({dirtySetCount, isFinishing, confirm});
+        useUnsavedWorkoutGuard({dirtySetCount, isFinishing, confirm});
         return <p>Session</p>;
     }
 
@@ -25,7 +25,7 @@ function renderGuard({
     return {router, confirm};
 }
 
-describe("useUnsavedSessionGuard", () => {
+describe("useUnsavedWorkoutGuard", () => {
     test("prevents browser unload only while changes are dirty", () => {
         const clean = renderGuard();
         const cleanEvent = new Event("beforeunload", {cancelable: true});

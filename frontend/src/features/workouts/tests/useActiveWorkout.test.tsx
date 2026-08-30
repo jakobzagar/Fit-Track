@@ -14,15 +14,15 @@ import {
     workoutId,
     workoutSet,
 } from "../../../test/fixtures/workouts";
-import {useWorkoutSession} from "../hooks/session/useWorkoutSession";
+import {useActiveWorkout} from "../hooks/active-workout/useActiveWorkout";
 
-type SessionState = ReturnType<typeof useWorkoutSession>;
+type ActiveWorkoutState = ReturnType<typeof useActiveWorkout>;
 
-function renderSessionHook(confirm = vi.fn().mockResolvedValue(false)) {
-    let current: SessionState | undefined;
+function renderActiveWorkoutHook(confirm = vi.fn().mockResolvedValue(false)) {
+    let current: ActiveWorkoutState | undefined;
     function Harness() {
         const {workoutId: id} = useParams();
-        const state = useWorkoutSession(id, useNavigate(), confirm);
+        const state = useActiveWorkout(id, useNavigate(), confirm);
         useEffect(() => {
             current = state;
         }, [state]);
@@ -61,7 +61,7 @@ function mockLoadRequests() {
     );
 }
 
-describe("useWorkoutSession", () => {
+describe("useActiveWorkout", () => {
     test("ignores stale session data after navigating to another workout", async () => {
         const nextWorkoutId = "123e4567-e89b-42d3-a456-426614174099";
         const oldRequestStarted = createDeferred();
@@ -86,7 +86,7 @@ describe("useWorkoutSession", () => {
                 HttpResponse.json({previousPerformances: []}),
             ),
         );
-        const hook = renderSessionHook();
+        const hook = renderActiveWorkoutHook();
 
         await oldRequestStarted.promise;
         await act(() => hook.router.navigate(`/workouts/${nextWorkoutId}/session`));
@@ -102,10 +102,10 @@ describe("useWorkoutSession", () => {
 
     test("keeps the session open when clean exit is cancelled", async () => {
         mockLoadRequests();
-        const hook = renderSessionHook();
+        const hook = renderActiveWorkoutHook();
         await waitFor(() => expect(hook.current?.isLoading).toBe(false));
 
-        act(() => hook.current?.exit());
+        act(() => hook.current?.exitActiveWorkout());
         await waitFor(() => expect(hook.confirm).toHaveBeenCalledOnce());
 
         expect(hook.router.state.location.pathname).toBe(`/workouts/${workoutId}/session`);
@@ -118,11 +118,11 @@ describe("useWorkoutSession", () => {
                 HttpResponse.json({message: "Set rejected"}, {status: 422}),
             ),
         );
-        const hook = renderSessionHook();
+        const hook = renderActiveWorkoutHook();
         await waitFor(() => expect(hook.current?.isLoading).toBe(false));
 
         await expect(
-            act(() => hook.current?.addSet(workoutExerciseId, {reps: 10, weight: 80})),
+            act(() => hook.current?.addWorkoutSet(workoutExerciseId, {reps: 10, weight: 80})),
         ).rejects.toThrow("Set rejected");
         expect(hook.current?.workout?.workoutExercises[0].sets).toHaveLength(1);
     });
@@ -135,12 +135,12 @@ describe("useWorkoutSession", () => {
                 () => HttpResponse.json({message: "Set update rejected"}, {status: 422}),
             ),
         );
-        const hook = renderSessionHook();
+        const hook = renderActiveWorkoutHook();
         await waitFor(() => expect(hook.current?.isLoading).toBe(false));
 
         await expect(
             act(() =>
-                hook.current?.saveSet(workoutExerciseId, workoutSet.id, {
+                hook.current?.saveWorkoutSet(workoutExerciseId, workoutSet.id, {
                     reps: 12,
                     weight: 80,
                     durationSeconds: null,
@@ -159,12 +159,12 @@ describe("useWorkoutSession", () => {
                 () => HttpResponse.json({message: "Completion rejected"}, {status: 409}),
             ),
         );
-        const hook = renderSessionHook();
+        const hook = renderActiveWorkoutHook();
         await waitFor(() => expect(hook.current?.isLoading).toBe(false));
 
         await expect(
             act(() =>
-                hook.current?.toggleSet(workoutExerciseId, workoutSet.id, true, {
+                hook.current?.toggleWorkoutSetCompletion(workoutExerciseId, workoutSet.id, true, {
                     reps: 8,
                     weight: 80,
                     durationSeconds: null,
@@ -183,13 +183,13 @@ describe("useWorkoutSession", () => {
                 HttpResponse.json({message: "Exercise already exists"}, {status: 409}),
             ),
         );
-        const hook = renderSessionHook();
+        const hook = renderActiveWorkoutHook();
         await waitFor(() => expect(hook.current?.isLoading).toBe(false));
 
         let caught: unknown;
         await act(async () => {
             try {
-                await hook.current?.addExercise({exerciseId: exercise.id});
+                await hook.current?.addExerciseToWorkout({exerciseId: exercise.id});
             } catch (error) {
                 caught = error;
             }

@@ -4,7 +4,7 @@ import type {ConfirmDialogOptions} from "../../../../components/ui/dialogs/conte
 
 type Confirm = (options: ConfirmDialogOptions) => Promise<boolean>;
 
-export function useUnsavedSessionGuard({
+export function useUnsavedWorkoutGuard({
     dirtySetCount,
     isFinishing,
     confirm,
