@@ -3,8 +3,8 @@ import {
     getWorkoutsService,
     getWorkoutByIdService,
     createWorkoutService,
-    deleteWorkoutByIdService,
-    updateWorkoutByIdService,
+    deleteWorkoutService,
+    updateWorkoutService,
     getPreviousPerformancesService,
 } from "../services/workout.service.js";
 import {
@@ -19,7 +19,7 @@ import type {
     WorkoutIdParams,
 } from "@fit-track/shared/workouts";
 
-export async function getWorkouts(_req: Request, res: Response) {
+export async function getWorkoutsController(_req: Request, res: Response) {
     const workouts = await getWorkoutsService(res.locals.userId);
 
     res.status(200).json({
@@ -27,7 +27,7 @@ export async function getWorkouts(_req: Request, res: Response) {
     });
 }
 
-export async function getWorkoutById(_req: Request, res: Response) {
+export async function getWorkoutByIdController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
 
     const workout = await getWorkoutByIdService(res.locals.userId, params.workoutId);
@@ -37,7 +37,7 @@ export async function getWorkoutById(_req: Request, res: Response) {
     });
 }
 
-export async function getPreviousPerformances(_req: Request, res: Response) {
+export async function getPreviousPerformancesController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
 
     const previousPerformances = await getPreviousPerformancesService(
@@ -50,7 +50,7 @@ export async function getPreviousPerformances(_req: Request, res: Response) {
     });
 }
 
-export async function createWorkout(_req: Request, res: Response) {
+export async function createWorkoutController(_req: Request, res: Response) {
     const body = res.locals.body as CreateWorkoutInput;
 
     const workout = await createWorkoutService(res.locals.userId, body);
@@ -60,28 +60,28 @@ export async function createWorkout(_req: Request, res: Response) {
     });
 }
 
-export async function deleteWorkout(_req: Request, res: Response) {
+export async function deleteWorkoutController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
 
-    await deleteWorkoutByIdService(res.locals.userId, params.workoutId);
+    await deleteWorkoutService(res.locals.userId, params.workoutId);
 
     res.status(200).json({
         message: "Workout deleted successfully",
     });
 }
 
-export async function updateWorkout(_req: Request, res: Response) {
+export async function updateWorkoutController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
     const body = res.locals.body as UpdateWorkoutInput;
 
-    const workout = await updateWorkoutByIdService(res.locals.userId, params.workoutId, body);
+    const workout = await updateWorkoutService(res.locals.userId, params.workoutId, body);
 
     res.status(200).json({
         workout,
     });
 }
 
-export async function startWorkout(_req: Request, res: Response) {
+export async function startWorkoutController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
 
     const workout = await startWorkoutService(res.locals.userId, params.workoutId);
@@ -91,7 +91,7 @@ export async function startWorkout(_req: Request, res: Response) {
     });
 }
 
-export async function finishWorkout(_req: Request, res: Response) {
+export async function finishWorkoutController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
 
     const workout = await finishWorkoutService(res.locals.userId, params.workoutId);
@@ -101,7 +101,7 @@ export async function finishWorkout(_req: Request, res: Response) {
     });
 }
 
-export async function cancelWorkout(_req: Request, res: Response) {
+export async function cancelWorkoutController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
 
     const workout = await cancelWorkoutService(res.locals.userId, params.workoutId);
@@ -111,7 +111,7 @@ export async function cancelWorkout(_req: Request, res: Response) {
     });
 }
 
-export async function reopenWorkout(_req: Request, res: Response) {
+export async function reopenWorkoutController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
 
     const workout = await reopenWorkoutService(res.locals.userId, params.workoutId);

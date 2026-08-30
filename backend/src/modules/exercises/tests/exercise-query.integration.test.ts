@@ -9,7 +9,7 @@ const exerciseInput = {
     equipment: "Barbell",
 };
 
-const createExercise = (
+const createExerciseRecord = (
     userId: string,
     overrides: NonNullable<Parameters<typeof createTestExercise>[1]> = {},
 ) => createTestExercise(userId, {...exerciseInput, ...overrides});
@@ -18,10 +18,10 @@ describe("GET /api/exercises", () => {
     it("returns only the owner's active exercises ordered by name", async () => {
         const owner = await createTestUser("owner@example.com");
         const other = await createTestUser("other@example.com");
-        await createExercise(owner.user.id, {name: "Squat", muscleGroup: "Legs"});
-        await createExercise(owner.user.id, {name: "Bench press"});
-        await createExercise(owner.user.id, {name: "Archived row", isArchived: true});
-        await createExercise(other.user.id, {name: "Other user's exercise"});
+        await createExerciseRecord(owner.user.id, {name: "Squat", muscleGroup: "Legs"});
+        await createExerciseRecord(owner.user.id, {name: "Bench press"});
+        await createExerciseRecord(owner.user.id, {name: "Archived row", isArchived: true});
+        await createExerciseRecord(other.user.id, {name: "Other user's exercise"});
 
         const response = await authenticated("get", "/api/exercises", owner.cookie);
         const body = exercisesResponseSchema.parse(response.body);
@@ -33,8 +33,8 @@ describe("GET /api/exercises", () => {
 
     it("returns only archived exercises when requested", async () => {
         const owner = await createTestUser("owner@example.com");
-        await createExercise(owner.user.id, {name: "Active"});
-        const archived = await createExercise(owner.user.id, {
+        await createExerciseRecord(owner.user.id, {name: "Active"});
+        const archived = await createExerciseRecord(owner.user.id, {
             name: "Archived",
             isArchived: true,
         });
@@ -62,7 +62,7 @@ describe("GET /api/exercises", () => {
 describe("GET /api/exercises/:exerciseId", () => {
     it("returns an active exercise owned by the authenticated user", async () => {
         const owner = await createTestUser("owner@example.com");
-        const exercise = await createExercise(owner.user.id);
+        const exercise = await createExerciseRecord(owner.user.id);
 
         const response = await authenticated("get", `/api/exercises/${exercise.id}`, owner.cookie);
 
@@ -76,7 +76,7 @@ describe("GET /api/exercises/:exerciseId", () => {
     ])("does not expose %s", async (_case, archived) => {
         const owner = await createTestUser("owner@example.com");
         const other = await createTestUser("other@example.com");
-        const exercise = await createExercise(archived ? owner.user.id : other.user.id, {
+        const exercise = await createExerciseRecord(archived ? owner.user.id : other.user.id, {
             isArchived: archived,
         });
 

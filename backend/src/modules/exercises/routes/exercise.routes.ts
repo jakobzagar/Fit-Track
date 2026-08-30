@@ -2,12 +2,12 @@ import {Router} from "express";
 import {authenticate} from "../../auth/middleware/auth.middleware.js";
 import {validate} from "../../../common/middleware/validate.middleware.js";
 import {
-    getExercises,
-    getExerciseById,
-    createExercise,
-    updateExerciseById,
-    archiveExercise,
-    restoreExerciseById,
+    getExercisesController,
+    getExerciseByIdController,
+    createExerciseController,
+    updateExerciseController,
+    archiveExerciseController,
+    restoreExerciseController,
 } from "../controllers/exercise.controller.js";
 import {
     createExerciseSchema,
@@ -20,21 +20,25 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get("/", validate(getExercisesQuerySchema, "query"), getExercises);
+router.get("/", validate(getExercisesQuerySchema, "query"), getExercisesController);
 
-router.get("/:exerciseId", validate(exerciseIdSchema, "params"), getExerciseById);
+router.get("/:exerciseId", validate(exerciseIdSchema, "params"), getExerciseByIdController);
 
-router.post("/", validate(createExerciseSchema), createExercise);
+router.post("/", validate(createExerciseSchema), createExerciseController);
 
-router.delete("/:exerciseId", validate(exerciseIdSchema, "params"), archiveExercise);
+router.delete("/:exerciseId", validate(exerciseIdSchema, "params"), archiveExerciseController);
 
-router.patch("/:exerciseId/restore", validate(exerciseIdSchema, "params"), restoreExerciseById);
+router.patch(
+    "/:exerciseId/restore",
+    validate(exerciseIdSchema, "params"),
+    restoreExerciseController,
+);
 
 router.patch(
     "/:exerciseId",
     validate(exerciseIdSchema, "params"),
     validate(updateExerciseSchema),
-    updateExerciseById,
+    updateExerciseController,
 );
 
 export default router;

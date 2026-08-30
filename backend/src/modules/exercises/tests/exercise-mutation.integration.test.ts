@@ -17,7 +17,7 @@ const exerciseInput = {
     equipment: "Barbell",
 };
 
-const createExercise = (
+const createExerciseRecord = (
     userId: string,
     overrides: NonNullable<Parameters<typeof createTestExercise>[1]> = {},
 ) => createTestExercise(userId, {...exerciseInput, ...overrides});
@@ -58,7 +58,7 @@ describe("POST /api/exercises", () => {
 
     it("rejects a duplicate name for the same user", async () => {
         const {user, cookie} = await createTestUser("owner@example.com");
-        await createExercise(user.id);
+        await createExerciseRecord(user.id);
 
         const response = await authenticated("post", "/api/exercises", cookie).send(exerciseInput);
 
@@ -72,7 +72,7 @@ describe("POST /api/exercises", () => {
     it("allows different users to use the same exercise name", async () => {
         const owner = await createTestUser("owner@example.com");
         const other = await createTestUser("other@example.com");
-        await createExercise(owner.user.id);
+        await createExerciseRecord(owner.user.id);
 
         const response = await authenticated("post", "/api/exercises", other.cookie).send(
             exerciseInput,
@@ -119,7 +119,7 @@ describe("POST /api/exercises", () => {
 describe("PATCH /api/exercises/:exerciseId", () => {
     it("updates selected fields and allows equipment to be cleared", async () => {
         const owner = await createTestUser("owner@example.com");
-        const exercise = await createExercise(owner.user.id);
+        const exercise = await createExerciseRecord(owner.user.id);
 
         const response = await authenticated(
             "patch",
@@ -138,7 +138,7 @@ describe("PATCH /api/exercises/:exerciseId", () => {
 
     it("rejects an empty update", async () => {
         const owner = await createTestUser("owner@example.com");
-        const exercise = await createExercise(owner.user.id);
+        const exercise = await createExerciseRecord(owner.user.id);
 
         const response = await authenticated(
             "patch",
@@ -154,8 +154,8 @@ describe("PATCH /api/exercises/:exerciseId", () => {
 
     it("rejects a name already used by another owned exercise", async () => {
         const owner = await createTestUser("owner@example.com");
-        const exercise = await createExercise(owner.user.id);
-        await createExercise(owner.user.id, {name: "Squat", muscleGroup: "Legs"});
+        const exercise = await createExerciseRecord(owner.user.id);
+        await createExerciseRecord(owner.user.id, {name: "Squat", muscleGroup: "Legs"});
 
         const response = await authenticated(
             "patch",
@@ -172,7 +172,7 @@ describe("PATCH /api/exercises/:exerciseId", () => {
     it("does not update another user's exercise", async () => {
         const owner = await createTestUser("owner@example.com");
         const other = await createTestUser("other@example.com");
-        const exercise = await createExercise(other.user.id);
+        const exercise = await createExerciseRecord(other.user.id);
 
         const response = await authenticated(
             "patch",
@@ -193,7 +193,7 @@ describe("PATCH /api/exercises/:exerciseId", () => {
 describe("DELETE /api/exercises/:exerciseId", () => {
     it("archives an owned exercise without deleting it", async () => {
         const owner = await createTestUser("owner@example.com");
-        const exercise = await createExercise(owner.user.id);
+        const exercise = await createExerciseRecord(owner.user.id);
 
         const response = await authenticated(
             "delete",
@@ -211,7 +211,7 @@ describe("DELETE /api/exercises/:exerciseId", () => {
     it("does not archive another user's exercise", async () => {
         const owner = await createTestUser("owner@example.com");
         const other = await createTestUser("other@example.com");
-        const exercise = await createExercise(other.user.id);
+        const exercise = await createExerciseRecord(other.user.id);
 
         const response = await authenticated(
             "delete",
@@ -229,7 +229,7 @@ describe("DELETE /api/exercises/:exerciseId", () => {
 describe("PATCH /api/exercises/:exerciseId/restore", () => {
     it("restores an archived owned exercise", async () => {
         const owner = await createTestUser("owner@example.com");
-        const exercise = await createExercise(owner.user.id, {isArchived: true});
+        const exercise = await createExerciseRecord(owner.user.id, {isArchived: true});
 
         const response = await authenticated(
             "patch",
@@ -247,7 +247,7 @@ describe("PATCH /api/exercises/:exerciseId/restore", () => {
     ])("does not restore %s", async (_case, archived, owned) => {
         const owner = await createTestUser("owner@example.com");
         const other = await createTestUser("other@example.com");
-        const exercise = await createExercise(owned ? owner.user.id : other.user.id, {
+        const exercise = await createExerciseRecord(owned ? owner.user.id : other.user.id, {
             isArchived: archived,
         });
 

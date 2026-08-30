@@ -21,7 +21,7 @@ import type {
     WorkoutIdParams,
 } from "@fit-track/shared/workouts";
 
-export async function addExerciseToWorkout(_req: Request, res: Response) {
+export async function addExerciseToWorkoutController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutIdParams;
     const body = res.locals.body as AddExerciseToWorkoutInput;
 
@@ -36,7 +36,7 @@ export async function addExerciseToWorkout(_req: Request, res: Response) {
     });
 }
 
-export async function addSetToWorkoutExercise(_req: Request, res: Response) {
+export async function addWorkoutSetController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutExerciseParams;
     const body = res.locals.body as CreateWorkoutSetInput;
 
@@ -52,7 +52,7 @@ export async function addSetToWorkoutExercise(_req: Request, res: Response) {
     });
 }
 
-export async function updateWorkoutExercise(_req: Request, res: Response) {
+export async function updateWorkoutExerciseController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutExerciseParams;
     const body = res.locals.body as UpdateWorkoutExerciseInput;
 
@@ -68,7 +68,7 @@ export async function updateWorkoutExercise(_req: Request, res: Response) {
     });
 }
 
-export async function deleteWorkoutExercise(_req: Request, res: Response) {
+export async function deleteWorkoutExerciseController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutExerciseParams;
 
     await deleteWorkoutExerciseService(
@@ -82,7 +82,7 @@ export async function deleteWorkoutExercise(_req: Request, res: Response) {
     });
 }
 
-export async function updateWorkoutSet(_req: Request, res: Response) {
+export async function updateWorkoutSetController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutSetIdParams;
     const body = res.locals.body as UpdateWorkoutSetInput;
 
@@ -99,7 +99,7 @@ export async function updateWorkoutSet(_req: Request, res: Response) {
     });
 }
 
-export async function deleteWorkoutSet(_req: Request, res: Response) {
+export async function deleteWorkoutSetController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutSetIdParams;
 
     await deleteWorkoutSetService(
@@ -114,7 +114,7 @@ export async function deleteWorkoutSet(_req: Request, res: Response) {
     });
 }
 
-export async function setWorkoutSetCompletion(_req: Request, res: Response) {
+export async function setWorkoutSetCompletionController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutSetIdParams;
     const body = res.locals.body as SetWorkoutSetCompletionInput;
 

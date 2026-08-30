@@ -177,7 +177,7 @@ export async function createWorkoutService(userId: string, data: CreateWorkoutIn
     });
 }
 
-export async function deleteWorkoutByIdService(userId: string, workoutId: string) {
+export async function deleteWorkoutService(userId: string, workoutId: string) {
     const workout = await prisma.workout.findFirst({
         where: {
             id: workoutId,
@@ -196,7 +196,7 @@ export async function deleteWorkoutByIdService(userId: string, workoutId: string
     });
 }
 
-export async function updateWorkoutByIdService(
+export async function updateWorkoutService(
     userId: string,
     workoutId: string,
     data: UpdateWorkoutInput,

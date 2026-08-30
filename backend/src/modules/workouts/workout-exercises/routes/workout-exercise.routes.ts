@@ -1,13 +1,13 @@
 import {Router} from "express";
 import {validate} from "../../../../common/middleware/validate.middleware.js";
 import {
-    addExerciseToWorkout,
-    addSetToWorkoutExercise,
-    deleteWorkoutExercise,
-    deleteWorkoutSet,
-    updateWorkoutExercise,
-    updateWorkoutSet,
-    setWorkoutSetCompletion,
+    addExerciseToWorkoutController,
+    addWorkoutSetController,
+    deleteWorkoutExerciseController,
+    deleteWorkoutSetController,
+    updateWorkoutExerciseController,
+    updateWorkoutSetController,
+    setWorkoutSetCompletionController,
 } from "../controllers/workout-exercise.controller.js";
 import {
     addExerciseToWorkoutSchema,
@@ -26,46 +26,46 @@ router.post(
     "/:workoutId/exercises",
     validate(workoutIdSchema, "params"),
     validate(addExerciseToWorkoutSchema),
-    addExerciseToWorkout,
+    addExerciseToWorkoutController,
 );
 router.post(
     "/:workoutId/exercises/:workoutExerciseId/sets",
     validate(workoutExerciseParamsSchema, "params"),
     validate(createWorkoutSetSchema),
-    addSetToWorkoutExercise,
+    addWorkoutSetController,
 );
 
 router.patch(
     "/:workoutId/exercises/:workoutExerciseId",
     validate(workoutExerciseParamsSchema, "params"),
     validate(updateWorkoutExerciseSchema),
-    updateWorkoutExercise,
+    updateWorkoutExerciseController,
 );
 
 router.delete(
     "/:workoutId/exercises/:workoutExerciseId",
     validate(workoutExerciseParamsSchema, "params"),
-    deleteWorkoutExercise,
+    deleteWorkoutExerciseController,
 );
 
 router.patch(
     "/:workoutId/exercises/:workoutExerciseId/sets/:workoutSetId",
     validate(workoutSetIdParamsSchema, "params"),
     validate(updateWorkoutSetSchema),
-    updateWorkoutSet,
+    updateWorkoutSetController,
 );
 
 router.patch(
     "/:workoutId/exercises/:workoutExerciseId/sets/:workoutSetId/completion",
     validate(workoutSetIdParamsSchema, "params"),
     validate(setWorkoutSetCompletionSchema),
-    setWorkoutSetCompletion,
+    setWorkoutSetCompletionController,
 );
 
 router.delete(
     "/:workoutId/exercises/:workoutExerciseId/sets/:workoutSetId",
     validate(workoutSetIdParamsSchema, "params"),
-    deleteWorkoutSet,
+    deleteWorkoutSetController,
 );
 
 export default router;
