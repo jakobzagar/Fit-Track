@@ -67,7 +67,33 @@ git commit -m "feat: add workout pagination"
 git push -u origin feat/workout-pagination
 ```
 
-Open a pull request from the pushed branch into `main`. The first push creates the remote tracking branch; later corrections use the same local branch and normally require only `git push`. Each push updates the existing pull request and reruns its checks, so a new branch or pull request is not needed for every commit.
+Create the pull request with GitHub CLI after the first push:
+
+```bash
+gh pr create \
+  --base main \
+  --head feat/workout-pagination \
+  --title "feat: add workout pagination" \
+  --body "## Summary
+
+- add paginated workout loading
+- preserve the existing workout filters
+
+## Validation
+
+- npm run verify"
+```
+
+Use a concise outcome-oriented title. In the description, summarize the behavior and list the checks that actually ran. Alternatively, open the compare link printed by `git push`, confirm that the base branch is `main`, enter the same title and description, and select **Create pull request**.
+
+The first push creates the remote tracking branch. Later corrections stay on the same local branch and normally require only:
+
+```bash
+git push
+gh pr checks --watch
+```
+
+Each push updates the existing pull request and reruns its checks, so a new branch or pull request is not needed for every commit. Use `gh pr view --web` to reopen the current branch's pull request in a browser.
 
 The repository ruleset for `main` should:
 
