@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/context/confirm-dialog.context";
-import {getExercises} from "../../../exercises/api/exercises.api";
+import {getExercises} from "../../../exercises";
 import type {Exercise} from "@fit-track/shared/exercises";
 import {getWorkoutById, reopenWorkout} from "../../api/workouts.api";
 import type {Workout} from "@fit-track/shared/workouts";

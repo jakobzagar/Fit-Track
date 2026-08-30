@@ -1,7 +1,7 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import type {NavigateFunction} from "react-router";
 import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/context/confirm-dialog.context";
-import {getExercises} from "../../../exercises/api/exercises.api";
+import {getExercises} from "../../../exercises";
 import type {Exercise} from "@fit-track/shared/exercises";
 import {
     cancelWorkout,
