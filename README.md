@@ -2,7 +2,7 @@
 
 ![FitTrack](frontend/public/brand/fittrack-logo.png)
 
-FitTrack is a production-minded full-stack workout planning and tracking application, designed and built independently as a portfolio project. Users can maintain a personal exercise library, build ordered workouts, record live sessions, compare previous performance, and correct completed training records through an explicit lifecycle.
+FitTrack is a production-minded full-stack workout planning and tracking application, designed and built independently as a portfolio project. Users can maintain a personal exercise library, build ordered workouts, record active workouts, compare previous performance, and correct completed training records through an explicit lifecycle.
 
 The repository demonstrates more than a CRUD interface: it treats runtime contracts, authorization, concurrent mutations, database invariants, isolated integration testing, container delivery, and operational failure modes as first-class engineering concerns.
 
@@ -12,7 +12,7 @@ The repository demonstrates more than a CRUD interface: it treats runtime contra
 
 | Area              | Evidence in the project                                                                                                                    |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Product thinking  | Explicit draft → active → completed workout lifecycle, safe cancellation and reopening, exercise history, and previous-performance context |
+| Product thinking  | Explicit draft → active → completed workout lifecycle, safe cancellation and reopening, workout history, and previous-performance context  |
 | Full-stack design | React client, Express application, PostgreSQL persistence, and shared runtime contracts in one TypeScript monorepo                         |
 | Data integrity    | Ownership-scoped queries, relational constraints, append-only migrations, serializable transactions, retry handling, and concurrency tests |
 | Security          | HTTP-only cookies, CSRF origin checks, credentialed CORS, request limits, rate limiting, security headers, and redacted structured logs    |
@@ -32,7 +32,7 @@ The repository demonstrates more than a CRUD interface: it treats runtime contra
 - **Defence at both boundaries:** the backend authoritatively validates untrusted input, while the frontend validates real API responses before using them.
 - **Ownership by default:** every protected query is scoped to the authenticated user, including nested workout exercises and sets.
 - **Transactional ordering:** workout exercise positions and set numbers remain contiguous after concurrent moves and deletions.
-- **Recoverable workout lifecycle:** sessions can be started, cancelled, completed, reopened for corrections, and safely deleted.
+- **Recoverable workout lifecycle:** workouts can be started, cancelled, completed, reopened for corrections, and safely deleted.
 - **Real integration environment:** Supertest exercises the exported Express application against migrated PostgreSQL, not an in-memory database.
 - **Critical browser journeys:** Playwright drives Chromium through registration, workout completion, persisted login state, and expired-session recovery against the real API and PostgreSQL.
 - **Defensive HTTP defaults:** HTTP-only cookies, CSRF origin checks, restricted credentialed CORS, Helmet, payload limits, and rate limiting.
@@ -43,9 +43,9 @@ The repository demonstrates more than a CRUD interface: it treats runtime contra
 - Registration, login, logout, and session restoration
 - Personal exercise library with archive and restore
 - Workout creation, editing, ordering, and deletion
-- Live workout sessions with reps, weight, duration, notes, and set completion
+- Active workouts with reps, weight, duration, notes, and set completion
 - Previous-performance context for each exercise
-- Explicit session cancellation and completed-workout reopening
+- Explicit active-workout cancellation and completed-workout reopening
 - Responsive protected routes and an accessible public landing page
 
 ## Workout lifecycle
@@ -53,7 +53,7 @@ The repository demonstrates more than a CRUD interface: it treats runtime contra
 ```mermaid
 stateDiagram-v2
     state "Draft workout" as Draft
-    state "Active session" as Active
+    state "Active workout" as Active
     state "Completed record" as Completed
 
     [*] --> Draft: Create
@@ -63,7 +63,7 @@ stateDiagram-v2
     Completed --> Active: Reopen
 ```
 
-A user can have only one active workout. **Cancel** returns it to draft and clears completion marks without discarding entered set values. **Reopen** returns a completed workout to the active session while preserving its recorded data. Any owned workout can be deleted from every lifecycle state together with its nested exercises and sets.
+A user can have only one active workout. **Cancel** returns it to draft and clears completion marks without discarding entered set values. **Reopen** returns a completed workout to the active state while preserving its recorded data. Any owned workout can be deleted from every lifecycle state together with its nested exercises and sets.
 
 ## Architecture
 
