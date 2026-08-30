@@ -29,6 +29,28 @@ describe("transaction retry handling", () => {
         expect(execute).toHaveBeenCalledTimes(2);
     });
 
+    it("waits for a transient conflict to clear before retrying", async () => {
+        let conflictActive = true;
+        const releaseConflict = setTimeout(() => {
+            conflictActive = false;
+        }, 10);
+        const transactionConflict = Object.assign(new Error("transaction conflict"), {
+            code: "P2034",
+        });
+        const execute = vi.fn(() => {
+            if (conflictActive) return Promise.reject(transactionConflict);
+            return Promise.resolve("committed");
+        });
+
+        try {
+            await expect(runWithTransactionRetry(execute)).resolves.toBe("committed");
+        } finally {
+            clearTimeout(releaseConflict);
+        }
+
+        expect(execute).toHaveBeenCalledTimes(2);
+    });
+
     it("returns a stable 503 error after exhausting all retries", async () => {
         const execute = vi.fn().mockRejectedValue({cause: {originalCode: "40P01"}});
 
@@ -38,6 +60,6 @@ describe("transaction retry handling", () => {
                 statusCode: 503,
             }),
         );
-        expect(execute).toHaveBeenCalledTimes(3);
+        expect(execute).toHaveBeenCalledTimes(5);
     });
 });
