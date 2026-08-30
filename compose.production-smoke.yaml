@@ -2,7 +2,7 @@ name: fit-track-production-smoke
 
 services:
   database:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: fit_track_smoke
       POSTGRES_PASSWORD: fit_track_smoke_password

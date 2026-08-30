@@ -2,7 +2,7 @@ name: fit-track-e2e
 
 services:
   database:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: fit_track_e2e
       POSTGRES_PASSWORD: fit_track_e2e_password

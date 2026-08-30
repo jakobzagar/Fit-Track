@@ -2,7 +2,7 @@ name: fit-track-test
 
 services:
   database:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: fit_track_test
       POSTGRES_PASSWORD: fit_track_test_password
