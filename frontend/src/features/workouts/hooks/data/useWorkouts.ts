@@ -1,7 +1,11 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {createWorkout, deleteWorkout, getWorkouts, updateWorkout} from "../../api/workouts.api";
-import type {CreateWorkoutInput, UpdateWorkoutInput} from "../../schemas/workout.schemas";
-import type {WorkoutSummary, WorkoutsResponse} from "../../types/workout.types";
+import type {
+    CreateWorkoutInput,
+    UpdateWorkoutInput,
+    WorkoutsResponse,
+    WorkoutSummary,
+} from "@fit-track/shared/workouts";
 
 function sortWorkoutsByPerformedAt(workouts: WorkoutSummary[]) {
     return [...workouts].sort(

@@ -1,10 +1,10 @@
 import type {
     Workout,
-    WorkoutBase,
+    WorkoutRecord,
     WorkoutExercise,
     WorkoutSet,
     WorkoutSummary,
-} from "../../features/workouts/types/workout.types";
+} from "@fit-track/shared/workouts";
 import {exercise, exerciseId, userId} from "./exercises";
 
 export {exercise, exerciseId, userId} from "./exercises";
@@ -56,7 +56,7 @@ export function createWorkout(overrides: Partial<Workout> = {}): Workout {
 }
 
 export function createWorkoutSummary(overrides: Partial<WorkoutSummary> = {}): WorkoutSummary {
-    const workout = createWorkoutBase();
+    const workout = createWorkoutRecord();
 
     return {
         ...workout,
@@ -65,9 +65,9 @@ export function createWorkoutSummary(overrides: Partial<WorkoutSummary> = {}): W
     };
 }
 
-export function createWorkoutBase(
-    overrides: Partial<WorkoutBase> & {workoutExercises?: unknown; _count?: unknown} = {},
-): WorkoutBase {
+export function createWorkoutRecord(
+    overrides: Partial<WorkoutRecord> & {workoutExercises?: unknown; _count?: unknown} = {},
+): WorkoutRecord {
     const {workoutExercises: _workoutExercises, ...workout} = createWorkout();
     const {
         workoutExercises: _overriddenWorkoutExercises,

@@ -1,41 +1,34 @@
 import {useState, type Dispatch, type SetStateAction} from "react";
 import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/context/confirm-dialog.context";
 import {
-    addSetToWorkoutExercise,
+    addWorkoutSet,
     deleteWorkoutSet,
     updateWorkoutSet,
-} from "../../../workout-exercises/api/workout-exercises.api";
-import type {
-    CreateWorkoutSetInput,
-    UpdateWorkoutSetInput,
-} from "../../../workout-exercises/schemas/workout-exercises.schemas";
-import type {Workout, WorkoutSet} from "../../types/workout.types";
+} from "../../workout-exercises/api/workout-exercises.api";
+import type {CreateWorkoutSetInput, UpdateWorkoutSetInput} from "@fit-track/shared/workouts";
+import type {Workout, WorkoutSet} from "@fit-track/shared/workouts";
 
 export function useWorkoutSetMutations(
     workoutId: string | undefined,
     confirm: ConfirmDialogFunction,
     setWorkout: Dispatch<SetStateAction<Workout | null>>,
 ) {
-    const [editingSet, setEditingSet] = useState<WorkoutSet | null>(null);
-    const [deletingSetId, setDeletingSetId] = useState<string | null>(null);
+    const [editingWorkoutSet, setEditingWorkoutSet] = useState<WorkoutSet | null>(null);
+    const [deletingWorkoutSetId, setDeletingWorkoutSetId] = useState<string | null>(null);
     const [error, setError] = useState("");
 
     async function add(workoutExerciseId: string, data: CreateWorkoutSetInput) {
         if (!workoutId) throw new Error("Workout ID is missing");
         setError("");
         try {
-            const {workoutExerciseSet} = await addSetToWorkoutExercise(
-                workoutId,
-                workoutExerciseId,
-                data,
-            );
+            const {workoutSet} = await addWorkoutSet(workoutId, workoutExerciseId, data);
             setWorkout((current) =>
                 current
                     ? {
                           ...current,
                           workoutExercises: current.workoutExercises.map((item) =>
                               item.id === workoutExerciseId
-                                  ? {...item, sets: [...item.sets, workoutExerciseSet]}
+                                  ? {...item, sets: [...item.sets, workoutSet]}
                                   : item,
                           ),
                       }
@@ -50,13 +43,13 @@ export function useWorkoutSetMutations(
     }
 
     async function update(data: UpdateWorkoutSetInput) {
-        if (!workoutId || !editingSet) throw new Error("Workout set is not selected");
+        if (!workoutId || !editingWorkoutSet) throw new Error("Workout set is not selected");
         setError("");
         try {
-            const {workoutExerciseSet} = await updateWorkoutSet(
+            const {workoutSet} = await updateWorkoutSet(
                 workoutId,
-                editingSet.workoutExerciseId,
-                editingSet.id,
+                editingWorkoutSet.workoutExerciseId,
+                editingWorkoutSet.id,
                 data,
             );
             setWorkout((current) =>
@@ -66,20 +59,20 @@ export function useWorkoutSetMutations(
                           workoutExercises: current.workoutExercises.map((item) => ({
                               ...item,
                               sets: item.sets.map((set) =>
-                                  set.id === editingSet.id ? workoutExerciseSet : set,
+                                  set.id === editingWorkoutSet.id ? workoutSet : set,
                               ),
                           })),
                       }
                     : null,
             );
-            setEditingSet(null);
+            setEditingWorkoutSet(null);
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : "Failed to update workout set");
             throw caught;
         }
     }
 
-    async function remove(workoutExerciseId: string, setId: string) {
+    async function remove(workoutExerciseId: string, workoutSetId: string) {
         if (
             !workoutId ||
             !(await confirm({
@@ -91,9 +84,9 @@ export function useWorkoutSetMutations(
         )
             return;
         setError("");
-        setDeletingSetId(setId);
+        setDeletingWorkoutSetId(workoutSetId);
         try {
-            await deleteWorkoutSet(workoutId, workoutExerciseId, setId);
+            await deleteWorkoutSet(workoutId, workoutExerciseId, workoutSetId);
             setWorkout((current) =>
                 current
                     ? {
@@ -103,7 +96,7 @@ export function useWorkoutSetMutations(
                                   ? {
                                         ...item,
                                         sets: item.sets
-                                            .filter((set) => set.id !== setId)
+                                            .filter((set) => set.id !== workoutSetId)
                                             .map((set, index) => ({...set, setNumber: index + 1})),
                                     }
                                   : item,
@@ -111,13 +104,22 @@ export function useWorkoutSetMutations(
                       }
                     : null,
             );
-            setEditingSet(null);
+            setEditingWorkoutSet(null);
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : "Failed to delete workout set");
         } finally {
-            setDeletingSetId(null);
+            setDeletingWorkoutSetId(null);
         }
     }
 
-    return {editingSet, setEditingSet, deletingSetId, error, setError, add, update, remove};
+    return {
+        editingWorkoutSet,
+        setEditingWorkoutSet,
+        deletingWorkoutSetId,
+        error,
+        setError,
+        addWorkoutSet: add,
+        updateWorkoutSet: update,
+        removeWorkoutSet: remove,
+    };
 }

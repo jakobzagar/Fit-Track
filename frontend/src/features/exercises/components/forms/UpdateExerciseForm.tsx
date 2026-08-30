@@ -1,9 +1,13 @@
 import {z} from "zod";
 import {useId, useRef, useState, type SubmitEvent} from "react";
-import {updateExerciseSchema, type UpdateExerciseInput} from "../../schemas/exercise.schemas";
-import type {Exercise} from "../../types/exercise.types.ts";
+import {
+    updateExerciseSchema,
+    type Exercise,
+    type UpdateExerciseInput,
+} from "@fit-track/shared/exercises";
 import {Button} from "../../../../components/ui/actions/Button";
 import {FieldError} from "../../../../components/ui/forms/FieldError";
+import {useApiValidationErrorHandler} from "../../../../components/ui/forms/hooks/useApiValidationErrorHandler";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
@@ -29,6 +33,7 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
     const [equipment, setEquipment] = useState(exercise.equipment ?? "");
     const [errors, setErrors] = useState<EditExerciseErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleApiValidationError = useApiValidationErrorHandler(formRef, setErrors);
 
     async function handleSubmit(event: SubmitEvent) {
         event.preventDefault();
@@ -57,7 +62,8 @@ export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExercis
 
         try {
             await onSubmit(result.data);
-        } catch {
+        } catch (error) {
+            handleApiValidationError(error);
             return;
         } finally {
             setIsSubmitting(false);

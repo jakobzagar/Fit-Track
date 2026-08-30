@@ -5,12 +5,12 @@ import {createMemoryRouter, RouterProvider} from "react-router";
 import {describe, expect, test} from "vitest";
 import {AppProviders} from "../app/providers/providers";
 import {LandingPage} from "../features/landing/pages/LandingPage";
-import {LoginPage} from "../features/auth/pages/LogInPage";
+import {LoginPage} from "../features/auth/pages/LoginPage";
 import {RegisterPage} from "../features/auth/pages/RegisterPage";
 import {WorkoutsPage} from "../features/workouts/pages/WorkoutsPage";
 import {ExercisesPage} from "../features/exercises/pages/ExercisesPage";
 import {WorkoutDetailPage} from "../features/workouts/pages/WorkoutDetailPage";
-import {WorkoutSessionPage} from "../features/workouts/pages/WorkoutSessionPage";
+import {ActiveWorkoutPage} from "../features/workouts/pages/ActiveWorkoutPage";
 import {API_URL} from "./constants";
 import {server} from "./mocks/server";
 import {createWorkout, createWorkoutSummary, exercise, workoutId} from "./fixtures/workouts";
@@ -32,7 +32,7 @@ describe("accessibility smoke tests", () => {
     test.each([
         ["landing", <LandingPage />, "Train with"],
         ["login", <LoginPage />, "Sign in"],
-        ["register", <RegisterPage />, "Create account"],
+        ["register", <RegisterPage />, "Register"],
     ])("has no detectable violations on the %s page", async (_name, page, heading) => {
         const {container} = renderWithProviders(page);
         await screen.findByRole("heading", {name: new RegExp(heading, "i")});
@@ -41,7 +41,7 @@ describe("accessibility smoke tests", () => {
 
     test.each([
         ["workouts", <WorkoutsPage />, "Workouts"],
-        ["exercises", <ExercisesPage />, "Movements"],
+        ["exercises", <ExercisesPage />, "Exercises"],
     ])("has no detectable violations on the %s page", async (_name, page, heading) => {
         server.use(
             http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts: []})),
@@ -89,7 +89,7 @@ describe("accessibility smoke tests", () => {
             ),
         );
         const router = createMemoryRouter(
-            [{path: "/workouts/:workoutId/session", element: <WorkoutSessionPage />}],
+            [{path: "/workouts/:workoutId/session", element: <ActiveWorkoutPage />}],
             {initialEntries: [`/workouts/${workoutId}/session`]},
         );
         const {container} = render(

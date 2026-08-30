@@ -69,7 +69,7 @@ export async function loginService(data: LoginInput) {
     };
 }
 
-export async function getMeService(userId: string) {
+export async function getCurrentUserService(userId: string) {
     const user = await prisma.user.findUnique({
         where: {id: userId},
         select: {

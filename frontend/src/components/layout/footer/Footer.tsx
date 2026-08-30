@@ -9,7 +9,7 @@ interface FooterProps {
 
 export function Footer({variant = "app"}: FooterProps) {
     const currentYear = new Date().getFullYear();
-    const {user} = useAuth();
+    const {currentUser} = useAuth();
 
     if (variant === "landing") {
         return (
@@ -28,13 +28,13 @@ export function Footer({variant = "app"}: FooterProps) {
                             <Link to="/exercises">Exercises</Link>
                         </div>
                         <div>
-                            <p>Account</p>
-                            {user ? (
+                            <p>User</p>
+                            {currentUser ? (
                                 <Link to="/workouts">Dashboard</Link>
                             ) : (
                                 <>
                                     <Link to="/login">Log in</Link>
-                                    <Link to="/register">Create account</Link>
+                                    <Link to="/register">Register</Link>
                                 </>
                             )}
                         </div>

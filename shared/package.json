@@ -1,15 +1,9 @@
 {
     "name": "@fit-track/shared",
-    "version": "0.2.0",
+    "version": "1.0.0",
     "private": true,
     "type": "module",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
     "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        },
         "./auth": {
             "types": "./dist/auth/schemas/auth.schemas.d.ts",
             "import": "./dist/auth/schemas/auth.schemas.js"
@@ -27,12 +21,8 @@
             "import": "./dist/health/schemas/health.schemas.js"
         },
         "./workouts": {
-            "types": "./dist/workouts/schemas/workout.schemas.d.ts",
-            "import": "./dist/workouts/schemas/workout.schemas.js"
-        },
-        "./workout-exercises": {
-            "types": "./dist/workout-exercises/schemas/workout-exercise.schemas.d.ts",
-            "import": "./dist/workout-exercises/schemas/workout-exercise.schemas.js"
+            "types": "./dist/workouts/index.d.ts",
+            "import": "./dist/workouts/index.js"
         }
     },
     "files": [

@@ -1,9 +1,9 @@
-.session-action-bar {
+.active-workout-action-bar {
     bottom: max(12px, env(safe-area-inset-bottom));
 }
 
 @media (max-width: 680px) {
-    .session-header {
+    .active-workout-header {
         position: sticky;
         top: 0;
         z-index: 35;
@@ -14,7 +14,7 @@
         backdrop-filter: blur(16px);
     }
 
-    .session-action-bar {
+    .active-workout-action-bar {
         margin-inline: -4px;
     }
 }

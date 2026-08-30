@@ -4,9 +4,9 @@ import {Navbar} from "../navigation/Navbar";
 
 export function AppLayout() {
     const {pathname} = useLocation();
-    const isWorkoutSession = pathname.endsWith("/session");
+    const isActiveWorkoutRoute = pathname.endsWith("/session");
 
-    if (isWorkoutSession) {
+    if (isActiveWorkoutRoute) {
         return (
             <main className="app-main min-h-screen">
                 <Outlet />

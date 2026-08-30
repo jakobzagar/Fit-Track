@@ -1,11 +1,13 @@
 import {z} from "zod";
-import {messageResponseSchema} from "@fit-track/shared/common";
-import {env} from "../../config/env.ts";
-import {ApiError} from "../../common/errors/api.error.ts";
+import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
+import {env} from "../../config/env";
+import {ApiError} from "../../common/errors/api.error";
+import {notifySessionExpired} from "../auth/session-expiration";
 
 interface ApiOptions {
     method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
     body?: unknown;
+    onUnauthorized?: "expire-session" | "ignore";
 }
 
 async function readResponseBody(response: Response): Promise<unknown> {
@@ -25,7 +27,7 @@ export async function apiRequest<T>(
     schema: z.ZodType<T>,
     options: ApiOptions = {},
 ): Promise<T> {
-    const response = await fetch(`${env.apiUrl}${path}`, {
+    const response = await fetch(`${env.apiBasePath}${path}`, {
         method: options.method ?? "GET",
         credentials: "include",
         headers: options.body === undefined ? undefined : {"Content-Type": "application/json"},
@@ -35,7 +37,19 @@ export async function apiRequest<T>(
     const result = await readResponseBody(response);
 
     if (!response.ok) {
+        const parsedValidationError = validationErrorResponseSchema.safeParse(result);
         const parsedError = messageResponseSchema.safeParse(result);
+
+        if (response.status === 401 && options.onUnauthorized !== "ignore") {
+            notifySessionExpired();
+        }
+
+        if (response.status === 400 && parsedValidationError.success) {
+            throw new ApiError(parsedValidationError.data.message, response.status, {
+                fieldErrors: parsedValidationError.data.errors,
+                formErrors: parsedValidationError.data.formErrors,
+            });
+        }
 
         throw new ApiError(
             parsedError.success ? parsedError.data.message : "Request failed",

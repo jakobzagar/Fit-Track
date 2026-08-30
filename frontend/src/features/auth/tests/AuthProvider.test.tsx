@@ -8,14 +8,14 @@ import {user as currentUser} from "../../../test/fixtures/users";
 import {useAuth} from "../hooks/useAuth";
 
 function AuthState() {
-    const {user, isLoading, signOut} = useAuth();
+    const {currentUser, isRestoringSession, signOut} = useAuth();
 
-    if (isLoading) return <p>Loading session</p>;
+    if (isRestoringSession) return <p>Loading session</p>;
 
     return (
         <div>
-            <p>{user?.email ?? "Signed out"}</p>
-            {user && <button onClick={() => void signOut()}>Log out</button>}
+            <p>{currentUser?.email ?? "Signed out"}</p>
+            {currentUser && <button onClick={() => void signOut()}>Log out</button>}
         </div>
     );
 }

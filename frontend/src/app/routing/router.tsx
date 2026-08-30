@@ -1,15 +1,15 @@
 import {createBrowserRouter, Link, RouterProvider} from "react-router";
 import {AppLayout} from "../../components/layout/shell/AppLayout";
 import {ProtectedRoute} from "../../features/auth/components/ProtectedRoute";
-import {LoginPage} from "../../features/auth/pages/LogInPage";
+import {LoginPage} from "../../features/auth/pages/LoginPage";
 import {RegisterPage} from "../../features/auth/pages/RegisterPage";
 import {ExercisesPage} from "../../features/exercises/pages/ExercisesPage";
 import {WorkoutsPage} from "../../features/workouts/pages/WorkoutsPage";
 import {WorkoutDetailPage} from "../../features/workouts/pages/WorkoutDetailPage";
-import {WorkoutSessionPage} from "../../features/workouts/pages/WorkoutSessionPage";
+import {ActiveWorkoutPage} from "../../features/workouts/pages/ActiveWorkoutPage";
 import {LandingPage} from "../../features/landing/pages/LandingPage";
 import {GuestRoute} from "../../features/auth/components/GuestRoute";
-import {RouteExperience} from "./RouteExperience";
+import {RouteChangeEffects} from "./RouteChangeEffects";
 
 function NotFoundPage() {
     return (
@@ -36,7 +36,7 @@ function NotFoundPage() {
 function createAppRouter() {
     return createBrowserRouter([
         {
-            element: <RouteExperience />,
+            element: <RouteChangeEffects />,
             children: [
                 {path: "/", element: <LandingPage />},
                 {
@@ -57,7 +57,7 @@ function createAppRouter() {
                                 {path: "/workouts/:workoutId", element: <WorkoutDetailPage />},
                                 {
                                     path: "/workouts/:workoutId/session",
-                                    element: <WorkoutSessionPage />,
+                                    element: <ActiveWorkoutPage />,
                                 },
                             ],
                         },

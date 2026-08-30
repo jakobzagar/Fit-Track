@@ -23,6 +23,33 @@ export default defineConfig([
             },
         },
         rules: {
+            "@typescript-eslint/naming-convention": [
+                "error",
+                {
+                    selector: "typeLike",
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: "function",
+                    format: ["camelCase", "PascalCase"],
+                },
+                {
+                    selector: "variable",
+                    format: ["camelCase", "PascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow",
+                },
+            ],
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        {
+                            regex: "^\\.\\.?/.*\\.tsx?$",
+                            message: "Use extensionless relative TypeScript imports.",
+                        },
+                    ],
+                },
+            ],
             "@typescript-eslint/no-misused-promises": [
                 "error",
                 {

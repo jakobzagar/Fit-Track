@@ -62,6 +62,13 @@ export const exerciseSchema = z
     })
     .strict();
 
+export const exerciseSummarySchema = exerciseSchema.pick({
+    id: true,
+    name: true,
+    muscleGroup: true,
+    equipment: true,
+});
+
 export const exerciseResponseSchema = z
     .object({
         exercise: exerciseSchema,
@@ -80,5 +87,6 @@ export type ExerciseIdParams = z.infer<typeof exerciseIdSchema>;
 export type ExerciseStatus = z.infer<typeof exerciseStatusSchema>;
 export type GetExercisesQuery = z.infer<typeof getExercisesQuerySchema>;
 export type Exercise = z.infer<typeof exerciseSchema>;
+export type ExerciseSummary = z.infer<typeof exerciseSummarySchema>;
 export type ExerciseResponse = z.infer<typeof exerciseResponseSchema>;
 export type ExercisesResponse = z.infer<typeof exercisesResponseSchema>;

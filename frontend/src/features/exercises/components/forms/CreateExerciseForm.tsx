@@ -1,8 +1,9 @@
 import {z} from "zod";
 import {useId, useRef, useState, type SubmitEvent} from "react";
-import {createExerciseSchema, type CreateExerciseInput} from "../../schemas/exercise.schemas";
+import {createExerciseSchema, type CreateExerciseInput} from "@fit-track/shared/exercises";
 import {Button} from "../../../../components/ui/actions/Button";
 import {FieldError} from "../../../../components/ui/forms/FieldError";
+import {useApiValidationErrorHandler} from "../../../../components/ui/forms/hooks/useApiValidationErrorHandler";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
@@ -27,6 +28,7 @@ export function CreateExerciseForm({onSubmit}: CreateExerciseFormProps) {
 
     const [errors, setErrors] = useState<CreateExerciseErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleApiValidationError = useApiValidationErrorHandler(formRef, setErrors);
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -55,7 +57,8 @@ export function CreateExerciseForm({onSubmit}: CreateExerciseFormProps) {
 
         try {
             await onSubmit(result.data);
-        } catch {
+        } catch (error) {
+            handleApiValidationError(error);
             return;
         } finally {
             setIsSubmitting(false);

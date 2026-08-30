@@ -13,5 +13,23 @@ export default defineConfig([
                 tsconfigRootDir: import.meta.dirname,
             },
         },
+        rules: {
+            "@typescript-eslint/naming-convention": [
+                "error",
+                {
+                    selector: "typeLike",
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: "function",
+                    format: ["camelCase", "PascalCase"],
+                },
+                {
+                    selector: "variable",
+                    format: ["camelCase", "PascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow",
+                },
+            ],
+        },
     },
 ]);

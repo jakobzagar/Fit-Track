@@ -4,6 +4,7 @@ import {describe, expect, test, vi} from "vitest";
 import {ApiError} from "../../../common/errors/api.error";
 import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
+import {onSessionExpired} from "../../auth/session-expiration";
 import {apiRequest} from "../api.client";
 
 const responseSchema = z.object({value: z.string()});
@@ -38,6 +39,84 @@ describe("apiRequest", () => {
             message: "Access denied",
             status: 403,
         });
+    });
+
+    test("preserves structured validation errors", async () => {
+        server.use(
+            http.post(`${API_URL}/example`, () =>
+                HttpResponse.json(
+                    {
+                        message: "Validation failed",
+                        errors: {
+                            name: ["Name is already in use"],
+                            notes: ["Notes are too long"],
+                        },
+                        formErrors: ["Check the submitted values"],
+                    },
+                    {status: 400},
+                ),
+            ),
+        );
+
+        await expect(
+            apiRequest("/example", responseSchema, {method: "POST", body: {name: "Squat"}}),
+        ).rejects.toMatchObject({
+            name: "ApiError",
+            message: "Validation failed",
+            status: 400,
+            fieldErrors: {
+                name: ["Name is already in use"],
+                notes: ["Notes are too long"],
+            },
+            formErrors: ["Check the submitted values"],
+        });
+    });
+
+    test("expires the session by default when a request returns 401", async () => {
+        const listener = vi.fn();
+        const unsubscribe = onSessionExpired(listener);
+        server.use(
+            http.get(`${API_URL}/example`, () =>
+                HttpResponse.json({message: "Authentication required"}, {status: 401}),
+            ),
+        );
+
+        await expect(apiRequest("/example", responseSchema)).rejects.toMatchObject({status: 401});
+
+        unsubscribe();
+        expect(listener).toHaveBeenCalledOnce();
+    });
+
+    test("ignores an expected 401 when configured", async () => {
+        const listener = vi.fn();
+        const unsubscribe = onSessionExpired(listener);
+        server.use(
+            http.get(`${API_URL}/example`, () =>
+                HttpResponse.json({message: "Invalid credentials"}, {status: 401}),
+            ),
+        );
+
+        await expect(
+            apiRequest("/example", responseSchema, {onUnauthorized: "ignore"}),
+        ).rejects.toMatchObject({status: 401});
+
+        unsubscribe();
+        expect(listener).not.toHaveBeenCalled();
+    });
+
+    test.each([403, 500])("does not expire the session for a %i response", async (status) => {
+        const listener = vi.fn();
+        const unsubscribe = onSessionExpired(listener);
+        server.use(
+            http.get(`${API_URL}/example`, () =>
+                HttpResponse.json({message: "Request failed"}, {status}),
+            ),
+        );
+
+        await expect(apiRequest("/example", responseSchema)).rejects.toMatchObject({status});
+
+        unsubscribe();
+        expect(listener).not.toHaveBeenCalled();
     });
 
     test("rejects an invalid successful response", async () => {

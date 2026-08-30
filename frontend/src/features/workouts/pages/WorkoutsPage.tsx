@@ -1,16 +1,19 @@
 import {useState} from "react";
-import {WorkoutFormDialog} from "../components/forms/WorkoutFormDialog.tsx";
-import {WorkoutEmptyState} from "../components/list/WorkoutEmptyState.tsx";
-import {WorkoutList} from "../components/list/WorkoutList.tsx";
-import type {CreateWorkoutInput, UpdateWorkoutInput} from "../schemas/workout.schemas.ts";
-import type {WorkoutSummary} from "../types/workout.types.ts";
-import {Feedback} from "../../../components/ui/feedback/Feedback.tsx";
-import {PageHeader} from "../../../components/ui/display/PageHeader.tsx";
-import {SkeletonGrid} from "../../../components/ui/display/SkeletonGrid.tsx";
-import {useConfirmDialog} from "../../../components/ui/dialogs/hooks/useConfirmDialog.ts";
-import {Button} from "../../../components/ui/actions/Button.tsx";
-import {Icon} from "../../../components/ui/display/Icon.tsx";
-import {useWorkouts} from "../hooks/data/useWorkouts.ts";
+import {WorkoutFormDialog} from "../components/forms/WorkoutFormDialog";
+import {WorkoutEmptyState} from "../components/list/WorkoutEmptyState";
+import {WorkoutList} from "../components/list/WorkoutList";
+import type {
+    CreateWorkoutInput,
+    UpdateWorkoutInput,
+    WorkoutSummary,
+} from "@fit-track/shared/workouts";
+import {StatusMessage} from "../../../components/ui/feedback/StatusMessage";
+import {PageHeader} from "../../../components/ui/display/PageHeader";
+import {SkeletonGrid} from "../../../components/ui/display/SkeletonGrid";
+import {useConfirmDialog} from "../../../components/ui/dialogs/hooks/useConfirmDialog";
+import {Button} from "../../../components/ui/actions/Button";
+import {Icon} from "../../../components/ui/display/Icon";
+import {useWorkouts} from "../hooks/data/useWorkouts";
 
 export function WorkoutsPage() {
     const confirm = useConfirmDialog();
@@ -70,7 +73,7 @@ export function WorkoutsPage() {
     if (workoutData.loadError) {
         return (
             <div className="page-stack">
-                <Feedback>{workoutData.loadError}</Feedback>
+                <StatusMessage>{workoutData.loadError}</StatusMessage>
                 <Button className="w-fit" variant="secondary" onClick={workoutData.retry}>
                     Try again
                 </Button>
@@ -83,7 +86,7 @@ export function WorkoutsPage() {
             <PageHeader
                 eyebrow="Training log"
                 title="Workouts"
-                description="Plan the session, log the work and leave with a record you can build on next time."
+                description="Plan the workout, log the work and leave with a record you can build on next time."
                 action={
                     <Button type="button" onClick={openCreateForm}>
                         <Icon name="plus" size={16} />
@@ -91,17 +94,19 @@ export function WorkoutsPage() {
                     </Button>
                 }
             />
-            {workoutData.mutationError && <Feedback>{workoutData.mutationError}</Feedback>}
+            {workoutData.mutationError && (
+                <StatusMessage>{workoutData.mutationError}</StatusMessage>
+            )}
             {workoutData.successMessage && (
-                <Feedback tone="success" onDismiss={workoutData.clearSuccess}>
+                <StatusMessage tone="success" onDismiss={workoutData.clearSuccess}>
                     {workoutData.successMessage}
-                </Feedback>
+                </StatusMessage>
             )}
 
             <div>
                 <div className="mb-4 flex items-end justify-between">
                     <div>
-                        <h2 className="section-title">Recent sessions</h2>
+                        <h2 className="section-title">Recent workouts</h2>
                         <p className="section-caption">
                             {workoutData.workouts.length} workouts in your log
                         </p>

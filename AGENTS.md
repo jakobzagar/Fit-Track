@@ -1,162 +1,113 @@
 # FitTrack contributor guide
 
-## Project overview
+## Repository map
 
-FitTrack is a TypeScript monorepo for planning workouts and recording exercise sets.
+FitTrack is a TypeScript monorepo:
 
-- `frontend/`: React 19 single-page application built with Vite and Tailwind CSS.
-- `backend/`: Express 5 REST API using Prisma and PostgreSQL.
-- `shared/`: framework-independent Zod schemas and TypeScript contracts shared by the apps.
-- `docs/`: focused architecture, testing, release, and portfolio documentation.
-- `backend/prisma/`: database schema and append-only migrations.
-- `compose.dev.yaml`: complete local development stack.
-- `compose.test.yaml` and `test.Dockerfile`: isolated verification stack with a temporary PostgreSQL database.
+- `frontend/`: React, Vite, Tailwind CSS, and browser tests;
+- `backend/`: Express, Prisma, PostgreSQL, and API tests;
+- `shared/`: framework-independent Zod contracts used by both applications;
+- `backend/prisma/`: schema and append-only migrations;
+- `docs/`: architecture, testing, release, and planned deployment documentation.
 
-## Working principles
+Do not edit generated Prisma files under `backend/generated/`.
 
-- Read the nearest relevant source files before changing behavior.
-- Keep changes focused on the requested task; do not perform unrelated refactors.
-- Preserve the workspace boundaries and the existing feature-based folder structure.
-- Prefer shared schemas from `@fit-track/shared` when a contract is used by both applications.
-- Keep server-side authorization and validation authoritative. Client checks are user experience, not security boundaries.
-- Never commit credentials, generated secrets, `.env` files, database dumps, or user data.
-- Keep environment files scoped to their launch mode: root `.env.dev` is for Docker Compose, while `backend/.env` and `frontend/.env` are for direct local processes. Keep their tracked `*.example` templates authoritative.
-- Do not edit generated Prisma client files under `backend/generated/`.
+## Default workflow
+
+1. Inspect the current branch, `git status`, and the nearest relevant source and tests. Preserve unrelated user changes.
+2. Make the smallest coherent change. Keep shared contracts, backend behavior, frontend consumers, and tests aligned.
+3. Run the narrowest useful check while iterating, then the required validation from the table below.
+4. Update only the document that owns the changed topic.
+5. Review the final diff for unrelated edits, generated files, secrets, and accidental version changes.
+6. Report exactly what changed, what passed, and what was not run.
+
+Never commit credentials, `.env` files, database dumps, generated secrets, or user data. Commit or push only when the user explicitly requests it.
+
+## Validation
+
+| Change                                       | Required local validation                                                          |
+| -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| TypeScript behavior or configuration         | Narrow tests while iterating, then `npm run verify`                                |
+| API, authorization, persistence, migrations  | `npm run verify` and `npm run test:docker`                                         |
+| Browser end-to-end behavior or configuration | `npm run verify` and `npm run test:e2e`                                            |
+| Docker, Nginx, health checks, startup        | `npm run verify` and the production-container smoke procedure in `docs/testing.md` |
+| GitHub Actions workflow or local action      | `npm run actions:lint` plus the relevant repository checks                         |
+| Markdown or non-workflow YAML only           | Prettier on changed files, link/content review, and `git diff --check`             |
+
+Useful commands:
+
+```bash
+npm run verify
+npm run test:docker
+npm run test:docker:down
+npm run test:e2e
+npm run actions:lint
+```
+
+`npm run verify` covers linting, type checking, formatting, fast tests, and builds without requiring PostgreSQL. `npm run test:docker` uses an isolated temporary PostgreSQL database. Never point integration tests at development or production data, and never claim a check passed when it was not run.
+
+## Code boundaries
+
+- Prefer schemas from `@fit-track/shared` whenever a contract crosses the frontend/backend boundary.
+- Keep backend routes thin: middleware handles cross-cutting concerns, controllers translate HTTP, services own business rules, and Prisma owns persistence.
+- Validate request bodies, parameters, query strings, environment variables, and API responses at their boundaries.
+- Return errors through `AppError` and the central error middleware.
+- Scope every protected read and mutation to the authenticated owner, including nested resources.
+- Preserve the feature-based frontend structure under `frontend/src/features/` and reusable components under `frontend/src/components/`.
+- Use existing responsibility directories; do not create empty placeholders or unrelated abstractions.
+- Follow the existing ESM, TypeScript, ESLint, and Prettier conventions. Backend relative imports include `.js` where required by the compiler setup.
+- Prefer semantic HTML, accessible labels, visible focus, and clear loading and error states.
+
+## Tests
+
+- Add tests for observable behavior changes and regression tests for bug fixes.
+- Put shared schema matrices beside their domain under `shared`, backend integration tests in the owning module, and frontend tests beside the owning feature or component.
+- Use Supertest against the exported Express app, Testing Library with accessible queries, `user-event` for interactions, and MSW for frontend HTTP boundaries.
+- Use Playwright through accessible browser locators for critical cross-application journeys; keep exhaustive API cases in backend integration tests.
+- Preserve the test database guard: destructive cleanup requires `NODE_ENV=test` and a database name ending in `_test`.
+- Do not weaken assertions or rewrite expected behavior merely to make a failing test pass.
+
+Detailed suite responsibilities and smoke commands belong in [docs/testing.md](docs/testing.md).
+
+## Database, security, and runtime
+
+- Every schema change requires a new Prisma migration. Do not modify an existing committed migration unless the task explicitly addresses an unreleased migration.
+- Run migrations once through the dedicated migration image before the matching backend revision; never from every backend replica at startup.
+- Use transactions for multi-step writes and consider ownership, uniqueness, indexes, deletion behavior, and existing data.
+- Preserve HTTP-only secure production cookies, credentialed CORS, CSRF origin checks, Helmet, CSP, payload limits, rate limiting, and `Cache-Control: no-store` for API responses.
+- Never log passwords, JWTs, cookies, authorization headers, secrets, or sensitive request bodies.
+- Keep liveness independent of external services and readiness dependent on PostgreSQL.
+- Keep container logs on standard output and error.
+- The current production frontend is Nginx and proxies `/api` to `backend:3001`. Changes to that contract, Docker stages, ports, health checks, or startup commands require production-container smoke validation and matching documentation.
+- AWS is planned but not implemented. Do not describe proposed AWS resources as existing or verified.
+
+Environment ownership is strict: `.env.dev` belongs to Docker Compose; `backend/.env` and `frontend/.env` belong to directly started processes. Their tracked `*.example` files are authoritative. Full environment rules belong in [docs/architecture.md](docs/architecture.md#environment-configuration).
 
 ## Documentation ownership
 
-- Keep `README.md` concise and recruiter-friendly: product value, engineering highlights, quick start, verification, and links to deeper material.
-- Keep architecture, trust boundaries, domain invariants, and design trade-offs in `docs/architecture.md`.
-- Keep suite responsibilities and test-environment instructions in `docs/testing.md`.
-- Keep image publication, migration ordering, and release operations in `docs/release-process.md`.
-- Update the narrowest relevant document when behavior, setup, architecture, or delivery changes; avoid copying the same operational detail into multiple files.
+- `README.md`: concise public overview, quick start, verification entry points, and links.
+- `docs/architecture.md`: code structure, domain model, trust boundaries, runtime behavior, and design decisions.
+- `docs/testing.md`: suite responsibilities, database safety, and test commands.
+- `docs/release-process.md`: protected-main flow, image publication, migrations, versions, and releases.
+- `docs/aws-deployment-plan.md`: current deployment readiness and planned AWS topology only.
+- `CHANGELOG.md`: release history generated by Release Please after the initial `1.0.0` baseline.
 
-## Local setup
+Update the narrowest owner and link to it from summaries. Do not copy detailed procedures or explanations between documents.
 
-The supported runtime is Node.js 24 or newer with npm 11. Install dependencies from the repository root:
+## Git and releases
 
-```bash
-npm ci
-```
+- `main` is protected. Normal changes use a short-lived branch and pull request; later pushes update the same PR.
+- Merge only after the branch is current, conversations are resolved, and `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` pass.
+- Use Conventional Commits without scopes: `feat:`, `fix:`, `perf:`, `test:`, `docs:`, `ci:`, `build:`, or `chore:` followed by a concise imperative summary.
+- Treat `fix:` and `perf:` as patch, `feat:` as minor, and `!` or `BREAKING CHANGE` as major release input. Use `Release-As` only for an intentional override.
+- Do not manually edit product versions or the changelog during ordinary work. Release Please owns coordinated releases after the documented `v1.0.0` bootstrap.
+- Inspect recent history before committing, keep unrelated concerns separate, and include directly related tests with behavior changes.
 
-The simplest development environment uses Docker Compose:
-
-```bash
-cp .env.dev.example .env.dev
-npm run dev:docker
-```
-
-Use `npm run dev:docker:debug` for backend debugging and `npm run dev:docker:down` to remove the development containers without deleting database volumes. Run individual applications from the repository root with `npm run dev:backend` and `npm run dev:frontend`. A PostgreSQL instance and correctly configured environment files are required when running outside Docker.
-
-## Validation commands
-
-Run the narrowest useful validation while iterating, then run the full verification before handing off a change:
-
-```bash
-npm run lint
-npm run typecheck
-npm run format:check
-npm test
-npm run build
-npm run verify
-```
-
-`npm run verify:integration` extends the normal verification with backend integration tests. It expects an already available migrated test database and is normally invoked by the Docker test stack.
-
-`npm test` runs the fast workspace tests, including shared contract, backend unit, and frontend tests. Backend integration tests require the isolated Docker stack because they use a real PostgreSQL database:
-
-```bash
-npm run test:docker
-```
-
-The Docker command applies committed migrations to a temporary `fit_track_test` database and then runs `npm run verify:integration`. Clean up an interrupted test stack with `npm run test:docker:down`. Never point integration tests at a development or production database, and never claim tests passed if they were not run.
-
-## Test conventions
-
-- Add or update tests whenever a feature changes observable behavior. Choose only the test layers relevant to the change rather than modifying every suite.
-- Update shared contract tests for new or changed schemas, backend integration tests for API behavior or business rules, and frontend tests for important user interactions.
-- Keep exhaustive validation boundary matrices in `shared`; frontend form tests should focus on error presentation, accessibility, submission, and normalization instead of repeating every schema case.
-- Do not add standalone tests for pass-through presentational components unless they own meaningful behavior, semantics, or an accessibility contract.
-- For bug fixes, add a regression test that reproduces the failure before or alongside the fix.
-- Pure styling changes normally do not require tests. Refactors that preserve behavior should keep existing tests passing without rewriting their expectations.
-- Do not weaken assertions or update expected results merely to make a failing test pass; first determine whether the requirement changed or the test exposed a regression.
-- Keep shared schemas in each domain's `schemas/` directory and their contract tests in the sibling `tests/` directory as `*.test.ts`.
-- Keep backend integration tests inside their owning module's `tests/` directory as `*.integration.test.ts`.
-- Keep isolated backend unit tests inside the owning area's `tests/` directory as `*.test.ts`; they must not depend on PostgreSQL or the integration setup.
-- Use Vitest and Supertest to exercise the exported Express app without starting a separate backend HTTP service.
-- Use the helpers under `backend/src/test/` for authenticated requests, fixtures, database cleanup, and connection teardown.
-- Preserve the test database guard: destructive cleanup is allowed only with `NODE_ENV=test` and a database name ending in `_test`.
-- Test successful behavior, validation failures, authentication, CSRF protection, ownership boundaries, and important relational or lifecycle constraints.
-- For nested protected resources, verify both cross-user access and valid child IDs supplied under mismatched parent IDs.
-- Keep backend integration test files sequential unless their database isolation strategy is deliberately changed.
-- Keep frontend tests in the owning feature's local `tests/` directory as `*.test.tsx` or `*.test.ts` and run them with the frontend Vitest jsdom environment.
-- Use Testing Library queries based on accessible roles and labels, and prefer `user-event` for interactions.
-- Use `renderWithProviders` from `frontend/src/test/render.tsx` when components need application providers or routing.
-- Mock frontend HTTP boundaries with MSW. Unhandled requests must remain test failures, and handlers must be reset after every test.
-
-## Code conventions
-
-- Follow the existing TypeScript, ESLint, and Prettier configuration.
-- Use ESM imports and include `.js` extensions in backend relative imports where the existing compiler setup requires them.
-- Keep route handlers thin: routes define middleware, controllers translate HTTP concerns, services contain business logic, and Prisma owns persistence.
-- Validate request bodies, parameters, query strings, environment variables, and API responses at their boundaries.
-- Return errors through the existing `AppError` and error middleware flow rather than introducing ad hoc response shapes.
-- Maintain user ownership checks for every protected resource query and mutation.
-- Preserve the frontend feature organization under `frontend/src/features/` and reusable primitives under `frontend/src/components/`.
-- Group existing source files by responsibility even when a category currently contains only one file. Use predictable directories such as `api/`, `components/`, `controllers/`, `hooks/`, `middleware/`, `pages/`, `policies/`, `routes/`, `schemas/`, `services/`, `styles/`, `tests/`, `types/`, and `utils/` where applicable.
-- Do not create empty placeholder directories. Workspace entrypoints and conventional configuration files may remain at their expected roots.
-- Prefer accessible semantic HTML, visible focus states, clear loading/error feedback, and responsive layouts.
-
-## Database changes
-
-- Update `backend/prisma/schema.prisma` and create a new Prisma migration for every schema change.
-- Never modify an existing committed migration unless the task explicitly concerns an unreleased migration and the impact is understood.
-- Run committed migrations through the dedicated migration target or another controlled one-off job before starting the corresponding backend version; do not run migrations independently from every backend replica at application startup.
-- Use transactions for multi-step writes that must succeed or fail together.
-- Consider ownership, uniqueness, indexes, deletion behavior, and existing data before changing a model.
-
-## Runtime expectations
-
-- The production frontend Nginx configuration currently proxies `/api` to `backend:3001`. Preserve that shared-network contract or update the proxy and its documentation together when the runtime topology changes.
-- The current rate limiters use process-local memory. Do not assume their counters are shared across backend processes; configure a shared store before relying on global limits in a multi-process runtime.
-- Keep liveness independent of external services and use readiness for PostgreSQL availability.
-- Keep container logs on standard output and error. Never add passwords, JWTs, cookies, secrets, or sensitive request bodies to logs.
-- Changes to production Docker stages, Nginx routing, health checks, ports, or startup commands require a production-container smoke check in addition to the normal verification commands. Report clearly when that check was not run.
-
-## Security expectations
-
-- Authentication uses an HTTP-only cookie. Preserve secure production cookie behavior, CORS credentials, CSRF origin checks, Helmet, payload limits, and rate limiting.
-- Do not log passwords, tokens, cookies, secrets, or sensitive request bodies.
-- Treat all client input as untrusted and keep Zod validation in place.
-- Do not weaken authorization, security middleware, or production defaults to make local development easier.
-
-## Branch and pull request workflow
-
-- Treat `main` as a protected, merge-only branch. Do not push feature, fix, documentation, or release commits directly to it after branch protection is enabled.
-- Start each logical change from an up-to-date `main`, create a short-lived branch such as `feat/workout-pagination`, `fix/session-timeout`, or `docs/testing-guide`, and keep unrelated work on separate branches.
-- Push commits to that branch and open a pull request targeting `main`. Additional fixes belong on the same branch and automatically update the existing pull request.
-- Do not merge until the branch is up to date with `main`, review conversations are resolved, and the required `Actions lint`, `Verify`, `Integration`, and `Production container smoke` checks pass.
-- A failed check leaves `main` unchanged. Diagnose the failure, commit the correction on the pull-request branch, push it, and wait for the checks to rerun; do not bypass or weaken a check to force a merge.
-- Release Please pull requests follow the same gate. Update a stale release pull request with the latest `main` commits and wait for all required checks before merging it.
-- After a pull request is merged, update local `main` with `git pull --ff-only` and delete the merged local branch.
-- Keep the repository ruleset for `main` active with pull requests required, required status checks, resolved conversations, an up-to-date branch, and force pushes and branch deletion blocked. Do not configure a routine bypass.
-
-## Commit conventions
-
-- Follow the repository's existing Conventional Commits style: `<type>: <imperative summary>`.
-- Do not add scopes in parentheses; use `feat:`, `fix:`, `test:`, `docs:`, `build:`, `chore:`, and similar prefixes directly.
-- Treat commit types as release inputs: `fix:` requests a patch, `feat:` requests a minor, and a `!` or `BREAKING CHANGE` footer requests a major release. Use non-releasable types such as `docs:`, `test:`, `ci:`, or `chore:` when no product release is warranted.
-- Use a `Release-As: MAJOR.MINOR.PATCH` commit footer only when intentionally overriding the next version proposed by Release Please.
-- Keep the summary concise, lowercase, and focused on the outcome, for example `feat: protect unsaved workout session edits`.
-- Split unrelated concerns into separate commits, and include directly related tests in the same commit as the behavior they cover.
-- Inspect recent commit history before committing and match its established wording and granularity.
+The complete branch, image, version, and release flow belongs in [docs/release-process.md](docs/release-process.md).
 
 ## Definition of done
 
-- The requested behavior is implemented without unrelated changes.
-- Shared contracts, API behavior, and UI consumers remain aligned.
-- Migrations and environment examples are updated when required.
-- `npm run verify` passes, or any pre-existing/unrelated failure is reported precisely.
-- `npm run test:docker` passes for backend behavior, persistence, authorization, migration, or integration-test changes.
-- User-facing behavior is manually checked when automated coverage is unavailable.
-- Documentation is updated if setup, architecture, commands, or public behavior changed.
+- The requested change is focused and complete.
+- Contracts, API behavior, UI consumers, migrations, environment examples, tests, and documentation are aligned where relevant.
+- Required validation passed, or each unrun/failed check is reported precisely.
+- The final diff contains no unrelated edits, secrets, generated artifacts, or unintended version changes.

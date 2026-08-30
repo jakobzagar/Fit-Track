@@ -8,9 +8,9 @@ import {LandingFeatures} from "../components/LandingFeatures";
 import {LandingWorkoutPreview} from "../components/LandingWorkoutPreview";
 
 export function LandingPage() {
-    const {user} = useAuth();
-    const primaryPath = user ? "/workouts" : "/register";
-    const primaryLabel = user ? "Open dashboard" : "Start training";
+    const {currentUser} = useAuth();
+    const primaryPath = currentUser ? "/workouts" : "/register";
+    const primaryLabel = currentUser ? "Open dashboard" : "Start training";
 
     return (
         <main id="top" className="landing-shell">
@@ -18,13 +18,13 @@ export function LandingPage() {
                 <BrandMark linked={false} />
                 <div className="flex items-center gap-2 sm:gap-3">
                     <ThemeToggle />
-                    {!user && (
+                    {!currentUser && (
                         <Link className="landing-link-muted" to="/login">
                             Log in
                         </Link>
                     )}
                     <Link className="landing-button landing-button-small" to={primaryPath}>
-                        {user ? "Dashboard" : "Get started"}
+                        {currentUser ? "Dashboard" : "Get started"}
                     </Link>
                 </div>
             </header>
@@ -46,7 +46,7 @@ export function LandingPage() {
                             {primaryLabel}
                             <Icon name="arrow" size={18} />
                         </Link>
-                        {!user && (
+                        {!currentUser && (
                             <Link className="landing-button landing-button-secondary" to="/login">
                                 Log in
                             </Link>
@@ -60,7 +60,7 @@ export function LandingPage() {
             <LandingFeatures />
 
             <section className="landing-cta">
-                <p className="eyebrow">Your next session starts here</p>
+                <p className="eyebrow">Your next workout starts here</p>
                 <h2>Ready to put in the work?</h2>
                 <Link className="landing-button" to={primaryPath}>
                     {primaryLabel}

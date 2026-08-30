@@ -1,12 +1,13 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import {z} from "zod";
-import {createWorkoutSchema, type CreateWorkoutInput} from "../../schemas/workout.schemas.ts";
-import {Button} from "../../../../components/ui/actions/Button.tsx";
-import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
+import {createWorkoutSchema, type CreateWorkoutInput} from "@fit-track/shared/workouts";
+import {Button} from "../../../../components/ui/actions/Button";
+import {FieldError} from "../../../../components/ui/forms/FieldError";
+import {useApiValidationErrorHandler} from "../../../../components/ui/forms/hooks/useApiValidationErrorHandler";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/forms/utils/formAccessibility.ts";
+} from "../../../../components/ui/forms/utils/formAccessibility";
 
 interface CreateWorkoutFormProps {
     onSubmit: (data: CreateWorkoutInput) => Promise<void>;
@@ -27,6 +28,7 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
 
     const [errors, setErrors] = useState<CreateWorkoutErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleApiValidationError = useApiValidationErrorHandler(formRef, setErrors);
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -55,7 +57,8 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
 
         try {
             await onSubmit(result.data);
-        } catch {
+        } catch (error) {
+            handleApiValidationError(error);
             return;
         } finally {
             setIsSubmitting(false);

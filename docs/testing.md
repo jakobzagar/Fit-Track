@@ -2,6 +2,23 @@
 
 FitTrack separates tests by responsibility so failures point to the correct boundary. The suite uses Vitest throughout, Testing Library and MSW in the frontend, and Supertest with PostgreSQL in backend integration tests.
 
+## Risk-to-evidence map
+
+| Engineering risk                    | Verification evidence                                                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Frontend and backend contract drift | Shared strict Zod matrices, backend response parsing, and frontend runtime response parsing                      |
+| Cross-user data exposure            | Integration tests for owned resources, nested-resource mismatches, and previous-performance isolation            |
+| Invalid lifecycle transitions       | Service and integration coverage for start, cancel, finish, reopen, and delete behavior                          |
+| Concurrent ordering corruption      | PostgreSQL integration tests for simultaneous exercise/set insertion, reordering, and lifecycle transitions      |
+| Browser component regressions       | Testing Library interactions, MSW network behavior, route/session tests, and axe-core accessibility smoke checks |
+| Critical user-journey regressions   | Playwright Chromium journeys through the real frontend, API, and migrated PostgreSQL                             |
+| Static security flaws               | GitHub-managed CodeQL analysis for JavaScript and TypeScript data flows                                          |
+| Vulnerable dependency introduction  | Pull-request dependency review for high and critical runtime advisories                                          |
+| Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
+| Release version drift               | Release validation checks the tag against packages, lockfile, manifest, and changelog                            |
+
+Tests cross the same Interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private Implementation details.
+
 ## Test layers
 
 | Layer               | Location                                  | Primary responsibility                                                            |
@@ -10,6 +27,10 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 | Backend unit        | Owning area `tests/` directories          | Environment parsing, logging, middleware, cookies, proxy trust, retries, shutdown |
 | Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency             |
 | Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions       |
+| Browser E2E         | `frontend/e2e/`                           | Critical cross-application journeys in Chromium against isolated PostgreSQL       |
+| Code scanning       | GitHub CodeQL default setup               | JavaScript and TypeScript security queries on repository changes                  |
+| Dependency review   | `Test` workflow pull-request job          | Added and updated dependencies compared with the pull-request base                |
+| Release             | `scripts/release/tests/`                  | Coordinated version validation across release artifacts                           |
 | Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy       |
 
 ## Fast verification
@@ -22,13 +43,17 @@ This command generates the Prisma client, then runs linting, type checking, form
 
 Useful narrower commands are:
 
-| Command                   | Purpose                                                   |
-| ------------------------- | --------------------------------------------------------- |
-| `npm test`                | Run all fast workspace tests                              |
-| `npm run check`           | Run lint, type checking, and formatting checks            |
-| `npm run verify:shared`   | Verify the shared package                                 |
-| `npm run verify:backend`  | Verify backend unit tests, compilation, and static checks |
-| `npm run verify:frontend` | Verify frontend checks, tests, and build                  |
+| Command                      | Purpose                                                   |
+| ---------------------------- | --------------------------------------------------------- |
+| `npm test`                   | Run application and release-validation tests              |
+| `npm run test:application`   | Run all fast workspace tests                              |
+| `npm run test:release`       | Test coordinated release-version validation               |
+| `npm run verify:application` | Check, test, and build application workspaces             |
+| `npm run check`              | Run lint, type checking, and formatting checks            |
+| `npm run verify:shared`      | Verify the shared package                                 |
+| `npm run verify:backend`     | Verify backend unit tests, compilation, and static checks |
+| `npm run verify:frontend`    | Verify frontend checks, tests, and build                  |
+| `npm run test:e2e`           | Run isolated critical Chromium journeys                   |
 
 ## Isolated PostgreSQL verification
 
@@ -41,9 +66,11 @@ The Docker stack:
 1. creates a temporary PostgreSQL database on `tmpfs`;
 2. waits for PostgreSQL readiness;
 3. applies every committed migration with `prisma migrate deploy`;
-4. runs the complete fast verification;
+4. checks, tests, and builds the application workspaces;
 5. runs backend integration tests sequentially;
 6. returns the test container's exit code.
+
+Release artifact validation is intentionally separate because it does not require PostgreSQL or the application test image. Run it directly with `npm run test:release`; the full `npm run verify` command includes it.
 
 Remove an interrupted stack before retrying:
 
@@ -57,11 +84,47 @@ Never point integration tests at development or production data. Destructive tes
 
 Pull requests run a production container smoke job after fast verification succeeds. It builds the final backend, migration, and frontend targets for the runner platform and rejects Dockerfile, migration startup, health-check, static-serving, or proxy regressions before merge. The job runs for every pull request, including documentation-only changes, so the protected-branch checks are always reported and cannot remain pending because a workflow was skipped by a path filter.
 
-After a merge to `main`, the image-publishing workflow repeats the runtime checks against the immutable multi-platform SHA images pulled from GHCR. The first gate checks the proposed source before merge; the second proves that the published deployment artifacts work. Neither replaces browser end-to-end or PostgreSQL integration tests.
+After a merge to `main`, the image-publishing workflow repeats the runtime checks against the exact multi-platform content digests returned by the GHCR build before promoting them to `main`. A release-tag workflow independently builds the tagged revision and runs the same suite before assigning the exact version and `latest` tags to its build digests. A rerun may replace a Git-addressed SHA tag, but neither workflow uses that movable tag as its promotion input. The pull-request gate checks proposed source; the registry runs prove that the published deployment artifacts work. Production smoke complements rather than replaces browser E2E and PostgreSQL integration tests.
 
-The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same readiness request through Nginx `/api`, and the SPA entry document.
+The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same requests through Nginx `/api`, the SPA entry document and external theme initializer, frontend security headers, static revalidation policy, and API `no-store` behavior.
 
-For a local run, build `fit-track-backend:smoke`, `fit-track-frontend:smoke`, and `fit-track-migration:smoke` first; the exact commands are in the [release and container process](release-process.md#production-runtime). Remove the stack afterward with `docker compose -f compose.production-smoke.yaml down --volumes --remove-orphans`.
+For a local run, build and start the same final targets:
+
+```bash
+docker build --target production --tag fit-track-backend:smoke -f backend/Dockerfile .
+docker build --target migration --tag fit-track-migration:smoke -f backend/Dockerfile .
+docker build --target production --tag fit-track-frontend:smoke -f frontend/Dockerfile .
+npm run smoke:production
+```
+
+The smoke script prints container logs on failure and always removes its temporary containers, network, and volumes. Set `SMOKE_BACKEND_PORT` or `SMOKE_FRONTEND_PORT` when the defaults `13001` and `18080` are unavailable.
+
+## Browser end-to-end tests
+
+Playwright owns a deliberately small set of critical user journeys through the public browser Interface. Chromium drives the real React application through its Vite `/api` proxy, Express handles real HTTP and cookies, and Prisma uses a freshly migrated PostgreSQL database. MSW and direct database fixtures are not part of this layer.
+
+The suite currently proves that:
+
+- a new user can create an exercise and workout, start it, add and complete a set, finish, log out, log back in, and observe the persisted completed workout;
+- an authenticated page returns to sign-in when the browser cookie expires and the next protected request receives `401`.
+
+Install the version-matched Chromium binary once after installing dependencies:
+
+```bash
+npm exec --workspace @fit-track/frontend -- playwright install chromium
+```
+
+Run the complete isolated environment:
+
+```bash
+npm run test:e2e
+```
+
+`scripts/e2e/run.sh` starts only the PostgreSQL service from `compose.e2e.yaml`, applies every migration, and delegates backend/frontend process lifecycle to Playwright. The database uses `tmpfs`, its name ends in `_test`, and the cleanup trap removes the container and network after success, failure, or interruption. Override `E2E_DATABASE_PORT`, `E2E_BACKEND_PORT`, or `E2E_FRONTEND_PORT` when the defaults `15433`, `13002`, or `15173` are unavailable.
+
+For interactive diagnosis, run `npm run test:e2e:ui`. Playwright keeps traces, screenshots, and videos only for failures. CI uses one Chromium worker for deterministic database access and uploads `frontend/playwright-report/` plus `frontend/test-results/` when the job fails.
+
+Browser E2E tests cover cross-application journeys, not the exhaustive validation and authorization matrix. Backend integration tests remain the owner of endpoint edge cases, cross-user isolation, concurrency, and persistence invariants; frontend tests remain the owner of detailed component states and accessibility behavior.
 
 ## Contract testing
 
@@ -103,6 +166,28 @@ Testing Library queries use accessible roles and labels. `user-event` is preferr
 
 Pure presentational pass-through components do not receive standalone tests unless they own meaningful semantics or accessibility behavior.
 
+## Code scanning
+
+CodeQL should use GitHub's default setup so its configuration remains visible and maintainable in repository settings rather than adding another workflow file. A repository administrator enables it once:
+
+1. open the repository's **Settings**;
+2. under **Security and quality**, select **Advanced Security**;
+3. under **Code Security**, find **CodeQL analysis** and select **Set up** → **Default**;
+4. keep **JavaScript/TypeScript** enabled and begin with the **Default** query suite;
+5. review the generated configuration and select **Enable CodeQL**.
+
+The first run validates the generated configuration. Results and remediation details appear under **Security** → **Code scanning**. JavaScript and TypeScript analysis does not require PostgreSQL, private environment files, or a custom build command.
+
+After the first successful run, add the exact CodeQL status reported by GitHub—normally similar to `CodeQL / Analyze (javascript-typescript)`—to the protected `main` ruleset. Do not guess the status name before GitHub creates it. The [official default-setup guide](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/configure-code-scanning/configure-code-scanning) owns current eligibility and UI details.
+
+## Dependency review
+
+The `Dependency review` job runs only on pull requests and compares dependency changes with the pull-request base through GitHub's dependency graph. It blocks newly introduced `high` or `critical` vulnerabilities in runtime dependencies and reports the first patched version when GitHub Advisory Database data provides one. Development-only findings remain visible without blocking the pull request; this keeps known build-tool findings separate from production exposure.
+
+This check complements rather than replaces Dependabot alerts: dependency review prevents vulnerable changes from entering `main`, while Dependabot reports vulnerabilities already present in the dependency graph. It uses only the read-only workflow token, does not post pull-request comments, and requires no external account or repository secret.
+
+Public repositories have the dependency graph available on GitHub.com. For an eligible private repository, enable the dependency graph before requiring the check. After the first successful pull-request run, add the exact `Dependency review` status to the protected `main` ruleset. The [official dependency-review documentation](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependency-review) owns current eligibility and behavior.
+
 ## Regression policy
 
 Observable behavior changes require tests at the layer that owns the behavior. Bug fixes add a regression case that reproduces the failure. Refactors should preserve existing expectations rather than weakening assertions to make tests pass.
@@ -114,8 +199,10 @@ When backend persistence, authorization, security middleware, concurrency, or mi
 The protected `main` branch requires these exact GitHub Actions job names:
 
 - `Actions lint` validates workflow syntax;
+- `Dependency review` rejects newly introduced high or critical runtime vulnerabilities;
 - `Verify` runs linting, type checking, formatting, fast tests, and production builds;
 - `Integration` applies committed migrations and tests the API against PostgreSQL;
+- `Browser E2E` runs critical Chromium journeys against an isolated migrated PostgreSQL database;
 - `Production container smoke` builds and exercises the final runtime targets.
 
-A pull request cannot merge while any required check is pending, failing, or missing. A failure does not remove commits from the source branch and does not change `main`; push the correction to the same branch and GitHub reruns the workflow for the updated pull request. The complete contributor flow and repository ruleset are documented in the [release and container process](release-process.md#protected-main-workflow).
+The complete merge policy, correction flow, and repository ruleset belong in the [release and container process](release-process.md#protected-main-workflow).

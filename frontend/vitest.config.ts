@@ -7,12 +7,13 @@ export default defineConfig({
         dedupe: ["react", "react-dom", "zod"],
     },
     test: {
+        include: ["src/**/*.test.{ts,tsx}"],
         environment: "jsdom",
         execArgv: ["--no-experimental-webstorage"],
         setupFiles: ["./src/test/setup.ts"],
         restoreMocks: true,
         env: {
-            VITE_API_URL: "/api",
+            VITE_API_BASE_PATH: "/api",
         },
     },
 });

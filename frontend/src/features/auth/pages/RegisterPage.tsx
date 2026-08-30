@@ -1,23 +1,23 @@
 import {useState} from "react";
 import {Link, useNavigate} from "react-router";
 import {BrandMark} from "../../../components/ui/display/BrandMark";
-import {Feedback} from "../../../components/ui/feedback/Feedback";
+import {StatusMessage} from "../../../components/ui/feedback/StatusMessage";
 import {RegisterForm} from "../components/RegisterForm";
 import {register} from "../api/auth.api";
-import type {RegisterInput} from "../schemas/auth.schemas";
-import {useAuth} from "../hooks/useAuth.ts";
+import type {RegisterInput} from "@fit-track/shared/auth";
+import {useAuth} from "../hooks/useAuth";
 import {ThemeToggle} from "../../../components/ui/actions/ThemeToggle";
 
 export function RegisterPage() {
     const navigate = useNavigate();
-    const {setUser} = useAuth();
+    const {setAuthenticatedUser} = useAuth();
     const [error, setError] = useState("");
 
     async function handleRegister(data: RegisterInput) {
         setError("");
         try {
             const response = await register(data);
-            setUser(response.user);
+            setAuthenticatedUser(response.user);
             void navigate("/workouts");
         } catch (caughtError) {
             setError(caughtError instanceof Error ? caughtError.message : "Registration failed");
@@ -45,12 +45,12 @@ export function RegisterPage() {
                 <div className="auth-form-wrap">
                     <p className="eyebrow">Start training</p>
                     <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-cream">
-                        Create account
+                        Register
                     </h2>
                     <p className="mb-8 mt-3 text-sm text-dim">Set up your private training log.</p>
                     {error && (
                         <div className="mb-5">
-                            <Feedback>{error}</Feedback>
+                            <StatusMessage>{error}</StatusMessage>
                         </div>
                     )}
                     <RegisterForm onSubmit={handleRegister} />

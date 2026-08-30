@@ -1,8 +1,8 @@
 import {Link, useNavigate, useParams} from "react-router";
-import {AddExerciseToWorkoutForm} from "../../workout-exercises/components/exercises/AddExerciseToWorkoutForm";
+import {AddExerciseToWorkoutForm} from "../workout-exercises/components/exercises/AddExerciseToWorkoutForm";
 import {Button} from "../../../components/ui/actions/Button";
 import {Card} from "../../../components/ui/display/Card";
-import {Feedback} from "../../../components/ui/feedback/Feedback";
+import {StatusMessage} from "../../../components/ui/feedback/StatusMessage";
 import {LoadingState} from "../../../components/ui/display/LoadingState";
 import {PageHeader} from "../../../components/ui/display/PageHeader";
 import {useConfirmDialog} from "../../../components/ui/dialogs/hooks/useConfirmDialog";
@@ -27,12 +27,12 @@ export function WorkoutDetailPage() {
         mutationError,
         setEditingWorkoutExercise,
         setEditingWorkoutSet,
-        addExercise: handleAddExercise,
-        addSet: handleAddSet,
-        updateExercise: handleUpdateWorkoutExercise,
-        removeExercise: handleDeleteWorkoutExercise,
-        updateSet: handleUpdateWorkoutSet,
-        removeSet: handleDeleteWorkoutSet,
+        addExerciseToWorkout: handleAddExercise,
+        addWorkoutSet: handleAddSet,
+        updateWorkoutExercise: handleUpdateWorkoutExercise,
+        removeWorkoutExercise: handleDeleteWorkoutExercise,
+        updateWorkoutSet: handleUpdateWorkoutSet,
+        removeWorkoutSet: handleDeleteWorkoutSet,
         reopen,
         retry,
     } = useWorkoutDetail(workoutId, confirm);
@@ -53,14 +53,14 @@ export function WorkoutDetailPage() {
     }
 
     if (isLoading) {
-        if (!workoutId) return <Feedback>Workout ID is missing</Feedback>;
+        if (!workoutId) return <StatusMessage>Workout ID is missing</StatusMessage>;
         return <LoadingState label="Loading workout" />;
     }
 
     if (loadError) {
         return (
             <div className="page-stack">
-                <Feedback>{loadError}</Feedback>
+                <StatusMessage>{loadError}</StatusMessage>
                 <Button className="w-fit" variant="secondary" onClick={retry}>
                     Try again
                 </Button>
@@ -69,13 +69,13 @@ export function WorkoutDetailPage() {
     }
 
     if (!workout) {
-        return <Feedback>Workout not found</Feedback>;
+        return <StatusMessage>Workout not found</StatusMessage>;
     }
 
     return (
         <section className="page-stack">
             <PageHeader
-                eyebrow={workout.status === "COMPLETED" ? "Completed session" : "Workout plan"}
+                eyebrow={workout.status === "COMPLETED" ? "Completed workout" : "Workout plan"}
                 title={workout.name}
                 description={`${formatWorkoutDate(workout.performedAt, {day: "2-digit", month: "long", year: "numeric"})}${workout.notes ? ` · ${workout.notes}` : ""}`}
                 action={
@@ -84,7 +84,7 @@ export function WorkoutDetailPage() {
                             className="inline-flex min-h-11 items-center rounded-[10px] bg-flame px-4 text-xs font-extrabold tracking-[0.07em] text-ink uppercase"
                             to={`/workouts/${workout.id}/session`}
                         >
-                            {workout.status === "ACTIVE" ? "Continue session" : "Start workout"}
+                            {workout.status === "ACTIVE" ? "Continue workout" : "Start workout"}
                         </Link>
                     ) : (
                         <Button
@@ -98,7 +98,7 @@ export function WorkoutDetailPage() {
                 }
             />
 
-            {mutationError && <Feedback>{mutationError}</Feedback>}
+            {mutationError && <StatusMessage>{mutationError}</StatusMessage>}
 
             {workout.status !== "COMPLETED" && (
                 <Card>
@@ -121,7 +121,7 @@ export function WorkoutDetailPage() {
             <div>
                 <h2 className="section-title">Exercises</h2>
                 <p className="section-caption">
-                    {workout.workoutExercises.length} movements in this workout
+                    {workout.workoutExercises.length} exercises in this workout
                 </p>
             </div>
 
@@ -143,8 +143,8 @@ export function WorkoutDetailPage() {
                             onDeleteExercise={(id) => void handleDeleteWorkoutExercise(id)}
                             onEditSet={setEditingWorkoutSet}
                             onUpdateSet={handleUpdateWorkoutSet}
-                            onDeleteSet={(workoutExerciseId, setId) =>
-                                void handleDeleteWorkoutSet(workoutExerciseId, setId)
+                            onDeleteSet={(workoutExerciseId, workoutSetId) =>
+                                void handleDeleteWorkoutSet(workoutExerciseId, workoutSetId)
                             }
                             onAddSet={(data) => handleAddSet(workoutExercise.id, data)}
                         />

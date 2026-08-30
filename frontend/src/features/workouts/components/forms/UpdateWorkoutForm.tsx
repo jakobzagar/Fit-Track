@@ -1,14 +1,18 @@
 import {useId, useRef, useState, type SubmitEvent} from "react";
 import {z} from "zod";
-import {updateWorkoutSchema, type UpdateWorkoutInput} from "../../schemas/workout.schemas.ts";
-import type {WorkoutSummary} from "../../types/workout.types.ts";
-import {Button} from "../../../../components/ui/actions/Button.tsx";
-import {FieldError} from "../../../../components/ui/forms/FieldError.tsx";
+import {
+    updateWorkoutSchema,
+    type UpdateWorkoutInput,
+    type WorkoutSummary,
+} from "@fit-track/shared/workouts";
+import {Button} from "../../../../components/ui/actions/Button";
+import {FieldError} from "../../../../components/ui/forms/FieldError";
+import {useApiValidationErrorHandler} from "../../../../components/ui/forms/hooks/useApiValidationErrorHandler";
 import {
     focusFirstInvalidField,
     invalidFieldProps,
-} from "../../../../components/ui/forms/utils/formAccessibility.ts";
-import {workoutDateInputValue} from "../../utils/workout-date.ts";
+} from "../../../../components/ui/forms/utils/formAccessibility";
+import {toWorkoutDateInputValue} from "../../utils/workout-date";
 
 interface UpdateWorkoutFormProps {
     workout: WorkoutSummary;
@@ -27,12 +31,13 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
     const id = useId();
     const [name, setName] = useState(workout.name);
     const [performedAt, setPerformedAt] = useState(() =>
-        workoutDateInputValue(workout.performedAt),
+        toWorkoutDateInputValue(workout.performedAt),
     );
     const [notes, setNotes] = useState(workout.notes ?? "");
 
     const [errors, setErrors] = useState<UpdateWorkoutErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleApiValidationError = useApiValidationErrorHandler(formRef, setErrors);
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -61,7 +66,8 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
 
         try {
             await onSubmit(result.data);
-        } catch {
+        } catch (error) {
+            handleApiValidationError(error);
             return;
         } finally {
             setIsSubmitting(false);

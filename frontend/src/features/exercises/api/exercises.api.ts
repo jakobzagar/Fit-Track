@@ -1,7 +1,12 @@
 import {exerciseResponseSchema, exercisesResponseSchema} from "@fit-track/shared/exercises";
-import {apiRequest} from "../../../lib/api/api.client.ts";
-import type {ExerciseResponse, ExercisesResponse, ExerciseStatus} from "../types/exercise.types.ts";
-import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas.ts";
+import {apiRequest} from "../../../lib/api/api.client";
+import type {
+    CreateExerciseInput,
+    ExerciseResponse,
+    ExercisesResponse,
+    ExerciseStatus,
+    UpdateExerciseInput,
+} from "@fit-track/shared/exercises";
 
 export function getExercises(status: ExerciseStatus = "active"): Promise<ExercisesResponse> {
     return apiRequest(`/exercises?status=${status}`, exercisesResponseSchema);

@@ -1,6 +1,5 @@
 import {FormDialog} from "../../../../components/ui/dialogs/FormDialog";
-import type {Exercise} from "../../types/exercise.types";
-import type {CreateExerciseInput, UpdateExerciseInput} from "../../schemas/exercise.schemas";
+import type {CreateExerciseInput, Exercise, UpdateExerciseInput} from "@fit-track/shared/exercises";
 import {CreateExerciseForm} from "./CreateExerciseForm";
 import {UpdateExerciseForm} from "./UpdateExerciseForm";
 
@@ -22,8 +21,8 @@ export function ExerciseFormDialog({
             title={exercise ? "Edit exercise" : "Add exercise"}
             description={
                 exercise
-                    ? "Keep the movement consistent so workout history remains useful."
-                    : "Use a clear name you will recognize immediately during a session."
+                    ? "Keep the exercise consistent so workout history remains useful."
+                    : "Use a clear name you will recognize immediately during a workout."
             }
             onClose={onClose}
         >

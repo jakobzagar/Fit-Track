@@ -6,17 +6,17 @@ const validEnv = {
     PORT: "3001",
     DATABASE_URL: "postgresql://user:password@database:5432/fit_track?sslmode=require",
     JWT_SECRET: "fit-track-test-secret-that-is-at-least-32-characters",
-    CLIENT_URL: "https://fittrack.example",
+    CLIENT_ORIGIN: "https://fittrack.example",
 };
 
 describe("backend environment schema", () => {
-    it("normalizes CLIENT_URL to an origin", () => {
+    it("normalizes CLIENT_ORIGIN to an origin", () => {
         const result = envSchema.parse({
             ...validEnv,
-            CLIENT_URL: "https://fittrack.example/",
+            CLIENT_ORIGIN: "https://fittrack.example/",
         });
 
-        expect(result.CLIENT_URL).toBe("https://fittrack.example");
+        expect(result.CLIENT_ORIGIN).toBe("https://fittrack.example");
     });
 
     it.each([
@@ -25,8 +25,8 @@ describe("backend environment schema", () => {
         "https://fittrack.example/app",
         "https://fittrack.example?preview=true",
         "https://fittrack.example#content",
-    ])("rejects a CLIENT_URL that is not an HTTP origin: %s", (clientUrl) => {
-        expect(envSchema.safeParse({...validEnv, CLIENT_URL: clientUrl}).success).toBe(false);
+    ])("rejects a CLIENT_ORIGIN that is not an HTTP origin: %s", (clientUrl) => {
+        expect(envSchema.safeParse({...validEnv, CLIENT_ORIGIN: clientUrl}).success).toBe(false);
     });
 
     it("defaults to trusting no proxy hops", () => {

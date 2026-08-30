@@ -6,18 +6,21 @@ import {
     restoreExercise,
     updateExercise,
 } from "../api/exercises.api";
-import type {Exercise, ExercisesResponse, ExerciseStatus} from "../types/exercise.types";
-import type {CreateExerciseInput, UpdateExerciseInput} from "../schemas/exercise.schemas";
-
-export type ExerciseView = ExerciseStatus;
+import type {
+    CreateExerciseInput,
+    Exercise,
+    ExercisesResponse,
+    ExerciseStatus,
+    UpdateExerciseInput,
+} from "@fit-track/shared/exercises";
 
 function sortExercisesByName(exercises: Exercise[]) {
     return [...exercises].sort((left, right) => left.name.localeCompare(right.name));
 }
 
-export function useExercises(view: ExerciseView) {
+export function useExercises(status: ExerciseStatus) {
     const [exercises, setExercises] = useState<Exercise[]>([]);
-    const [archivingExerciseId, setArchivingExerciseId] = useState<string | null>(null);
+    const [updatingExerciseStatusId, setUpdatingExerciseStatusId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
     const [mutationError, setMutationError] = useState("");
@@ -27,7 +30,7 @@ export function useExercises(view: ExerciseView) {
     const load = useCallback(async () => {
         const requestId = ++requestIdRef.current;
         try {
-            const response: ExercisesResponse = await getExercises(view);
+            const response: ExercisesResponse = await getExercises(status);
             if (requestId === requestIdRef.current) setExercises(response.exercises);
         } catch (error) {
             if (requestId === requestIdRef.current) {
@@ -36,7 +39,7 @@ export function useExercises(view: ExerciseView) {
         } finally {
             if (requestId === requestIdRef.current) setIsLoading(false);
         }
-    }, [view]);
+    }, [status]);
 
     useEffect(() => {
         let isCurrent = true;
@@ -108,7 +111,7 @@ export function useExercises(view: ExerciseView) {
     ) {
         setMutationError("");
         setSuccessMessage("");
-        setArchivingExerciseId(exerciseId);
+        setUpdatingExerciseStatusId(exerciseId);
         try {
             await mutation(exerciseId);
             setExercises((current) => current.filter((exercise) => exercise.id !== exerciseId));
@@ -118,7 +121,7 @@ export function useExercises(view: ExerciseView) {
                 error instanceof Error ? error.message : `Failed to ${action} exercise`,
             );
         } finally {
-            setArchivingExerciseId(null);
+            setUpdatingExerciseStatusId(null);
         }
     }
 
@@ -130,7 +133,7 @@ export function useExercises(view: ExerciseView) {
 
     return {
         exercises,
-        archivingExerciseId,
+        updatingExerciseStatusId,
         isLoading,
         loadError,
         mutationError,

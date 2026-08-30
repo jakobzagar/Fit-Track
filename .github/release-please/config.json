@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/googleapis/release-please/v17.6.1/schemas/config.json",
-    "release-type": "simple",
+    "release-type": "node",
     "include-component-in-tag": false,
     "include-v-in-tag": true,
     "pull-request-title-pattern": "chore: release ${version}",
@@ -22,17 +22,12 @@
             "section": "Reverts"
         }
     ],
-    "bootstrap-sha": "7d9f46b31b93cf4ad2a9d040233ebf6684621098",
+    "bootstrap-sha": "90aa67b4057f2cef832bae7705a74a8dd0b78cc9",
     "packages": {
         ".": {
             "component": "fit-track",
             "package-name": "fit-track",
             "extra-files": [
-                {
-                    "type": "json",
-                    "path": "package.json",
-                    "jsonpath": "$.version"
-                },
                 {
                     "type": "json",
                     "path": "backend/package.json",
@@ -47,16 +42,6 @@
                     "type": "json",
                     "path": "shared/package.json",
                     "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "package-lock.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "package-lock.json",
-                    "jsonpath": "$.packages[''].version"
                 },
                 {
                     "type": "json",

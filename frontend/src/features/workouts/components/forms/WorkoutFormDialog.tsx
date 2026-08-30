@@ -1,6 +1,9 @@
 import {FormDialog} from "../../../../components/ui/dialogs/FormDialog";
-import type {CreateWorkoutInput, UpdateWorkoutInput} from "../../schemas/workout.schemas";
-import type {WorkoutSummary} from "../../types/workout.types";
+import type {
+    CreateWorkoutInput,
+    UpdateWorkoutInput,
+    WorkoutSummary,
+} from "@fit-track/shared/workouts";
 import {CreateWorkoutForm} from "./CreateWorkoutForm";
 import {UpdateWorkoutForm} from "./UpdateWorkoutForm";
 
@@ -17,8 +20,8 @@ export function WorkoutFormDialog({workout, onCreate, onUpdate, onClose}: Workou
             title={workout ? "Edit workout" : "Create workout"}
             description={
                 workout
-                    ? "Update the session details without leaving your training log."
-                    : "Create the session first, then add exercises and working sets."
+                    ? "Update the workout details without leaving your training log."
+                    : "Create the workout first, then add exercises and working sets."
             }
             onClose={onClose}
         >

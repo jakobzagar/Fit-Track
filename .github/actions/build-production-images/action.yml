@@ -1,0 +1,55 @@
+name: Build production images
+description: Build and push the backend, frontend, and migration images for a single revision
+
+inputs:
+  revision:
+    description: Git commit SHA represented by all three images
+    required: true
+
+outputs:
+  backend-digest:
+    description: Published backend image digest
+    value: ${{ steps.backend.outputs.digest }}
+  frontend-digest:
+    description: Published frontend image digest
+    value: ${{ steps.frontend.outputs.digest }}
+  migration-digest:
+    description: Published migration image digest
+    value: ${{ steps.migration.outputs.digest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build and push backend image
+      id: backend
+      uses: ./.github/actions/build-container
+      with:
+        image: ghcr.io/${{ github.repository_owner }}/fit-track-backend
+        dockerfile: backend/Dockerfile
+        cache-scope: backend
+        revision: ${{ inputs.revision }}
+        tags: |
+          type=raw,value=sha-${{ inputs.revision }}
+
+    - name: Build and push frontend image
+      id: frontend
+      uses: ./.github/actions/build-container
+      with:
+        image: ghcr.io/${{ github.repository_owner }}/fit-track-frontend
+        dockerfile: frontend/Dockerfile
+        cache-scope: frontend
+        revision: ${{ inputs.revision }}
+        tags: |
+          type=raw,value=sha-${{ inputs.revision }}
+
+    - name: Build and push migration image
+      id: migration
+      uses: ./.github/actions/build-container
+      with:
+        image: ghcr.io/${{ github.repository_owner }}/fit-track-migration
+        dockerfile: backend/Dockerfile
+        target: migration
+        cache-scope: migration
+        revision: ${{ inputs.revision }}
+        tags: |
+          type=raw,value=sha-${{ inputs.revision }}

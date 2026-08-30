@@ -1,6 +1,6 @@
 # Architecture and design decisions
 
-This document explains how FitTrack is organized, where trust boundaries sit, and why the project uses its current design. For setup and the product overview, start with the [main README](../README.md).
+This document explains how FitTrack is organized, where trust boundaries sit, and why the project uses its current design. For setup and the product overview, start with the [main README](../README.md); for canonical product terminology, see the [domain language](../CONTEXT.md).
 
 ## Workspace responsibilities
 
@@ -37,13 +37,13 @@ sequenceDiagram
 
 The diagram shows the successful path for a protected feature request. Express runs these layers in order:
 
-| Scope           | Middleware                                                       | Responsibility                                                                      |
-| --------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Application     | Helmet → CORS → general rate limiter                             | Security headers, allowed browser origin, request throttling                        |
-| Application     | JSON and URL-encoded parsers → cookie parser → CSRF origin check | Parse bodies up to 100 KB, read the auth cookie, protect state-changing requests    |
-| Protected route | JWT authentication → Zod validation → controller                 | Establish the user identity, validate path/query/body data, translate HTTP concerns |
-| Service         | Ownership rules → Prisma transaction when required               | Enforce domain rules and persist a consistent result                                |
-| Final handler   | Not-found middleware → error middleware                          | Return stable responses for unknown routes and failures                             |
+| Scope           | Middleware                                                       | Responsibility                                                                         |
+| --------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Application     | Helmet → CORS → API no-store → general rate limiter              | Security headers, allowed browser origin, private-response caching, request throttling |
+| Application     | JSON and URL-encoded parsers → cookie parser → CSRF origin check | Parse bodies up to 100 KB, read the auth cookie, protect state-changing requests       |
+| Protected route | JWT authentication → Zod validation → controller                 | Establish the user identity, validate path/query/body data, translate HTTP concerns    |
+| Service         | Ownership rules → Prisma transaction when required               | Enforce domain rules and persist a consistent result                                   |
+| Final handler   | Not-found middleware → error middleware                          | Return stable responses for unknown routes and failures                                |
 
 Public health routes and login or registration omit JWT authentication. Health checks also bypass the general limiter so runtime probes remain independent of client traffic. Login and registration use their own endpoint rate limiters in addition to the general limiter.
 
@@ -51,11 +51,27 @@ Shared Zod schemas validate input at the API boundary and successful responses a
 
 ## Feature organization
 
-Backend modules live under `backend/src/modules/`. Every existing responsibility uses a predictable directory such as `controllers/`, `middleware/`, `routes/`, `services/`, `policies/`, or `tests/`, even when that directory currently contains one file. Workout lifecycle operations are separated from general workout CRUD because they coordinate status transitions and serializable transactions.
+Backend modules live under `backend/src/modules/`. Every existing responsibility uses a predictable directory such as `controllers/`, `middleware/`, `routes/`, `services/`, `policies/`, or `tests/`, even when that directory currently contains one file. Workout lifecycle operations are separated from general workout CRUD because they coordinate status transitions and serializable transactions. Workout exercise and set mutations remain nested under `modules/workouts/workout-exercises/`; the application mounts only the workout router, which owns the nested routes.
 
-Frontend features live under `frontend/src/features/`. Feature APIs, schemas, hooks, pages, components, styles, types, and local tests stay together in responsibility directories. Reusable primitives live under `frontend/src/components/`, separated into layout and UI responsibilities with tests under their owning component area.
+Frontend features live under `frontend/src/features/`. Feature APIs, hooks, pages, components, styles, utilities, and local tests stay together in responsibility directories. Workout exercise and set interactions live under `features/workouts/workout-exercises/` because they have no independent page or user flow outside a workout. Reusable primitives live under `frontend/src/components/`, separated into layout and UI responsibilities with tests under their owning component area.
 
-Shared domains follow the same convention with `schemas/` and `tests/` directories while preserving stable public package subpaths such as `@fit-track/shared/workouts`. Directories are created only for responsibilities that exist; entrypoints and conventional configuration files remain at their expected roots.
+Shared domains follow the same convention with `schemas/` and `tests/` directories while preserving stable public package subpaths. The workout contract Implementation is split into workout, workout-exercise, and workout-set schema files, while `@fit-track/shared/workouts` is their single public Interface. Directories are created only for responsibilities that exist; entrypoints and conventional configuration files remain at their expected roots.
+
+The same ownership model is visible in every workspace:
+
+```text
+Workout Module
+├── Workout
+├── WorkoutExercise
+└── WorkoutSet
+
+shared/src/workouts/                              public contract Interface
+backend/src/modules/workouts/                     authoritative Implementation
+frontend/src/features/workouts/                   user-facing Implementation
+└── workout-exercises/                            nested exercise and set behavior
+```
+
+The `Workout` Module is the external Seam because callers act on exercises and sets only in the context of an owned workout. A single shared Interface gives callers Leverage without exposing the schema file layout. Keeping routes, domain rules, UI flows, and tests near that Seam improves Locality: a nested-workout change has one predictable home in each workspace.
 
 ## PostgreSQL data model
 
@@ -129,7 +145,7 @@ Database constraints and indexes:
 
 - `WorkoutStatus` is a PostgreSQL enum: `DRAFT`, `ACTIVE`, or `COMPLETED`, with `DRAFT` as the default;
 - `User.email`, `Exercise(userId, name)`, `WorkoutExercise(workoutId, exerciseId)`, `WorkoutExercise(workoutId, position)`, and `WorkoutSet(workoutExerciseId, setNumber)` are unique; a partial unique index additionally allows at most one `ACTIVE` workout per user;
-- indexes support `Exercise(userId, isArchived)`, `Workout(userId, performedAt DESC)`, and `WorkoutExercise(exerciseId)`;
+- indexes support `Exercise(userId, isArchived)`, `Workout(userId, performedAt DESC)`, `Workout(userId, status, completedAt DESC)`, and `WorkoutExercise(exerciseId)`;
 - deleting a user cascades to that user's exercises and workouts; deleting a workout cascades to its workout exercises and sets; deleting an exercise referenced by a workout is restricted;
 - database checks require positive positions, set numbers, reps, and durations; weight is `0` through `999999.99`; each set has either reps or duration; workout timestamps must match the `DRAFT`, `ACTIVE`, or `COMPLETED` lifecycle state.
 
@@ -141,7 +157,7 @@ Application invariants complement the database rules: protected reads and mutati
 | --------- | ----------------------------- | ----------- | ---------------------------------------------------------- |
 | Start     | `DRAFT`                       | `ACTIVE`    | Exercises and planned sets                                 |
 | Cancel    | `ACTIVE`                      | `DRAFT`     | Set values; completion marks are cleared                   |
-| Finish    | `ACTIVE` with a completed set | `COMPLETED` | Full recorded session                                      |
+| Finish    | `ACTIVE` with a completed set | `COMPLETED` | Full recorded workout                                      |
 | Reopen    | `COMPLETED`                   | `ACTIVE`    | Original start time, exercises, sets, and completion marks |
 | Delete    | Any owned state               | Removed     | Nothing; nested rows cascade                               |
 
@@ -157,24 +173,29 @@ The frontend provides early validation and useful error presentation, but it is 
 - nested-resource relationships;
 - transaction and relational constraints.
 
-The frontend separately parses actual JSON responses with shared strict schemas. This detects response drift before malformed data reaches application state.
+The frontend separately parses actual JSON responses with shared strict schemas. This detects response drift before malformed data reaches application state. Structured backend validation failures are preserved by the API client and projected onto the matching form fields; unknown or non-field failures remain page-level feedback.
 
 ## Authentication and request security
 
 Authentication uses a signed JWT in an HTTP-only cookie. Production cookies are marked `Secure` and use `SameSite=Lax`. State-changing requests must carry the configured frontend `Origin`, providing explicit CSRF protection in addition to cookie attributes.
 
-`CLIENT_URL` accepts only an HTTP or HTTPS origin. The configuration parser removes an optional trailing slash, then CORS and CSRF checks consume the same normalized value. `DATABASE_URL` must be a valid PostgreSQL URL with a host and database name. Production connections require `sslmode=require`, `verify-ca`, or `verify-full` unless a controlled production-like environment explicitly sets `DATABASE_TLS_MODE=allow-insecure`; the production smoke stack uses that escape hatch only for its temporary local PostgreSQL container.
+The frontend treats `401 Unauthorized` from an authenticated request as an expired session, clears its local user state, and lets protected routing return the user to login. Public authentication requests such as login, registration, and the initial session check handle `401` as an expected response instead of emitting the global expiration signal.
+
+`CLIENT_ORIGIN` accepts only an HTTP or HTTPS origin. The configuration parser removes an optional trailing slash, then CORS and CSRF checks consume the same normalized value. `DATABASE_URL` must be a valid PostgreSQL URL with a host and database name. Production connections require `sslmode=require`, `verify-ca`, or `verify-full` unless a controlled production-like environment explicitly sets `DATABASE_TLS_MODE=allow-insecure`; the production smoke stack uses that escape hatch only for its temporary local PostgreSQL container.
 
 The Express application also provides:
 
 - Helmet security headers;
-- credentialed CORS limited to `CLIENT_URL`;
+- credentialed CORS limited to `CLIENT_ORIGIN`;
+- `Cache-Control: no-store` on every API response so authenticated data, authentication results, and API errors are not retained by browsers or shared caches;
 - 100 KB JSON and form payload limits;
 - general, login, and registration rate limiters;
 - sanitized unexpected error responses;
 - an explicit `TRUST_PROXY_HOPS` count that defaults to no trusted proxy.
 
 The proxy count must match the only network path to the API because Express uses it to determine the client address from `X-Forwarded-For`. The development and production-smoke Compose stacks use one proxy hop; a directly started backend uses zero. Rate-limit counters currently use process memory. A multi-process runtime needs a shared store before treating those counters as global.
+
+The production frontend applies its browser security policy at the static-serving boundary. Its Content Security Policy permits only same-origin application resources and API connections, blocks embedding and plugins, and does not allow inline scripts. The synchronous theme initializer is therefore a normal static file loaded before the React bundle. Referrer, permissions, content-type, framing, and cross-origin isolation headers complement the CSP. Hashed Vite assets remain immutable for one year, while `index.html` and the stable theme initializer require revalidation. A different static-serving platform must preserve these header and cache policies; they are runtime controls and cannot be encoded reliably in the static files themselves.
 
 ## Runtime lifecycle
 
@@ -211,7 +232,7 @@ Archiving removes an exercise from new workout selection without destroying hist
 
 ### Explicit workout reopening
 
-Completed sessions are immutable during normal editing. A deliberate reopen action makes corrections possible while keeping accidental changes visible in the user flow. Reopening is rejected while another workout is active.
+Completed workouts are immutable during normal editing. A deliberate reopen action makes corrections possible while keeping accidental changes visible in the user flow. Reopening is rejected while another workout is active.
 
 ### Separate migration image
 
@@ -251,7 +272,7 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-Set a valid PostgreSQL `DATABASE_URL`, strong `JWT_SECRET`, matching origin-only `CLIENT_URL`, and `TRUST_PROXY_HOPS=0` in `backend/.env`. Apply migrations from the repository root:
+Set a valid PostgreSQL `DATABASE_URL`, strong `JWT_SECRET`, matching origin-only `CLIENT_ORIGIN`, and `TRUST_PROXY_HOPS=0` in `backend/.env`. Apply migrations from the repository root:
 
 ```bash
 npm exec --workspace @fit-track/backend -- prisma migrate deploy
@@ -268,7 +289,9 @@ The frontend requests relative `/api` paths. Vite forwards them to `API_PROXY_TA
 
 ## Known operational boundaries
 
+The repository's current production artifacts and planned AWS topology are summarized in the [AWS deployment plan](aws-deployment-plan.md).
+
 - The repository does not configure an external log aggregation, metrics, or distributed-tracing destination.
 - The repository publishes containers but does not include a platform deployment definition.
 - Production containers are not started together by the normal fast verification command.
-- HTTPS termination, managed secrets, backups, monitoring, and deployment remain runtime responsibilities.
+- HTTPS termination, managed secrets, backup automation, monitoring, and deployment are not configured yet.

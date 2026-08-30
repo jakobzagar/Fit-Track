@@ -58,7 +58,7 @@ export async function createExerciseService(userId: string, data: CreateExercise
     });
 }
 
-export async function deleteExerciseByIdService(userId: string, exerciseId: string) {
+export async function archiveExerciseService(userId: string, exerciseId: string) {
     const exercise = await prisma.exercise.findFirst({
         where: {
             id: exerciseId,
@@ -81,7 +81,7 @@ export async function deleteExerciseByIdService(userId: string, exerciseId: stri
     });
 }
 
-export async function restoreExerciseByIdService(userId: string, exerciseId: string) {
+export async function restoreExerciseService(userId: string, exerciseId: string) {
     const exercise = await prisma.exercise.findFirst({
         where: {
             id: exerciseId,
@@ -104,7 +104,7 @@ export async function restoreExerciseByIdService(userId: string, exerciseId: str
     });
 }
 
-export async function updateExerciseByIdService(
+export async function updateExerciseService(
     userId: string,
     exerciseId: string,
     data: UpdateExerciseInput,

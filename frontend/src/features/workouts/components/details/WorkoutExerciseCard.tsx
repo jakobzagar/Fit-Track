@@ -1,14 +1,14 @@
 import {Button} from "../../../../components/ui/actions/Button";
 import {Card} from "../../../../components/ui/display/Card";
 import {Icon} from "../../../../components/ui/display/Icon";
-import {AddWorkoutSetForm} from "../../../workout-exercises/components/sets/AddWorkoutSetForm";
-import {UpdateWorkoutExerciseForm} from "../../../workout-exercises/components/exercises/UpdateWorkoutExerciseForm";
+import {AddWorkoutSetForm} from "../../workout-exercises/components/sets/AddWorkoutSetForm";
+import {UpdateWorkoutExerciseForm} from "../../workout-exercises/components/exercises/UpdateWorkoutExerciseForm";
 import type {
     CreateWorkoutSetInput,
     UpdateWorkoutExerciseInput,
     UpdateWorkoutSetInput,
-} from "../../../workout-exercises/schemas/workout-exercises.schemas";
-import type {WorkoutExercise, WorkoutSet} from "../../types/workout.types";
+} from "@fit-track/shared/workouts";
+import type {WorkoutExercise, WorkoutSet} from "@fit-track/shared/workouts";
 import {WorkoutSetList} from "./WorkoutSetList";
 
 interface WorkoutExerciseCardProps {
@@ -23,7 +23,7 @@ interface WorkoutExerciseCardProps {
     onDeleteExercise: (workoutExerciseId: string) => void;
     onEditSet: (set: WorkoutSet | null) => void;
     onUpdateSet: (data: UpdateWorkoutSetInput) => Promise<void>;
-    onDeleteSet: (workoutExerciseId: string, setId: string) => void;
+    onDeleteSet: (workoutExerciseId: string, workoutSetId: string) => void;
     onAddSet: (data: CreateWorkoutSetInput) => Promise<void>;
 }
 

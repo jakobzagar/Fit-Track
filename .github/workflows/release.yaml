@@ -20,8 +20,6 @@ jobs:
 
     outputs:
       version: ${{ steps.release.outputs.version }}
-      major: ${{ steps.release.outputs.major }}
-      minor: ${{ steps.release.outputs.minor }}
       revision: ${{ steps.release.outputs.revision }}
 
     steps:
@@ -34,50 +32,14 @@ jobs:
         id: release
         shell: bash
         run: |
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Release tag must use the vMAJOR.MINOR.PATCH format"
-            exit 1
-          fi
-
-          revision="$(git rev-parse HEAD)"
           git fetch origin main:refs/remotes/origin/main --no-tags
+          bash scripts/release/validate.sh "$GITHUB_REF_NAME" origin/main >> "$GITHUB_OUTPUT"
 
-          if ! git merge-base --is-ancestor "$revision" origin/main; then
-            echo "Release commit must belong to the main branch"
-            exit 1
-          fi
-
-          latest_tag=""
-          while IFS= read -r candidate; do
-            if [[ "$candidate" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] && \
-              git merge-base --is-ancestor "$candidate" origin/main; then
-              latest_tag="$candidate"
-              break
-            fi
-          done < <(git tag --list "v*.*.*" --sort=-version:refname)
-
-          if [[ "$latest_tag" != "$GITHUB_REF_NAME" ]]; then
-            echo "Release tag must be the highest SemVer tag on main (latest: $latest_tag)"
-            exit 1
-          fi
-
-          version="${GITHUB_REF_NAME#v}"
-          major="${version%%.*}"
-          minor_and_patch="${version#*.}"
-          minor="${minor_and_patch%%.*}"
-
-          {
-            echo "version=$version"
-            echo "major=$major"
-            echo "minor=$minor"
-            echo "revision=$revision"
-          } >> "$GITHUB_OUTPUT"
-
-  promote-images:
-    name: Promote images
+  release-images:
+    name: Build, test, and release images
     needs: validate-release
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
 
     permissions:
       contents: read
@@ -90,6 +52,14 @@ jobs:
       MIGRATION_IMAGE: ${{ github.repository_owner }}/fit-track-migration
 
     steps:
+      - name: Checkout release
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        with:
+          platforms: arm64
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
@@ -100,87 +70,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify release artifacts
-        shell: bash
+      - name: Build and push production images
+        id: images
+        uses: ./.github/actions/build-production-images
+        with:
+          revision: ${{ needs.validate-release.outputs.revision }}
+
+      - name: Smoke test release images
         env:
-          VERSION: ${{ needs.validate-release.outputs.version }}
-          REVISION: ${{ needs.validate-release.outputs.revision }}
-        run: |
-          image_digest() {
-            local inspection
-
-            inspection="$(docker buildx imagetools inspect "$1")" || return 1
-            awk '/^Digest:/ {print $2; exit}' <<< "$inspection"
-          }
-
-          verify_image() {
-            local image="$1"
-            local source_ref="$image:sha-$REVISION"
-            local release_ref="$image:$VERSION"
-            local source_digest
-            local release_digest
-
-            source_digest="$(image_digest "$source_ref")"
-            if [[ -z "$source_digest" ]]; then
-              echo "Source image does not expose a digest: $source_ref"
-              exit 1
-            fi
-
-            if release_digest="$(image_digest "$release_ref" 2>/dev/null)"; then
-              if [[ "$release_digest" != "$source_digest" ]]; then
-                echo "Release tag already points to a different image: $release_ref"
-                exit 1
-              fi
-
-              echo "Release image already exists with the expected digest: $release_ref"
-            fi
-          }
-
-          verify_image "$REGISTRY/$BACKEND_IMAGE"
-          verify_image "$REGISTRY/$FRONTEND_IMAGE"
-          verify_image "$REGISTRY/$MIGRATION_IMAGE"
+          BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}@${{ steps.images.outputs.backend-digest }}
+          FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}@${{ steps.images.outputs.frontend-digest }}
+          MIGRATION_IMAGE: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}@${{ steps.images.outputs.migration-digest }}
+        run: npm run smoke:production
 
       - name: Promote release images
         shell: bash
         env:
           VERSION: ${{ needs.validate-release.outputs.version }}
-          MAJOR: ${{ needs.validate-release.outputs.major }}
-          MINOR: ${{ needs.validate-release.outputs.minor }}
-          REVISION: ${{ needs.validate-release.outputs.revision }}
+          BACKEND_REF: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}@${{ steps.images.outputs.backend-digest }}
+          FRONTEND_REF: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}@${{ steps.images.outputs.frontend-digest }}
+          MIGRATION_REF: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}@${{ steps.images.outputs.migration-digest }}
         run: |
-          image_digest() {
-            local inspection
-
-            inspection="$(docker buildx imagetools inspect "$1")" || return 1
-            awk '/^Digest:/ {print $2; exit}' <<< "$inspection"
-          }
-
-          promote_image() {
-            local image="$1"
-            local source_ref="$image:sha-$REVISION"
-            local release_ref="$image:$VERSION"
-            local source_digest
-            local release_digest
-
-            source_digest="$(image_digest "$source_ref")"
-            if release_digest="$(image_digest "$release_ref" 2>/dev/null)"; then
-              if [[ "$release_digest" != "$source_digest" ]]; then
-                echo "Release tag already points to a different image: $release_ref"
-                exit 1
-              fi
-
-              echo "Skipping image that is already released: $release_ref"
-              return
-            fi
-
-            docker buildx imagetools create \
-              --tag "$release_ref" \
-              --tag "$image:$MAJOR.$MINOR" \
-              --tag "$image:$MAJOR" \
-              --tag "$image:latest" \
-              "$image@$source_digest"
-          }
-
-          promote_image "$REGISTRY/$BACKEND_IMAGE"
-          promote_image "$REGISTRY/$FRONTEND_IMAGE"
-          promote_image "$REGISTRY/$MIGRATION_IMAGE"
+          bash scripts/release/promote-images.sh \
+            "$VERSION" \
+            "$BACKEND_REF" \
+            "$FRONTEND_REF" \
+            "$MIGRATION_REF"

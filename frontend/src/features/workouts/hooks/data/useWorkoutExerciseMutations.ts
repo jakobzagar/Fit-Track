@@ -4,20 +4,22 @@ import {
     addExerciseToWorkout,
     deleteWorkoutExercise,
     updateWorkoutExercise,
-} from "../../../workout-exercises/api/workout-exercises.api";
+} from "../../workout-exercises/api/workout-exercises.api";
 import type {
     AddExerciseToWorkoutInput,
     UpdateWorkoutExerciseInput,
-} from "../../../workout-exercises/schemas/workout-exercises.schemas";
-import type {Workout, WorkoutExercise} from "../../types/workout.types";
+} from "@fit-track/shared/workouts";
+import type {Workout, WorkoutExercise} from "@fit-track/shared/workouts";
 
 export function useWorkoutExerciseMutations(
     workoutId: string | undefined,
     confirm: ConfirmDialogFunction,
     setWorkout: Dispatch<SetStateAction<Workout | null>>,
 ) {
-    const [editingExercise, setEditingExercise] = useState<WorkoutExercise | null>(null);
-    const [deletingExerciseId, setDeletingExerciseId] = useState<string | null>(null);
+    const [editingWorkoutExercise, setEditingWorkoutExercise] = useState<WorkoutExercise | null>(
+        null,
+    );
+    const [deletingWorkoutExerciseId, setDeletingWorkoutExerciseId] = useState<string | null>(null);
     const [error, setError] = useState("");
 
     async function add(data: AddExerciseToWorkoutInput) {
@@ -45,13 +47,14 @@ export function useWorkoutExerciseMutations(
     }
 
     async function update(data: UpdateWorkoutExerciseInput) {
-        if (!workoutId || !editingExercise) throw new Error("Workout exercise is not selected");
+        if (!workoutId || !editingWorkoutExercise)
+            throw new Error("Workout exercise is not selected");
         setError("");
         try {
-            const previousPosition = editingExercise.position;
+            const previousPosition = editingWorkoutExercise.position;
             const {workoutExercise} = await updateWorkoutExercise(
                 workoutId,
-                editingExercise.id,
+                editingWorkoutExercise.id,
                 data,
             );
             const nextPosition = workoutExercise.position;
@@ -61,7 +64,7 @@ export function useWorkoutExerciseMutations(
                           ...current,
                           workoutExercises: current.workoutExercises
                               .map((item) => {
-                                  if (item.id === editingExercise.id) return workoutExercise;
+                                  if (item.id === editingWorkoutExercise.id) return workoutExercise;
                                   if (
                                       nextPosition < previousPosition &&
                                       item.position >= nextPosition &&
@@ -80,7 +83,7 @@ export function useWorkoutExerciseMutations(
                       }
                     : null,
             );
-            setEditingExercise(null);
+            setEditingWorkoutExercise(null);
         } catch (caught) {
             setError(
                 caught instanceof Error ? caught.message : "Failed to update workout exercise",
@@ -101,7 +104,7 @@ export function useWorkoutExerciseMutations(
         )
             return;
         setError("");
-        setDeletingExerciseId(workoutExerciseId);
+        setDeletingWorkoutExerciseId(workoutExerciseId);
         try {
             await deleteWorkoutExercise(workoutId, workoutExerciseId);
             setWorkout((current) =>
@@ -114,24 +117,24 @@ export function useWorkoutExerciseMutations(
                       }
                     : null,
             );
-            setEditingExercise(null);
+            setEditingWorkoutExercise(null);
         } catch (caught) {
             setError(
                 caught instanceof Error ? caught.message : "Failed to delete workout exercise",
             );
         } finally {
-            setDeletingExerciseId(null);
+            setDeletingWorkoutExerciseId(null);
         }
     }
 
     return {
-        editingExercise,
-        setEditingExercise,
-        deletingExerciseId,
+        editingWorkoutExercise,
+        setEditingWorkoutExercise,
+        deletingWorkoutExerciseId,
         error,
         setError,
-        add,
-        update,
-        remove,
+        addExerciseToWorkout: add,
+        updateWorkoutExercise: update,
+        removeWorkoutExercise: remove,
     };
 }

@@ -37,8 +37,8 @@ FROM dependencies AS build
 COPY shared ./shared
 COPY frontend ./frontend
 
-ARG VITE_API_URL=/api
-ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_API_BASE_PATH=/api
+ENV VITE_API_BASE_PATH=$VITE_API_BASE_PATH
 
 RUN npm run build:frontend
 
@@ -48,6 +48,7 @@ FROM nginxinc/nginx-unprivileged:alpine AS production
 LABEL org.opencontainers.image.source="https://github.com/jakobzagar/Fit-Track"
 
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY frontend/nginx-security-headers.conf /etc/nginx/security-headers.conf
 COPY --from=build /user/src/app/frontend/dist /usr/share/nginx/html
 
 EXPOSE 8080

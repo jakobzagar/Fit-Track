@@ -6,7 +6,7 @@ import {server} from "../../../test/mocks/server";
 import {renderWithProviders} from "../../../test/render";
 import {createWorkoutSummary} from "../../../test/fixtures/workouts";
 import {WorkoutsPage} from "../pages/WorkoutsPage";
-import type {WorkoutSummary} from "../types/workout.types";
+import type {WorkoutSummary} from "@fit-track/shared/workouts";
 
 const summary = createWorkoutSummary({status: "DRAFT"});
 const {_count: _count, ...workout} = summary;
@@ -16,7 +16,7 @@ function handleWorkoutList(workouts: WorkoutSummary[] = [summary]) {
 }
 
 describe("WorkoutsPage", () => {
-    test("loads workouts and links to a draft session", async () => {
+    test("loads workouts and links to a draft workout", async () => {
         server.use(handleWorkoutList());
         renderWithProviders(<WorkoutsPage />);
 
@@ -47,7 +47,7 @@ describe("WorkoutsPage", () => {
         server.use(handleWorkoutList([]));
         renderWithProviders(<WorkoutsPage />);
 
-        expect(await screen.findByText("No sessions logged yet.")).toBeInTheDocument();
+        expect(await screen.findByText("No workouts logged yet.")).toBeInTheDocument();
         expect(screen.getByRole("button", {name: "Create your first workout"})).toBeInTheDocument();
     });
 
@@ -88,7 +88,7 @@ describe("WorkoutsPage", () => {
             }),
         );
         const {user} = renderWithProviders(<WorkoutsPage />);
-        await screen.findByText("No sessions logged yet.");
+        await screen.findByText("No workouts logged yet.");
 
         await user.click(screen.getByRole("button", {name: "Create workout"}));
         const dialog = screen.getByRole("dialog", {name: "Create workout"});
@@ -136,7 +136,7 @@ describe("WorkoutsPage", () => {
         expect(dialog).toHaveTextContent("Push day");
         await user.click(within(dialog).getByRole("button", {name: "Delete workout"}));
 
-        expect(await screen.findByText("No sessions logged yet.")).toBeInTheDocument();
+        expect(await screen.findByText("No workouts logged yet.")).toBeInTheDocument();
         expect(screen.getByRole("status")).toHaveTextContent("Workout deleted.");
     });
 
@@ -159,7 +159,7 @@ describe("WorkoutsPage", () => {
             ),
         );
         const {user} = renderWithProviders(<WorkoutsPage />);
-        await screen.findByText("No sessions logged yet.");
+        await screen.findByText("No workouts logged yet.");
         await user.click(screen.getByRole("button", {name: "Create workout"}));
         const dialog = screen.getByRole("dialog", {name: "Create workout"});
         await user.type(screen.getByLabelText("Name"), "Push day");

@@ -1,8 +1,8 @@
 import {z, flattenError} from "zod";
 
 const envSchema = z.object({
-    VITE_API_URL: z.literal("/api", {
-        error: "VITE_API_URL must be /api",
+    VITE_API_BASE_PATH: z.literal("/api", {
+        error: "VITE_API_BASE_PATH must be /api",
     }),
 });
 
@@ -15,5 +15,5 @@ if (!parsedEnv.success) {
 }
 
 export const env = {
-    apiUrl: parsedEnv.data.VITE_API_URL,
+    apiBasePath: parsedEnv.data.VITE_API_BASE_PATH,
 };

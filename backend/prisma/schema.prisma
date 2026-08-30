@@ -60,6 +60,7 @@ model Workout {
   workoutExercises WorkoutExercise[]
 
   @@index([userId, performedAt(sort: Desc)])
+  @@index([userId, status, completedAt(sort: Desc)])
 }
 
 model WorkoutExercise {

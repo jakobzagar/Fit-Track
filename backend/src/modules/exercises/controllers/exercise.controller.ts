@@ -3,9 +3,9 @@ import {
     getExercisesService,
     getExerciseByIdService,
     createExerciseService,
-    deleteExerciseByIdService,
-    updateExerciseByIdService,
-    restoreExerciseByIdService,
+    archiveExerciseService,
+    updateExerciseService,
+    restoreExerciseService,
 } from "../services/exercise.service.js";
 import type {
     CreateExerciseInput,
@@ -14,7 +14,7 @@ import type {
     UpdateExerciseInput,
 } from "@fit-track/shared/exercises";
 
-export async function getExercises(_req: Request, res: Response) {
+export async function getExercisesController(_req: Request, res: Response) {
     const query = res.locals.query as GetExercisesQuery;
 
     const exercises = await getExercisesService(res.locals.userId, query);
@@ -24,7 +24,7 @@ export async function getExercises(_req: Request, res: Response) {
     });
 }
 
-export async function getExerciseById(_req: Request, res: Response) {
+export async function getExerciseByIdController(_req: Request, res: Response) {
     const params = res.locals.params as ExerciseIdParams;
 
     const exercise = await getExerciseByIdService(res.locals.userId, params.exerciseId);
@@ -34,7 +34,7 @@ export async function getExerciseById(_req: Request, res: Response) {
     });
 }
 
-export async function createExercise(_req: Request, res: Response) {
+export async function createExerciseController(_req: Request, res: Response) {
     const body = res.locals.body as CreateExerciseInput;
 
     const exercise = await createExerciseService(res.locals.userId, body);
@@ -44,31 +44,31 @@ export async function createExercise(_req: Request, res: Response) {
     });
 }
 
-export async function deleteExerciseById(_req: Request, res: Response) {
+export async function archiveExerciseController(_req: Request, res: Response) {
     const params = res.locals.params as ExerciseIdParams;
 
-    const exercise = await deleteExerciseByIdService(res.locals.userId, params.exerciseId);
+    const exercise = await archiveExerciseService(res.locals.userId, params.exerciseId);
 
     res.status(200).json({
         exercise,
     });
 }
 
-export async function restoreExerciseById(_req: Request, res: Response) {
+export async function restoreExerciseController(_req: Request, res: Response) {
     const params = res.locals.params as ExerciseIdParams;
 
-    const exercise = await restoreExerciseByIdService(res.locals.userId, params.exerciseId);
+    const exercise = await restoreExerciseService(res.locals.userId, params.exerciseId);
 
     res.status(200).json({
         exercise,
     });
 }
 
-export async function updateExerciseById(_req: Request, res: Response) {
+export async function updateExerciseController(_req: Request, res: Response) {
     const params = res.locals.params as ExerciseIdParams;
     const body = res.locals.body as UpdateExerciseInput;
 
-    const exercise = await updateExerciseByIdService(res.locals.userId, params.exerciseId, body);
+    const exercise = await updateExerciseService(res.locals.userId, params.exerciseId, body);
 
     res.status(200).json({
         exercise,

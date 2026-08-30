@@ -1,6 +1,6 @@
 {
     "name": "fit-track",
-    "version": "0.2.0",
+    "version": "1.0.0",
     "private": true,
     "workspaces": [
         "shared",
@@ -20,10 +20,15 @@
         "dev:docker:tools": "docker compose --env-file .env.dev -f compose.dev.yaml --profile tools up --build",
         "generate": "DATABASE_URL=${DATABASE_URL:-postgresql://unused:unused@localhost:5432/unused} npm run generate --workspace @fit-track/backend",
         "lint": "npm run generate && npm run build:shared && npm run lint --workspace @fit-track/shared && npm run lint --workspace @fit-track/backend && npm run lint --workspace @fit-track/frontend",
-        "test": "npm run generate && npm run test --workspaces --if-present",
+        "test": "npm run test:application && npm run test:release",
+        "test:application": "npm run generate && npm run test --workspaces --if-present",
         "test:integration": "npm run test:integration --workspace @fit-track/backend",
+        "test:release": "bash scripts/release/tests/validate-artifacts.sh",
         "test:docker": "docker compose -f compose.test.yaml up --build --remove-orphans --abort-on-container-exit --exit-code-from tests tests",
         "test:docker:down": "docker compose -f compose.test.yaml down --volumes --remove-orphans",
+        "test:e2e": "bash scripts/e2e/run.sh",
+        "test:e2e:ui": "bash scripts/e2e/run.sh --ui",
+        "smoke:production": "bash scripts/smoke/production-containers.sh",
         "typecheck": "npm run generate && npm run build:shared && npm run typecheck --workspace @fit-track/shared && npm run typecheck --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/frontend",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
@@ -32,11 +37,12 @@
         "actions:check": "actionlint && act workflow_dispatch --dryrun --job verify",
         "actions:verify": "act workflow_dispatch --job verify",
         "check": "npm run lint && npm run typecheck && npm run format:check",
-        "verify": "npm run check && npm test && npm run build",
+        "verify": "npm run verify:application && npm run test:release",
+        "verify:application": "npm run check && npm run test:application && npm run build",
         "verify:shared": "npm run lint --workspace @fit-track/shared && npm run typecheck --workspace @fit-track/shared && prettier --check shared && npm run test --workspace @fit-track/shared && npm run build --workspace @fit-track/shared",
         "verify:backend": "npm run generate && npm run build:shared && npm run lint --workspace @fit-track/backend && npm run typecheck --workspace @fit-track/backend && prettier --check backend && npm run test --workspace @fit-track/backend && npm run build --workspace @fit-track/backend",
         "verify:frontend": "npm run build:shared && npm run lint --workspace @fit-track/frontend && npm run typecheck --workspace @fit-track/frontend && prettier --check frontend && npm run test --workspace @fit-track/frontend && npm run build --workspace @fit-track/frontend",
-        "verify:integration": "npm run verify && npm run test:integration"
+        "verify:integration": "npm run verify:application && npm run test:integration"
     },
     "devDependencies": {
         "prettier": "^3.9.6"

@@ -1,16 +1,17 @@
 import {Router} from "express";
 import {authenticate} from "../../auth/middleware/auth.middleware.js";
+import workoutExerciseRoutes from "../workout-exercises/routes/workout-exercise.routes.js";
 import {
-    getWorkouts,
-    getWorkoutById,
-    createWorkout,
-    deleteWorkout,
-    updateWorkout,
-    startWorkout,
-    finishWorkout,
-    cancelWorkout,
-    reopenWorkout,
-    getPreviousPerformances,
+    getWorkoutsController,
+    getWorkoutByIdController,
+    createWorkoutController,
+    deleteWorkoutController,
+    updateWorkoutController,
+    startWorkoutController,
+    finishWorkoutController,
+    cancelWorkoutController,
+    reopenWorkoutController,
+    getPreviousPerformancesController,
 } from "../controllers/workout.controller.js";
 import {validate} from "../../../common/middleware/validate.middleware.js";
 import {
@@ -22,34 +23,35 @@ import {
 const router = Router();
 
 router.use(authenticate);
+router.use(workoutExerciseRoutes);
 
-router.get("/", getWorkouts);
+router.get("/", getWorkoutsController);
 
-router.get("/:workoutId", validate(workoutIdSchema, "params"), getWorkoutById);
+router.get("/:workoutId", validate(workoutIdSchema, "params"), getWorkoutByIdController);
 
 router.get(
     "/:workoutId/previous-performances",
     validate(workoutIdSchema, "params"),
-    getPreviousPerformances,
+    getPreviousPerformancesController,
 );
 
-router.post("/", validate(createWorkoutSchema), createWorkout);
+router.post("/", validate(createWorkoutSchema), createWorkoutController);
 
-router.post("/:workoutId/start", validate(workoutIdSchema, "params"), startWorkout);
+router.post("/:workoutId/start", validate(workoutIdSchema, "params"), startWorkoutController);
 
-router.post("/:workoutId/finish", validate(workoutIdSchema, "params"), finishWorkout);
+router.post("/:workoutId/finish", validate(workoutIdSchema, "params"), finishWorkoutController);
 
-router.post("/:workoutId/cancel", validate(workoutIdSchema, "params"), cancelWorkout);
+router.post("/:workoutId/cancel", validate(workoutIdSchema, "params"), cancelWorkoutController);
 
-router.post("/:workoutId/reopen", validate(workoutIdSchema, "params"), reopenWorkout);
+router.post("/:workoutId/reopen", validate(workoutIdSchema, "params"), reopenWorkoutController);
 
-router.delete("/:workoutId", validate(workoutIdSchema, "params"), deleteWorkout);
+router.delete("/:workoutId", validate(workoutIdSchema, "params"), deleteWorkoutController);
 
 router.patch(
     "/:workoutId",
     validate(workoutIdSchema, "params"),
     validate(updateWorkoutSchema),
-    updateWorkout,
+    updateWorkoutController,
 );
 
 export default router;
