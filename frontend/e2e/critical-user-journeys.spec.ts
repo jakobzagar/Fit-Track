@@ -54,7 +54,7 @@ test("user completes a workout and sees it after signing in again", async ({page
     const finishWorkout = page.getByRole("button", {name: "Finish workout"});
     await expect(finishWorkout).toBeEnabled();
     await finishWorkout.click();
-    await expect(page.getByText("Completed session")).toBeVisible();
+    await expect(page.getByText("Completed workout")).toBeVisible();
 
     await page.locator("header").getByRole("button", {name: "Log out"}).click();
     await expect(page).toHaveURL(/\/login$/);
