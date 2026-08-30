@@ -10,14 +10,14 @@ import {ThemeToggle} from "../../../components/ui/actions/ThemeToggle";
 
 export function RegisterPage() {
     const navigate = useNavigate();
-    const {setUser} = useAuth();
+    const {setAuthenticatedUser} = useAuth();
     const [error, setError] = useState("");
 
     async function handleRegister(data: RegisterInput) {
         setError("");
         try {
             const response = await register(data);
-            setUser(response.user);
+            setAuthenticatedUser(response.user);
             void navigate("/workouts");
         } catch (caughtError) {
             setError(caughtError instanceof Error ? caughtError.message : "Registration failed");

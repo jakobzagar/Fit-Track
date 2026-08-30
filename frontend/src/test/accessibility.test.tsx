@@ -5,7 +5,7 @@ import {createMemoryRouter, RouterProvider} from "react-router";
 import {describe, expect, test} from "vitest";
 import {AppProviders} from "../app/providers/providers";
 import {LandingPage} from "../features/landing/pages/LandingPage";
-import {LoginPage} from "../features/auth/pages/LogInPage";
+import {LoginPage} from "../features/auth/pages/LoginPage";
 import {RegisterPage} from "../features/auth/pages/RegisterPage";
 import {WorkoutsPage} from "../features/workouts/pages/WorkoutsPage";
 import {ExercisesPage} from "../features/exercises/pages/ExercisesPage";

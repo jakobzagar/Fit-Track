@@ -5,10 +5,20 @@ import {AuthContext, type AuthContextValue} from "../../../../features/auth/cont
 import {user as authenticatedUser} from "../../../../test/fixtures/users";
 import {Footer} from "../Footer";
 
-function renderFooter(user: AuthContextValue["user"], variant: "app" | "landing" = "landing") {
+function renderFooter(
+    currentUser: AuthContextValue["currentUser"],
+    variant: "app" | "landing" = "landing",
+) {
     return render(
         <MemoryRouter>
-            <AuthContext value={{user, isLoading: false, setUser: vi.fn(), signOut: vi.fn()}}>
+            <AuthContext
+                value={{
+                    currentUser,
+                    isRestoringSession: false,
+                    setAuthenticatedUser: vi.fn(),
+                    signOut: vi.fn(),
+                }}
+            >
                 <Footer variant={variant} />
             </AuthContext>
         </MemoryRouter>,

@@ -1,5 +1,5 @@
 import type {Request, Response} from "express";
-import {registerService, loginService, getMeService} from "../services/auth.service.js";
+import {registerService, loginService, getCurrentUserService} from "../services/auth.service.js";
 import type {LoginInput, RegisterInput} from "@fit-track/shared/auth";
 import {clearAuthCookie, setAuthCookie} from "../cookies/auth.cookie.js";
 
@@ -15,7 +15,7 @@ export async function registerController(_req: Request, res: Response) {
     });
 }
 
-export async function logInController(_req: Request, res: Response) {
+export async function loginController(_req: Request, res: Response) {
     const body = res.locals.body as LoginInput;
 
     const result = await loginService(body);
@@ -27,7 +27,7 @@ export async function logInController(_req: Request, res: Response) {
     });
 }
 
-export function logOutController(_req: Request, res: Response) {
+export function logoutController(_req: Request, res: Response) {
     clearAuthCookie(res);
 
     res.status(200).json({
@@ -35,8 +35,8 @@ export function logOutController(_req: Request, res: Response) {
     });
 }
 
-export async function getMeController(_req: Request, res: Response) {
-    const user = await getMeService(res.locals.userId);
+export async function getCurrentUserController(_req: Request, res: Response) {
+    const user = await getCurrentUserService(res.locals.userId);
 
     res.status(200).json({
         user,

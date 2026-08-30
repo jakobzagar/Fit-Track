@@ -1,10 +1,10 @@
-import {createContext, type Dispatch, type SetStateAction} from "react";
+import {createContext} from "react";
 import type {User} from "@fit-track/shared/auth";
 
 export interface AuthContextValue {
-    user: User | null;
-    isLoading: boolean;
-    setUser: Dispatch<SetStateAction<User | null>>;
+    currentUser: User | null;
+    isRestoringSession: boolean;
+    setAuthenticatedUser: (user: User) => void;
     signOut: () => Promise<void>;
 }
 

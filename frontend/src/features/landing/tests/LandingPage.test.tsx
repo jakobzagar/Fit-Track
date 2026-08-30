@@ -5,10 +5,17 @@ import {AuthContext, type AuthContextValue} from "../../auth/context/auth.contex
 import {user as authenticatedUser} from "../../../test/fixtures/users";
 import {LandingPage} from "../pages/LandingPage";
 
-function renderPage(user: AuthContextValue["user"]) {
+function renderPage(currentUser: AuthContextValue["currentUser"]) {
     return render(
         <MemoryRouter>
-            <AuthContext value={{user, isLoading: false, setUser: vi.fn(), signOut: vi.fn()}}>
+            <AuthContext
+                value={{
+                    currentUser,
+                    isRestoringSession: false,
+                    setAuthenticatedUser: vi.fn(),
+                    signOut: vi.fn(),
+                }}
+            >
                 <LandingPage />
             </AuthContext>
         </MemoryRouter>,

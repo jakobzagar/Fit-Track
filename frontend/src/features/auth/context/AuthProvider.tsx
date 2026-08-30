@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState, type ReactNode} from "react";
-import {getMe, logout} from "../api/auth.api";
+import {getCurrentUser, logout} from "../api/auth.api";
 import type {User} from "@fit-track/shared/auth";
 import {AuthContext} from "./auth.context";
 import {ApiError} from "../../../common/errors/api.error";
@@ -13,7 +13,7 @@ interface AuthProviderProps {
 
 async function restoreCurrentUser(): Promise<User | null> {
     try {
-        const response = await getMe();
+        const response = await getCurrentUser();
         return response.user;
     } catch (error) {
         if (error instanceof ApiError && error.status === 401) return null;
@@ -22,29 +22,29 @@ async function restoreCurrentUser(): Promise<User | null> {
 }
 
 export function AuthProvider({children}: AuthProviderProps) {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [sessionError, setSessionError] = useState(false);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [isRestoringSession, setIsRestoringSession] = useState(true);
+    const [hasSessionRestoreError, setHasSessionRestoreError] = useState(false);
     const requestIdRef = useRef(0);
 
-    useEffect(() => onSessionExpired(() => setUser(null)), []);
+    useEffect(() => onSessionExpired(() => setCurrentUser(null)), []);
 
     async function signOut() {
         await logout();
-        setUser(null);
+        setCurrentUser(null);
     }
 
     useEffect(() => {
         const requestId = ++requestIdRef.current;
         void restoreCurrentUser()
             .then((restoredUser) => {
-                if (requestId === requestIdRef.current) setUser(restoredUser);
+                if (requestId === requestIdRef.current) setCurrentUser(restoredUser);
             })
             .catch(() => {
-                if (requestId === requestIdRef.current) setSessionError(true);
+                if (requestId === requestIdRef.current) setHasSessionRestoreError(true);
             })
             .finally(() => {
-                if (requestId === requestIdRef.current) setIsLoading(false);
+                if (requestId === requestIdRef.current) setIsRestoringSession(false);
             });
 
         return () => {
@@ -54,21 +54,21 @@ export function AuthProvider({children}: AuthProviderProps) {
 
     function retryCurrentUser() {
         const requestId = ++requestIdRef.current;
-        setIsLoading(true);
-        setSessionError(false);
+        setIsRestoringSession(true);
+        setHasSessionRestoreError(false);
         void restoreCurrentUser()
             .then((restoredUser) => {
-                if (requestId === requestIdRef.current) setUser(restoredUser);
+                if (requestId === requestIdRef.current) setCurrentUser(restoredUser);
             })
             .catch(() => {
-                if (requestId === requestIdRef.current) setSessionError(true);
+                if (requestId === requestIdRef.current) setHasSessionRestoreError(true);
             })
             .finally(() => {
-                if (requestId === requestIdRef.current) setIsLoading(false);
+                if (requestId === requestIdRef.current) setIsRestoringSession(false);
             });
     }
 
-    if (sessionError) {
+    if (hasSessionRestoreError) {
         return (
             <main className="grid min-h-screen place-items-center bg-ink p-6">
                 <div className="w-full max-w-md space-y-4 text-center">
@@ -84,9 +84,9 @@ export function AuthProvider({children}: AuthProviderProps) {
     return (
         <AuthContext
             value={{
-                user,
-                isLoading,
-                setUser,
+                currentUser,
+                isRestoringSession,
+                setAuthenticatedUser: setCurrentUser,
                 signOut,
             }}
         >

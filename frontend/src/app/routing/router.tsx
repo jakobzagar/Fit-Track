@@ -1,7 +1,7 @@
 import {createBrowserRouter, Link, RouterProvider} from "react-router";
 import {AppLayout} from "../../components/layout/shell/AppLayout";
 import {ProtectedRoute} from "../../features/auth/components/ProtectedRoute";
-import {LoginPage} from "../../features/auth/pages/LogInPage";
+import {LoginPage} from "../../features/auth/pages/LoginPage";
 import {RegisterPage} from "../../features/auth/pages/RegisterPage";
 import {ExercisesPage} from "../../features/exercises/pages/ExercisesPage";
 import {WorkoutsPage} from "../../features/workouts/pages/WorkoutsPage";

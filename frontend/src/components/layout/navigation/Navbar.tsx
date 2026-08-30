@@ -7,7 +7,7 @@ import {NavbarUser} from "./NavbarUser";
 
 export function Navbar() {
     const navigate = useNavigate();
-    const {user, signOut} = useAuth();
+    const {currentUser, signOut} = useAuth();
     const [error, setError] = useState("");
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -33,7 +33,7 @@ export function Navbar() {
 
                     <DesktopNavigation />
                     <NavbarUser
-                        name={user?.name}
+                        name={currentUser?.name}
                         isLoggingOut={isLoggingOut}
                         onLogout={() => void handleLogout()}
                     />

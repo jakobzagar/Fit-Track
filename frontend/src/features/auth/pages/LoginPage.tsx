@@ -2,7 +2,7 @@ import {useState} from "react";
 import {Link, useNavigate} from "react-router";
 import {BrandMark} from "../../../components/ui/display/BrandMark";
 import {Feedback} from "../../../components/ui/feedback/Feedback";
-import {LoginForm} from "../components/LogInForm";
+import {LoginForm} from "../components/LoginForm";
 import {login} from "../api/auth.api";
 import type {LoginInput} from "@fit-track/shared/auth";
 import {useAuth} from "../hooks/useAuth";
@@ -10,14 +10,14 @@ import {ThemeToggle} from "../../../components/ui/actions/ThemeToggle";
 
 export function LoginPage() {
     const navigate = useNavigate();
-    const {setUser} = useAuth();
+    const {setAuthenticatedUser} = useAuth();
     const [error, setError] = useState("");
 
     async function handleLogin(data: LoginInput) {
         setError("");
         try {
             const response = await login(data);
-            setUser(response.user);
+            setAuthenticatedUser(response.user);
             void navigate("/workouts");
         } catch (caughtError) {
             setError(caughtError instanceof Error ? caughtError.message : "Login failed");

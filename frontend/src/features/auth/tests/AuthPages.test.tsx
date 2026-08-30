@@ -6,7 +6,7 @@ import {API_URL} from "../../../test/constants";
 import {renderWithProviders} from "../../../test/render";
 import {server} from "../../../test/mocks/server";
 import {user} from "../../../test/fixtures/users";
-import {LoginPage} from "../pages/LogInPage";
+import {LoginPage} from "../pages/LoginPage";
 import {RegisterPage} from "../pages/RegisterPage";
 
 const userResponse = {

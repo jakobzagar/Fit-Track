@@ -1,9 +1,9 @@
 import {Router} from "express";
 import {
     registerController,
-    logInController,
-    logOutController,
-    getMeController,
+    loginController,
+    logoutController,
+    getCurrentUserController,
 } from "../controllers/auth.controller.js";
 import {validate} from "../../../common/middleware/validate.middleware.js";
 import {authenticate} from "../middleware/auth.middleware.js";
@@ -15,10 +15,10 @@ import {
 
 const router = Router();
 
-router.get("/me", authenticate, getMeController);
+router.get("/me", authenticate, getCurrentUserController);
 
 router.post("/register", registerRateLimiter, validate(registerSchema), registerController);
-router.post("/login", loginRateLimiter, validate(loginSchema), logInController);
-router.post("/logout", logOutController);
+router.post("/login", loginRateLimiter, validate(loginSchema), loginController);
+router.post("/logout", logoutController);
 
 export default router;

@@ -6,9 +6,9 @@ import {user} from "../../../../test/fixtures/users";
 import {AppLayout} from "../AppLayout";
 
 const authValue = {
-    user,
-    isLoading: false,
-    setUser: vi.fn(),
+    currentUser: user,
+    isRestoringSession: false,
+    setAuthenticatedUser: vi.fn(),
     signOut: vi.fn(),
 };
 

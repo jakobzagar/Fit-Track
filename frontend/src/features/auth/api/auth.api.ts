@@ -26,6 +26,6 @@ export function logout(): Promise<MessageResponse> {
     });
 }
 
-export function getMe(): Promise<AuthResponse> {
+export function getCurrentUser(): Promise<AuthResponse> {
     return apiRequest("/auth/me", authResponseSchema, {onUnauthorized: "ignore"});
 }

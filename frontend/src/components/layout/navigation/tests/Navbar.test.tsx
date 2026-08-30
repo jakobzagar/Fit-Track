@@ -7,9 +7,9 @@ import {user} from "../../../../test/fixtures/users";
 import {Navbar} from "../Navbar";
 
 const authValue = {
-    user,
-    isLoading: false,
-    setUser: vi.fn(),
+    currentUser: user,
+    isRestoringSession: false,
+    setAuthenticatedUser: vi.fn(),
     signOut: vi.fn().mockResolvedValue(undefined),
 };
 

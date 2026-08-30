@@ -1,7 +1,7 @@
 import {render, screen, waitFor} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
-import {LoginForm} from "../components/LogInForm";
+import {LoginForm} from "../components/LoginForm";
 
 describe("LoginForm", () => {
     test("shows validation errors and does not submit invalid data", async () => {
