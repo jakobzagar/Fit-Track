@@ -1,7 +1,7 @@
 import {useState, type Dispatch, type SetStateAction} from "react";
 import type {ConfirmDialogFunction} from "../../../../components/ui/dialogs/context/confirm-dialog.context";
 import {
-    addSetToWorkoutExercise,
+    addWorkoutSet,
     deleteWorkoutSet,
     updateWorkoutSet,
 } from "../../workout-exercises/api/workout-exercises.api";
@@ -21,7 +21,7 @@ export function useWorkoutSetMutations(
         if (!workoutId) throw new Error("Workout ID is missing");
         setError("");
         try {
-            const {workoutSet} = await addSetToWorkoutExercise(workoutId, workoutExerciseId, data);
+            const {workoutSet} = await addWorkoutSet(workoutId, workoutExerciseId, data);
             setWorkout((current) =>
                 current
                     ? {

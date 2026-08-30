@@ -67,7 +67,7 @@ export function useActiveWorkout(
             setPreviousPerformances(performancesResponse.previousPerformances);
         } catch (caught) {
             if (requestId === requestIdRef.current) {
-                setError(caught instanceof Error ? caught.message : "Failed to load session");
+                setError(caught instanceof Error ? caught.message : "Failed to load workout");
             }
         } finally {
             if (requestId === requestIdRef.current) setIsLoading(false);
@@ -133,16 +133,16 @@ export function useActiveWorkout(
         setError("");
         if (dirtySetIds.size > 0) {
             setError(
-                `Save or discard ${dirtySetIds.size === 1 ? "the edited set" : `all ${dirtySetIds.size} edited sets`} before cancelling the session.`,
+                `Save or discard ${dirtySetIds.size === 1 ? "the edited set" : `all ${dirtySetIds.size} edited sets`} before cancelling the workout.`,
             );
             return;
         }
 
         const confirmed = await confirm({
-            title: "Cancel active session?",
+            title: "Cancel active workout?",
             message:
                 "The workout will return to draft. Saved set values will remain, but completed set checkmarks will be reset.",
-            confirmLabel: "Cancel session",
+            confirmLabel: "Cancel workout",
             variant: "danger",
         });
         if (!confirmed) return;
@@ -152,7 +152,7 @@ export function useActiveWorkout(
             await cancelWorkout(workoutId);
             void navigate(`/workouts/${workoutId}`, {replace: true});
         } catch (caught) {
-            setError(caught instanceof Error ? caught.message : "Failed to cancel session");
+            setError(caught instanceof Error ? caught.message : "Failed to cancel workout");
             setIsCancelling(false);
         }
     }
@@ -164,8 +164,8 @@ export function useActiveWorkout(
         }
         void confirm({
             title: "Leave active workout?",
-            message: "Your saved sets will remain and you can continue this session later.",
-            confirmLabel: "Leave session",
+            message: "Your saved sets will remain and you can continue this workout later.",
+            confirmLabel: "Leave workout",
         }).then((confirmed) => {
             if (confirmed && workout) void navigate(`/workouts/${workout.id}`);
         });

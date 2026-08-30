@@ -86,7 +86,7 @@ export function WorkoutsPage() {
             <PageHeader
                 eyebrow="Training log"
                 title="Workouts"
-                description="Plan the session, log the work and leave with a record you can build on next time."
+                description="Plan the workout, log the work and leave with a record you can build on next time."
                 action={
                     <Button type="button" onClick={openCreateForm}>
                         <Icon name="plus" size={16} />
@@ -106,7 +106,7 @@ export function WorkoutsPage() {
             <div>
                 <div className="mb-4 flex items-end justify-between">
                     <div>
-                        <h2 className="section-title">Recent sessions</h2>
+                        <h2 className="section-title">Recent workouts</h2>
                         <p className="section-caption">
                             {workoutData.workouts.length} workouts in your log
                         </p>

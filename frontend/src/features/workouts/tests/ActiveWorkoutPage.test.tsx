@@ -49,7 +49,7 @@ function mockLoadRequests(workout = createWorkout()) {
 }
 
 describe("ActiveWorkoutPage", () => {
-    test("starts a draft workout and renders the live session", async () => {
+    test("starts a draft workout and renders the active workout", async () => {
         const draft = createWorkout({status: "DRAFT", startedAt: null});
         mockLoadRequests(draft);
         const startRequest = vi.fn();
@@ -81,13 +81,13 @@ describe("ActiveWorkoutPage", () => {
         expect(await screen.findByRole("heading", {name: "Workout detail"})).toBeInTheDocument();
     });
 
-    test("retries a failed session load", async () => {
+    test("retries a failed workout load", async () => {
         let attempts = 0;
         server.use(
             http.get(`${API_URL}/workouts/${workoutId}`, () => {
                 attempts += 1;
                 return attempts === 1
-                    ? HttpResponse.json({message: "Session unavailable"}, {status: 503})
+                    ? HttpResponse.json({message: "Workout unavailable"}, {status: 503})
                     : HttpResponse.json({workout: createWorkout()});
             }),
             http.get(`${API_URL}/exercises`, () => HttpResponse.json({exercises: [exercise]})),
@@ -160,7 +160,7 @@ describe("ActiveWorkoutPage", () => {
         expect(await screen.findByRole("heading", {name: "Workout detail"})).toBeInTheDocument();
     });
 
-    test("cancels an active session after confirmation and returns to detail", async () => {
+    test("cancels an active workout after confirmation and returns to detail", async () => {
         mockLoadRequests();
         const cancelRequest = vi.fn();
         server.use(
@@ -178,16 +178,16 @@ describe("ActiveWorkoutPage", () => {
         const {user} = renderPage();
         await screen.findByRole("heading", {name: "Push day"});
 
-        await user.click(screen.getByRole("button", {name: "Cancel session"}));
-        const dialog = screen.getByRole("alertdialog", {name: "Cancel active session?"});
+        await user.click(screen.getByRole("button", {name: "Cancel workout"}));
+        const dialog = screen.getByRole("alertdialog", {name: "Cancel active workout?"});
         expect(dialog).toHaveTextContent("completed set checkmarks will be reset");
-        await user.click(within(dialog).getByRole("button", {name: "Cancel session"}));
+        await user.click(within(dialog).getByRole("button", {name: "Cancel workout"}));
 
         expect(await screen.findByRole("heading", {name: "Workout detail"})).toBeInTheDocument();
         expect(cancelRequest).toHaveBeenCalledOnce();
     });
 
-    test("shows a finish error and keeps the active session open", async () => {
+    test("shows a finish error and keeps the active workout open", async () => {
         const completedSet = {...workoutSet, completedAt: "2026-07-26T10:20:00.000Z"};
         mockLoadRequests(
             createWorkout({
@@ -231,7 +231,7 @@ describe("ActiveWorkoutPage", () => {
         expect(await screen.findByText("0/2 done")).toBeInTheDocument();
     });
 
-    test("adds an exercise to an active session", async () => {
+    test("adds an exercise to an active workout", async () => {
         mockLoadRequests(createWorkout({workoutExercises: []}));
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/exercises`, () => {

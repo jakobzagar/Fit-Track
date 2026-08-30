@@ -157,7 +157,7 @@ Application invariants complement the database rules: protected reads and mutati
 | --------- | ----------------------------- | ----------- | ---------------------------------------------------------- |
 | Start     | `DRAFT`                       | `ACTIVE`    | Exercises and planned sets                                 |
 | Cancel    | `ACTIVE`                      | `DRAFT`     | Set values; completion marks are cleared                   |
-| Finish    | `ACTIVE` with a completed set | `COMPLETED` | Full recorded session                                      |
+| Finish    | `ACTIVE` with a completed set | `COMPLETED` | Full recorded workout                                      |
 | Reopen    | `COMPLETED`                   | `ACTIVE`    | Original start time, exercises, sets, and completion marks |
 | Delete    | Any owned state               | Removed     | Nothing; nested rows cascade                               |
 
@@ -232,7 +232,7 @@ Archiving removes an exercise from new workout selection without destroying hist
 
 ### Explicit workout reopening
 
-Completed sessions are immutable during normal editing. A deliberate reopen action makes corrections possible while keeping accidental changes visible in the user flow. Reopening is rejected while another workout is active.
+Completed workouts are immutable during normal editing. A deliberate reopen action makes corrections possible while keeping accidental changes visible in the user flow. Reopening is rejected while another workout is active.
 
 ### Separate migration image
 

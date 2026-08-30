@@ -20,8 +20,8 @@ export function WorkoutFormDialog({workout, onCreate, onUpdate, onClose}: Workou
             title={workout ? "Edit workout" : "Create workout"}
             description={
                 workout
-                    ? "Update the session details without leaving your training log."
-                    : "Create the session first, then add exercises and working sets."
+                    ? "Update the workout details without leaving your training log."
+                    : "Create the workout first, then add exercises and working sets."
             }
             onClose={onClose}
         >

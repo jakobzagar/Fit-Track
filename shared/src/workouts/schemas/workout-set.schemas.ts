@@ -76,13 +76,13 @@ export const workoutSetResponseSchema = z
     })
     .strict();
 
-export const addSetToWorkoutExerciseResponseSchema = workoutSetResponseSchema;
+export const addWorkoutSetResponseSchema = workoutSetResponseSchema;
 export const deleteWorkoutSetResponseSchema = messageResponseSchema;
 
 export type WorkoutSet = z.infer<typeof workoutSetSchema>;
 export type CreateWorkoutSetInput = z.infer<typeof createWorkoutSetSchema>;
 export type UpdateWorkoutSetInput = z.infer<typeof updateWorkoutSetSchema>;
 export type SetWorkoutSetCompletionInput = z.infer<typeof setWorkoutSetCompletionSchema>;
-export type AddSetToWorkoutExerciseResponse = z.infer<typeof addSetToWorkoutExerciseResponseSchema>;
+export type AddWorkoutSetResponse = z.infer<typeof addWorkoutSetResponseSchema>;
 export type WorkoutSetResponse = z.infer<typeof workoutSetResponseSchema>;
 export type DeleteWorkoutSetResponse = z.infer<typeof deleteWorkoutSetResponseSchema>;

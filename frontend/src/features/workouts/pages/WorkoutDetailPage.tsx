@@ -75,7 +75,7 @@ export function WorkoutDetailPage() {
     return (
         <section className="page-stack">
             <PageHeader
-                eyebrow={workout.status === "COMPLETED" ? "Completed session" : "Workout plan"}
+                eyebrow={workout.status === "COMPLETED" ? "Completed workout" : "Workout plan"}
                 title={workout.name}
                 description={`${formatWorkoutDate(workout.performedAt, {day: "2-digit", month: "long", year: "numeric"})}${workout.notes ? ` · ${workout.notes}` : ""}`}
                 action={
@@ -84,7 +84,7 @@ export function WorkoutDetailPage() {
                             className="inline-flex min-h-11 items-center rounded-[10px] bg-flame px-4 text-xs font-extrabold tracking-[0.07em] text-ink uppercase"
                             to={`/workouts/${workout.id}/session`}
                         >
-                            {workout.status === "ACTIVE" ? "Continue session" : "Start workout"}
+                            {workout.status === "ACTIVE" ? "Continue workout" : "Start workout"}
                         </Link>
                     ) : (
                         <Button

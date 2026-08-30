@@ -5,7 +5,7 @@ import {
     updateWorkoutExerciseService,
 } from "../services/workout-exercise.service.js";
 import {
-    addSetToWorkoutExerciseService,
+    addWorkoutSetService,
     deleteWorkoutSetService,
     updateWorkoutSetService,
     setWorkoutSetCompletionService,
@@ -40,7 +40,7 @@ export async function addWorkoutSetController(_req: Request, res: Response) {
     const params = res.locals.params as WorkoutExerciseParams;
     const body = res.locals.body as CreateWorkoutSetInput;
 
-    const workoutSet = await addSetToWorkoutExerciseService(
+    const workoutSet = await addWorkoutSetService(
         res.locals.userId,
         params.workoutId,
         params.workoutExerciseId,

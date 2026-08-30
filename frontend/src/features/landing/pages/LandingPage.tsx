@@ -60,7 +60,7 @@ export function LandingPage() {
             <LandingFeatures />
 
             <section className="landing-cta">
-                <p className="eyebrow">Your next session starts here</p>
+                <p className="eyebrow">Your next workout starts here</p>
                 <h2>Ready to put in the work?</h2>
                 <Link className="landing-button" to={primaryPath}>
                     {primaryLabel}

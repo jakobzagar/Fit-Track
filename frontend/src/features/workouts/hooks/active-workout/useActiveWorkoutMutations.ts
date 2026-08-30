@@ -1,7 +1,7 @@
 import {useState, type Dispatch, type SetStateAction} from "react";
 import {
     addExerciseToWorkout as requestAddExerciseToWorkout,
-    addSetToWorkoutExercise,
+    addWorkoutSet as requestAddWorkoutSet,
     setWorkoutSetCompletion,
     updateWorkoutSet,
 } from "../../workout-exercises/api/workout-exercises.api";
@@ -68,7 +68,7 @@ export function useActiveWorkoutMutations(
     async function addWorkoutSet(workoutExerciseId: string, data: CreateWorkoutSetInput) {
         if (!workoutId) return;
         setError("");
-        const {workoutSet} = await addSetToWorkoutExercise(workoutId, workoutExerciseId, data);
+        const {workoutSet} = await requestAddWorkoutSet(workoutId, workoutExerciseId, data);
         setWorkout((current) =>
             current
                 ? {

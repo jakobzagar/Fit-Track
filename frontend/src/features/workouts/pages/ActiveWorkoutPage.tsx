@@ -64,7 +64,7 @@ export function ActiveWorkoutPage() {
 
             <Card>
                 <div className="mb-5">
-                    <p className="eyebrow">Build session</p>
+                    <p className="eyebrow">Build workout</p>
                     <h2 className="section-title mt-2">Add an exercise</h2>
                 </div>
                 <AddExerciseToWorkoutForm

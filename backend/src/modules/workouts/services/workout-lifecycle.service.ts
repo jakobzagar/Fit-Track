@@ -20,7 +20,7 @@ export async function startWorkoutService(userId: string, workoutId: string) {
 
         if (!workout) throw new AppError("Workout not found", 404);
 
-        // Starting is idempotent because the session can mount more than once in React Strict Mode.
+        // Starting is idempotent because the active workout view can mount more than once in React Strict Mode.
         if (workout.status === "ACTIVE") return workout;
         if (workout.status === "COMPLETED") {
             throw new AppError("Completed workout cannot be started", 409);

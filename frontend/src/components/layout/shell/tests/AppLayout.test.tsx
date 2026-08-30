@@ -19,7 +19,10 @@ function renderLayout(route: string) {
                 <Routes>
                     <Route element={<AppLayout />}>
                         <Route path="/workouts" element={<h1>Workouts page</h1>} />
-                        <Route path="/workouts/:id/session" element={<h1>Session page</h1>} />
+                        <Route
+                            path="/workouts/:id/session"
+                            element={<h1>Active workout page</h1>}
+                        />
                     </Route>
                 </Routes>
             </AuthContext>
@@ -36,10 +39,10 @@ describe("AppLayout", () => {
         expect(screen.getByRole("heading", {name: "Workouts page"})).toBeInTheDocument();
     });
 
-    test("keeps the live session free of app navigation", () => {
+    test("keeps the active workout free of app navigation", () => {
         renderLayout("/workouts/123/session");
 
-        expect(screen.getByRole("heading", {name: "Session page"})).toBeInTheDocument();
+        expect(screen.getByRole("heading", {name: "Active workout page"})).toBeInTheDocument();
         expect(screen.queryByRole("navigation", {name: "Main navigation"})).not.toBeInTheDocument();
         expect(
             screen.queryByRole("navigation", {name: "Footer navigation"}),

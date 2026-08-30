@@ -2,7 +2,7 @@ import {describe, expect, test} from "vitest";
 
 import {
     addExerciseToWorkoutSchema,
-    addSetToWorkoutExerciseResponseSchema,
+    addWorkoutSetResponseSchema,
     deleteWorkoutExerciseResponseSchema,
     createWorkoutSetSchema,
     deleteWorkoutSetResponseSchema,
@@ -142,6 +142,6 @@ describe("workout exercise responses", () => {
     test("reuses common and workout-set response contracts", () => {
         expect(deleteWorkoutExerciseResponseSchema).toBe(messageResponseSchema);
         expect(deleteWorkoutSetResponseSchema).toBe(messageResponseSchema);
-        expect(addSetToWorkoutExerciseResponseSchema).toBe(workoutSetResponseSchema);
+        expect(addWorkoutSetResponseSchema).toBe(workoutSetResponseSchema);
     });
 });

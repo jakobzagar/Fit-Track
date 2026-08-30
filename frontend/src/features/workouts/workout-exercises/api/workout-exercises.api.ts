@@ -1,6 +1,6 @@
 import {
     addExerciseToWorkoutResponseSchema,
-    addSetToWorkoutExerciseResponseSchema,
+    addWorkoutSetResponseSchema,
     deleteWorkoutExerciseResponseSchema,
     deleteWorkoutSetResponseSchema,
     workoutExerciseResponseSchema,
@@ -10,7 +10,7 @@ import {apiRequest} from "../../../../lib/api/api.client";
 import type {
     AddExerciseToWorkoutInput,
     AddExerciseToWorkoutResponse,
-    AddSetToWorkoutExerciseResponse,
+    AddWorkoutSetResponse,
     CreateWorkoutSetInput,
     DeleteWorkoutExerciseResponse,
     DeleteWorkoutSetResponse,
@@ -31,14 +31,14 @@ export function addExerciseToWorkout(
     });
 }
 
-export function addSetToWorkoutExercise(
+export function addWorkoutSet(
     workoutId: string,
     workoutExerciseId: string,
     data: CreateWorkoutSetInput,
-): Promise<AddSetToWorkoutExerciseResponse> {
+): Promise<AddWorkoutSetResponse> {
     return apiRequest(
         `/workouts/${workoutId}/exercises/${workoutExerciseId}/sets`,
-        addSetToWorkoutExerciseResponseSchema,
+        addWorkoutSetResponseSchema,
         {
             method: "POST",
             body: data,

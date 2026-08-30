@@ -13,7 +13,7 @@ const features = [
     },
     {
         title: "Keep progressing",
-        description: "Return to your workout history and make every next session count.",
+        description: "Return to your workout history and make every next workout count.",
         icon: "arrow" as const,
     },
 ];

@@ -11,15 +11,15 @@ function renderGuard({
 } = {}) {
     function Harness() {
         useUnsavedWorkoutGuard({dirtySetCount, isFinishing, confirm});
-        return <p>Session</p>;
+        return <p>Active workout</p>;
     }
 
     const router = createMemoryRouter(
         [
-            {path: "/session", element: <Harness />},
+            {path: "/active-workout", element: <Harness />},
             {path: "/workouts", element: <p>Workouts</p>},
         ],
-        {initialEntries: ["/session"]},
+        {initialEntries: ["/active-workout"]},
     );
     render(<RouterProvider router={router} />);
     return {router, confirm};

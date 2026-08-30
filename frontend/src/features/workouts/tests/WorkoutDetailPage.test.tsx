@@ -20,7 +20,7 @@ function renderPage() {
     return renderWithProviders(
         <Routes>
             <Route path="/workouts/:workoutId" element={<WorkoutDetailPage />} />
-            <Route path="/workouts/:workoutId/session" element={<h1>Workout session</h1>} />
+            <Route path="/workouts/:workoutId/session" element={<h1>Active workout</h1>} />
         </Routes>,
         {route: `/workouts/${workoutId}`},
     );
@@ -42,7 +42,7 @@ describe("WorkoutDetailPage", () => {
         expect(await screen.findByRole("heading", {name: "Push day"})).toBeInTheDocument();
         expect(screen.getByRole("heading", {name: "Bench press"})).toBeInTheDocument();
         expect(screen.getByText("80")).toBeInTheDocument();
-        expect(screen.getByRole("link", {name: "Continue session"})).toHaveAttribute(
+        expect(screen.getByRole("link", {name: "Continue workout"})).toHaveAttribute(
             "href",
             `/workouts/${workoutId}/session`,
         );
@@ -57,7 +57,7 @@ describe("WorkoutDetailPage", () => {
         );
         renderPage();
 
-        expect(await screen.findByText("Completed session")).toBeInTheDocument();
+        expect(await screen.findByText("Completed workout")).toBeInTheDocument();
         expect(screen.queryByRole("heading", {name: "Add exercise"})).not.toBeInTheDocument();
         expect(screen.queryByRole("button", {name: "Edit"})).not.toBeInTheDocument();
         expect(screen.queryByRole("button", {name: "Edit set"})).not.toBeInTheDocument();
@@ -91,13 +91,13 @@ describe("WorkoutDetailPage", () => {
             ),
         );
         const {user} = renderPage();
-        await screen.findByText("Completed session");
+        await screen.findByText("Completed workout");
 
         await user.click(screen.getByRole("button", {name: "Reopen workout"}));
         const dialog = screen.getByRole("alertdialog", {name: "Reopen completed workout?"});
         await user.click(within(dialog).getByRole("button", {name: "Reopen workout"}));
 
-        expect(await screen.findByRole("heading", {name: "Workout session"})).toBeInTheDocument();
+        expect(await screen.findByRole("heading", {name: "Active workout"})).toBeInTheDocument();
     });
 
     test("shows a failed load", async () => {

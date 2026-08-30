@@ -22,7 +22,7 @@ export function ExerciseFormDialog({
             description={
                 exercise
                     ? "Keep the exercise consistent so workout history remains useful."
-                    : "Use a clear name you will recognize immediately during a session."
+                    : "Use a clear name you will recognize immediately during a workout."
             }
             onClose={onClose}
         >

@@ -34,7 +34,7 @@ export function ActiveWorkoutActionBar({
                     disabled={isFinishing || isCancelling}
                     onClick={onCancel}
                 >
-                    {isCancelling ? "Cancelling..." : "Cancel session"}
+                    {isCancelling ? "Cancelling..." : "Cancel workout"}
                 </Button>
                 <Button
                     className="w-full sm:w-auto"

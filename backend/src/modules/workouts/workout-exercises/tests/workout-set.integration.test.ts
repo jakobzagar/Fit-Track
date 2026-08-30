@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
 import {
-    addSetToWorkoutExerciseResponseSchema,
+    addWorkoutSetResponseSchema,
     deleteWorkoutSetResponseSchema,
     workoutSetResponseSchema,
 } from "@fit-track/shared/workouts";
@@ -33,8 +33,7 @@ describe("workout sets", () => {
         });
 
         expect(responses.map((response) => response.status)).toEqual([201, 201]);
-        for (const response of responses)
-            addSetToWorkoutExerciseResponseSchema.parse(response.body);
+        for (const response of responses) addWorkoutSetResponseSchema.parse(response.body);
         expect(stored.map(({setNumber}) => setNumber)).toEqual([1, 2]);
     });
 
@@ -56,12 +55,12 @@ describe("workout sets", () => {
         ).send({durationSeconds: 60});
 
         expect(first.status).toBe(201);
-        expect(addSetToWorkoutExerciseResponseSchema.parse(first.body).workoutSet).toMatchObject({
+        expect(addWorkoutSetResponseSchema.parse(first.body).workoutSet).toMatchObject({
             setNumber: 1,
             reps: 10,
             weight: 82.5,
         });
-        expect(addSetToWorkoutExerciseResponseSchema.parse(second.body).workoutSet).toMatchObject({
+        expect(addWorkoutSetResponseSchema.parse(second.body).workoutSet).toMatchObject({
             setNumber: 2,
             durationSeconds: 60,
         });

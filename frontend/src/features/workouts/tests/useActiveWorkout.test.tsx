@@ -62,7 +62,7 @@ function mockLoadRequests() {
 }
 
 describe("useActiveWorkout", () => {
-    test("ignores stale session data after navigating to another workout", async () => {
+    test("ignores stale workout data after navigating to another workout", async () => {
         const nextWorkoutId = "123e4567-e89b-42d3-a456-426614174099";
         const oldRequestStarted = createDeferred();
         const releaseOldRequest = createDeferred();
@@ -77,7 +77,7 @@ describe("useActiveWorkout", () => {
                 return HttpResponse.json({
                     workout: createWorkout({
                         id: String(params.id),
-                        name: params.id === workoutId ? "Old session" : "Current session",
+                        name: params.id === workoutId ? "Old workout" : "Current workout",
                     }),
                 });
             }),
@@ -91,16 +91,16 @@ describe("useActiveWorkout", () => {
         await oldRequestStarted.promise;
         await act(() => hook.router.navigate(`/workouts/${nextWorkoutId}/session`));
 
-        await waitFor(() => expect(hook.current?.workout?.name).toBe("Current session"));
+        await waitFor(() => expect(hook.current?.workout?.name).toBe("Current workout"));
         await act(async () => {
             releaseOldRequest.resolve();
             await oldRequestCompleted.promise;
         });
-        expect(hook.current?.workout?.name).toBe("Current session");
+        expect(hook.current?.workout?.name).toBe("Current workout");
         expect(hook.router.state.location.pathname).toBe(`/workouts/${nextWorkoutId}/session`);
     });
 
-    test("keeps the session open when clean exit is cancelled", async () => {
+    test("keeps the workout open when clean exit is cancelled", async () => {
         mockLoadRequests();
         const hook = renderActiveWorkoutHook();
         await waitFor(() => expect(hook.current?.isLoading).toBe(false));
@@ -176,7 +176,7 @@ describe("useActiveWorkout", () => {
         expect(hook.current?.completedSetCount).toBe(0);
     });
 
-    test("reports an add-exercise failure without changing the session", async () => {
+    test("reports an add-exercise failure without changing the workout", async () => {
         mockLoadRequests();
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/exercises`, () =>

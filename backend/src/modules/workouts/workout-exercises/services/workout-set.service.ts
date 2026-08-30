@@ -11,7 +11,7 @@ import type {
     UpdateWorkoutSetInput,
 } from "@fit-track/shared/workouts";
 
-export async function addSetToWorkoutExerciseService(
+export async function addWorkoutSetService(
     userId: string,
     workoutId: string,
     workoutExerciseId: string,
