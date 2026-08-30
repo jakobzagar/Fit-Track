@@ -8,7 +8,7 @@ import {API_URL} from "../../../test/constants";
 import {server} from "../../../test/mocks/server";
 import {
     createWorkout,
-    createWorkoutBase,
+    createWorkoutRecord,
     exercise,
     workoutExercise,
     workoutExerciseId,
@@ -57,7 +57,7 @@ describe("ActiveWorkoutPage", () => {
             http.post(`${API_URL}/workouts/${workoutId}/start`, () => {
                 startRequest();
                 return HttpResponse.json({
-                    workout: createWorkoutBase({
+                    workout: createWorkoutRecord({
                         ...draft,
                         status: "ACTIVE",
                         startedAt: "2026-07-26T10:05:00.000Z",
@@ -144,7 +144,7 @@ describe("ActiveWorkoutPage", () => {
         server.use(
             http.post(`${API_URL}/workouts/${workoutId}/finish`, () =>
                 HttpResponse.json({
-                    workout: createWorkoutBase({
+                    workout: createWorkoutRecord({
                         ...active,
                         status: "COMPLETED",
                         completedAt: "2026-07-26T10:30:00.000Z",
@@ -167,7 +167,7 @@ describe("ActiveWorkoutPage", () => {
             http.post(`${API_URL}/workouts/${workoutId}/cancel`, () => {
                 cancelRequest();
                 return HttpResponse.json({
-                    workout: createWorkoutBase({
+                    workout: createWorkoutRecord({
                         status: "DRAFT",
                         startedAt: null,
                         completedAt: null,

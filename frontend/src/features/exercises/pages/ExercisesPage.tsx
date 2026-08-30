@@ -1,6 +1,6 @@
 import {useState} from "react";
 import {Button} from "../../../components/ui/actions/Button";
-import {Feedback} from "../../../components/ui/feedback/Feedback";
+import {StatusMessage} from "../../../components/ui/feedback/StatusMessage";
 import {Icon} from "../../../components/ui/display/Icon";
 import {PageHeader} from "../../../components/ui/display/PageHeader";
 import {SkeletonGrid} from "../../../components/ui/display/SkeletonGrid";
@@ -69,7 +69,7 @@ export function ExercisesPage() {
     if (exerciseData.loadError) {
         return (
             <div className="page-stack">
-                <Feedback>{exerciseData.loadError}</Feedback>
+                <StatusMessage>{exerciseData.loadError}</StatusMessage>
                 <Button className="w-fit" variant="secondary" onClick={exerciseData.retry}>
                     Try again
                 </Button>
@@ -92,11 +92,13 @@ export function ExercisesPage() {
                     ) : undefined
                 }
             />
-            {exerciseData.mutationError && <Feedback>{exerciseData.mutationError}</Feedback>}
+            {exerciseData.mutationError && (
+                <StatusMessage>{exerciseData.mutationError}</StatusMessage>
+            )}
             {exerciseData.successMessage && (
-                <Feedback tone="success" onDismiss={exerciseData.clearSuccess}>
+                <StatusMessage tone="success" onDismiss={exerciseData.clearSuccess}>
                     {exerciseData.successMessage}
-                </Feedback>
+                </StatusMessage>
             )}
 
             <ExerciseStatusTabs status={status} onChange={changeStatus} />

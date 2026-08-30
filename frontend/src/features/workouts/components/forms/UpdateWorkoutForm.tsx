@@ -12,7 +12,7 @@ import {
     focusFirstInvalidField,
     invalidFieldProps,
 } from "../../../../components/ui/forms/utils/formAccessibility";
-import {workoutDateInputValue} from "../../utils/workout-date";
+import {toWorkoutDateInputValue} from "../../utils/workout-date";
 
 interface UpdateWorkoutFormProps {
     workout: WorkoutSummary;
@@ -31,7 +31,7 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
     const id = useId();
     const [name, setName] = useState(workout.name);
     const [performedAt, setPerformedAt] = useState(() =>
-        workoutDateInputValue(workout.performedAt),
+        toWorkoutDateInputValue(workout.performedAt),
     );
     const [notes, setNotes] = useState(workout.notes ?? "");
 

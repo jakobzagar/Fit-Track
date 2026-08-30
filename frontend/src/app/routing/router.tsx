@@ -9,7 +9,7 @@ import {WorkoutDetailPage} from "../../features/workouts/pages/WorkoutDetailPage
 import {ActiveWorkoutPage} from "../../features/workouts/pages/ActiveWorkoutPage";
 import {LandingPage} from "../../features/landing/pages/LandingPage";
 import {GuestRoute} from "../../features/auth/components/GuestRoute";
-import {RouteExperience} from "./RouteExperience";
+import {RouteChangeEffects} from "./RouteChangeEffects";
 
 function NotFoundPage() {
     return (
@@ -36,7 +36,7 @@ function NotFoundPage() {
 function createAppRouter() {
     return createBrowserRouter([
         {
-            element: <RouteExperience />,
+            element: <RouteChangeEffects />,
             children: [
                 {path: "/", element: <LandingPage />},
                 {

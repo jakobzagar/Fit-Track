@@ -7,7 +7,7 @@ import {
 } from "@fit-track/shared/workouts";
 import {prisma} from "../../../../db/prisma.js";
 import {
-    authenticated,
+    requestAsUser,
     createTestExercise,
     createTestSet,
     createTestUser,
@@ -26,7 +26,7 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
 
         const responses = await Promise.all(
             exercises.map((exercise) =>
-                authenticated("post", `/api/workouts/${workout.id}/exercises`, owner.cookie).send({
+                requestAsUser("post", `/api/workouts/${workout.id}/exercises`, owner.cookie).send({
                     exerciseId: exercise.id,
                 }),
             ),
@@ -47,12 +47,12 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
         const first = await createTestExercise(owner.user.id, {name: "Bench"});
         const second = await createTestExercise(owner.user.id, {name: "Squat"});
 
-        const firstResponse = await authenticated(
+        const firstResponse = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises`,
             owner.cookie,
         ).send({exerciseId: first.id, notes: "  Controlled  "});
-        const secondResponse = await authenticated(
+        const secondResponse = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises`,
             owner.cookie,
@@ -73,7 +73,7 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
         const exercise = await createTestExercise(owner.user.id);
         await createTestWorkoutExercise(workout.id, exercise.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises`,
             owner.cookie,
@@ -90,7 +90,7 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
         const workout = await createTestWorkout(owner.user.id);
         const archived = await createTestExercise(owner.user.id, {isArchived: true});
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises`,
             owner.cookie,
@@ -106,7 +106,7 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
         const workout = await createTestWorkout(owner.user.id);
         const foreign = await createTestExercise(other.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises`,
             owner.cookie,
@@ -122,7 +122,7 @@ describe("POST /api/workouts/:workoutId/exercises", () => {
         const workout = await createTestWorkout(other.user.id);
         const exercise = await createTestExercise(owner.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises`,
             owner.cookie,
@@ -149,12 +149,12 @@ describe("workout exercise updates and deletion", () => {
         );
 
         const responses = await Promise.all([
-            authenticated(
+            requestAsUser(
                 "patch",
                 `/api/workouts/${workout.id}/exercises/${items[0]!.id}`,
                 owner.cookie,
             ).send({position: 3}),
-            authenticated(
+            requestAsUser(
                 "patch",
                 `/api/workouts/${workout.id}/exercises/${items[2]!.id}`,
                 owner.cookie,
@@ -185,7 +185,7 @@ describe("workout exercise updates and deletion", () => {
             ),
         );
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/workouts/${workout.id}/exercises/${items[2]!.id}`,
             owner.cookie,
@@ -213,7 +213,7 @@ describe("workout exercise updates and deletion", () => {
         const exercise = await createTestExercise(owner.user.id);
         const item = await createTestWorkoutExercise(workout.id, exercise.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/workouts/${workout.id}/exercises/${item.id}`,
             owner.cookie,
@@ -234,7 +234,7 @@ describe("workout exercise updates and deletion", () => {
         const second = await createTestWorkoutExercise(workout.id, secondExercise.id, 2);
         await createTestSet(first.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "delete",
             `/api/workouts/${workout.id}/exercises/${first.id}`,
             owner.cookie,
@@ -257,7 +257,7 @@ describe("workout exercise updates and deletion", () => {
         const exercise = await createTestExercise(other.user.id);
         const item = await createTestWorkoutExercise(workout.id, exercise.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/workouts/${workout.id}/exercises/${item.id}`,
             owner.cookie,
@@ -276,7 +276,7 @@ describe("workout exercise updates and deletion", () => {
         const exercise = await createTestExercise(other.user.id);
         const item = await createTestWorkoutExercise(workout.id, exercise.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "delete",
             `/api/workouts/${workout.id}/exercises/${item.id}`,
             owner.cookie,

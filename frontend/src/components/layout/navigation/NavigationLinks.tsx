@@ -6,7 +6,7 @@ const navigation = [
     {to: "/exercises", label: "Exercises", icon: "exercise" as const},
 ];
 
-function navigationClass({isActive}: {isActive: boolean}) {
+function getNavigationClassName({isActive}: {isActive: boolean}) {
     return `relative flex min-h-11 items-center gap-2 px-3 text-xs font-extrabold tracking-[0.1em] uppercase transition ${isActive ? "text-cream" : "text-dim hover:text-cream"}`;
 }
 
@@ -14,7 +14,7 @@ export function DesktopNavigation() {
     return (
         <nav className="hidden items-center gap-2 md:flex" aria-label="Main navigation">
             {navigation.map((item) => (
-                <NavLink key={item.to} className={navigationClass} to={item.to}>
+                <NavLink key={item.to} className={getNavigationClassName} to={item.to}>
                     {({isActive}) => (
                         <>
                             {item.label}
@@ -42,7 +42,7 @@ export function MobileNavigation({
             aria-label="Mobile navigation"
         >
             {navigation.map((item) => (
-                <NavLink key={item.to} className={navigationClass} to={item.to}>
+                <NavLink key={item.to} className={getNavigationClassName} to={item.to}>
                     {({isActive}) => (
                         <span
                             className={`flex w-full flex-col items-center gap-1 rounded-[9px] py-2 ${isActive ? "bg-flame text-ink" : ""}`}

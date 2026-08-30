@@ -1,8 +1,8 @@
 import {describe, expect, it} from "vitest";
 import {messageResponseSchema} from "@fit-track/shared/common";
-import {workoutBaseResponseSchema} from "@fit-track/shared/workouts";
+import {workoutRecordResponseSchema} from "@fit-track/shared/workouts";
 import {prisma} from "../../../db/prisma.js";
-import {authenticated, createTestUser, createTestWorkout} from "../../../test/support/fixtures.js";
+import {requestAsUser, createTestUser, createTestWorkout} from "../../../test/support/fixtures.js";
 
 async function expectLifecycleConstraint(promise: Promise<unknown>) {
     await expect(promise).rejects.toMatchObject({
@@ -65,14 +65,14 @@ describe("workout lifecycle database constraints and concurrency", () => {
 
         const responses = await Promise.all(
             [first, second].map((workout) =>
-                authenticated("post", `/api/workouts/${workout.id}/start`, owner.cookie),
+                requestAsUser("post", `/api/workouts/${workout.id}/start`, owner.cookie),
             ),
         );
         const successful = responses.find((response) => response.status === 200);
         const conflicted = responses.find((response) => response.status === 409);
 
         expect(responses.map((response) => response.status).sort()).toEqual([200, 409]);
-        expect(workoutBaseResponseSchema.parse(successful?.body).workout.status).toBe("ACTIVE");
+        expect(workoutRecordResponseSchema.parse(successful?.body).workout.status).toBe("ACTIVE");
         expect(messageResponseSchema.parse(conflicted?.body)).toEqual({
             message: "Another workout is already active",
         });
@@ -92,13 +92,13 @@ describe("workout lifecycle database constraints and concurrency", () => {
         });
 
         const responses = await Promise.all([
-            authenticated("post", `/api/workouts/${draft.id}/start`, owner.cookie),
-            authenticated("post", `/api/workouts/${completed.id}/reopen`, owner.cookie),
+            requestAsUser("post", `/api/workouts/${draft.id}/start`, owner.cookie),
+            requestAsUser("post", `/api/workouts/${completed.id}/reopen`, owner.cookie),
         ]);
 
         expect(responses.map((response) => response.status).sort()).toEqual([200, 409]);
         for (const response of responses) {
-            if (response.status === 200) workoutBaseResponseSchema.parse(response.body);
+            if (response.status === 200) workoutRecordResponseSchema.parse(response.body);
             else
                 expect(messageResponseSchema.parse(response.body)).toEqual({
                     message: "Another workout is already active",

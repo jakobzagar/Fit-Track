@@ -5,7 +5,7 @@ import {exerciseResponseSchema} from "@fit-track/shared/exercises";
 import {app} from "../../../app.js";
 import {prisma} from "../../../db/prisma.js";
 import {
-    authenticated,
+    requestAsUser,
     createTestExercise,
     createTestUser,
     testOrigin,
@@ -26,7 +26,7 @@ describe("POST /api/exercises", () => {
     it("normalizes and creates an exercise owned by the authenticated user", async () => {
         const {user, cookie} = await createTestUser("owner@example.com");
 
-        const response = await authenticated("post", "/api/exercises", cookie).send({
+        const response = await requestAsUser("post", "/api/exercises", cookie).send({
             name: "  Bench press  ",
             muscleGroup: "  Chest  ",
             equipment: "  Barbell  ",
@@ -47,7 +47,7 @@ describe("POST /api/exercises", () => {
     it("stores missing optional equipment as null", async () => {
         const {cookie} = await createTestUser("owner@example.com");
 
-        const response = await authenticated("post", "/api/exercises", cookie).send({
+        const response = await requestAsUser("post", "/api/exercises", cookie).send({
             name: "Pull-up",
             muscleGroup: "Back",
         });
@@ -60,7 +60,7 @@ describe("POST /api/exercises", () => {
         const {user, cookie} = await createTestUser("owner@example.com");
         await createExerciseRecord(user.id);
 
-        const response = await authenticated("post", "/api/exercises", cookie).send(exerciseInput);
+        const response = await requestAsUser("post", "/api/exercises", cookie).send(exerciseInput);
 
         expect(response.status).toBe(409);
         expect(messageResponseSchema.parse(response.body)).toEqual({
@@ -74,7 +74,7 @@ describe("POST /api/exercises", () => {
         const other = await createTestUser("other@example.com");
         await createExerciseRecord(owner.user.id);
 
-        const response = await authenticated("post", "/api/exercises", other.cookie).send(
+        const response = await requestAsUser("post", "/api/exercises", other.cookie).send(
             exerciseInput,
         );
 
@@ -85,7 +85,7 @@ describe("POST /api/exercises", () => {
     it("rejects invalid data without creating an exercise", async () => {
         const {cookie} = await createTestUser("owner@example.com");
 
-        const response = await authenticated("post", "/api/exercises", cookie).send({
+        const response = await requestAsUser("post", "/api/exercises", cookie).send({
             name: "",
             muscleGroup: "",
             equipment: "",
@@ -121,7 +121,7 @@ describe("PATCH /api/exercises/:exerciseId", () => {
         const owner = await createTestUser("owner@example.com");
         const exercise = await createExerciseRecord(owner.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/exercises/${exercise.id}`,
             owner.cookie,
@@ -140,7 +140,7 @@ describe("PATCH /api/exercises/:exerciseId", () => {
         const owner = await createTestUser("owner@example.com");
         const exercise = await createExerciseRecord(owner.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/exercises/${exercise.id}`,
             owner.cookie,
@@ -157,7 +157,7 @@ describe("PATCH /api/exercises/:exerciseId", () => {
         const exercise = await createExerciseRecord(owner.user.id);
         await createExerciseRecord(owner.user.id, {name: "Squat", muscleGroup: "Legs"});
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/exercises/${exercise.id}`,
             owner.cookie,
@@ -174,7 +174,7 @@ describe("PATCH /api/exercises/:exerciseId", () => {
         const other = await createTestUser("other@example.com");
         const exercise = await createExerciseRecord(other.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/exercises/${exercise.id}`,
             owner.cookie,
@@ -195,7 +195,7 @@ describe("DELETE /api/exercises/:exerciseId", () => {
         const owner = await createTestUser("owner@example.com");
         const exercise = await createExerciseRecord(owner.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "delete",
             `/api/exercises/${exercise.id}`,
             owner.cookie,
@@ -213,7 +213,7 @@ describe("DELETE /api/exercises/:exerciseId", () => {
         const other = await createTestUser("other@example.com");
         const exercise = await createExerciseRecord(other.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "delete",
             `/api/exercises/${exercise.id}`,
             owner.cookie,
@@ -231,7 +231,7 @@ describe("PATCH /api/exercises/:exerciseId/restore", () => {
         const owner = await createTestUser("owner@example.com");
         const exercise = await createExerciseRecord(owner.user.id, {isArchived: true});
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/exercises/${exercise.id}/restore`,
             owner.cookie,
@@ -251,7 +251,7 @@ describe("PATCH /api/exercises/:exerciseId/restore", () => {
             isArchived: archived,
         });
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/exercises/${exercise.id}/restore`,
             owner.cookie,

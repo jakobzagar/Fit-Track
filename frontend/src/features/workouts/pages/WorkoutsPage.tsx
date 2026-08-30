@@ -7,7 +7,7 @@ import type {
     UpdateWorkoutInput,
     WorkoutSummary,
 } from "@fit-track/shared/workouts";
-import {Feedback} from "../../../components/ui/feedback/Feedback";
+import {StatusMessage} from "../../../components/ui/feedback/StatusMessage";
 import {PageHeader} from "../../../components/ui/display/PageHeader";
 import {SkeletonGrid} from "../../../components/ui/display/SkeletonGrid";
 import {useConfirmDialog} from "../../../components/ui/dialogs/hooks/useConfirmDialog";
@@ -73,7 +73,7 @@ export function WorkoutsPage() {
     if (workoutData.loadError) {
         return (
             <div className="page-stack">
-                <Feedback>{workoutData.loadError}</Feedback>
+                <StatusMessage>{workoutData.loadError}</StatusMessage>
                 <Button className="w-fit" variant="secondary" onClick={workoutData.retry}>
                     Try again
                 </Button>
@@ -94,11 +94,13 @@ export function WorkoutsPage() {
                     </Button>
                 }
             />
-            {workoutData.mutationError && <Feedback>{workoutData.mutationError}</Feedback>}
+            {workoutData.mutationError && (
+                <StatusMessage>{workoutData.mutationError}</StatusMessage>
+            )}
             {workoutData.successMessage && (
-                <Feedback tone="success" onDismiss={workoutData.clearSuccess}>
+                <StatusMessage tone="success" onDismiss={workoutData.clearSuccess}>
                     {workoutData.successMessage}
-                </Feedback>
+                </StatusMessage>
             )}
 
             <div>

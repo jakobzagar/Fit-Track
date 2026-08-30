@@ -4,7 +4,7 @@ import {describe, expect, test} from "vitest";
 import {API_URL} from "../../../test/constants";
 import {createDeferred} from "../../../test/deferred";
 import {server} from "../../../test/mocks/server";
-import {createWorkoutBase, createWorkoutSummary} from "../../../test/fixtures/workouts";
+import {createWorkoutRecord, createWorkoutSummary} from "../../../test/fixtures/workouts";
 import {useWorkouts} from "../hooks/data/useWorkouts";
 
 describe("useWorkouts", () => {
@@ -18,7 +18,7 @@ describe("useWorkouts", () => {
             name: "Newest",
             performedAt: "2026-07-26T00:00:00.000Z",
         });
-        const historical = createWorkoutBase({
+        const historical = createWorkoutRecord({
             id: "123e4567-e89b-42d3-a456-426614174012",
             name: "Historical",
             performedAt: "2026-07-22T00:00:00.000Z",
@@ -30,7 +30,7 @@ describe("useWorkouts", () => {
             ),
             http.patch(`${API_URL}/workouts/${oldest.id}`, () =>
                 HttpResponse.json({
-                    workout: createWorkoutBase({
+                    workout: createWorkoutRecord({
                         ...oldest,
                         performedAt: "2026-07-28T00:00:00.000Z",
                     }),

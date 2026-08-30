@@ -1,7 +1,7 @@
 import {useEffect, type ReactNode} from "react";
 import {Icon} from "../display/Icon";
 
-interface FeedbackProps {
+interface StatusMessageProps {
     children: ReactNode;
     tone?: "error" | "info" | "success";
     onDismiss?: () => void;
@@ -14,12 +14,12 @@ const tones = {
     success: "border-positive/30 bg-positive/8 text-green-200",
 };
 
-export function Feedback({
+export function StatusMessage({
     children,
     tone = "error",
     onDismiss,
     autoDismissMs = tone === "success" ? 5000 : undefined,
-}: FeedbackProps) {
+}: StatusMessageProps) {
     useEffect(() => {
         if (!onDismiss || !autoDismissMs) return;
         const timeout = window.setTimeout(onDismiss, autoDismissMs);

@@ -2,7 +2,7 @@ import {useNavigate, useParams} from "react-router";
 import {AddExerciseToWorkoutForm} from "../workout-exercises/components/exercises/AddExerciseToWorkoutForm";
 import {Button} from "../../../components/ui/actions/Button";
 import {Card} from "../../../components/ui/display/Card";
-import {Feedback} from "../../../components/ui/feedback/Feedback";
+import {StatusMessage} from "../../../components/ui/feedback/StatusMessage";
 import {LoadingState} from "../../../components/ui/display/LoadingState";
 import {useConfirmDialog} from "../../../components/ui/dialogs/hooks/useConfirmDialog";
 import {ActiveWorkoutActionBar} from "../components/active-workout/ActiveWorkoutActionBar";
@@ -37,13 +37,13 @@ export function ActiveWorkoutPage() {
     } = useActiveWorkout(workoutId, navigate, confirm);
 
     if (isLoading) {
-        if (!workoutId) return <Feedback>Workout ID is missing</Feedback>;
+        if (!workoutId) return <StatusMessage>Workout ID is missing</StatusMessage>;
         return <LoadingState label="Starting workout" />;
     }
     if (error && !workout) {
         return (
             <div className="page-stack">
-                <Feedback>{error}</Feedback>
+                <StatusMessage>{error}</StatusMessage>
                 <Button className="w-fit" variant="secondary" onClick={retryLoad}>
                     Try again
                 </Button>
@@ -60,7 +60,7 @@ export function ActiveWorkoutPage() {
                 onExit={handleExit}
             />
 
-            {error && <Feedback>{error}</Feedback>}
+            {error && <StatusMessage>{error}</StatusMessage>}
 
             <Card>
                 <div className="mb-5">

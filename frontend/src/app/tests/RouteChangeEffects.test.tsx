@@ -2,15 +2,15 @@ import {render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {createMemoryRouter, Link, RouterProvider} from "react-router";
 import {describe, expect, test, vi} from "vitest";
-import {RouteExperience} from "../routing/RouteExperience";
+import {RouteChangeEffects} from "../routing/RouteChangeEffects";
 
-describe("RouteExperience", () => {
+describe("RouteChangeEffects", () => {
     test("updates the page title and focuses the new page heading after navigation", async () => {
         window.scrollTo = vi.fn();
         const router = createMemoryRouter(
             [
                 {
-                    element: <RouteExperience />,
+                    element: <RouteChangeEffects />,
                     children: [
                         {
                             path: "/",

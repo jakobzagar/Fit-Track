@@ -1,9 +1,9 @@
 import {describe, expect, it} from "vitest";
 import {messageResponseSchema} from "@fit-track/shared/common";
-import {workoutBaseResponseSchema} from "@fit-track/shared/workouts";
+import {workoutRecordResponseSchema} from "@fit-track/shared/workouts";
 import {prisma} from "../../../db/prisma.js";
 import {
-    authenticated,
+    requestAsUser,
     createTestExercise,
     createTestSet,
     createTestUser,
@@ -16,18 +16,18 @@ describe("workout lifecycle transitions", () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id);
 
-        const first = await authenticated(
+        const first = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/start`,
             owner.cookie,
         );
-        const firstBody = workoutBaseResponseSchema.parse(first.body);
-        const second = await authenticated(
+        const firstBody = workoutRecordResponseSchema.parse(first.body);
+        const second = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/start`,
             owner.cookie,
         );
-        const secondBody = workoutBaseResponseSchema.parse(second.body);
+        const secondBody = workoutRecordResponseSchema.parse(second.body);
 
         expect(first.status).toBe(200);
         expect(firstBody.workout.status).toBe("ACTIVE");
@@ -40,7 +40,7 @@ describe("workout lifecycle transitions", () => {
         await createTestWorkout(owner.user.id, {status: "ACTIVE", startedAt: new Date()});
         const draft = await createTestWorkout(owner.user.id, {name: "Draft"});
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${draft.id}/start`,
             owner.cookie,
@@ -60,7 +60,7 @@ describe("workout lifecycle transitions", () => {
             completedAt: new Date(),
         });
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/start`,
             owner.cookie,
@@ -81,12 +81,12 @@ describe("workout lifecycle transitions", () => {
             startedAt: new Date(),
         });
 
-        const draftResponse = await authenticated(
+        const draftResponse = await requestAsUser(
             "post",
             `/api/workouts/${draft.id}/finish`,
             owner.cookie,
         );
-        const emptyResponse = await authenticated(
+        const emptyResponse = await requestAsUser(
             "post",
             `/api/workouts/${active.id}/finish`,
             owner.cookie,
@@ -108,12 +108,12 @@ describe("workout lifecycle transitions", () => {
         const workoutExercise = await createTestWorkoutExercise(workout.id, exercise.id);
         await createTestSet(workoutExercise.id, 1, {completedAt: new Date()});
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/finish`,
             owner.cookie,
         );
-        const body = workoutBaseResponseSchema.parse(response.body);
+        const body = workoutRecordResponseSchema.parse(response.body);
 
         expect(response.status).toBe(200);
         expect(body.workout.status).toBe("COMPLETED");
@@ -134,12 +134,12 @@ describe("workout lifecycle transitions", () => {
             completedAt: new Date(),
         });
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/cancel`,
             owner.cookie,
         );
-        const body = workoutBaseResponseSchema.parse(response.body);
+        const body = workoutRecordResponseSchema.parse(response.body);
 
         expect(response.status).toBe(200);
         expect(body.workout).toMatchObject({
@@ -164,7 +164,7 @@ describe("workout lifecycle transitions", () => {
             ...(status === "COMPLETED" && {startedAt: new Date(), completedAt: new Date()}),
         });
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/cancel`,
             owner.cookie,
@@ -190,12 +190,12 @@ describe("workout lifecycle transitions", () => {
             completedAt: new Date(),
         });
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/reopen`,
             owner.cookie,
         );
-        const body = workoutBaseResponseSchema.parse(response.body);
+        const body = workoutRecordResponseSchema.parse(response.body);
 
         expect(response.status).toBe(200);
         expect(body.workout).toMatchObject({
@@ -218,7 +218,7 @@ describe("workout lifecycle transitions", () => {
             completedAt: new Date(),
         });
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${completed.id}/reopen`,
             owner.cookie,
@@ -243,13 +243,13 @@ describe("workout lifecycle transitions", () => {
         const workoutExercise = await createTestWorkoutExercise(active.id, exercise.id);
         await createTestSet(workoutExercise.id, 1, {completedAt: new Date()});
 
-        const start = await authenticated("post", `/api/workouts/${draft.id}/start`, owner.cookie);
-        const finish = await authenticated(
+        const start = await requestAsUser("post", `/api/workouts/${draft.id}/start`, owner.cookie);
+        const finish = await requestAsUser(
             "post",
             `/api/workouts/${active.id}/finish`,
             owner.cookie,
         );
-        const cancel = await authenticated(
+        const cancel = await requestAsUser(
             "post",
             `/api/workouts/${active.id}/cancel`,
             owner.cookie,
@@ -260,7 +260,7 @@ describe("workout lifecycle transitions", () => {
             startedAt: new Date(),
             completedAt: new Date(),
         });
-        const reopen = await authenticated(
+        const reopen = await requestAsUser(
             "post",
             `/api/workouts/${completed.id}/reopen`,
             owner.cookie,

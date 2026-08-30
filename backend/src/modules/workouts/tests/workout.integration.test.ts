@@ -3,14 +3,14 @@ import {describe, expect, it} from "vitest";
 import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/shared/common";
 import {
     deleteWorkoutResponseSchema,
-    workoutBaseResponseSchema,
+    workoutRecordResponseSchema,
     workoutResponseSchema,
     workoutsResponseSchema,
 } from "@fit-track/shared/workouts";
 import {app} from "../../../app.js";
 import {prisma} from "../../../db/prisma.js";
 import {
-    authenticated,
+    requestAsUser,
     createTestExercise,
     createTestSet,
     createTestUser,
@@ -24,12 +24,12 @@ describe("POST /api/workouts", () => {
         const owner = await createTestUser("owner@example.com");
         const performedAt = "2026-07-20";
 
-        const response = await authenticated("post", "/api/workouts", owner.cookie).send({
+        const response = await requestAsUser("post", "/api/workouts", owner.cookie).send({
             name: "  Push day  ",
             notes: "  Heavy session  ",
             performedAt,
         });
-        const body = workoutBaseResponseSchema.parse(response.body);
+        const body = workoutRecordResponseSchema.parse(response.body);
 
         expect(response.status).toBe(201);
         expect(body.workout).toMatchObject({
@@ -43,7 +43,7 @@ describe("POST /api/workouts", () => {
 
     it("rejects invalid data", async () => {
         const owner = await createTestUser("owner@example.com");
-        const response = await authenticated("post", "/api/workouts", owner.cookie).send({
+        const response = await requestAsUser("post", "/api/workouts", owner.cookie).send({
             name: "",
             performedAt: "today",
         });
@@ -85,7 +85,7 @@ describe("GET /api/workouts", () => {
         await createTestWorkoutExercise(newer.id, exercise.id);
         await createTestWorkout(other.user.id, {name: "Hidden"});
 
-        const response = await authenticated("get", "/api/workouts", owner.cookie);
+        const response = await requestAsUser("get", "/api/workouts", owner.cookie);
         const body = workoutsResponseSchema.parse(response.body);
 
         expect(response.status).toBe(200);
@@ -105,7 +105,7 @@ describe("GET /api/workouts/:workoutId", () => {
         await createTestSet(first.id, 2, {reps: 8});
         await createTestSet(first.id, 1, {reps: 10});
 
-        const response = await authenticated("get", `/api/workouts/${workout.id}`, owner.cookie);
+        const response = await requestAsUser("get", `/api/workouts/${workout.id}`, owner.cookie);
         const body = workoutResponseSchema.parse(response.body);
 
         expect(response.status).toBe(200);
@@ -118,7 +118,7 @@ describe("GET /api/workouts/:workoutId", () => {
         const other = await createTestUser("other@example.com");
         const foreignWorkout = await createTestWorkout(other.user.id);
 
-        const foreign = await authenticated(
+        const foreign = await requestAsUser(
             "get",
             `/api/workouts/${foreignWorkout.id}`,
             owner.cookie,
@@ -130,7 +130,7 @@ describe("GET /api/workouts/:workoutId", () => {
     it("validates the workout ID", async () => {
         const owner = await createTestUser("owner@example.com");
 
-        const response = await authenticated("get", "/api/workouts/not-a-uuid", owner.cookie);
+        const response = await requestAsUser("get", "/api/workouts/not-a-uuid", owner.cookie);
 
         expect(response.status).toBe(400);
         expect(validationErrorResponseSchema.parse(response.body).message).toBe(
@@ -144,12 +144,12 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id, {notes: "Old notes"});
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/workouts/${workout.id}`,
             owner.cookie,
         ).send({name: "  Pull day  ", notes: null});
-        const body = workoutBaseResponseSchema.parse(response.body);
+        const body = workoutRecordResponseSchema.parse(response.body);
 
         expect(response.status).toBe(200);
         expect(body.workout).toMatchObject({name: "Pull day", notes: null});
@@ -159,7 +159,7 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/workouts/${workout.id}`,
             owner.cookie,
@@ -176,7 +176,7 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         const other = await createTestUser("other@example.com");
         const workout = await createTestWorkout(other.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/workouts/${workout.id}`,
             owner.cookie,
@@ -193,7 +193,7 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         const workoutExercise = await createTestWorkoutExercise(workout.id, exercise.id);
         await createTestSet(workoutExercise.id);
 
-        const response = await authenticated("delete", `/api/workouts/${workout.id}`, owner.cookie);
+        const response = await requestAsUser("delete", `/api/workouts/${workout.id}`, owner.cookie);
 
         expect(response.status).toBe(200);
         expect(deleteWorkoutResponseSchema.parse(response.body)).toEqual({
@@ -209,7 +209,7 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
         const other = await createTestUser("other@example.com");
         const workout = await createTestWorkout(other.user.id);
 
-        const response = await authenticated("delete", `/api/workouts/${workout.id}`, owner.cookie);
+        const response = await requestAsUser("delete", `/api/workouts/${workout.id}`, owner.cookie);
 
         expect(response.status).toBe(404);
         expect(messageResponseSchema.parse(response.body)).toEqual({message: "Workout not found"});
@@ -224,12 +224,12 @@ describe("PATCH and DELETE /api/workouts/:workoutId", () => {
             completedAt: new Date(),
         });
 
-        const update = await authenticated(
+        const update = await requestAsUser(
             "patch",
             `/api/workouts/${workout.id}`,
             owner.cookie,
         ).send({name: "Changed"});
-        const deletion = await authenticated("delete", `/api/workouts/${workout.id}`, owner.cookie);
+        const deletion = await requestAsUser("delete", `/api/workouts/${workout.id}`, owner.cookie);
 
         expect(update.status).toBe(409);
         expect(messageResponseSchema.parse(update.body)).toEqual({

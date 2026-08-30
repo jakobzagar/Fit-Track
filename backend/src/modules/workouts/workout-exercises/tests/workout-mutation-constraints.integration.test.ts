@@ -4,7 +4,7 @@ import {messageResponseSchema} from "@fit-track/shared/common";
 import {app} from "../../../../app.js";
 import {prisma} from "../../../../db/prisma.js";
 import {
-    authenticated,
+    requestAsUser,
     createTestExercise,
     createTestSet,
     createTestUser,
@@ -36,22 +36,22 @@ describe("completed workout mutations", () => {
 
         const response =
             operation === "add exercise"
-                ? await authenticated(
+                ? await requestAsUser(
                       "post",
                       `/api/workouts/${workout.id}/exercises`,
                       owner.cookie,
                   ).send({exerciseId: otherExercise.id})
                 : operation === "update exercise"
-                  ? await authenticated("patch", itemPath, owner.cookie).send({notes: "Changed"})
+                  ? await requestAsUser("patch", itemPath, owner.cookie).send({notes: "Changed"})
                   : operation === "delete exercise"
-                    ? await authenticated("delete", itemPath, owner.cookie)
+                    ? await requestAsUser("delete", itemPath, owner.cookie)
                     : operation === "add set"
-                      ? await authenticated("post", `${itemPath}/sets`, owner.cookie).send({
+                      ? await requestAsUser("post", `${itemPath}/sets`, owner.cookie).send({
                             reps: 12,
                         })
                       : operation === "update set"
-                        ? await authenticated("patch", setPath, owner.cookie).send({reps: 12})
-                        : await authenticated("delete", setPath, owner.cookie);
+                        ? await requestAsUser("patch", setPath, owner.cookie).send({reps: 12})
+                        : await requestAsUser("delete", setPath, owner.cookie);
 
         expect(response.status).toBe(409);
         expect(messageResponseSchema.parse(response.body)).toEqual({

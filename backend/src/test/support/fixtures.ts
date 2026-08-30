@@ -16,7 +16,7 @@ export const createTestUser = async (email: string) => {
     return {user, cookie: `token=${token}`};
 };
 
-export const authenticated = (
+export const requestAsUser = (
     method: "get" | "post" | "patch" | "delete",
     path: string,
     cookie: string,

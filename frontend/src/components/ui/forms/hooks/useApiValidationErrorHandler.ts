@@ -1,5 +1,5 @@
 import {useCallback, type RefObject} from "react";
-import {apiValidationErrors} from "../utils/apiValidationErrors";
+import {extractApiValidationErrors} from "../utils/extractApiValidationErrors";
 import {focusFirstInvalidField} from "../utils/formAccessibility";
 
 type SetErrors = (errors: Record<string, string>) => void;
@@ -10,7 +10,7 @@ export function useApiValidationErrorHandler(
 ) {
     return useCallback(
         (error: unknown) => {
-            const errors = apiValidationErrors(error);
+            const errors = extractApiValidationErrors(error);
             if (!errors) return;
 
             setErrors(errors);

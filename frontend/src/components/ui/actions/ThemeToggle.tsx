@@ -3,12 +3,12 @@ import {Icon} from "../display/Icon";
 
 type Theme = "dark" | "light";
 
-function currentTheme(): Theme {
+function getCurrentTheme(): Theme {
     return document.documentElement.dataset.theme === "light" ? "light" : "dark";
 }
 
 export function ThemeToggle({className = ""}: {className?: string}) {
-    const [theme, setTheme] = useState<Theme>(currentTheme);
+    const [theme, setTheme] = useState<Theme>(getCurrentTheme);
 
     function toggleTheme() {
         const nextTheme = theme === "dark" ? "light" : "dark";

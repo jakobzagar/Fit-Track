@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {Link, useNavigate} from "react-router";
 import {BrandMark} from "../../../components/ui/display/BrandMark";
-import {Feedback} from "../../../components/ui/feedback/Feedback";
+import {StatusMessage} from "../../../components/ui/feedback/StatusMessage";
 import {LoginForm} from "../components/LoginForm";
 import {login} from "../api/auth.api";
 import type {LoginInput} from "@fit-track/shared/auth";
@@ -52,7 +52,7 @@ export function LoginPage() {
                     </p>
                     {error && (
                         <div className="mb-5">
-                            <Feedback>{error}</Feedback>
+                            <StatusMessage>{error}</StatusMessage>
                         </div>
                     )}
                     <LoginForm onSubmit={handleLogin} />

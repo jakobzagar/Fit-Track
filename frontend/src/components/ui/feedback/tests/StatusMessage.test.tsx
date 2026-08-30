@@ -1,17 +1,17 @@
 import {act, render, screen} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe, expect, test, vi} from "vitest";
-import {Feedback} from "../Feedback";
+import {StatusMessage} from "../StatusMessage";
 
-describe("Feedback", () => {
+describe("StatusMessage", () => {
     test("announces its message as status feedback", () => {
-        render(<Feedback tone="success">Workout saved</Feedback>);
+        render(<StatusMessage tone="success">Workout saved</StatusMessage>);
 
         expect(screen.getByRole("status")).toHaveTextContent("Workout saved");
     });
 
     test("announces errors urgently", () => {
-        render(<Feedback>Could not save workout</Feedback>);
+        render(<StatusMessage>Could not save workout</StatusMessage>);
         expect(screen.getByRole("alert")).toHaveTextContent("Could not save workout");
     });
 
@@ -19,9 +19,9 @@ describe("Feedback", () => {
         const onDismiss = vi.fn();
         const user = userEvent.setup();
         render(
-            <Feedback tone="success" onDismiss={onDismiss} autoDismissMs={undefined}>
+            <StatusMessage tone="success" onDismiss={onDismiss} autoDismissMs={undefined}>
                 Workout saved
-            </Feedback>,
+            </StatusMessage>,
         );
 
         await user.click(screen.getByRole("button", {name: "Dismiss message"}));
@@ -32,9 +32,9 @@ describe("Feedback", () => {
         vi.useFakeTimers();
         const onDismiss = vi.fn();
         render(
-            <Feedback tone="success" onDismiss={onDismiss}>
+            <StatusMessage tone="success" onDismiss={onDismiss}>
                 Workout saved
-            </Feedback>,
+            </StatusMessage>,
         );
 
         await act(() => vi.advanceTimersByTime(5000));

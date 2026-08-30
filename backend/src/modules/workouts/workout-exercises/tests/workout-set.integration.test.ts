@@ -7,7 +7,7 @@ import {
 } from "@fit-track/shared/workouts";
 import {prisma} from "../../../../db/prisma.js";
 import {
-    authenticated,
+    requestAsUser,
     createTestExercise,
     createTestSet,
     createTestUser,
@@ -24,8 +24,8 @@ describe("workout sets", () => {
         const path = `/api/workouts/${workout.id}/exercises/${item.id}/sets`;
 
         const responses = await Promise.all([
-            authenticated("post", path, owner.cookie).send({reps: 8}),
-            authenticated("post", path, owner.cookie).send({reps: 10}),
+            requestAsUser("post", path, owner.cookie).send({reps: 8}),
+            requestAsUser("post", path, owner.cookie).send({reps: 10}),
         ]);
         const stored = await prisma.workoutSet.findMany({
             where: {workoutExerciseId: item.id},
@@ -44,12 +44,12 @@ describe("workout sets", () => {
         const exercise = await createTestExercise(owner.user.id);
         const item = await createTestWorkoutExercise(workout.id, exercise.id);
 
-        const first = await authenticated(
+        const first = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises/${item.id}/sets`,
             owner.cookie,
         ).send({reps: 10, weight: 82.5});
-        const second = await authenticated(
+        const second = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises/${item.id}/sets`,
             owner.cookie,
@@ -73,7 +73,7 @@ describe("workout sets", () => {
         const exercise = await createTestExercise(owner.user.id);
         const item = await createTestWorkoutExercise(workout.id, exercise.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises/${item.id}/sets`,
             owner.cookie,
@@ -92,7 +92,7 @@ describe("workout sets", () => {
         const exercise = await createTestExercise(other.user.id);
         const item = await createTestWorkoutExercise(workout.id, exercise.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "post",
             `/api/workouts/${workout.id}/exercises/${item.id}/sets`,
             owner.cookie,
@@ -112,11 +112,11 @@ describe("workout sets", () => {
         const set = await createTestSet(item.id, 1, {reps: 10, durationSeconds: null});
         const path = `/api/workouts/${workout.id}/exercises/${item.id}/sets/${set.id}`;
 
-        const updated = await authenticated("patch", path, owner.cookie).send({
+        const updated = await requestAsUser("patch", path, owner.cookie).send({
             reps: 12,
             weight: 90,
         });
-        const invalid = await authenticated("patch", path, owner.cookie).send({reps: null});
+        const invalid = await requestAsUser("patch", path, owner.cookie).send({reps: null});
 
         expect(updated.status).toBe(200);
         expect(workoutSetResponseSchema.parse(updated.body).workoutSet).toMatchObject({
@@ -137,7 +137,7 @@ describe("workout sets", () => {
         const first = await createTestSet(item.id, 1);
         const second = await createTestSet(item.id, 2);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "delete",
             `/api/workouts/${workout.id}/exercises/${item.id}/sets/${first.id}`,
             owner.cookie,
@@ -161,8 +161,8 @@ describe("workout sets", () => {
         const set = await createTestSet(item.id, 1, {reps: 10});
         const path = `/api/workouts/${workout.id}/exercises/${item.id}/sets/${set.id}`;
 
-        const update = await authenticated("patch", path, owner.cookie).send({reps: 12});
-        const deletion = await authenticated("delete", path, owner.cookie);
+        const update = await requestAsUser("patch", path, owner.cookie).send({reps: 12});
+        const deletion = await requestAsUser("delete", path, owner.cookie);
 
         expect(update.status).toBe(404);
         expect(deletion.status).toBe(404);
@@ -187,12 +187,12 @@ describe("workout sets", () => {
         const secondItem = await createTestWorkoutExercise(secondWorkout.id, secondExercise.id);
         const set = await createTestSet(firstItem.id, 1, {reps: 10});
 
-        const wrongExercise = await authenticated(
+        const wrongExercise = await requestAsUser(
             "patch",
             `/api/workouts/${firstWorkout.id}/exercises/${secondItem.id}/sets/${set.id}`,
             owner.cookie,
         ).send({reps: 12});
-        const wrongWorkout = await authenticated(
+        const wrongWorkout = await requestAsUser(
             "delete",
             `/api/workouts/${secondWorkout.id}/exercises/${firstItem.id}/sets/${set.id}`,
             owner.cookie,
@@ -224,11 +224,11 @@ describe("workout set completion", () => {
         const set = await createTestSet(item.id);
         const path = `/api/workouts/${workout.id}/exercises/${item.id}/sets/${set.id}/completion`;
 
-        const completed = await authenticated("patch", path, owner.cookie).send({
+        const completed = await requestAsUser("patch", path, owner.cookie).send({
             completed: true,
             reps: 12,
         });
-        const reopened = await authenticated("patch", path, owner.cookie).send({completed: false});
+        const reopened = await requestAsUser("patch", path, owner.cookie).send({completed: false});
 
         expect(completed.status).toBe(200);
         expect(
@@ -244,7 +244,7 @@ describe("workout set completion", () => {
         const item = await createTestWorkoutExercise(workout.id, exercise.id);
         const set = await createTestSet(item.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "patch",
             `/api/workouts/${workout.id}/exercises/${item.id}/sets/${set.id}/completion`,
             owner.cookie,
@@ -274,12 +274,12 @@ describe("workout set completion", () => {
         const ownerItem = await createTestWorkoutExercise(ownerWorkout.id, ownerExercise.id);
         const ownerSet = await createTestSet(ownerItem.id);
 
-        const foreign = await authenticated(
+        const foreign = await requestAsUser(
             "patch",
             `/api/workouts/${foreignWorkout.id}/exercises/${foreignItem.id}/sets/${foreignSet.id}/completion`,
             owner.cookie,
         ).send({completed: true, reps: 10});
-        const mismatched = await authenticated(
+        const mismatched = await requestAsUser(
             "patch",
             `/api/workouts/${ownerWorkout.id}/exercises/${foreignItem.id}/sets/${ownerSet.id}/completion`,
             owner.cookie,

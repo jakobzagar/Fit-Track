@@ -4,7 +4,7 @@ import pino, {type Level, type Logger} from "pino";
 import {pinoHttp} from "pino-http";
 import {logger} from "./logger.js";
 
-function requestLogLevel(request: Request, response: Response, error?: Error): Level {
+function getRequestLogLevel(request: Request, response: Response, error?: Error): Level {
     if (error || response.statusCode >= 500) return "error";
     if (response.statusCode === 429) return "warn";
     if (request.path.startsWith("/api/health/") && response.statusCode < 400) return "debug";
@@ -36,7 +36,7 @@ export function createHttpLogger(parentLogger: Logger) {
             }),
             err: pino.stdSerializers.err,
         },
-        customLogLevel: requestLogLevel,
+        customLogLevel: getRequestLogLevel,
         customSuccessMessage: () => "request completed",
         customErrorMessage: () => "request failed",
     });

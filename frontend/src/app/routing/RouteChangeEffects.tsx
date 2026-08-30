@@ -12,7 +12,7 @@ function getRouteTitle(pathname: string) {
     return "Page not found · FitTrack";
 }
 
-export function RouteExperience() {
+export function RouteChangeEffects() {
     const {pathname} = useLocation();
     const announcementRef = useRef<HTMLParagraphElement>(null);
     const isInitialRender = useRef(true);

@@ -38,7 +38,7 @@ export const workoutIdSchema = z
 
 export const workoutStatusSchema = z.enum(["DRAFT", "ACTIVE", "COMPLETED"]);
 
-export const workoutBaseSchema = z
+export const workoutRecordSchema = z
     .object({
         id: z.uuid(),
         name: z.string(),
@@ -53,7 +53,7 @@ export const workoutBaseSchema = z
     })
     .strict();
 
-export const workoutSummarySchema = workoutBaseSchema.extend({
+export const workoutSummarySchema = workoutRecordSchema.extend({
     _count: z
         .object({
             workoutExercises: z.number().int().nonnegative(),
@@ -61,7 +61,7 @@ export const workoutSummarySchema = workoutBaseSchema.extend({
         .strict(),
 });
 
-export const workoutSchema = workoutBaseSchema.extend({
+export const workoutSchema = workoutRecordSchema.extend({
     workoutExercises: z.array(workoutExerciseSchema),
 });
 
@@ -92,9 +92,9 @@ export const previousPerformancesResponseSchema = z
     })
     .strict();
 
-export const workoutBaseResponseSchema = z
+export const workoutRecordResponseSchema = z
     .object({
-        workout: workoutBaseSchema,
+        workout: workoutRecordSchema,
     })
     .strict();
 
@@ -104,12 +104,12 @@ export type CreateWorkoutInput = z.infer<typeof createWorkoutSchema>;
 export type UpdateWorkoutInput = z.infer<typeof updateWorkoutSchema>;
 export type WorkoutIdParams = z.infer<typeof workoutIdSchema>;
 export type WorkoutStatus = z.infer<typeof workoutStatusSchema>;
-export type WorkoutBase = z.infer<typeof workoutBaseSchema>;
+export type WorkoutRecord = z.infer<typeof workoutRecordSchema>;
 export type WorkoutSummary = z.infer<typeof workoutSummarySchema>;
 export type Workout = z.infer<typeof workoutSchema>;
 export type WorkoutResponse = z.infer<typeof workoutResponseSchema>;
 export type PreviousPerformance = z.infer<typeof previousPerformanceSchema>;
 export type PreviousPerformancesResponse = z.infer<typeof previousPerformancesResponseSchema>;
-export type WorkoutBaseResponse = z.infer<typeof workoutBaseResponseSchema>;
+export type WorkoutRecordResponse = z.infer<typeof workoutRecordResponseSchema>;
 export type DeleteWorkoutResponse = z.infer<typeof deleteWorkoutResponseSchema>;
 export type WorkoutsResponse = z.infer<typeof workoutsResponseSchema>;

@@ -23,6 +23,22 @@ export default defineConfig([
             },
         },
         rules: {
+            "@typescript-eslint/naming-convention": [
+                "error",
+                {
+                    selector: "typeLike",
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: "function",
+                    format: ["camelCase", "PascalCase"],
+                },
+                {
+                    selector: "variable",
+                    format: ["camelCase", "PascalCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow",
+                },
+            ],
             "no-restricted-imports": [
                 "error",
                 {

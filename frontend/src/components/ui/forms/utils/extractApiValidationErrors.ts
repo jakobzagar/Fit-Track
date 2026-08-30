@@ -1,6 +1,6 @@
 import {ApiError} from "../../../../common/errors/api.error";
 
-export function apiValidationErrors(error: unknown): Record<string, string> | null {
+export function extractApiValidationErrors(error: unknown): Record<string, string> | null {
     if (!(error instanceof ApiError)) return null;
 
     const errors: Record<string, string> = {};

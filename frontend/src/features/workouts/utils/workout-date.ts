@@ -1,4 +1,4 @@
-export function workoutDateInputValue(timestamp: string) {
+export function toWorkoutDateInputValue(timestamp: string) {
     return timestamp.slice(0, 10);
 }
 

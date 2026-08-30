@@ -21,7 +21,7 @@ cleanup() {
     exit "$exit_code"
 }
 
-assert_ok() {
+assert_http_ok() {
     curl --fail --silent --show-error "$1" >/dev/null
 }
 
@@ -52,10 +52,10 @@ trap cleanup EXIT
 
 "${compose[@]}" up --detach --wait --wait-timeout 120
 
-assert_ok "$frontend_url/health"
-assert_ok "$backend_url/api/health/live"
-assert_ok "$backend_url/api/health/ready"
-assert_ok "$frontend_url/api/health/ready"
+assert_http_ok "$frontend_url/health"
+assert_http_ok "$backend_url/api/health/live"
+assert_http_ok "$backend_url/api/health/ready"
+assert_http_ok "$frontend_url/api/health/ready"
 assert_body_contains "$frontend_url/" '<div id="root">'
 assert_body_contains "$frontend_url/theme-init.js" "fittrack-theme"
 

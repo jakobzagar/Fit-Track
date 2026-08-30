@@ -4,7 +4,7 @@ import {messageResponseSchema, validationErrorResponseSchema} from "@fit-track/s
 import {previousPerformancesResponseSchema} from "@fit-track/shared/workouts";
 import {app} from "../../../app.js";
 import {
-    authenticated,
+    requestAsUser,
     createTestExercise,
     createTestSet,
     createTestUser,
@@ -40,7 +40,7 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
         const foreignExercise = await createTestWorkoutExercise(foreign.id, exercise.id);
         await createTestSet(foreignExercise.id, 1, {completedAt: new Date()});
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "get",
             `/api/workouts/${current.id}/previous-performances`,
             owner.cookie,
@@ -84,7 +84,7 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
         const latestSquat = await createTestWorkoutExercise(latest.id, squat.id);
         await createTestSet(latestSquat.id, 1, {completedAt: new Date()});
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "get",
             `/api/workouts/${current.id}/previous-performances`,
             owner.cookie,
@@ -104,7 +104,7 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
         const owner = await createTestUser("owner@example.com");
         const current = await createTestWorkout(owner.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "get",
             `/api/workouts/${current.id}/previous-performances`,
             owner.cookie,
@@ -121,7 +121,7 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
         const other = await createTestUser("other@example.com");
         const foreignWorkout = await createTestWorkout(other.user.id);
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "get",
             `/api/workouts/${foreignWorkout.id}/previous-performances`,
             owner.cookie,
@@ -135,7 +135,7 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
         const owner = await createTestUser("owner@example.com");
         const missingWorkoutId = "123e4567-e89b-42d3-a456-426614174099";
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "get",
             `/api/workouts/${missingWorkoutId}/previous-performances`,
             owner.cookie,
@@ -148,7 +148,7 @@ describe("GET /api/workouts/:workoutId/previous-performances", () => {
     it("validates the workout ID", async () => {
         const owner = await createTestUser("owner@example.com");
 
-        const response = await authenticated(
+        const response = await requestAsUser(
             "get",
             "/api/workouts/not-a-uuid/previous-performances",
             owner.cookie,

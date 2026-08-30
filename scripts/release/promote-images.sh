@@ -16,7 +16,7 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 1
 fi
 
-image_digest() {
+resolve_image_digest() {
     docker buildx imagetools inspect "$1" | awk '/^Digest:/ {print $2; exit}'
 }
 
@@ -30,7 +30,7 @@ for source_ref in "${source_refs[@]}"; do
     source_digest="${BASH_REMATCH[2]}"
     release_ref="$image:$version"
 
-    if release_digest="$(image_digest "$release_ref" 2>/dev/null)" && \
+    if release_digest="$(resolve_image_digest "$release_ref" 2>/dev/null)" && \
         [[ "$release_digest" != "$source_digest" ]]; then
         echo "Release tag already points to a different image: $release_ref" >&2
         exit 1
@@ -48,7 +48,7 @@ for source_ref in "${source_refs[@]}"; do
         --tag "$image:latest" \
         "$source_ref"
 
-    if [[ "$(image_digest "$release_ref")" != "$source_digest" ]]; then
+    if [[ "$(resolve_image_digest "$release_ref")" != "$source_digest" ]]; then
         echo "Published release digest does not match its source: $release_ref" >&2
         exit 1
     fi
