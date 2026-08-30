@@ -45,13 +45,13 @@ const databaseUrlSchema = z
         }
     });
 
-const clientOriginSchema = z.url("CLIENT_URL must be a valid URL").transform((value, ctx) => {
+const clientOriginSchema = z.url("CLIENT_ORIGIN must be a valid URL").transform((value, ctx) => {
     const url = new URL(value);
 
     if (url.protocol !== "http:" && url.protocol !== "https:") {
         ctx.addIssue({
             code: "custom",
-            message: "CLIENT_URL must use HTTP or HTTPS",
+            message: "CLIENT_ORIGIN must use HTTP or HTTPS",
         });
         return z.NEVER;
     }
@@ -65,7 +65,7 @@ const clientOriginSchema = z.url("CLIENT_URL must be a valid URL").transform((va
     ) {
         ctx.addIssue({
             code: "custom",
-            message: "CLIENT_URL must contain only an origin",
+            message: "CLIENT_ORIGIN must contain only an origin",
         });
         return z.NEVER;
     }
@@ -116,7 +116,7 @@ export const envSchema = z
 
         JWT_SECRET: z.string().min(32, "JWT_SECRET must contain at least 32 characters"),
 
-        CLIENT_URL: clientOriginSchema,
+        CLIENT_ORIGIN: clientOriginSchema,
 
         TRUST_PROXY_HOPS: proxyHopsSchema,
     })

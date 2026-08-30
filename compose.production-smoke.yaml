@@ -42,7 +42,7 @@ services:
       DB_IDLE_TIMEOUT_MS: 30000
       LOG_LEVEL: info
       JWT_SECRET: fit-track-production-smoke-secret-that-is-at-least-32-characters
-      CLIENT_URL: http://localhost:${SMOKE_FRONTEND_PORT:-18080}
+      CLIENT_ORIGIN: http://localhost:${SMOKE_FRONTEND_PORT:-18080}
       TRUST_PROXY_HOPS: "1"
     ports:
       - "127.0.0.1:${SMOKE_BACKEND_PORT:-13001}:3001"

@@ -37,8 +37,8 @@ FROM dependencies AS build
 COPY shared ./shared
 COPY frontend ./frontend
 
-ARG VITE_API_URL=/api
-ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_API_BASE_PATH=/api
+ENV VITE_API_BASE_PATH=$VITE_API_BASE_PATH
 
 RUN npm run build:frontend
 

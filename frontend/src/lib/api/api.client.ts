@@ -27,7 +27,7 @@ export async function apiRequest<T>(
     schema: z.ZodType<T>,
     options: ApiOptions = {},
 ): Promise<T> {
-    const response = await fetch(`${env.apiUrl}${path}`, {
+    const response = await fetch(`${env.apiBasePath}${path}`, {
         method: options.method ?? "GET",
         credentials: "include",
         headers: options.body === undefined ? undefined : {"Content-Type": "application/json"},

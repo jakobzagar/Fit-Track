@@ -57,7 +57,7 @@ services:
       DB_IDLE_TIMEOUT_MS: ${DB_IDLE_TIMEOUT_MS:-30000}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.dev}
-      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:5173}
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-3001}:3001"
@@ -80,7 +80,7 @@ services:
       target: development
     init: true
     environment:
-      VITE_API_URL: ${VITE_API_URL:-/api}
+      VITE_API_BASE_PATH: ${VITE_API_BASE_PATH:-/api}
       API_PROXY_TARGET: ${API_PROXY_TARGET:-http://backend:3001}
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"

@@ -22,6 +22,6 @@ export const env = {
     databaseIdleTimeoutMs: parsedEnv.data.DB_IDLE_TIMEOUT_MS,
     logLevel: parsedEnv.data.LOG_LEVEL,
     jwtSecret: parsedEnv.data.JWT_SECRET,
-    clientOrigin: parsedEnv.data.CLIENT_URL,
+    clientOrigin: parsedEnv.data.CLIENT_ORIGIN,
     trustProxyHops: parsedEnv.data.TRUST_PROXY_HOPS,
 };

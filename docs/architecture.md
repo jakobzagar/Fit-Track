@@ -181,12 +181,12 @@ Authentication uses a signed JWT in an HTTP-only cookie. Production cookies are 
 
 The frontend treats `401 Unauthorized` from an authenticated request as an expired session, clears its local user state, and lets protected routing return the user to login. Public authentication requests such as login, registration, and the initial session check handle `401` as an expected response instead of emitting the global expiration signal.
 
-`CLIENT_URL` accepts only an HTTP or HTTPS origin. The configuration parser removes an optional trailing slash, then CORS and CSRF checks consume the same normalized value. `DATABASE_URL` must be a valid PostgreSQL URL with a host and database name. Production connections require `sslmode=require`, `verify-ca`, or `verify-full` unless a controlled production-like environment explicitly sets `DATABASE_TLS_MODE=allow-insecure`; the production smoke stack uses that escape hatch only for its temporary local PostgreSQL container.
+`CLIENT_ORIGIN` accepts only an HTTP or HTTPS origin. The configuration parser removes an optional trailing slash, then CORS and CSRF checks consume the same normalized value. `DATABASE_URL` must be a valid PostgreSQL URL with a host and database name. Production connections require `sslmode=require`, `verify-ca`, or `verify-full` unless a controlled production-like environment explicitly sets `DATABASE_TLS_MODE=allow-insecure`; the production smoke stack uses that escape hatch only for its temporary local PostgreSQL container.
 
 The Express application also provides:
 
 - Helmet security headers;
-- credentialed CORS limited to `CLIENT_URL`;
+- credentialed CORS limited to `CLIENT_ORIGIN`;
 - `Cache-Control: no-store` on every API response so authenticated data, authentication results, and API errors are not retained by browsers or shared caches;
 - 100 KB JSON and form payload limits;
 - general, login, and registration rate limiters;
@@ -272,7 +272,7 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-Set a valid PostgreSQL `DATABASE_URL`, strong `JWT_SECRET`, matching origin-only `CLIENT_URL`, and `TRUST_PROXY_HOPS=0` in `backend/.env`. Apply migrations from the repository root:
+Set a valid PostgreSQL `DATABASE_URL`, strong `JWT_SECRET`, matching origin-only `CLIENT_ORIGIN`, and `TRUST_PROXY_HOPS=0` in `backend/.env`. Apply migrations from the repository root:
 
 ```bash
 npm exec --workspace @fit-track/backend -- prisma migrate deploy
