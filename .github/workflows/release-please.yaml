@@ -32,7 +32,21 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Check production baseline
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if gh api "repos/$REPOSITORY/git/ref/tags/v1.0.0" >/dev/null 2>&1; then
+            printf 'exists=true\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'exists=false\n' >> "$GITHUB_OUTPUT"
+            echo "Release Please is paused until the v1.0.0 baseline tag exists."
+          fi
+
       - name: Run Release Please
+        if: steps.baseline.outputs.exists == 'true'
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
