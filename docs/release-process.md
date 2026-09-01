@@ -101,6 +101,7 @@ The repository ruleset for `main` should:
 - require the branch to be up to date with `main` before merging;
 - require all review conversations to be resolved;
 - require the exact `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` status checks;
+- permit rebase merges only, preserving reviewed commits while keeping `main` linear;
 - block force pushes and deletion of `main`;
 - provide no routine bypass for repository administrators or automation.
 
@@ -173,7 +174,7 @@ The release pull request updates the root, frontend, backend, and shared `packag
 
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. The token allows Release Please-created changes and tags to trigger the normal workflows.
 
-After image publication on `main`, Release Please creates or updates a release pull request. Review the generated version and changelog, wait for checks, and squash-merge it. The merge is verified and published by SHA before Release Please creates the version tag and GitHub Release.
+After image publication on `main`, Release Please creates or updates a release pull request. Review the generated version and changelog, wait for checks, and rebase-merge it. The merge is verified and published by SHA before Release Please creates the version tag and GitHub Release.
 
 Do not manually create or move release tags during the normal process. Publish a new patch version when a released artifact needs correction.
 
