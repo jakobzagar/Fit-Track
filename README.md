@@ -2,53 +2,64 @@
 
 ![FitTrack](frontend/public/brand/fittrack-logo.png)
 
-FitTrack is a production-minded full-stack workout planning and tracking application, designed and built independently as a portfolio project. Users can maintain a personal exercise library, build ordered workouts, record active workouts, compare previous performance, and correct completed training records through an explicit lifecycle.
+[![Test](https://github.com/jakobzagar/Fit-Track/actions/workflows/test.yaml/badge.svg)](https://github.com/jakobzagar/Fit-Track/actions/workflows/test.yaml)
+[![Release](https://img.shields.io/github/v/release/jakobzagar/Fit-Track)](https://github.com/jakobzagar/Fit-Track/releases)
 
-The repository demonstrates more than a CRUD interface: it treats runtime contracts, authorization, concurrent mutations, database invariants, isolated integration testing, container delivery, and operational failure modes as first-class engineering concerns.
+FitTrack is a backend- and delivery-focused TypeScript system for planning and recording workouts. It demonstrates relational data modelling, authorization, transactional lifecycle invariants, PostgreSQL integration testing, containerized delivery, and release automation. A React application serves as the reference client for the complete API workflow.
 
-> **Status:** the core workout workflow is complete. Current work focuses on reliability, documentation, delivery, and operational readiness rather than adding unrelated features. A public demo is not available yet; the complete application runs locally with Docker Compose.
+> **Current state:** the application and its production container artifacts are implemented and verified locally and in CI. A public environment is not deployed yet. AWS infrastructure is the next planned phase and is documented as a plan, not as an existing capability.
 
-## Portfolio overview
+## What this project demonstrates
 
-| Area              | Evidence in the project                                                                                                                    |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Product thinking  | Explicit draft → active → completed workout lifecycle, safe cancellation and reopening, workout history, and previous-performance context  |
-| Full-stack design | React client, Express application, PostgreSQL persistence, and shared runtime contracts in one TypeScript monorepo                         |
-| Data integrity    | Ownership-scoped queries, relational constraints, append-only migrations, serializable transactions, retry handling, and concurrency tests |
-| Security          | HTTP-only cookies, CSRF origin checks, credentialed CORS, request limits, rate limiting, security headers, and redacted structured logs    |
-| Quality strategy  | Contract, unit, frontend, PostgreSQL integration, real-browser E2E, accessibility, and final-container smoke coverage                      |
-| Delivery          | Protected pull-request checks, multi-platform containers, digest-pinned verification, SBOM, provenance, and coordinated releases           |
+| Focus               | Evidence                                                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Backend design      | Thin Express routes, authoritative domain services, centralized middleware, and Prisma persistence                           |
+| Data integrity      | Ownership-scoped queries, relational constraints, append-only migrations, serializable transactions, and retry handling      |
+| Security            | HTTP-only cookies, CSRF origin checks, credentialed CORS, payload limits, rate limiting, security headers, and log redaction |
+| Verification        | Contract, unit, PostgreSQL integration, concurrency, browser E2E, accessibility, release, and final-container tests          |
+| Container delivery  | Non-root multi-stage images, a dedicated migration artifact, digest-pinned smoke tests, SBOM, and build provenance           |
+| Release engineering | Protected pull requests, coordinated product versions, exact-digest promotion, and Release Please                            |
+| Cloud direction     | An explicit AWS gap analysis and deployment plan without presenting proposed infrastructure as implemented                   |
+| Reference client    | A React interface that exercises authentication, lifecycle transitions, validation failures, and persisted state             |
 
-### Suggested review path
+### Recommended technical review path
 
-1. Scan the [workout lifecycle](#workout-lifecycle) and [engineering highlights](#engineering-highlights).
-2. Review the [architecture and data model](docs/architecture.md), including the documented trade-offs.
-3. Inspect the [testing strategy](docs/testing.md) to see how each risk is verified.
-4. Review the [release process](docs/release-process.md) for digest-pinned container verification and promotion.
+1. Read the [workout lifecycle and data model](docs/architecture.md#workout-lifecycle).
+2. Inspect the [lifecycle service](backend/src/modules/workouts/services/workout-lifecycle.service.ts) and its [concurrency tests](backend/src/modules/workouts/tests/workout-lifecycle-concurrency.integration.test.ts).
+3. Review [nested ownership enforcement](backend/src/modules/workouts/workout-exercises/services/owned-workout-resource.loader.ts) and the [authorization integration tests](backend/src/modules/workouts/workout-exercises/tests/workout-exercise.integration.test.ts).
+4. Follow the [risk-to-evidence testing map](docs/testing.md#risk-to-evidence-map).
+5. Review the [container and release pipeline](docs/release-process.md#pipeline-overview).
+6. See the [AWS readiness gap](docs/aws-deployment-plan.md#production-readiness-gap) for work that is deliberately not claimed as complete.
 
-## Engineering highlights
+## Engineering case studies
 
-- **Shared runtime contracts:** frontend and backend consume the same strict Zod request and response schemas from `@fit-track/shared`.
-- **Defence at both boundaries:** the backend authoritatively validates untrusted input, while the frontend validates real API responses before using them.
-- **Ownership by default:** every protected query is scoped to the authenticated user, including nested workout exercises and sets.
-- **Transactional ordering:** workout exercise positions and set numbers remain contiguous after concurrent moves and deletions.
-- **Recoverable workout lifecycle:** workouts can be started, cancelled, completed, reopened for corrections, and safely deleted.
-- **Real integration environment:** Supertest exercises the exported Express application against migrated PostgreSQL, not an in-memory database.
-- **Critical browser journeys:** Playwright drives Chromium through registration, workout completion, persisted login state, and expired-session recovery against the real API and PostgreSQL.
-- **Defensive HTTP defaults:** HTTP-only cookies, CSRF origin checks, restricted credentialed CORS, Helmet, payload limits, and rate limiting.
-- **Operational lifecycle:** structured request-correlated logs, separate liveness/readiness checks, graceful shutdown, append-only migrations, non-root containers, Git-addressed image tags, digest-pinned smoke checks, SBOM, and build provenance.
+### Enforcing one active workout
 
-## Product capabilities
+**Problem:** two concurrent requests could otherwise start different workouts for the same user.
 
-- Registration, login, logout, and session restoration
-- Personal exercise library with archive and restore
-- Workout creation, editing, ordering, and deletion
-- Active workouts with reps, weight, duration, notes, and set completion
-- Previous-performance context for each exercise
-- Explicit active-workout cancellation and completed-workout reopening
-- Responsive protected routes and an accessible public landing page
+**Decision:** lifecycle transitions run in serializable transactions, while a partial PostgreSQL unique index provides the final persistence-level invariant. The service translates the expected uniqueness race into stable domain behavior.
 
-## Workout lifecycle
+**Evidence:** [lifecycle implementation](backend/src/modules/workouts/services/workout-lifecycle.service.ts), [database migration](backend/prisma/migrations/20260815000000_enforce_one_active_workout_per_user/migration.sql), and [concurrency regression tests](backend/src/modules/workouts/tests/workout-lifecycle-concurrency.integration.test.ts).
+
+### Protecting nested workout resources
+
+**Problem:** knowing a valid set or workout-exercise ID must not allow access through a different workout or by another user.
+
+**Decision:** every protected nested mutation resolves the complete ownership chain before changing data. PostgreSQL relations and cascades complement, rather than replace, application authorization.
+
+**Evidence:** [owned-resource loader](backend/src/modules/workouts/workout-exercises/services/owned-workout-resource.loader.ts) and [nested mutation tests](backend/src/modules/workouts/workout-exercises/tests/workout-mutation-constraints.integration.test.ts).
+
+### Verifying the artifact that is promoted
+
+**Problem:** a human-readable image tag can move and therefore cannot prove which content passed runtime verification.
+
+**Decision:** workflows smoke-test the exact digests returned by each build and promote those same digests. A separate migration image makes schema rollout an explicit deployment step.
+
+**Evidence:** [production image action](.github/actions/build-production-images/action.yml), [container smoke script](scripts/smoke/production-containers.sh), and [release policy](docs/release-process.md#image-tags).
+
+## Product behavior
+
+Users can register, maintain a personal exercise library, create ordered workouts, record sets, compare previous performance, and correct completed records through an explicit lifecycle.
 
 ```mermaid
 stateDiagram-v2
@@ -63,50 +74,32 @@ stateDiagram-v2
     Completed --> Active: Reopen
 ```
 
-A user can have only one active workout. **Cancel** returns it to draft and clears completion marks without discarding entered set values. **Reopen** returns a completed workout to the active state while preserving its recorded data. Any owned workout can be deleted from every lifecycle state together with its nested exercises and sets.
+A user can have only one active workout. Cancellation preserves entered set values but clears completion marks. Reopening preserves a completed record while making the correction deliberate. Any owned workout can be deleted together with its nested exercises and sets.
 
-## Architecture
+## System overview
 
 ```mermaid
 flowchart LR
-    User([User]) --> Frontend[React application]
-    Frontend -->|/api| API[Express API]
-    API --> Database[(PostgreSQL)]
+    User([User]) --> Client[React reference client]
+    Client -->|/api| Backend[Express backend]
+    Backend --> Database[(PostgreSQL)]
 
-    Contracts[Shared Zod contracts] -.-> Frontend
-    Contracts -.-> API
+    Contracts[Shared Zod contracts] -.-> Client
+    Contracts -.-> Backend
 ```
 
-```text
-fit-track/
-├── frontend/          React single-page application organized by feature
-├── backend/           Express API, domain services, tests, and Prisma layer
-│   └── prisma/        Database schema and append-only migrations
-├── shared/            Framework-independent Zod schemas and TypeScript contracts
-├── docs/              Architecture, testing, release, and AWS planning
-├── compose.dev.yaml   Complete local development stack
-├── compose.test.yaml  Isolated backend integration stack with temporary PostgreSQL
-└── compose.e2e.yaml   Isolated browser-test PostgreSQL
-```
+| Area             | Technologies                                                  |
+| ---------------- | ------------------------------------------------------------- |
+| Backend          | Node.js 24, Express 5, TypeScript, Prisma ORM, Zod, Pino      |
+| Database         | PostgreSQL 17                                                 |
+| Delivery         | Docker Compose, GitHub Actions, GHCR, Release Please          |
+| Testing          | Vitest, Supertest, Playwright, Testing Library, MSW, axe-core |
+| Reference client | React 19, Vite, React Router, Tailwind CSS                    |
+| Shared contracts | Framework-independent Zod schemas and inferred types          |
 
-The React application sends `/api` requests to the Express API, which persists data in PostgreSQL. Shared Zod contracts keep both applications aligned at the HTTP boundary; API responses return along the same path.
+The backend is the authoritative trust boundary. Shared contracts keep HTTP request and response shapes aligned, while PostgreSQL constraints protect invariants that must survive concurrent requests. See [Architecture and design decisions](docs/architecture.md) for request flow, Module ownership, security controls, runtime behavior, and accepted trade-offs.
 
-Frontend code is organized around user-facing features, while reusable layout and UI primitives remain outside feature modules. Feature APIs, components, hooks, pages, styles, utilities, and local tests stay with the feature that owns them; empty placeholder directories are not created.
-
-Read [Architecture and design decisions](docs/architecture.md) for request flow, backend layers, data model, security boundaries, and trade-offs.
-
-## Technology stack
-
-| Area           | Technologies                                                                 |
-| -------------- | ---------------------------------------------------------------------------- |
-| Frontend       | React 19, TypeScript, Vite, React Router, Tailwind CSS, Zod                  |
-| Backend        | Node.js 24, Express 5, TypeScript, Prisma ORM, Zod, Pino                     |
-| Database       | PostgreSQL 17                                                                |
-| Authentication | JWT in HTTP-only cookies, bcrypt password hashing                            |
-| Testing        | Vitest, Supertest, Testing Library, MSW, axe-core, Playwright                |
-| Delivery       | Docker Compose, multi-stage containers, GitHub Actions, GHCR, Release Please |
-
-## Quick start
+## Run locally
 
 ### Requirements
 
@@ -119,103 +112,38 @@ cd Fit-Track
 cp .env.dev.example .env.dev
 ```
 
-Replace the example passwords and `JWT_SECRET` in `.env.dev`, then start the application:
+Replace the example passwords and `JWT_SECRET`, then start the complete stack:
 
 ```bash
 npm run dev:docker
 ```
 
-| Service    | Address                                        |
+| Process    | Address                                        |
 | ---------- | ---------------------------------------------- |
 | Frontend   | [http://localhost:5173](http://localhost:5173) |
-| API        | [http://localhost:3001](http://localhost:3001) |
+| Backend    | [http://localhost:3001](http://localhost:3001) |
 | PostgreSQL | `127.0.0.1:5433`                               |
 
-The migration container applies committed migrations before the backend starts. The frontend sends `/api` requests through its development proxy.
-
-Stop the stack without deleting the database volume:
-
-```bash
-npm run dev:docker:down
-```
-
-For pgAdmin, configure its values in `.env.dev` and start the optional tools profile:
-
-```bash
-npm run dev:docker:tools
-```
-
-Instructions for running Node.js and PostgreSQL directly are available in [Architecture and design decisions](docs/architecture.md#local-development-without-docker).
-
-Environment files are owned by their launch mode: the Docker stack reads only root `.env.dev`, while direct application processes read `backend/.env` and `frontend/.env`. See [Environment configuration](docs/architecture.md#environment-configuration) for the complete mapping and proxy guidance.
+The one-off migration container must succeed before the backend starts. Stop the stack without deleting its database volume with `npm run dev:docker:down`. Direct-process setup and environment ownership are documented in [architecture](docs/architecture.md#environment-configuration).
 
 ## Verification
 
-Run the fast workspace verification before opening a pull request:
-
 ```bash
-npm run verify
+npm run verify      # lint, types, formatting, fast tests, release checks, builds
+npm run test:docker # migrated PostgreSQL integration and concurrency tests
+npm run test:e2e    # critical browser journeys against the real backend and database
 ```
 
-The command generates the Prisma client automatically and does not require a running database. PostgreSQL is required only for the isolated integration suite below.
+Pull requests additionally build and exercise the final backend, migration, and Nginx images together. The complete responsibility map, safety guards, and diagnostic commands belong in the [testing strategy](docs/testing.md).
 
-Run the complete isolated suite for backend behavior, persistence, authorization, concurrency, security middleware, or migrations:
+## Current operational limits
 
-```bash
-npm run test:docker
-```
+- There is no public deployment or AWS infrastructure definition yet.
+- HTTPS termination, managed secrets, backups, monitoring, and deployment automation are not configured.
+- Rate-limit counters are process-local and are not global across backend replicas.
+- Structured logs are written to standard output, but no external collection or alerting destination is configured.
 
-Run the critical real-browser journeys against an isolated migrated database:
-
-```bash
-npm run test:e2e
-```
-
-| Layer               | Responsibility                                                                   |
-| ------------------- | -------------------------------------------------------------------------------- |
-| Shared contracts    | Validation boundaries, normalization, and strict response shapes                 |
-| Backend unit        | Middleware, transaction retry logic, cookies, and graceful shutdown              |
-| Backend integration | HTTP behavior against migrated PostgreSQL, ownership, lifecycle, and concurrency |
-| Frontend            | User interactions, state transitions, API failures, routing, and accessibility   |
-| Browser E2E         | Critical user journeys through Chromium, the real API, and migrated PostgreSQL   |
-| Production smoke    | Final container startup, migrations, Nginx static serving, and Nginx → API proxy |
-
-See [Testing strategy](docs/testing.md) for suite boundaries, database safety, commands, and test conventions.
-
-## Design decisions
-
-- **HTTP-only cookies over browser storage:** JavaScript cannot read the authentication token; same-origin state-changing requests are additionally protected by CSRF origin checks.
-- **Runtime schemas over TypeScript-only contracts:** compile-time types cannot validate JSON received over the network, so successful and error responses are parsed at the client boundary.
-- **A real relational test database:** ownership, foreign keys, cascades, uniqueness, ordering, and transaction conflicts depend on PostgreSQL behavior.
-- **Archive exercises, preserve history:** an exercise referenced by previous workouts remains available to historical records even when removed from the active library.
-- **Explicit lifecycle corrections:** completed workouts remain read-only until the user deliberately reopens them, making accidental history changes less likely.
-- **Separate migration artifact:** schema changes run once before the matching backend revision rather than from every application replica.
-
-More context and accepted trade-offs are documented in [Architecture and design decisions](docs/architecture.md#design-decisions-and-trade-offs).
-
-## Security and operational boundaries
-
-The API restricts credentialed CORS to the configured frontend origin, checks CSRF origins for state-changing requests, limits JSON bodies to 100 KB, uses Helmet security headers, and returns sanitized unexpected errors. Production cookies are secure and HTTP-only.
-
-The current rate limiter uses process-local memory and is suitable for the present single-process runtime. Multiple backend processes require a shared store if limits must be global. The backend emits redacted JSON logs to standard output in production, attaches a generated request ID to each response, and uses readable pretty-printing only during local development.
-
-The planned deployment target is AWS, with an Application Load Balancer routing to separate frontend and backend ECS services, an ECS migration task, and RDS PostgreSQL. That infrastructure is not implemented in this repository yet, so HTTPS termination, managed secrets, backups, monitoring, and deployment remain explicit pre-production work described in the [AWS deployment plan](docs/aws-deployment-plan.md).
-
-## Delivery
-
-`main` is the protected integration branch. Contributors work on short-lived branches, open pull requests, and merge only after `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` succeed. Failed checks leave `main` unchanged and are corrected by pushing another commit to the same pull-request branch.
-
-FitTrack uses `1.0.0` as its planned first production release and maintained version baseline. The root package, all workspaces, package lock, Release Please manifest, and changelog carry the same product version.
-
-Successful commits on `main` publish three multi-platform images from the same tested revision:
-
-- `fit-track-backend`
-- `fit-track-frontend`
-- `fit-track-migration`
-
-Images receive Git-addressed `sha-<commit>` tags, SBOM attestations, and build provenance. A rerun may replace a SHA tag, while smoke tests pin the exact digest returned by each successful build before promoting it to the moving `main` tag. After the one-time `v1.0.0` production-baseline bootstrap, Release Please manages later product versions; each release rebuilds the tagged revision, smoke-tests its exact digests, and only then assigns the exact version and `latest` tags.
-
-See [Release and container process](docs/release-process.md#protected-main-workflow) for the branch workflow, repository ruleset, migration ordering, image tags, local workflow checks, and release operations.
+These are documented gaps, not hidden production claims. The intended next phase is described in the [AWS deployment plan](docs/aws-deployment-plan.md).
 
 ## Documentation
 
@@ -227,4 +155,4 @@ See [Release and container process](docs/release-process.md#protected-main-workf
 
 ## Author
 
-Designed and implemented by [Jakob Zagar](https://github.com/jakobzagar) as an independent portfolio project.
+Designed and implemented by [Jakob Zagar](https://github.com/jakobzagar) as an independent backend, delivery, and cloud-learning portfolio project.

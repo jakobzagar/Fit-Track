@@ -1,14 +1,27 @@
 # Architecture and design decisions
 
-This document explains how FitTrack is organized, where trust boundaries sit, and why the project uses its current design. For setup and the product overview, start with the [main README](../README.md); for canonical product terminology, see the [domain language](../CONTEXT.md).
+This document explains how FitTrack's backend, persistence, delivery-facing runtime, and reference client are organized. It records implemented behavior and accepted trade-offs; proposed AWS infrastructure remains separate in the [deployment plan](aws-deployment-plan.md). For a concise portfolio overview, start with the [main README](../README.md); for canonical product terminology, see the [domain language](../CONTEXT.md).
+
+## Architectural priorities
+
+FitTrack is intentionally backend-led. The React application proves the public HTTP Interface, but the authoritative behavior lives in the backend and PostgreSQL.
+
+| Priority                    | Design response                                                                                                 |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Protect user-owned data     | Authenticate before protected routes and scope every read and mutation to the complete ownership chain          |
+| Preserve relational state   | Combine application rules, serializable transactions, retries, constraints, indexes, and append-only migrations |
+| Reject contract drift       | Validate input at the backend and parse real responses through shared strict Zod schemas                        |
+| Expose safe runtime signals | Separate process liveness from database readiness and shut down gracefully on termination                       |
+| Verify deployable artifacts | Build non-root runtime images, isolate migrations, and smoke-test exact image digests before promotion          |
+| Keep claims evidence-based  | Separate implemented application behavior from unimplemented cloud infrastructure                               |
 
 ## Workspace responsibilities
 
-| Workspace  | Responsibility                                                                               |
-| ---------- | -------------------------------------------------------------------------------------------- |
-| `frontend` | React application, user interactions, client state, routing, and API response validation     |
-| `backend`  | Authentication, authorization, input validation, domain rules, transactions, and persistence |
-| `shared`   | Framework-independent Zod schemas and TypeScript contracts used by both applications         |
+| Workspace  | Responsibility                                                                                |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `frontend` | Reference React client, user interactions, client state, routing, and API response validation |
+| `backend`  | Authentication, authorization, input validation, domain rules, transactions, and persistence  |
+| `shared`   | Framework-independent Zod schemas and TypeScript contracts used by both applications          |
 
 Shared contracts describe data crossing the HTTP boundary. They do not contain React, Express, or Prisma behavior, keeping the package portable and preventing infrastructure details from leaking into domain contracts.
 
@@ -205,6 +218,24 @@ The backend exposes two health checks:
 - `GET /api/health/ready` confirms that PostgreSQL is reachable and returns `503` otherwise.
 
 On `SIGTERM` or `SIGINT`, the server stops accepting new connections, waits for HTTP connections to close, disconnects Prisma, and exits. A timeout force-closes remaining connections to prevent an indefinitely stuck shutdown.
+
+## Failure and recovery behavior
+
+Failure behavior is part of each Module's Interface rather than an afterthought at deployment time.
+
+| Scenario                            | Implemented behavior                                                                                                     | Recovery owner                                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| Invalid request                     | Zod validation rejects the request before the controller and returns structured field or form errors                     | Caller corrects the request                                  |
+| Expired authenticated session       | The backend returns `401`; the reference client clears local session state and returns the user to sign-in               | User authenticates again                                     |
+| Ownership or nested-parent mismatch | The mutation is rejected without exposing or changing another user's resource                                            | Caller uses an owned resource                                |
+| Serializable transaction conflict   | The transaction Adapter retries a bounded number of times; exhaustion becomes a stable `503` response                    | Caller retries later                                         |
+| PostgreSQL unavailable              | Liveness remains independent, readiness returns `503`, and persistence-dependent requests fail through central handling  | Runtime platform withholds traffic and operators investigate |
+| Unexpected backend exception        | The client receives a sanitized error while structured logs retain request context without credentials or request bodies | Operator traces the request ID                               |
+| Process termination                 | The server stops accepting traffic, drains HTTP connections, disconnects Prisma, and force-closes after a timeout        | Runtime platform replaces or stops the process               |
+| Migration failure                   | The one-off migration process exits unsuccessfully; Compose does not start the dependent backend                         | Deployment must stop before application rollout              |
+| Container smoke failure             | The workflow does not promote the build digest to a moving or version tag                                                | Maintainer fixes the source or build configuration           |
+
+The repository implements the application and container behavior in this table. Automated cloud traffic shifting, alarms, backup recovery, and deployment rollback do not exist yet and remain responsibilities of the planned platform.
 
 ## Structured logging
 
