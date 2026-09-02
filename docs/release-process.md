@@ -1,6 +1,6 @@
 # Release and container process
 
-FitTrack uses GitHub Actions to verify the repository, publish digest-addressed container artifacts, and manage one product version across all workspaces.
+FitTrack uses GitHub Actions to verify the repository, publish digest-addressed container artifacts, and manage one product version across all workspaces. This is an implemented artifact-release process, not a cloud deployment pipeline: it ends with verified images in GHCR.
 
 The process follows three principles:
 
@@ -178,21 +178,11 @@ After image publication on `main`, Release Please creates or updates a release p
 
 Do not manually create or move release tags during the normal process. Publish a new patch version when a released artifact needs correction.
 
-### One-time 1.0.0 production baseline
+### Established 1.0.0 baseline
 
-Version `1.0.0` is the first production release and maintained version baseline. Its preparation PR intentionally aligns the root package, all three workspaces, root and workspace lockfile entries, Release Please manifest, and changelog at `1.0.0`.
+Tag `v1.0.0` is the established product baseline. Its bootstrap aligned the root package, all workspaces, lockfile entries, Release Please manifest, and changelog before enabling the normal automated release line. The workflow retains an explicit baseline-tag check as a safety guard, but the one-time manual bootstrap is complete and must not be repeated.
 
-Before the manual release step below, those files describe a prepared baseline rather than an already published tag or GitHub Release.
-
-Because this baseline is established before Release Please owns the `1.x` line, publish it with this one-time bootstrap sequence:
-
-1. merge the baseline PR only after `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` pass;
-2. wait for the merge commit's `Test` workflow and subsequent `Build and Push to GHCR` workflow to succeed;
-3. confirm that the backend, frontend, and migration `sha-<merge-commit>` images passed the publishing workflow's digest-pinned smoke test;
-4. create GitHub Release `v1.0.0` targeting that exact commit on `main` and use the `1.0.0` changelog section as its notes;
-5. wait for `Release Images` to validate the tag, rebuild and smoke-test that revision, and tag those exact digests as `1.0.0` and `latest`.
-
-Never create the tag before the SHA images for its commit have passed their digest-pinned registry smoke test. Once `v1.0.0` exists, this exception is complete: Release Please discovers the manifest and tag as the current release and owns every later version through its normal protected PR flow. A `fix:` or `perf:` then proposes `1.0.1`, a `feat:` proposes `1.1.0`, and a breaking change proposes `2.0.0`.
+Release Please now owns every later version through the protected pull-request flow. A `fix:` or `perf:` proposes a patch, a `feat:` proposes a minor release, and a breaking change proposes a major release. Every generated release pull request must keep the coordinated version artifacts aligned and pass the same merge gate as application changes.
 
 To intentionally override the proposed next version, use a `Release-As` footer:
 

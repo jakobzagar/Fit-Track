@@ -1,6 +1,6 @@
 # Testing strategy
 
-FitTrack separates tests by responsibility so failures point to the correct boundary. The suite uses Vitest throughout, Testing Library and MSW in the frontend, and Supertest with PostgreSQL in backend integration tests.
+FitTrack treats tests as evidence for backend, persistence, security, and delivery risks rather than as a single coverage number. Each layer owns a distinct failure class so a failing check identifies the relevant Seam. The suite uses Vitest throughout, Supertest with migrated PostgreSQL for backend integration, Playwright for complete browser journeys, and final-image smoke tests for runtime artifacts.
 
 ## Risk-to-evidence map
 
@@ -18,6 +18,21 @@ FitTrack separates tests by responsibility so failures point to the correct boun
 | Release version drift               | Release validation checks the tag against packages, lockfile, manifest, and changelog                            |
 
 Tests cross the same Interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private Implementation details.
+
+```mermaid
+flowchart LR
+    Source[Source change] --> Fast[Static checks and fast tests]
+    Fast --> Integration[PostgreSQL integration]
+    Fast --> Browser[Browser E2E]
+    Fast --> Images[Build final images]
+    Images --> Smoke[Container smoke]
+    Integration --> Merge[Merge gate]
+    Browser --> Merge
+    Smoke --> Merge
+    Merge --> Registry[Build and verify exact registry digests]
+```
+
+Fast checks protect developer feedback time. PostgreSQL tests own relational and concurrency behavior, browser E2E owns only critical cross-application journeys, and smoke tests prove that the final container Implementations still satisfy their runtime Interfaces. None of these layers substitutes for another.
 
 ## Test layers
 
