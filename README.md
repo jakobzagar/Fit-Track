@@ -3,11 +3,10 @@
 ![FitTrack](frontend/public/brand/fittrack-logo.png)
 
 [![Test](https://github.com/jakobzagar/Fit-Track/actions/workflows/test.yaml/badge.svg)](https://github.com/jakobzagar/Fit-Track/actions/workflows/test.yaml)
-[![Release](https://img.shields.io/github/v/release/jakobzagar/Fit-Track)](https://github.com/jakobzagar/Fit-Track/releases)
 
 FitTrack is a backend- and delivery-focused TypeScript system for planning and recording workouts. It demonstrates relational data modelling, authorization, transactional lifecycle invariants, PostgreSQL integration testing, containerized delivery, and release automation. A React application serves as the reference client for the complete API workflow.
 
-> **Current state:** the application and its production container artifacts are implemented and verified locally and in CI. A public environment is not deployed yet. AWS infrastructure is the next planned phase and is documented as a plan, not as an existing capability.
+> **Current state:** the application and its production container artifacts are implemented and verified locally and in CI, but the product is still unreleased and uses the internal `0.0.0` version. Release automation is configured for its first release. A public environment is not deployed yet. AWS infrastructure is the next planned phase and is documented as a plan, not as an existing capability.
 
 ## What this project demonstrates
 

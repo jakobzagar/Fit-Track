@@ -22,7 +22,6 @@
             "section": "Reverts"
         }
     ],
-    "bootstrap-sha": "90aa67b4057f2cef832bae7705a74a8dd0b78cc9",
     "packages": {
         ".": {
             "component": "fit-track",
