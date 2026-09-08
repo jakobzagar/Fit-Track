@@ -23,13 +23,29 @@ RUN DATABASE_URL=postgresql://unused:unused@localhost:5432/unused \
     npm run build:backend
 
 
-FROM build AS migration
+FROM base AS migration-dependencies
+
+WORKDIR /user/src/migration
+
+COPY backend/migration-runtime/package.json backend/migration-runtime/package-lock.json ./
+
+RUN npm ci --omit=dev
+
+
+FROM base AS migration
 
 WORKDIR /user/src/app/backend
 
+ENV NODE_ENV=production
+
+COPY --from=migration-dependencies --chown=node:node /user/src/migration/node_modules ./node_modules
+COPY --chown=node:node backend/migration-runtime/package.json ./package.json
+COPY --chown=node:node backend/prisma.config.ts ./prisma.config.ts
+COPY --chown=node:node backend/prisma ./prisma
+
 USER node
 
-CMD ["npm", "exec", "--", "prisma", "migrate", "deploy"]
+CMD ["./node_modules/.bin/prisma", "migrate", "deploy"]
 
 
 FROM base AS production-dependencies

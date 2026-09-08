@@ -85,7 +85,7 @@ The Docker stack:
 5. runs backend integration tests sequentially;
 6. returns the test container's exit code.
 
-Release artifact validation is intentionally separate because it does not require PostgreSQL or the application test image. Run it directly with `npm run test:release`; the full `npm run verify` command includes it.
+Release artifact validation is intentionally separate because it does not require PostgreSQL or the application test image. It also rejects Prisma or `dotenv` version drift between the backend and the minimal migration runtime. Run it directly with `npm run test:release`; the full `npm run verify` command includes it.
 
 Remove an interrupted stack before retrying:
 

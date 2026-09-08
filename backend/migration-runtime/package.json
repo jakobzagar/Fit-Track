@@ -1,0 +1,13 @@
+{
+    "name": "fit-track-migration-runtime",
+    "private": true,
+    "type": "module",
+    "dependencies": {
+        "dotenv": "^17.4.2",
+        "prisma": "^7.10.0"
+    },
+    "engines": {
+        "node": ">=24.18.0"
+    },
+    "packageManager": "npm@11.12.1"
+}

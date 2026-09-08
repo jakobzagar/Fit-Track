@@ -124,7 +124,7 @@ Release Please pull requests use the same protected path. Never merge a stale re
 | --------------------- | ------------- | -------------------------------------------------------- |
 | `fit-track-backend`   | `production`  | Compiled Express application and production dependencies |
 | `fit-track-frontend`  | `production`  | Static React assets served by unprivileged Nginx         |
-| `fit-track-migration` | `migration`   | Prisma CLI, generated client, and committed migrations   |
+| `fit-track-migration` | `migration`   | Minimal Prisma CLI runtime and committed migrations      |
 
 Images are built for `linux/amd64` and `linux/arm64`. Each build publishes an SBOM and max-level provenance attestation.
 
@@ -201,7 +201,7 @@ Portable release-tag validation and image-promotion policy lives under `scripts/
 
 ## Dependency update automation
 
-Dependabot checks GitHub Actions and the root npm workspace weekly. Minor and patch npm updates are grouped by production or development responsibility, while major updates remain individually reviewable.
+Dependabot checks GitHub Actions, the root npm workspace, and the standalone migration-runtime package weekly. Minor and patch npm updates are grouped by production or development responsibility, with Prisma packages grouped across both npm lockfiles; major updates remain individually reviewable. Release validation rejects Prisma or `dotenv` range drift between the backend and migration manifests.
 
 Docker coverage is also weekly. The `docker` ecosystem scans the root, backend, and frontend Dockerfile directories; the separate `docker-compose` ecosystem scans the root Compose definitions. Dependabot pull requests are not auto-merged: they follow the same protected `main` pull-request path and required checks as contributor changes.
 

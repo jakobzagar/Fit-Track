@@ -38,11 +38,20 @@ updates:
           - patch
 
   - package-ecosystem: npm
-    directory: /
+    directories:
+      - /
+      - /backend/migration-runtime
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
     groups:
+      prisma-dependencies:
+        patterns:
+          - prisma
+          - "@prisma/*"
+        update-types:
+          - minor
+          - patch
       production-dependencies:
         dependency-type: production
         update-types:

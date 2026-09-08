@@ -267,7 +267,7 @@ Completed workouts are immutable during normal editing. A deliberate reopen acti
 
 ### Separate migration image
 
-The runtime backend image contains only compiled application files and production dependencies. A separate migration image includes the Prisma tooling and committed migrations. This increases the number of artifacts but makes schema changes an explicit one-off step rather than a side effect of every application start.
+The runtime backend image contains only compiled application files and production dependencies. A separate migration image contains a minimal locked runtime with the Prisma CLI and `dotenv`, plus the Prisma configuration, schema, and committed migrations. It does not contain the backend build output, generated Prisma Client, shared workspace, or application dependencies. This increases the number of artifacts and introduces a second lockfile, but reduces migration-image transfer and attack surface while making schema changes an explicit one-off step rather than a side effect of every application start. Release validation keeps the migration Prisma and `dotenv` ranges aligned with the backend manifest.
 
 ### Protected integration branch
 
