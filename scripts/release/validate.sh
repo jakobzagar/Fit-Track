@@ -33,6 +33,31 @@ checkVersion(
     readJson(".github/release-please/manifest.json")["."],
 );
 
+const backendPackage = readJson("backend/package.json");
+const migrationPackage = readJson("backend/migration-runtime/package.json");
+const expectedMigrationDependencies = {
+    dotenv: backendPackage.dependencies?.dotenv,
+    prisma: backendPackage.devDependencies?.prisma,
+};
+
+for (const [dependency, expectedRange] of Object.entries(expectedMigrationDependencies)) {
+    const actualRange = migrationPackage.dependencies?.[dependency];
+    if (actualRange !== expectedRange) {
+        failures.push(
+            `backend/migration-runtime/package.json dependency ${dependency} is ${JSON.stringify(actualRange)}, expected ${JSON.stringify(expectedRange)}`,
+        );
+    }
+}
+
+const unexpectedMigrationDependencies = Object.keys(migrationPackage.dependencies ?? {}).filter(
+    (dependency) => !(dependency in expectedMigrationDependencies),
+);
+if (unexpectedMigrationDependencies.length > 0) {
+    failures.push(
+        `backend/migration-runtime/package.json has unexpected dependencies: ${unexpectedMigrationDependencies.join(", ")}`,
+    );
+}
+
 const escapedVersion = expectedVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const changelogHeading = new RegExp(`^## \\[${escapedVersion}\\](?:\\(|\\s|$)`, "m");
 if (!changelogHeading.test(readFileSync("CHANGELOG.md", "utf8"))) {
