@@ -29,7 +29,7 @@ WORKDIR /user/src/migration
 
 COPY backend/migration-runtime/package.json backend/migration-runtime/package-lock.json ./
 
-RUN npm ci --omit=dev
+RUN npm ci
 
 
 FROM base AS migration

@@ -41,26 +41,32 @@ if (isUnreleased) {
 const backendPackage = readJson("backend/package.json");
 const migrationPackage = readJson("backend/migration-runtime/package.json");
 const expectedMigrationDependencies = {
-    dotenv: backendPackage.dependencies?.dotenv,
-    prisma: backendPackage.devDependencies?.prisma,
+    dependencies: {
+        dotenv: backendPackage.dependencies?.dotenv,
+    },
+    devDependencies: {
+        prisma: backendPackage.devDependencies?.prisma,
+    },
 };
 
-for (const [dependency, expectedRange] of Object.entries(expectedMigrationDependencies)) {
-    const actualRange = migrationPackage.dependencies?.[dependency];
-    if (actualRange !== expectedRange) {
+for (const [dependencyType, expectedDependencies] of Object.entries(expectedMigrationDependencies)) {
+    for (const [dependency, expectedRange] of Object.entries(expectedDependencies)) {
+        const actualRange = migrationPackage[dependencyType]?.[dependency];
+        if (actualRange !== expectedRange) {
+            failures.push(
+                `backend/migration-runtime/package.json dependency ${dependency} is ${JSON.stringify(actualRange)}, expected ${JSON.stringify(expectedRange)}`,
+            );
+        }
+    }
+
+    const unexpectedDependencies = Object.keys(migrationPackage[dependencyType] ?? {}).filter(
+        (dependency) => !(dependency in expectedDependencies),
+    );
+    if (unexpectedDependencies.length > 0) {
         failures.push(
-            `backend/migration-runtime/package.json dependency ${dependency} is ${JSON.stringify(actualRange)}, expected ${JSON.stringify(expectedRange)}`,
+            `backend/migration-runtime/package.json has unexpected ${dependencyType}: ${unexpectedDependencies.join(", ")}`,
         );
     }
-}
-
-const unexpectedMigrationDependencies = Object.keys(migrationPackage.dependencies ?? {}).filter(
-    (dependency) => !(dependency in expectedMigrationDependencies),
-);
-if (unexpectedMigrationDependencies.length > 0) {
-    failures.push(
-        `backend/migration-runtime/package.json has unexpected dependencies: ${unexpectedMigrationDependencies.join(", ")}`,
-    );
 }
 
 const escapedVersion = expectedVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
