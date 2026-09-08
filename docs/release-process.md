@@ -95,19 +95,20 @@ gh pr checks --watch
 
 Each push updates the existing pull request and reruns its checks, so a new branch or pull request is not needed for every commit. Use `gh pr view --web` to reopen the current branch's pull request in a browser.
 
-The repository ruleset for `main` should:
+The active repository ruleset for `main` is configured to:
 
 - require a pull request before merging;
 - require the branch to be up to date with `main` before merging;
 - require all review conversations to be resolved;
 - require the exact `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` status checks;
+- enforce CodeQL through the dedicated code-scanning rule, rejecting high-or-higher security alerts and analysis errors;
 - permit rebase merges only, preserving reviewed commits while keeping `main` linear;
 - block force pushes and deletion of `main`;
 - provide no routine bypass for repository administrators or automation.
 
 A solo-maintainer repository may use zero required approving reviews while still requiring the pull request itself and all automated checks. Increase the approval count when another regular reviewer is available.
 
-If any required check fails, `main` remains unchanged. Fix the problem on the pull-request branch, commit it, push again, and wait for the new check run. Do not merge by bypassing, dismissing, or weakening the required check. After merge, synchronize and clean up locally:
+If any required status check fails or the code-scanning rule rejects the revision, `main` remains unchanged. Fix the problem on the pull-request branch, commit it, push again, and wait for the new results. Do not merge by bypassing, dismissing, or weakening the required protection. After merge, synchronize and clean up locally:
 
 ```bash
 git switch main
