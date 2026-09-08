@@ -58,7 +58,8 @@ const {readFileSync, writeFileSync} = require("node:fs");
 
 const [path, dependency] = process.argv.slice(2);
 const packageJson = JSON.parse(readFileSync(path, "utf8"));
-packageJson.dependencies[dependency] = "9.9.9";
+const dependencyType = dependency === "prisma" ? "devDependencies" : "dependencies";
+packageJson[dependencyType][dependency] = "9.9.9";
 writeFileSync(path, `${JSON.stringify(packageJson, null, 4)}\n`);
 NODE
 
