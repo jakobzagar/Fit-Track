@@ -183,17 +183,9 @@ Pure presentational pass-through components do not receive standalone tests unle
 
 ## Code scanning
 
-CodeQL should use GitHub's default setup so its configuration remains visible and maintainable in repository settings rather than adding another workflow file. A repository administrator enables it once:
+CodeQL uses GitHub's default setup so its configuration remains visible and maintainable in repository settings rather than in a workflow file. JavaScript and TypeScript analysis does not require PostgreSQL, private environment files, or a custom build command. Results and remediation details appear under **Security** → **Code scanning**.
 
-1. open the repository's **Settings**;
-2. under **Security and quality**, select **Advanced Security**;
-3. under **Code Security**, find **CodeQL analysis** and select **Set up** → **Default**;
-4. keep **JavaScript/TypeScript** enabled and begin with the **Default** query suite;
-5. review the generated configuration and select **Enable CodeQL**.
-
-The first run validates the generated configuration. Results and remediation details appear under **Security** → **Code scanning**. JavaScript and TypeScript analysis does not require PostgreSQL, private environment files, or a custom build command.
-
-After the first successful run, add the exact CodeQL status reported by GitHub—normally similar to `CodeQL / Analyze (javascript-typescript)`—to the protected `main` ruleset. Do not guess the status name before GitHub creates it. The [official default-setup guide](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/configure-code-scanning/configure-code-scanning) owns current eligibility and UI details.
+The active `main` ruleset enforces CodeQL through GitHub's dedicated code-scanning rule, not through a named required status check. It rejects high-or-higher security alerts and analysis errors. The six GitHub Actions jobs below remain separate required status checks. The [official default-setup guide](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/configure-code-scanning/configure-code-scanning) owns current eligibility and configuration details.
 
 ## Dependency review
 
@@ -201,7 +193,7 @@ The `Dependency review` job runs only on pull requests and compares dependency c
 
 This check complements rather than replaces Dependabot alerts: dependency review prevents vulnerable changes from entering `main`, while Dependabot reports vulnerabilities already present in the dependency graph. It uses only the read-only workflow token, does not post pull-request comments, and requires no external account or repository secret.
 
-Public repositories have the dependency graph available on GitHub.com. For an eligible private repository, enable the dependency graph before requiring the check. After the first successful pull-request run, add the exact `Dependency review` status to the protected `main` ruleset. The [official dependency-review documentation](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependency-review) owns current eligibility and behavior.
+The repository's active `main` ruleset requires the exact `Dependency review` status. Public repositories have the dependency graph available on GitHub.com; an eligible private repository would need the dependency graph enabled before it could enforce this check. The [official dependency-review documentation](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependency-review) owns current eligibility and behavior.
 
 ## Regression policy
 
@@ -211,7 +203,7 @@ When backend persistence, authorization, security middleware, concurrency, or mi
 
 ## Pull request quality gate
 
-The protected `main` branch requires these exact GitHub Actions job names:
+The protected `main` branch requires these exact GitHub Actions job names as status checks:
 
 - `Actions lint` validates workflow syntax;
 - `Dependency review` rejects newly introduced high or critical runtime vulnerabilities;
@@ -219,5 +211,7 @@ The protected `main` branch requires these exact GitHub Actions job names:
 - `Integration` applies committed migrations and tests the API against PostgreSQL;
 - `Browser E2E` runs critical Chromium journeys against an isolated migrated PostgreSQL database;
 - `Production container smoke` builds and exercises the final runtime targets.
+
+The ruleset separately enforces the CodeQL result through its dedicated code-scanning rule.
 
 The complete merge policy, correction flow, and repository ruleset belong in the [release and container process](release-process.md#protected-main-workflow).
