@@ -28,10 +28,15 @@ for (const workspace of ["", "shared", "backend", "frontend"]) {
     checkVersion(`package-lock.json packages[${JSON.stringify(workspace)}]`, lockfile.packages?.[workspace]?.version);
 }
 
-checkVersion(
-    ".github/release-please/manifest.json entry for .",
-    readJson(".github/release-please/manifest.json")["."],
-);
+const isUnreleased = expectedVersion === "0.0.0";
+const releaseManifest = readJson(".github/release-please/manifest.json");
+if (isUnreleased) {
+    if (Object.keys(releaseManifest).length > 0) {
+        failures.push(".github/release-please/manifest.json must be empty before the first release");
+    }
+} else {
+    checkVersion(".github/release-please/manifest.json entry for .", releaseManifest["."]);
+}
 
 const backendPackage = readJson("backend/package.json");
 const migrationPackage = readJson("backend/migration-runtime/package.json");
@@ -60,7 +65,10 @@ if (unexpectedMigrationDependencies.length > 0) {
 
 const escapedVersion = expectedVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const changelogHeading = new RegExp(`^## \\[${escapedVersion}\\](?:\\(|\\s|$)`, "m");
-if (!changelogHeading.test(readFileSync("CHANGELOG.md", "utf8"))) {
+const changelog = readFileSync("CHANGELOG.md", "utf8");
+if (isUnreleased && /^## \\[[0-9]+\\.[0-9]+\\.[0-9]+\\]/m.test(changelog)) {
+    failures.push("CHANGELOG.md must not contain a published release before the first release");
+} else if (!isUnreleased && !changelogHeading.test(changelog)) {
     failures.push(`CHANGELOG.md has no ${expectedVersion} release heading`);
 }
 

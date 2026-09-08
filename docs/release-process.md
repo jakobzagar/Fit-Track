@@ -1,6 +1,6 @@
 # Release and container process
 
-FitTrack uses GitHub Actions to verify the repository, publish digest-addressed container artifacts, and manage one product version across all workspaces. This is an implemented artifact-release process, not a cloud deployment pipeline: it ends with verified images in GHCR.
+FitTrack uses GitHub Actions to verify the repository, publish digest-addressed container artifacts, and manage one product version across all workspaces. No public release currently exists; Release Please is configured as a first-time release setup. This is an artifact-release process, not a cloud deployment pipeline: it ends with verified images in GHCR.
 
 The process follows three principles:
 
@@ -179,11 +179,7 @@ After image publication on `main`, Release Please creates or updates a release p
 
 Do not manually create or move release tags during the normal process. Publish a new patch version when a released artifact needs correction.
 
-### Established 1.0.0 baseline
-
-Tag `v1.0.0` is the established product baseline. Its bootstrap aligned the root package, all workspaces, lockfile entries, Release Please manifest, and changelog before enabling the normal automated release line. The workflow retains an explicit baseline-tag check as a safety guard, but the one-time manual bootstrap is complete and must not be repeated.
-
-Release Please now owns every later version through the protected pull-request flow. A `fix:` or `perf:` proposes a patch, a `feat:` proposes a minor release, and a breaking change proposes a major release. Every generated release pull request must keep the coordinated version artifacts aligned and pass the same merge gate as application changes.
+The root package and workspaces use `0.0.0` while the Release Please manifest and changelog contain no released version. This is the standard first-release state; Release Please will propose the initial version from Conventional Commits. For this project, `0.1.0` is appropriate while behavior and operational expectations may still change, while `1.0.0` should be reserved for a production-ready product with stable public contracts.
 
 To intentionally override the proposed next version, use a `Release-As` footer:
 
