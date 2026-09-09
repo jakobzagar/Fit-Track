@@ -3,17 +3,13 @@ import {AppError} from "../../../common/errors/app.error.js";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "@fit-track/shared/workouts";
 import {assertWorkoutIsMutable} from "../policies/workout-edit.policy.js";
 
-function workoutDateToTimestamp(date: string) {
-    return new Date(`${date}T00:00:00.000Z`);
-}
-
 export async function getWorkoutsService(userId: string) {
     return prisma.workout.findMany({
         where: {
             userId,
         },
         orderBy: {
-            performedAt: "desc",
+            updatedAt: "desc",
         },
         include: {
             _count: {
@@ -122,7 +118,7 @@ export async function getPreviousPerformancesService(userId: string, workoutId: 
             workoutId: true,
             workout: {
                 select: {
-                    performedAt: true,
+                    completedAt: true,
                 },
             },
             sets: {
@@ -147,12 +143,12 @@ export async function getPreviousPerformancesService(userId: string, workoutId: 
 
     return exerciseIds.flatMap((exerciseId) => {
         const performance = latestByExerciseId.get(exerciseId);
-        return performance
+        return performance?.workout.completedAt
             ? [
                   {
                       exerciseId,
                       workoutId: performance.workoutId,
-                      performedAt: performance.workout.performedAt,
+                      completedAt: performance.workout.completedAt,
                       sets: performance.sets,
                   },
               ]
@@ -168,10 +164,6 @@ export async function createWorkoutService(userId: string, data: CreateWorkoutIn
 
             ...(data.notes !== undefined && {
                 notes: data.notes,
-            }),
-
-            ...(data.performedAt !== undefined && {
-                performedAt: workoutDateToTimestamp(data.performedAt),
             }),
         },
     });
@@ -220,9 +212,6 @@ export async function updateWorkoutService(
         },
         data: {
             ...(data.name !== undefined && {name: data.name}),
-            ...(data.performedAt !== undefined && {
-                performedAt: workoutDateToTimestamp(data.performedAt),
-            }),
             ...(data.notes !== undefined && {notes: data.notes}),
         },
     });

@@ -7,9 +7,9 @@ import type {
     WorkoutSummary,
 } from "@fit-track/shared/workouts";
 
-function sortWorkoutsByPerformedAt(workouts: WorkoutSummary[]) {
+function sortWorkoutsByUpdatedAt(workouts: WorkoutSummary[]) {
     return [...workouts].sort(
-        (left, right) => Date.parse(right.performedAt) - Date.parse(left.performedAt),
+        (left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt),
     );
 }
 
@@ -53,7 +53,7 @@ export function useWorkouts() {
         try {
             const response = await createWorkout(data);
             setWorkouts((current) =>
-                sortWorkoutsByPerformedAt([
+                sortWorkoutsByUpdatedAt([
                     ...current,
                     {...response.workout, _count: {workoutExercises: 0}},
                 ]),
@@ -71,13 +71,12 @@ export function useWorkouts() {
         try {
             const response = await updateWorkout(workoutId, data);
             setWorkouts((current) =>
-                sortWorkoutsByPerformedAt(
+                sortWorkoutsByUpdatedAt(
                     current.map((workout) =>
                         workout.id === workoutId
                             ? {
                                   ...workout,
                                   name: response.workout.name,
-                                  performedAt: response.workout.performedAt,
                                   notes: response.workout.notes,
                                   updatedAt: response.workout.updatedAt,
                               }

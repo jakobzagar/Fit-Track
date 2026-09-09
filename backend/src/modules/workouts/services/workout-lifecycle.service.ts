@@ -63,9 +63,11 @@ export async function finishWorkoutService(userId: string, workoutId: string) {
             throw new AppError("Complete at least one set before finishing the workout", 409);
         }
 
+        const completedAt = new Date();
+
         return tx.workout.update({
             where: {id: workoutId},
-            data: {status: "COMPLETED", completedAt: new Date()},
+            data: {status: "COMPLETED", completedAt},
         });
     });
 }

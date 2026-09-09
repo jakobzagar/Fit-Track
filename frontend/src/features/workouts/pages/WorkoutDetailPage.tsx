@@ -72,12 +72,20 @@ export function WorkoutDetailPage() {
         return <StatusMessage>Workout not found</StatusMessage>;
     }
 
+    const displayedAt = workout.completedAt ?? workout.startedAt ?? workout.createdAt;
+    const dateLabel =
+        workout.status === "COMPLETED"
+            ? "Completed"
+            : workout.status === "ACTIVE"
+              ? "Started"
+              : "Created";
+
     return (
         <section className="page-stack">
             <PageHeader
                 eyebrow={workout.status === "COMPLETED" ? "Completed workout" : "Workout plan"}
                 title={workout.name}
-                description={`${formatWorkoutDate(workout.performedAt, {day: "2-digit", month: "long", year: "numeric"})}${workout.notes ? ` · ${workout.notes}` : ""}`}
+                description={`${dateLabel} ${formatWorkoutDate(displayedAt, {day: "2-digit", month: "long", year: "numeric"})}${workout.notes ? ` · ${workout.notes}` : ""}`}
                 action={
                     workout.status !== "COMPLETED" ? (
                         <Link

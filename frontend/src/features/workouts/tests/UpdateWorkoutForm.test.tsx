@@ -13,6 +13,7 @@ describe("UpdateWorkoutForm", () => {
         render(<UpdateWorkoutForm workout={workout} onSubmit={onSubmit} onCancel={vi.fn()} />);
 
         expect(screen.getByLabelText("Name")).toHaveValue("Push day");
+        expect(screen.queryByLabelText("Performed at")).not.toBeInTheDocument();
         await user.clear(screen.getByLabelText("Name"));
         await user.type(screen.getByLabelText("Name"), "Upper body");
         await user.clear(screen.getByLabelText("Notes"));
@@ -20,7 +21,6 @@ describe("UpdateWorkoutForm", () => {
 
         expect(onSubmit).toHaveBeenCalledWith({
             name: "Upper body",
-            performedAt: "2026-07-26",
             notes: null,
         });
     });

@@ -39,14 +39,18 @@ export const workoutExercise: WorkoutExercise = {
 };
 
 export function createWorkout(overrides: Partial<Workout> = {}): Workout {
+    const status = overrides.status ?? "ACTIVE";
+    const startedAt =
+        overrides.startedAt ?? (status === "DRAFT" ? null : "2026-07-26T10:05:00.000Z");
+    const completedAt =
+        overrides.completedAt ?? (status === "COMPLETED" ? "2026-07-26T11:00:00.000Z" : null);
     return {
         id: workoutId,
         userId,
         name: "Push day",
-        status: "ACTIVE",
-        performedAt: "2026-07-26T10:00:00.000Z",
-        startedAt: "2026-07-26T10:05:00.000Z",
-        completedAt: null,
+        status,
+        startedAt,
+        completedAt,
         notes: "Heavy session",
         createdAt: "2026-07-26T10:00:00.000Z",
         updatedAt: "2026-07-26T10:05:00.000Z",

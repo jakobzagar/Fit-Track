@@ -1,11 +1,10 @@
 import {describe, expect, test} from "vitest";
-import {formatWorkoutDate, toWorkoutDateInputValue} from "../utils/workout-date";
+import {formatWorkoutDate} from "../utils/workout-date";
 
 describe("workout dates", () => {
     test("preserves the stored calendar date independently of the local timezone", () => {
         const timestamp = "2026-07-26T00:00:00.000Z";
 
-        expect(toWorkoutDateInputValue(timestamp)).toBe("2026-07-26");
         expect(
             formatWorkoutDate(
                 timestamp,

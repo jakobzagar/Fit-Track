@@ -45,19 +45,19 @@ describe("getPreviousPerformancesService", () => {
             {
                 exerciseId: "exercise-1",
                 workoutId: "workout-latest-1",
-                workout: {performedAt: new Date("2026-08-20T00:00:00.000Z")},
+                workout: {completedAt: new Date("2026-08-20T00:00:00.000Z")},
                 sets: [{id: "set-latest-1"}],
             },
             {
                 exerciseId: "exercise-2",
                 workoutId: "workout-latest-2",
-                workout: {performedAt: new Date("2026-08-19T00:00:00.000Z")},
+                workout: {completedAt: new Date("2026-08-19T00:00:00.000Z")},
                 sets: [{id: "set-latest-2"}],
             },
             {
                 exerciseId: "exercise-1",
                 workoutId: "workout-older-1",
-                workout: {performedAt: new Date("2026-08-10T00:00:00.000Z")},
+                workout: {completedAt: new Date("2026-08-10T00:00:00.000Z")},
                 sets: [{id: "set-older-1"}],
             },
         ]);

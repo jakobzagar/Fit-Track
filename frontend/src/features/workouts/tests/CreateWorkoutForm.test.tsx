@@ -19,14 +19,13 @@ describe("CreateWorkoutForm", () => {
         const onSubmit = vi.fn().mockResolvedValue(undefined);
         render(<CreateWorkoutForm onSubmit={onSubmit} />);
 
+        expect(screen.queryByLabelText("Performed at")).not.toBeInTheDocument();
         await user.type(screen.getByLabelText("Name"), "  Push day  ");
-        await user.type(screen.getByLabelText("Performed at"), "2026-07-26");
         await user.type(screen.getByLabelText("Notes"), "  Heavy session  ");
         await user.click(screen.getByRole("button", {name: "Create workout"}));
 
         expect(onSubmit).toHaveBeenCalledWith({
             name: "Push day",
-            performedAt: "2026-07-26",
             notes: "Heavy session",
         });
         expect(screen.getByLabelText("Name")).toHaveValue("");

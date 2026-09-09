@@ -8,13 +8,11 @@ const workoutNameSchema = z
     .trim()
     .min(1, "Workout name is required")
     .max(100, "Workout name is too long");
-const workoutDateSchema = z.iso.date("Invalid workout date");
 const workoutNotesSchema = z.string().trim().max(1000, "Notes are too long").nullable();
 
 export const createWorkoutSchema = z
     .object({
         name: workoutNameSchema,
-        performedAt: workoutDateSchema.optional(),
         notes: workoutNotesSchema.optional(),
     })
     .strict();
@@ -22,7 +20,6 @@ export const createWorkoutSchema = z
 export const updateWorkoutSchema = z
     .object({
         name: workoutNameSchema.optional(),
-        performedAt: workoutDateSchema.optional(),
         notes: workoutNotesSchema.optional(),
     })
     .strict()
@@ -45,7 +42,6 @@ export const workoutRecordSchema = z
         status: workoutStatusSchema,
         startedAt: z.iso.datetime().nullable(),
         completedAt: z.iso.datetime().nullable(),
-        performedAt: z.iso.datetime(),
         notes: z.string().nullable(),
         createdAt: z.iso.datetime(),
         updatedAt: z.iso.datetime(),
@@ -81,7 +77,7 @@ export const previousPerformanceSchema = z
     .object({
         exerciseId: z.uuid(),
         workoutId: z.uuid(),
-        performedAt: z.iso.datetime(),
+        completedAt: z.iso.datetime(),
         sets: z.array(workoutSetSchema),
     })
     .strict();

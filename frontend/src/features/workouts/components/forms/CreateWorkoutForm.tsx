@@ -15,7 +15,6 @@ interface CreateWorkoutFormProps {
 
 interface CreateWorkoutErrors {
     name?: string;
-    performedAt?: string;
     notes?: string;
 }
 
@@ -23,7 +22,6 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
     const id = useId();
     const [name, setName] = useState("");
-    const [performedAt, setPerformedAt] = useState("");
     const [notes, setNotes] = useState("");
 
     const [errors, setErrors] = useState<CreateWorkoutErrors>({});
@@ -35,7 +33,6 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
 
         const result = createWorkoutSchema.safeParse({
             name,
-            performedAt: performedAt === "" ? undefined : performedAt,
             notes: notes.trim() === "" ? undefined : notes,
         });
 
@@ -44,7 +41,6 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
 
             setErrors({
                 name: fieldErrors.name?.[0],
-                performedAt: fieldErrors.performedAt?.[0],
                 notes: fieldErrors.notes?.[0],
             });
             focusFirstInvalidField(formRef);
@@ -65,7 +61,6 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
         }
 
         setName("");
-        setPerformedAt("");
         setNotes("");
     }
 
@@ -81,18 +76,6 @@ export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {
                 />
             </label>
             <FieldError id={`${id}-name-error`}>{errors.name}</FieldError>
-
-            <label>
-                Performed at
-                <input
-                    type="date"
-                    value={performedAt}
-                    disabled={isSubmitting}
-                    {...invalidFieldProps(errors.performedAt, `${id}-performed-at-error`)}
-                    onChange={(event) => setPerformedAt(event.target.value)}
-                />
-            </label>
-            <FieldError id={`${id}-performed-at-error`}>{errors.performedAt}</FieldError>
 
             <label>
                 Notes

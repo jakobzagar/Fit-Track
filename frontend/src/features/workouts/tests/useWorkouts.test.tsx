@@ -8,20 +8,20 @@ import {createWorkoutRecord, createWorkoutSummary} from "../../../test/fixtures/
 import {useWorkouts} from "../hooks/data/useWorkouts";
 
 describe("useWorkouts", () => {
-    test("keeps workouts sorted by performed date after creating and rescheduling one", async () => {
+    test("keeps workouts sorted by latest update after creating and editing one", async () => {
         const oldest = createWorkoutSummary({
             id: "123e4567-e89b-42d3-a456-426614174011",
             name: "Oldest",
-            performedAt: "2026-07-20T00:00:00.000Z",
+            updatedAt: "2026-07-20T00:00:00.000Z",
         });
         const newest = createWorkoutSummary({
             name: "Newest",
-            performedAt: "2026-07-26T00:00:00.000Z",
+            updatedAt: "2026-07-26T00:00:00.000Z",
         });
         const historical = createWorkoutRecord({
             id: "123e4567-e89b-42d3-a456-426614174012",
             name: "Historical",
-            performedAt: "2026-07-22T00:00:00.000Z",
+            updatedAt: "2026-07-22T00:00:00.000Z",
         });
         server.use(
             http.get(`${API_URL}/workouts`, () => HttpResponse.json({workouts: [newest, oldest]})),
@@ -32,7 +32,7 @@ describe("useWorkouts", () => {
                 HttpResponse.json({
                     workout: createWorkoutRecord({
                         ...oldest,
-                        performedAt: "2026-07-28T00:00:00.000Z",
+                        updatedAt: "2026-07-28T00:00:00.000Z",
                     }),
                 }),
             ),
@@ -40,14 +40,14 @@ describe("useWorkouts", () => {
         const {result} = renderHook(() => useWorkouts());
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-        await act(() => result.current.create({name: "Historical", performedAt: "2026-07-22"}));
+        await act(() => result.current.create({name: "Historical"}));
         expect(result.current.workouts.map(({name}) => name)).toEqual([
             "Newest",
             "Historical",
             "Oldest",
         ]);
 
-        await act(() => result.current.update(oldest.id, {performedAt: "2026-07-28"}));
+        await act(() => result.current.update(oldest.id, {name: "Oldest"}));
         expect(result.current.workouts.map(({name}) => name)).toEqual([
             "Oldest",
             "Newest",
