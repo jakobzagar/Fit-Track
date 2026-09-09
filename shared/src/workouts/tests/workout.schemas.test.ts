@@ -16,23 +16,17 @@ describe("createWorkoutSchema", () => {
             createWorkoutSchema.parse({
                 name: "  Push day ",
                 notes: "  Heavy session ",
-                performedAt: "2026-07-26",
             }),
         ).toEqual({
             name: "Push day",
             notes: "Heavy session",
-            performedAt: "2026-07-26",
         });
     });
 
     test.each([
         ["an empty name", {name: " "}],
         ["a name over 100 characters", {name: "a".repeat(101)}],
-        ["an invalid date", {name: "Push day", performedAt: "today"}],
-        [
-            "a timestamp instead of a calendar date",
-            {name: "Push day", performedAt: "2026-07-26T10:00:00.000Z"},
-        ],
+        ["a client-controlled performed time", {name: "Push day", performedAt: "2026-07-26"}],
         ["notes over 1000 characters", {name: "Push day", notes: "a".repeat(1001)}],
         ["an unknown field", {name: "Push day", userId: "unexpected"}],
     ])("rejects %s", (_case, input) => {
@@ -53,6 +47,10 @@ describe("updateWorkoutSchema", () => {
         expect(updateWorkoutSchema.safeParse({name: "Push day", status: "ACTIVE"}).success).toBe(
             false,
         );
+    });
+
+    test("rejects a client-controlled performed time", () => {
+        expect(updateWorkoutSchema.safeParse({performedAt: "2026-07-26"}).success).toBe(false);
     });
 });
 

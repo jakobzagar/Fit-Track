@@ -27,10 +27,11 @@ export const createTestWorkout = (
     overrides: {
         name?: string;
         status?: WorkoutStatus;
-        performedAt?: Date;
         startedAt?: Date | null;
         completedAt?: Date | null;
         notes?: string | null;
+        createdAt?: Date;
+        updatedAt?: Date;
     } = {},
 ) =>
     prisma.workout.create({

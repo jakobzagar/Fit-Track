@@ -32,6 +32,10 @@ _Avoid_: Open workout, current routine
 A historical workout record that cannot be edited unless deliberately reopened, but can be deleted without reopening.
 _Avoid_: Archived workout, finished routine
 
+**Completed at**:
+The instant when an active workout becomes completed. It is absent for draft and active workouts and is cleared if a completed workout is reopened.
+_Avoid_: Performed at, planned date, workout date
+
 **Previous performance**:
 The most recent completed effort for the same exercise from another owned workout, shown as context during an active workout.
 _Avoid_: Personal record, exercise history

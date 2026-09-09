@@ -81,7 +81,6 @@ describe("WorkoutDetailPage", () => {
                         status: "ACTIVE",
                         startedAt: completed.startedAt,
                         completedAt: null,
-                        performedAt: completed.performedAt,
                         notes: completed.notes,
                         createdAt: completed.createdAt,
                         updatedAt: completed.updatedAt,

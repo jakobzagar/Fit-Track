@@ -19,6 +19,14 @@ const statusStyles = {
 };
 
 export function WorkoutItem({workout, onDelete, onEdit, isDeleting}: WorkoutItemProps) {
+    const displayedAt = workout.completedAt ?? workout.startedAt ?? workout.createdAt;
+    const dateLabel =
+        workout.status === "COMPLETED"
+            ? "Completed"
+            : workout.status === "ACTIVE"
+              ? "Started"
+              : "Created";
+
     return (
         <Card as="article" className="group relative overflow-hidden">
             {workout.status === "ACTIVE" && (
@@ -44,7 +52,8 @@ export function WorkoutItem({workout, onDelete, onEdit, isDeleting}: WorkoutItem
             </div>
 
             <p className="mt-3 text-xs font-semibold tracking-[0.05em] text-dim uppercase">
-                {formatWorkoutDate(workout.performedAt, {
+                {dateLabel}{" "}
+                {formatWorkoutDate(displayedAt, {
                     day: "2-digit",
                     month: "short",
                     year: "numeric",

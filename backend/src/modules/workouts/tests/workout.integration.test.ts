@@ -22,12 +22,10 @@ import {
 describe("POST /api/workouts", () => {
     it("normalizes and creates a draft workout for the authenticated user", async () => {
         const owner = await createTestUser("owner@example.com");
-        const performedAt = "2026-07-20";
 
         const response = await requestAsUser("post", "/api/workouts", owner.cookie).send({
             name: "  Push day  ",
             notes: "  Heavy session  ",
-            performedAt,
         });
         const body = workoutRecordResponseSchema.parse(response.body);
 
@@ -35,8 +33,8 @@ describe("POST /api/workouts", () => {
         expect(body.workout).toMatchObject({
             name: "Push day",
             notes: "Heavy session",
-            performedAt: "2026-07-20T00:00:00.000Z",
             status: "DRAFT",
+            completedAt: null,
             userId: owner.user.id,
         });
     });
@@ -45,7 +43,7 @@ describe("POST /api/workouts", () => {
         const owner = await createTestUser("owner@example.com");
         const response = await requestAsUser("post", "/api/workouts", owner.cookie).send({
             name: "",
-            performedAt: "today",
+            performedAt: "2026-07-20",
         });
 
         expect(response.status).toBe(400);
@@ -70,16 +68,16 @@ describe("POST /api/workouts", () => {
 });
 
 describe("GET /api/workouts", () => {
-    it("returns only owned workouts ordered by performed date with exercise counts", async () => {
+    it("returns only owned workouts ordered by latest update with exercise counts", async () => {
         const owner = await createTestUser("owner@example.com");
         const other = await createTestUser("other@example.com");
         const older = await createTestWorkout(owner.user.id, {
             name: "Older",
-            performedAt: new Date("2026-07-01T10:00:00.000Z"),
+            updatedAt: new Date("2026-07-01T10:00:00.000Z"),
         });
         const newer = await createTestWorkout(owner.user.id, {
             name: "Newer",
-            performedAt: new Date("2026-07-20T10:00:00.000Z"),
+            updatedAt: new Date("2026-07-20T10:00:00.000Z"),
         });
         const exercise = await createTestExercise(owner.user.id);
         await createTestWorkoutExercise(newer.id, exercise.id);

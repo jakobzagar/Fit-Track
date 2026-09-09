@@ -57,7 +57,7 @@ export function ActiveWorkoutExerciseCard({
             {previous ? (
                 <div className="border-l-2 border-flame bg-flame/6 px-4 py-3 text-sm text-dim">
                     <strong className="text-cream">
-                        Previous ({formatWorkoutDate(previous.performedAt)}):
+                        Previous ({formatWorkoutDate(previous.completedAt)}):
                     </strong>{" "}
                     {previous.sets
                         .map((set) =>

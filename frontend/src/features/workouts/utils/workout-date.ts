@@ -1,7 +1,3 @@
-export function toWorkoutDateInputValue(timestamp: string) {
-    return timestamp.slice(0, 10);
-}
-
 export function formatWorkoutDate(
     timestamp: string,
     options?: Intl.DateTimeFormatOptions,

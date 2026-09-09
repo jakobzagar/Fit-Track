@@ -12,7 +12,6 @@ import {
     focusFirstInvalidField,
     invalidFieldProps,
 } from "../../../../components/ui/forms/utils/formAccessibility";
-import {toWorkoutDateInputValue} from "../../utils/workout-date";
 
 interface UpdateWorkoutFormProps {
     workout: WorkoutSummary;
@@ -22,7 +21,6 @@ interface UpdateWorkoutFormProps {
 
 interface UpdateWorkoutErrors {
     name?: string;
-    performedAt?: string;
     notes?: string;
 }
 
@@ -30,9 +28,6 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
     const formRef = useRef<HTMLFormElement>(null);
     const id = useId();
     const [name, setName] = useState(workout.name);
-    const [performedAt, setPerformedAt] = useState(() =>
-        toWorkoutDateInputValue(workout.performedAt),
-    );
     const [notes, setNotes] = useState(workout.notes ?? "");
 
     const [errors, setErrors] = useState<UpdateWorkoutErrors>({});
@@ -44,7 +39,6 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
 
         const result = updateWorkoutSchema.safeParse({
             name,
-            performedAt: performedAt === "" ? undefined : performedAt,
             notes: notes.trim() === "" ? null : notes,
         });
 
@@ -53,7 +47,6 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
 
             setErrors({
                 name: fieldErrors.name?.[0],
-                performedAt: fieldErrors.performedAt?.[0],
                 notes: fieldErrors.notes?.[0],
             });
             focusFirstInvalidField(formRef);
@@ -91,18 +84,6 @@ export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFo
                 />
             </label>
             <FieldError id={`${id}-name-error`}>{errors.name}</FieldError>
-
-            <label>
-                Performed at
-                <input
-                    type="date"
-                    value={performedAt}
-                    disabled={isSubmitting}
-                    {...invalidFieldProps(errors.performedAt, `${id}-performed-at-error`)}
-                    onChange={(event) => setPerformedAt(event.target.value)}
-                />
-            </label>
-            <FieldError id={`${id}-performed-at-error`}>{errors.performedAt}</FieldError>
 
             <label>
                 Notes
