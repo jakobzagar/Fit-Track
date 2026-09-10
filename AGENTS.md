@@ -15,9 +15,9 @@ Do not edit generated Prisma files under `backend/generated/`.
 ## Default workflow
 
 1. Inspect the current branch, `git status`, and the nearest relevant source and tests. Preserve unrelated user changes.
-2. Make the smallest coherent change. Keep shared contracts, backend behavior, frontend consumers, and tests aligned.
+2. Trace every change through all affected contracts, backend behavior, frontend consumers, persistence and migrations, tests, environment examples, CI/runtime configuration, and documentation. Update every affected file in the same change; the work is incomplete until each surface is changed or verified unaffected.
 3. Run the narrowest useful check while iterating, then the required validation from the table below.
-4. Update only the document that owns the changed topic.
+4. Reconcile documentation with the final implementation on every change. Update only the narrowest owning document, remove stale or contradictory claims, and verify its behavior descriptions, examples, versions, commands, and links against the final code and configuration.
 5. Review the final diff for unrelated edits, generated files, secrets, and accidental version changes.
 6. Report exactly what changed, what passed, and what was not run.
 
@@ -108,6 +108,7 @@ The complete branch, image, version, and release flow belongs in [docs/release-p
 ## Definition of done
 
 - The requested change is focused and complete.
-- Contracts, API behavior, UI consumers, migrations, environment examples, tests, and documentation are aligned where relevant.
+- Every affected contract, API behavior, UI consumer, migration, environment example, test, runtime/CI configuration, and owning document is accounted for and mutually consistent.
+- Documentation describes the current implemented and verified state without stale, speculative, duplicated, or contradictory claims.
 - Required validation passed, or each unrun/failed check is reported precisely.
 - The final diff contains no unrelated edits, secrets, generated artifacts, or unintended version changes.
