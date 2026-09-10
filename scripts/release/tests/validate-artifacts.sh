@@ -32,6 +32,57 @@ current_version="$(node -p 'require(process.argv[1]).version' "$repository_root/
     validate_release_artifacts "$current_version"
 )
 
+printf '# Changelog\n\n## 0.1.0 (2026-09-10)\n' >"$temporary_directory/CHANGELOG.md"
+if (
+    cd "$temporary_directory"
+    validate_release_artifacts "$current_version"
+) 2>"$temporary_directory/changelog-error.log"; then
+    echo "Expected a release heading in the unreleased changelog to fail validation" >&2
+    exit 1
+fi
+grep --fixed-strings --quiet \
+    "CHANGELOG.md must not contain a published release before the first release" \
+    "$temporary_directory/changelog-error.log"
+cp "$repository_root/CHANGELOG.md" "$temporary_directory/CHANGELOG.md"
+
+node - "$temporary_directory" <<'NODE'
+const {readFileSync, writeFileSync} = require("node:fs");
+const {join} = require("node:path");
+
+const root = process.argv[2];
+const releaseVersion = "0.1.0";
+for (const relativePath of ["package.json", "shared/package.json", "backend/package.json", "frontend/package.json"]) {
+    const path = join(root, relativePath);
+    const packageJson = JSON.parse(readFileSync(path, "utf8"));
+    packageJson.version = releaseVersion;
+    writeFileSync(path, `${JSON.stringify(packageJson, null, 4)}\n`);
+}
+
+const lockfilePath = join(root, "package-lock.json");
+const lockfile = JSON.parse(readFileSync(lockfilePath, "utf8"));
+lockfile.version = releaseVersion;
+for (const workspace of ["", "shared", "backend", "frontend"]) {
+    lockfile.packages[workspace].version = releaseVersion;
+}
+writeFileSync(lockfilePath, `${JSON.stringify(lockfile, null, 4)}\n`);
+writeFileSync(join(root, ".github/release-please/manifest.json"), `{".":"${releaseVersion}"}\n`);
+writeFileSync(join(root, "CHANGELOG.md"), `# Changelog\n\n## ${releaseVersion} (2026-09-10)\n`);
+NODE
+
+(
+    cd "$temporary_directory"
+    validate_release_artifacts "0.1.0"
+)
+
+cp "$repository_root/package.json" "$temporary_directory/package.json"
+cp "$repository_root/package-lock.json" "$temporary_directory/package-lock.json"
+cp "$repository_root/CHANGELOG.md" "$temporary_directory/CHANGELOG.md"
+cp "$repository_root/.github/release-please/manifest.json" \
+    "$temporary_directory/.github/release-please/manifest.json"
+cp "$repository_root/backend/package.json" "$temporary_directory/backend/package.json"
+cp "$repository_root/frontend/package.json" "$temporary_directory/frontend/package.json"
+cp "$repository_root/shared/package.json" "$temporary_directory/shared/package.json"
+
 sed -i.bak "s/\"version\": \"$current_version\"/\"version\": \"9.9.9\"/" \
     "$temporary_directory/backend/package.json"
 
