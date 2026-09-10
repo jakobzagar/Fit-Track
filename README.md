@@ -6,7 +6,7 @@
 
 FitTrack is a backend- and delivery-focused TypeScript system for planning and recording workouts. It demonstrates relational data modelling, authorization, transactional lifecycle invariants, PostgreSQL integration testing, containerized delivery, and release automation. A React application serves as the reference client for the complete API workflow.
 
-> **Current state:** the application and its production container artifacts are implemented and verified locally and in CI, but the product is still unreleased and uses the internal `0.0.0` version. Release automation is configured for its first release. A public environment is not deployed yet. AWS infrastructure is the next planned phase and is documented as a plan, not as an existing capability.
+> **Current state:** the application and its production container artifacts are implemented and verified locally and in CI. A public environment and AWS infrastructure are not implemented.
 
 ## What this project demonstrates
 
@@ -15,7 +15,7 @@ FitTrack is a backend- and delivery-focused TypeScript system for planning and r
 | Backend design      | Thin Express routes, authoritative domain services, centralized middleware, and Prisma persistence                           |
 | Data integrity      | Ownership-scoped queries, relational constraints, append-only migrations, serializable transactions, and retry handling      |
 | Security            | HTTP-only cookies, CSRF origin checks, credentialed CORS, payload limits, rate limiting, security headers, and log redaction |
-| Verification        | Contract, unit, PostgreSQL integration, concurrency, browser E2E, accessibility, release, and final-container tests          |
+| Verification        | Contract, unit, PostgreSQL integration, concurrency, browser E2E, accessibility, and final-container tests                   |
 | Container delivery  | Non-root multi-stage images, a dedicated migration artifact, digest-pinned smoke tests, SBOM, and build provenance           |
 | Release engineering | Protected pull requests, coordinated product versions, exact-digest promotion, and Release Please                            |
 | Cloud direction     | An explicit AWS gap analysis and deployment plan without presenting proposed infrastructure as implemented                   |
@@ -54,7 +54,7 @@ FitTrack is a backend- and delivery-focused TypeScript system for planning and r
 
 **Decision:** workflows smoke-test the exact digests returned by each build and promote those same digests. A separate migration image makes schema rollout an explicit deployment step.
 
-**Evidence:** [production image action](.github/actions/build-production-images/action.yml), [container smoke script](scripts/smoke/production-containers.sh), and [release policy](docs/release-process.md#image-tags).
+**Evidence:** [production image action](.github/actions/build-production-images/action.yml), [container smoke script](scripts/smoke/production-containers.sh), and [release policy](docs/release-process.md#published-images).
 
 ## Product behavior
 
@@ -128,7 +128,7 @@ The one-off migration container must succeed before the backend starts. Stop the
 ## Verification
 
 ```bash
-npm run verify      # lint, types, formatting, fast tests, release checks, builds
+npm run verify      # lint, types, formatting, fast tests, and builds
 npm run test:docker # migrated PostgreSQL integration and concurrency tests
 npm run test:e2e    # critical browser journeys against the real backend and database
 ```
@@ -149,6 +149,7 @@ These are documented gaps, not hidden production claims. The intended next phase
 - [Domain language](CONTEXT.md)
 - [Architecture and design decisions](docs/architecture.md)
 - [Testing strategy](docs/testing.md)
+- [Dependency policy](docs/dependency-audit.md)
 - [Release and container process](docs/release-process.md)
 - [AWS deployment plan](docs/aws-deployment-plan.md)
 

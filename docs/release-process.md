@@ -1,122 +1,58 @@
 # Release and container process
 
-FitTrack uses GitHub Actions to verify the repository, publish digest-addressed container artifacts, and manage one product version across all workspaces. No public release currently exists; Release Please is prepared to propose one without publishing it automatically. This is an artifact-release process, not a cloud deployment pipeline: it ends with verified images in GHCR.
-
-The process follows three principles:
-
-- **gate source before merge:** static checks, fast tests, PostgreSQL integration, and final-container smoke tests must pass;
-- **test exact release content:** every moving or version tag is created from the digest that passed smoke testing in the same workflow run;
-- **migrate before application rollout:** a dedicated migration artifact must succeed before the matching backend revision starts.
+FitTrack uses protected pull requests for source changes, publishes verified container images from `main`, and uses Release Please for versions, changelog entries, tags, and GitHub Releases.
 
 ## Pipeline overview
 
 ```mermaid
-flowchart TB
-    subgraph Quality[Quality gate]
-        direction LR
-        PR[Pull request] --> Checks[Actions lint and verification]
-        PR --> DependencyReview[Dependency review]
-        Checks --> Integration[Integration]
-        Checks --> BrowserE2E[Browser E2E]
-        Checks --> SourceSmoke[Production smoke]
-        DependencyReview --> Gate
-        Integration --> Gate[Merge gate]
-        BrowserE2E --> Gate
-        SourceSmoke --> Gate
-    end
-
-    subgraph Artifacts[Artifact publication]
-        direction LR
-        Build[Build three images] --> Sha[Git-addressed SHA tags]
-        Sha --> Digest[Use build digests]
-        Digest --> Smoke[Production smoke]
-        Smoke --> Main[main tags]
-    end
-
-    subgraph Release[Release promotion]
-        direction LR
-        ReleasePR[Release Please PR] --> Merge[Merge release PR]
-        Merge --> Tag[Version tag]
-        Tag --> ReleaseBuild[Build three images]
-        ReleaseBuild --> ReleaseSmoke[Smoke exact digests]
-        ReleaseSmoke --> ReleaseTags[Exact version and latest tags]
-    end
-
-    Gate --> Build
-    Main --> ReleasePR
+flowchart LR
+    Change[Pull request] --> Checks[Required checks]
+    Checks --> Main[main]
+    Main --> RP[Release Please PR]
+    Main --> Images[Build and smoke images]
+    Images --> MainTags[SHA and main tags]
+    RP -->|merge| Release[Version tag and GitHub Release]
+    Release --> ReleaseImages[Build and smoke release images]
+    ReleaseImages --> VersionTags[Version and latest tags]
 ```
 
-Every pull request builds and smoke-tests the final production targets before merge, including documentation-only pull requests. The image workflow then runs only after the complete `Test` workflow succeeds for a non-documentation push to `main`. It checks out the exact tested SHA rather than the current branch tip, publishes Git-addressed SHA tags, smoke-tests the exact digests returned by that build, and only then promotes those digests to the moving `main` tags. A push to `main` that changes only Markdown files skips post-merge testing and image publication because its pull request was already fully checked. Release Please creates or updates a release pull request after artifact publication. Its version tag starts one self-contained workflow that rebuilds that tagged revision, smoke-tests the returned digests, and promotes those same references to the exact version and `latest` tags.
+Every pull request runs the complete quality gate. A push to `main` has two independent effects:
+
+- Release Please creates or updates one release pull request from Conventional Commits;
+- after the `Test` workflow succeeds for a source or configuration change, the image workflow builds all three production images, smoke-tests their exact digests, and publishes the `main` tags. Markdown-only pushes do not rebuild images.
+
+Merging the Release Please pull request is the explicit release action. Release Please then creates the version tag and GitHub Release. The tag starts the release-image workflow, which rebuilds that revision, smoke-tests the returned digests, and publishes the version and `latest` image tags.
 
 ## Protected main workflow
 
-`main` is the stable integration branch. After branch protection is enabled, all feature, fix, documentation, and release changes reach it through pull requests rather than direct pushes.
-
-For each logical change:
+Normal changes use a short-lived branch and pull request:
 
 ```bash
 git switch main
 git pull --ff-only
 git switch -c feat/workout-pagination
 
-# Edit the relevant files, then run the narrowest checks while iterating.
+# Make and verify the change.
 npm run verify
 
 git add -- <changed-files>
 git commit -m "feat: add workout pagination"
 git push -u origin feat/workout-pagination
+gh pr create --base main
 ```
 
-Create the pull request with GitHub CLI after the first push:
+Later corrections stay on the same branch and pull request. Push the additional commits and wait for the new checks.
 
-```bash
-gh pr create \
-  --base main \
-  --head feat/workout-pagination \
-  --title "feat: add workout pagination" \
-  --body "## Summary
+The `main` ruleset requires:
 
-- add paginated workout loading
-- preserve the existing workout filters
+- a pull request that is current with `main`;
+- resolved review conversations;
+- `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke`;
+- the separate CodeQL code-scanning rule;
+- rebase merges only;
+- no force pushes or deletion of `main`.
 
-## Validation
-
-- npm run verify"
-```
-
-Use a concise outcome-oriented title. In the description, summarize the behavior and list the checks that actually ran. Alternatively, open the compare link printed by `git push`, confirm that the base branch is `main`, enter the same title and description, and select **Create pull request**.
-
-The first push creates the remote tracking branch. Later corrections stay on the same local branch and normally require only:
-
-```bash
-git push
-gh pr checks --watch
-```
-
-Each push updates the existing pull request and reruns its checks, so a new branch or pull request is not needed for every commit. Use `gh pr view --web` to reopen the current branch's pull request in a browser.
-
-The active repository ruleset for `main` is configured to:
-
-- require a pull request before merging;
-- require the branch to be up to date with `main` before merging;
-- require all review conversations to be resolved;
-- require the exact `Actions lint`, `Dependency review`, `Verify`, `Integration`, `Browser E2E`, and `Production container smoke` status checks;
-- enforce CodeQL through the dedicated code-scanning rule, rejecting high-or-higher security alerts and analysis errors;
-- permit rebase merges only, preserving reviewed commits while keeping `main` linear;
-- block force pushes and deletion of `main`;
-- provide no routine bypass for repository administrators or automation.
-
-A solo-maintainer repository may use zero required approving reviews while still requiring the pull request itself and all automated checks. Increase the approval count when another regular reviewer is available.
-
-If any required status check fails or the code-scanning rule rejects the revision, `main` remains unchanged. Fix the problem on the pull-request branch, commit it, push again, and wait for the new results. Do not merge by bypassing, dismissing, or weakening the required protection. After merge, synchronize and clean up locally:
-
-```bash
-git switch main
-git pull --ff-only
-git branch -d feat/workout-pagination
-```
-
-Release Please pull requests use the same protected path. Never merge a stale release pull request: first allow it to incorporate the latest commits from `main`, review its proposed version and changelog, and wait for all six required checks to pass.
+Release Please pull requests use the same merge gate. Review the proposed version and changelog, and merge only when publishing a release is intentional. Opening, updating, or closing the pull request publishes nothing.
 
 ## Published images
 
@@ -126,85 +62,54 @@ Release Please pull requests use the same protected path. Never merge a stale re
 | `fit-track-frontend`  | `production`  | Static React assets served by unprivileged Nginx         |
 | `fit-track-migration` | `migration`   | Minimal Prisma CLI runtime and committed migrations      |
 
-Images are built for `linux/amd64` and `linux/arm64`. Each build publishes an SBOM and max-level provenance attestation.
+Images are built for `linux/amd64` and `linux/arm64` with an SBOM and provenance attestation.
 
-The current request topology and container behavior are documented in [architecture](architecture.md); exact production-smoke coverage and local commands belong in the [testing strategy](testing.md#production-container-smoke-tests). The future AWS topology is separate from these currently verified artifacts and is described in the [AWS deployment plan](aws-deployment-plan.md).
+Successful `main` builds publish:
 
-## Image tags
+- `sha-<commit>`;
+- `main`.
 
-After a successful build and production smoke test, every image receives:
+Successful release builds additionally publish:
 
-- Git-addressed `sha-<commit>`;
-- moving `main`.
+- the exact version without the `v` prefix, for example `0.2.0`;
+- `latest`.
 
-A release rebuilds the tagged revision, smoke-tests the exact build digests, and adds these tags to the same content:
+Workflows smoke-test exact digests returned by the builds before applying moving tags. Deployments and migrations should use digests; `main` and `latest` are convenience tags that move.
 
-- exact version, for example `1.2.3`;
-- moving `latest`.
-
-Only an `image@sha256:<digest>` reference is technically immutable. The `sha-<commit>` image tag records the Git revision and can be replaced by a rerun. Neither publication workflow trusts that movable tag as its promotion input: each uses the digest returned by its own build for both smoke testing and subsequent tagging.
-
-Prefer a content digest for deployments and migration jobs; a Git-addressed SHA or exact version is the human-readable release reference. Never apply migrations from `main` or `latest` because those tags can move.
+This process publishes artifacts only. The current deployment boundary and planned AWS topology are documented in the [AWS deployment plan](aws-deployment-plan.md); container validation is documented in the [testing guide](testing.md).
 
 ## Migration ordering
 
-Committed Prisma migrations are append-only deployment artifacts. A release should follow this order:
+Deploy each schema and application change in this order:
 
-1. select backend and migration references from the same exact release version or release workflow digests;
-2. run the migration image once with the target `DATABASE_URL`;
-3. stop if `prisma migrate deploy` fails;
-4. start or update the matching backend image;
-5. wait for `/api/health/ready` before sending traffic;
-6. update the frontend when required.
+1. build the migration, backend, and frontend images from the same revision;
+2. smoke-test the exact image digests;
+3. run the migration image once with the target database connection;
+4. require a successful migration exit;
+5. deploy the matching backend and frontend digests;
+6. confirm backend readiness before routing traffic.
 
-Do not run migrations independently from every backend process at startup.
-
-The development Compose stack follows the same principle: PostgreSQL becomes healthy, the one-off migration service succeeds, and only then does the backend start. The test stack applies the complete migration chain to a temporary database.
+Backend replicas never run migrations during startup. Changes that cannot tolerate old and new application revisions at the same time require an expand-and-contract migration across separate releases.
 
 ## Release Please
 
 Release Please treats the monorepo as one versioned product. Conventional Commit types drive the proposed version:
 
-- `fix:` requests a patch release;
-- `perf:` requests a patch release and records the change under performance improvements;
-- `feat:` requests a minor release;
-- `!` or a `BREAKING CHANGE` footer requests a major release;
-- `docs:`, `test:`, `ci:`, and `chore:` normally do not request a product release.
+- `fix:` and `perf:` propose a patch;
+- `feat:` proposes a minor;
+- `!` or a `BREAKING CHANGE` footer proposes a major;
+- `build:`, `chore:`, `ci:`, `docs:`, and `test:` do not by themselves propose a release.
 
-The release pull request updates the root, frontend, backend, and shared `package.json` versions together with their `package-lock.json` entries. The manifest, Git tag, changelog, and every workspace therefore describe the same product version; workspace packages are not released independently. Review these exact entries in a release pull request and never update dependency versions through a repository-wide replacement.
+The release pull request coordinates the root, backend, frontend, and shared package versions. Release Please owns the product versions, root lockfile entries, manifest, changelog, version tag, and GitHub Release. Do not edit those release artifacts manually during ordinary development.
 
-Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. The token allows Release Please-created changes and tags to trigger the normal workflows.
-
-After image publication on `main`, Release Please creates or updates a release pull request. Opening or closing that pull request does not create a tag, GitHub Release, or versioned container image. Review the generated version and changelog, wait for checks, and rebase-merge it only when a release is intentional. The merge is verified and published by SHA before Release Please creates the version tag and GitHub Release.
-
-Do not manually create or move release tags during the normal process. Publish a new patch version when a released artifact needs correction.
-
-The root package and workspaces use `0.0.0` while the Release Please manifest and changelog contain no released version. Commit `cad37f7` (`build: slim migration image`) is the configured history baseline, so the initial release pull request documents eligible Conventional Commits strictly after that commit. Its configured initial version is `0.1.0`. The baseline and initial-version setting prepare the proposal only: neither creates a release, tag, or versioned image. Once that release pull request is eventually merged, Release Please records the released version in its manifest and no longer uses either initial setting.
-
-Subsequent versions follow the eligible Conventional Commits after the recorded release. `0.1.0` is appropriate while behavior and operational expectations may still change; reserve `1.0.0` for a production-ready product with stable public contracts.
-
-To intentionally override the proposed next version, use a `Release-As` footer:
-
-```bash
-git commit --allow-empty \
-  -m "chore: prepare release 2.0.0" \
-  -m "Release-As: 2.0.0"
-```
+Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. This token allows Release Please-created pull requests and tags to trigger the repository workflows.
 
 ## Workflow validation
 
-Run `npm run actions:lint` after changing a workflow or local action. Local simulation cannot reproduce every GitHub-hosted runner behavior, so the pull request checks remain authoritative. Never commit local workflow secrets or credentials.
+Changes to GitHub Actions or local actions require:
 
-Portable release-tag validation and image-promotion policy lives under `scripts/release/`. Before any image build, the validator requires the tag version to match every workspace package, the root lockfile and its workspace entries, the Release Please manifest, and Release Please's generated changelog heading. The workflow then supplies the authenticated registry session, version, and exact digest references returned by its build. The promotion script rejects mutable source references and conflicting exact-version tags before moving any image tags.
+```bash
+npm run actions:lint
+```
 
-## Dependency update automation
-
-Dependabot checks GitHub Actions, the root npm workspace, and the standalone migration-runtime package weekly. Minor and patch npm updates are grouped by production or development responsibility, with Prisma packages grouped across both npm lockfiles; major updates remain individually reviewable. Release validation rejects Prisma or `dotenv` range drift between the backend and migration manifests.
-
-Docker coverage is also weekly. The `docker` ecosystem scans the root, backend, and frontend Dockerfile directories; the separate `docker-compose` ecosystem scans the root Compose definitions. Dependabot pull requests are not auto-merged: they follow the same protected `main` pull-request path and required checks as contributor changes.
-
-## Repository security settings
-
-The GitHub repository keeps the dependency graph, Dependabot alerts, secret scanning, and push protection enabled. Secret scanning reports supported credentials found in repository history, while push protection rejects supported secrets before they enter the repository. These repository-level controls are configured under **Settings** → **Advanced Security** and are not duplicated as custom workflow steps.
-
-Do not bypass push protection for a real credential. Remove and rotate it before retrying the push. A confirmed false positive may be bypassed only with the matching GitHub reason so the decision remains visible in repository security history. Review secret-scanning and Dependabot alerts under **Security** before a production release.
+They must also pass the repository's required pull-request checks. See the [testing guide](testing.md) for the complete validation matrix.
