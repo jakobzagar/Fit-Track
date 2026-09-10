@@ -10,6 +10,7 @@ backend/generated/prisma/
 backend/prisma/migrations/
 package-lock.json
 CHANGELOG.md
+.github/release-please/manifest.json
 .env
 .env.*
 !.env.example
