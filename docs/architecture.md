@@ -294,7 +294,7 @@ The backend passes bounded pool settings directly to the PostgreSQL driver adapt
 
 ## Local development without Docker
 
-Requirements are Node.js 24.18 or newer, npm 11 or newer, and a reachable PostgreSQL server.
+Requirements are Node.js 24.21.x, npm 11.x, and a reachable PostgreSQL server. The manifests reject other Node major versions and unsupported npm major versions. CI and container builds use the npm release bundled with the selected official Node distribution, avoiding a redundant package-manager installation layer.
 
 ```bash
 npm ci

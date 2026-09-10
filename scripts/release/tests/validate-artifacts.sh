@@ -49,6 +49,34 @@ grep --fixed-strings --quiet \
 
 cp "$repository_root/backend/package.json" "$temporary_directory/backend/package.json"
 
+for dependency in @prisma/client @prisma/adapter-pg; do
+    cp "$repository_root/backend/package.json" "$temporary_directory/backend/package.json"
+
+    node - "$temporary_directory/backend/package.json" "$dependency" <<'NODE'
+const {readFileSync, writeFileSync} = require("node:fs");
+
+const [path, dependency] = process.argv.slice(2);
+const packageJson = JSON.parse(readFileSync(path, "utf8"));
+packageJson.dependencies[dependency] = "9.9.9";
+writeFileSync(path, `${JSON.stringify(packageJson, null, 4)}\n`);
+NODE
+
+    if (
+        cd "$temporary_directory"
+        validate_release_artifacts "$current_version"
+    ) 2>"$temporary_directory/prisma-error.log"; then
+        echo "Expected mismatched Prisma dependency to fail validation: $dependency" >&2
+        exit 1
+    fi
+
+    expected_range="$(node -p 'require(process.argv[1]).devDependencies.prisma' "$repository_root/backend/package.json")"
+    grep --fixed-strings --quiet \
+        "backend/package.json dependency $dependency is \"9.9.9\", expected \"$expected_range\"" \
+        "$temporary_directory/prisma-error.log"
+done
+
+cp "$repository_root/backend/package.json" "$temporary_directory/backend/package.json"
+
 for dependency in prisma dotenv; do
     cp "$repository_root/backend/migration-runtime/package.json" \
         "$temporary_directory/backend/migration-runtime/package.json"

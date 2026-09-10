@@ -40,6 +40,17 @@ if (isUnreleased) {
 
 const backendPackage = readJson("backend/package.json");
 const migrationPackage = readJson("backend/migration-runtime/package.json");
+const expectedPrismaVersion = backendPackage.devDependencies?.prisma;
+
+for (const dependency of ["@prisma/client", "@prisma/adapter-pg"]) {
+    const actualVersion = backendPackage.dependencies?.[dependency];
+    if (actualVersion !== expectedPrismaVersion) {
+        failures.push(
+            `backend/package.json dependency ${dependency} is ${JSON.stringify(actualVersion)}, expected ${JSON.stringify(expectedPrismaVersion)}`,
+        );
+    }
+}
+
 const expectedMigrationDependencies = {
     dependencies: {
         dotenv: backendPackage.dependencies?.dotenv,
