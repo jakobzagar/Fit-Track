@@ -81,9 +81,9 @@ for (const [dependencyType, expectedDependencies] of Object.entries(expectedMigr
 }
 
 const escapedVersion = expectedVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const changelogHeading = new RegExp(`^## \\[${escapedVersion}\\](?:\\(|\\s|$)`, "m");
+const changelogHeading = new RegExp(`^## ${escapedVersion}(?:\\s|$)`, "m");
 const changelog = readFileSync("CHANGELOG.md", "utf8");
-if (isUnreleased && /^## \\[[0-9]+\\.[0-9]+\\.[0-9]+\\]/m.test(changelog)) {
+if (isUnreleased && /^## (?:\[)?[0-9]+\.[0-9]+\.[0-9]+(?:\])?(?:\s|$)/m.test(changelog)) {
     failures.push("CHANGELOG.md must not contain a published release before the first release");
 } else if (!isUnreleased && !changelogHeading.test(changelog)) {
     failures.push(`CHANGELOG.md has no ${expectedVersion} release heading`);

@@ -15,7 +15,7 @@ FitTrack treats tests as evidence for backend, persistence, security, and delive
 | Static security flaws               | GitHub-managed CodeQL analysis for JavaScript and TypeScript data flows                                          |
 | Vulnerable dependency introduction  | Pull-request dependency review for high and critical runtime advisories                                          |
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
-| Release version drift               | Release validation checks the tag against packages, lockfile, manifest, and changelog                            |
+| Release version drift               | Release validation checks the tag against packages, lockfile, manifest, and the generated changelog heading      |
 
 Tests cross the same Interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private Implementation details.
 

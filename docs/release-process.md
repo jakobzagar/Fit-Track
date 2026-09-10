@@ -1,6 +1,6 @@
 # Release and container process
 
-FitTrack uses GitHub Actions to verify the repository, publish digest-addressed container artifacts, and manage one product version across all workspaces. No public release currently exists; Release Please is configured as a first-time release setup. This is an artifact-release process, not a cloud deployment pipeline: it ends with verified images in GHCR.
+FitTrack uses GitHub Actions to verify the repository, publish digest-addressed container artifacts, and manage one product version across all workspaces. No public release currently exists; Release Please is prepared to propose one without publishing it automatically. This is an artifact-release process, not a cloud deployment pipeline: it ends with verified images in GHCR.
 
 The process follows three principles:
 
@@ -175,11 +175,13 @@ The release pull request updates the root, frontend, backend, and shared `packag
 
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. The token allows Release Please-created changes and tags to trigger the normal workflows.
 
-After image publication on `main`, Release Please creates or updates a release pull request. Review the generated version and changelog, wait for checks, and rebase-merge it. The merge is verified and published by SHA before Release Please creates the version tag and GitHub Release.
+After image publication on `main`, Release Please creates or updates a release pull request. Opening or closing that pull request does not create a tag, GitHub Release, or versioned container image. Review the generated version and changelog, wait for checks, and rebase-merge it only when a release is intentional. The merge is verified and published by SHA before Release Please creates the version tag and GitHub Release.
 
 Do not manually create or move release tags during the normal process. Publish a new patch version when a released artifact needs correction.
 
-The root package and workspaces use `0.0.0` while the Release Please manifest and changelog contain no released version. This is the standard first-release state; Release Please will propose the initial version from Conventional Commits. For this project, `0.1.0` is appropriate while behavior and operational expectations may still change, while `1.0.0` should be reserved for a production-ready product with stable public contracts.
+The root package and workspaces use `0.0.0` while the Release Please manifest and changelog contain no released version. Commit `cad37f7` (`build: slim migration image`) is the configured history baseline, so the initial release pull request documents eligible Conventional Commits strictly after that commit. The baseline is only a changelog boundary: it is not a release, tag, or product version. Once an initial release pull request is eventually merged, Release Please records the released version in its manifest and no longer uses the bootstrap boundary.
+
+Release Please proposes the initial version from the eligible commits after the baseline. `0.1.0` is appropriate while behavior and operational expectations may still change; reserve `1.0.0` for a production-ready product with stable public contracts.
 
 To intentionally override the proposed next version, use a `Release-As` footer:
 
@@ -193,7 +195,7 @@ git commit --allow-empty \
 
 Run `npm run actions:lint` after changing a workflow or local action. Local simulation cannot reproduce every GitHub-hosted runner behavior, so the pull request checks remain authoritative. Never commit local workflow secrets or credentials.
 
-Portable release-tag validation and image-promotion policy lives under `scripts/release/`. Before any image build, the validator requires the tag version to match every workspace package, the root lockfile and its workspace entries, the Release Please manifest, and the changelog. The workflow then supplies the authenticated registry session, version, and exact digest references returned by its build. The promotion script rejects mutable source references and conflicting exact-version tags before moving any image tags.
+Portable release-tag validation and image-promotion policy lives under `scripts/release/`. Before any image build, the validator requires the tag version to match every workspace package, the root lockfile and its workspace entries, the Release Please manifest, and Release Please's generated changelog heading. The workflow then supplies the authenticated registry session, version, and exact digest references returned by its build. The promotion script rejects mutable source references and conflicting exact-version tags before moving any image tags.
 
 ## Dependency update automation
 
