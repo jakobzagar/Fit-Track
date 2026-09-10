@@ -15,7 +15,7 @@ FitTrack is a backend- and delivery-focused TypeScript system for planning and r
 | Backend design      | Thin Express routes, authoritative domain services, centralized middleware, and Prisma persistence                           |
 | Data integrity      | Ownership-scoped queries, relational constraints, append-only migrations, serializable transactions, and retry handling      |
 | Security            | HTTP-only cookies, CSRF origin checks, credentialed CORS, payload limits, rate limiting, security headers, and log redaction |
-| Verification        | Contract, unit, PostgreSQL integration, concurrency, browser E2E, accessibility, and final-container tests                   |
+| Verification        | Contract, unit, PostgreSQL integration, concurrency, browser E2E, accessibility, release-tool, and final-container tests     |
 | Container delivery  | Non-root multi-stage images, a dedicated migration artifact, digest-pinned smoke tests, SBOM, and build provenance           |
 | Release engineering | Protected pull requests, coordinated product versions, exact-digest promotion, and Release Please                            |
 | Cloud direction     | An explicit AWS gap analysis and deployment plan without presenting proposed infrastructure as implemented                   |
@@ -128,7 +128,7 @@ The one-off migration container must succeed before the backend starts. Stop the
 ## Verification
 
 ```bash
-npm run verify      # lint, types, formatting, fast tests, and builds
+npm run verify      # lint, types, formatting, fast and release-tool tests, builds
 npm run test:docker # migrated PostgreSQL integration and concurrency tests
 npm run test:e2e    # critical browser journeys against the real backend and database
 ```
