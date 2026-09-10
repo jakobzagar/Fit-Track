@@ -15,7 +15,6 @@ FitTrack treats tests as evidence for backend, persistence, security, and delive
 | Static security flaws               | GitHub-managed CodeQL analysis for JavaScript and TypeScript data flows                                          |
 | Vulnerable dependency introduction  | Pull-request dependency review for high and critical runtime advisories                                          |
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
-| Release version drift               | Release validation checks the tag against packages, lockfile, manifest, and the generated changelog heading      |
 
 Tests cross the same Interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private Implementation details.
 
@@ -45,7 +44,6 @@ Fast checks protect developer feedback time. PostgreSQL tests own relational and
 | Browser E2E         | `frontend/e2e/`                           | Critical cross-application journeys in Chromium against isolated PostgreSQL       |
 | Code scanning       | GitHub CodeQL default setup               | JavaScript and TypeScript security queries on repository changes                  |
 | Dependency review   | `Test` workflow pull-request job          | Added and updated dependencies compared with the pull-request base                |
-| Release             | `scripts/release/tests/`                  | Coordinated version validation across release artifacts                           |
 | Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy       |
 
 ## Fast verification
@@ -60,9 +58,8 @@ Useful narrower commands are:
 
 | Command                      | Purpose                                                   |
 | ---------------------------- | --------------------------------------------------------- |
-| `npm test`                   | Run application and release-validation tests              |
+| `npm test`                   | Run all fast workspace tests                              |
 | `npm run test:application`   | Run all fast workspace tests                              |
-| `npm run test:release`       | Test coordinated release-version validation               |
 | `npm run verify:application` | Check, test, and build application workspaces             |
 | `npm run check`              | Run lint, type checking, and formatting checks            |
 | `npm run verify:shared`      | Verify the shared package                                 |
@@ -84,8 +81,6 @@ The Docker stack:
 4. checks, tests, and builds the application workspaces;
 5. runs backend integration tests sequentially;
 6. returns the test container's exit code.
-
-Release artifact validation is intentionally separate because it does not require PostgreSQL or the application test image. It rejects Prisma CLI drift between the backend and migration runtime, verifies that `@prisma/client` and `@prisma/adapter-pg` use that same exact version, and rejects `dotenv` drift between the two packages. Run it directly with `npm run test:release`; the full `npm run verify` command includes it.
 
 Remove an interrupted stack before retrying:
 
