@@ -85,7 +85,7 @@ The Docker stack:
 5. runs backend integration tests sequentially;
 6. returns the test container's exit code.
 
-Release artifact validation is intentionally separate because it does not require PostgreSQL or the application test image. It also rejects Prisma or `dotenv` version drift between the backend and the minimal migration runtime. Run it directly with `npm run test:release`; the full `npm run verify` command includes it.
+Release artifact validation is intentionally separate because it does not require PostgreSQL or the application test image. It rejects Prisma CLI drift between the backend and migration runtime, verifies that `@prisma/client` and `@prisma/adapter-pg` use that same exact version, and rejects `dotenv` drift between the two packages. Run it directly with `npm run test:release`; the full `npm run verify` command includes it.
 
 Remove an interrupted stack before retrying:
 
@@ -189,7 +189,11 @@ The active `main` ruleset enforces CodeQL through GitHub's dedicated code-scanni
 
 ## Dependency review
 
-The `Dependency review` job runs only on pull requests and compares dependency changes with the pull-request base through GitHub's dependency graph. It blocks newly introduced `high` or `critical` vulnerabilities in runtime dependencies and reports the first patched version when GitHub Advisory Database data provides one. Development-only findings remain visible without blocking the pull request; this keeps known build-tool findings separate from production exposure.
+The `Dependency review` job runs only on pull requests and compares dependency changes with the pull-request base through GitHub's dependency graph. It blocks newly introduced `high` or `critical` vulnerabilities in runtime dependencies and reports the first patched version when GitHub Advisory Database data provides one. Development-only findings remain visible without blocking the pull request.
+
+Package classification does not by itself define deployment exposure. The Prisma CLI is a development dependency so the backend runtime can omit it, but the dedicated migration image intentionally installs and executes it. Dependabot covers both the root and `backend/migration-runtime` lockfiles; review Prisma CLI advisories as migration-tool findings even when dependency review classifies them as development-only. Do not use `npm audit fix --force` to replace the supported Prisma major or override Prisma's pinned transitive dependencies without upstream compatibility evidence.
+
+The manifests record reviewed lifecycle-script packages in npm's version-pinned `allowScripts` field. npm 11 currently treats this policy as advisory and reports unreviewed scripts; review and update a pin whenever a dependency update changes a package that runs an install script.
 
 This check complements rather than replaces Dependabot alerts: dependency review prevents vulnerable changes from entering `main`, while Dependabot reports vulnerabilities already present in the dependency graph. It uses only the read-only workflow token, does not post pull-request comments, and requires no external account or repository secret.
 
