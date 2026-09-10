@@ -15,6 +15,7 @@ FitTrack treats tests as evidence for backend, persistence, security, and delive
 | Static security flaws               | GitHub-managed CodeQL analysis for JavaScript and TypeScript data flows                                          |
 | Vulnerable dependency introduction  | Pull-request dependency review for high and critical runtime advisories                                          |
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
+| Invalid release input               | Focused shell tests for version consistency and digest-only image promotion                                      |
 
 Tests cross the same Interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private Implementation details.
 
@@ -44,6 +45,7 @@ Fast checks protect developer feedback time. PostgreSQL tests own relational and
 | Browser E2E         | `frontend/e2e/`                           | Critical cross-application journeys in Chromium against isolated PostgreSQL       |
 | Code scanning       | GitHub CodeQL default setup               | JavaScript and TypeScript security queries on repository changes                  |
 | Dependency review   | `Test` workflow pull-request job          | Added and updated dependencies compared with the pull-request base                |
+| Release tools       | `scripts/release/tests/`                  | Version validation and immutable promotion inputs                                 |
 | Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy       |
 
 ## Fast verification
@@ -52,14 +54,15 @@ Fast checks protect developer feedback time. PostgreSQL tests own relational and
 npm run verify
 ```
 
-This command generates the Prisma client, then runs linting, type checking, formatting checks, fast workspace tests, and production builds. Prisma generation uses a local placeholder URL when `DATABASE_URL` is unset and does not connect to PostgreSQL. The command intentionally excludes PostgreSQL integration tests.
+This command generates the Prisma client, then runs linting, type checking, formatting checks, fast workspace tests, focused release-tool tests, and production builds. Prisma generation uses a local placeholder URL when `DATABASE_URL` is unset and does not connect to PostgreSQL. The command intentionally excludes PostgreSQL integration tests.
 
 Useful narrower commands are:
 
 | Command                      | Purpose                                                   |
 | ---------------------------- | --------------------------------------------------------- |
-| `npm test`                   | Run all fast workspace tests                              |
+| `npm test`                   | Run fast workspace and release-tool tests                 |
 | `npm run test:application`   | Run all fast workspace tests                              |
+| `npm run test:release-tools` | Test release validation and image-promotion rules         |
 | `npm run verify:application` | Check, test, and build application workspaces             |
 | `npm run check`              | Run lint, type checking, and formatting checks            |
 | `npm run verify:shared`      | Verify the shared package                                 |

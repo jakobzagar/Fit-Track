@@ -104,6 +104,8 @@ The release pull request coordinates the root, backend, frontend, and shared pac
 
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. This token allows Release Please-created pull requests and tags to trigger the repository workflows.
 
+Before building release images, `scripts/release/validate.sh` requires a semantic version tag and matching package, lockfile, and Release Please manifest versions. After the exact build digests pass the production smoke test, `scripts/release/promote-images.sh` accepts only digest references and refuses to move an existing version tag to different content. `npm run test:release-tools` covers these critical rules.
+
 ## Workflow validation
 
 Changes to GitHub Actions or local actions require:
