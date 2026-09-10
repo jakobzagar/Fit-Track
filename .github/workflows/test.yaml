@@ -218,4 +218,4 @@ jobs:
           cache-to: type=gha,mode=max,scope=smoke-frontend
 
       - name: Smoke test production containers
-        run: npm run smoke:production
+        run: bash scripts/smoke/production-containers.sh

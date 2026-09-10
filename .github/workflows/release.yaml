@@ -81,7 +81,7 @@ jobs:
           BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}@${{ steps.images.outputs.backend-digest }}
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}@${{ steps.images.outputs.frontend-digest }}
           MIGRATION_IMAGE: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}@${{ steps.images.outputs.migration-digest }}
-        run: npm run smoke:production
+        run: bash scripts/smoke/production-containers.sh
 
       - name: Promote release images
         shell: bash
