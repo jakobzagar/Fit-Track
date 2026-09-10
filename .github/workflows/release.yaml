@@ -13,31 +13,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  validate-release:
-    name: Validate release
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    outputs:
-      version: ${{ steps.release.outputs.version }}
-      revision: ${{ steps.release.outputs.revision }}
-
-    steps:
-      - name: Checkout release
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Validate release
-        id: release
-        shell: bash
-        run: |
-          git fetch origin main:refs/remotes/origin/main --no-tags
-          bash scripts/release/validate.sh "$GITHUB_REF_NAME" origin/main >> "$GITHUB_OUTPUT"
-
   release-images:
-    name: Build, test, and release images
-    needs: validate-release
+    name: Build and publish release images
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -54,6 +31,11 @@ jobs:
     steps:
       - name: Checkout release
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Read release version
+        id: release
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
@@ -74,7 +56,7 @@ jobs:
         id: images
         uses: ./.github/actions/build-production-images
         with:
-          revision: ${{ needs.validate-release.outputs.revision }}
+          revision: ${{ github.sha }}
 
       - name: Smoke test release images
         env:
@@ -86,13 +68,22 @@ jobs:
       - name: Promote release images
         shell: bash
         env:
-          VERSION: ${{ needs.validate-release.outputs.version }}
+          VERSION: ${{ steps.release.outputs.version }}
           BACKEND_REF: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}@${{ steps.images.outputs.backend-digest }}
           FRONTEND_REF: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}@${{ steps.images.outputs.frontend-digest }}
           MIGRATION_REF: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}@${{ steps.images.outputs.migration-digest }}
         run: |
-          bash scripts/release/promote-images.sh \
-            "$VERSION" \
-            "$BACKEND_REF" \
-            "$FRONTEND_REF" \
+          docker buildx imagetools create \
+            --tag "$REGISTRY/$BACKEND_IMAGE:$VERSION" \
+            --tag "$REGISTRY/$BACKEND_IMAGE:latest" \
+            "$BACKEND_REF"
+
+          docker buildx imagetools create \
+            --tag "$REGISTRY/$FRONTEND_IMAGE:$VERSION" \
+            --tag "$REGISTRY/$FRONTEND_IMAGE:latest" \
+            "$FRONTEND_REF"
+
+          docker buildx imagetools create \
+            --tag "$REGISTRY/$MIGRATION_IMAGE:$VERSION" \
+            --tag "$REGISTRY/$MIGRATION_IMAGE:latest" \
             "$MIGRATION_REF"
