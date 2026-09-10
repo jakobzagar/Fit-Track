@@ -179,9 +179,9 @@ After image publication on `main`, Release Please creates or updates a release p
 
 Do not manually create or move release tags during the normal process. Publish a new patch version when a released artifact needs correction.
 
-The root package and workspaces use `0.0.0` while the Release Please manifest and changelog contain no released version. Commit `cad37f7` (`build: slim migration image`) is the configured history baseline, so the initial release pull request documents eligible Conventional Commits strictly after that commit. The baseline is only a changelog boundary: it is not a release, tag, or product version. Once an initial release pull request is eventually merged, Release Please records the released version in its manifest and no longer uses the bootstrap boundary.
+The root package and workspaces use `0.0.0` while the Release Please manifest and changelog contain no released version. Commit `cad37f7` (`build: slim migration image`) is the configured history baseline, so the initial release pull request documents eligible Conventional Commits strictly after that commit. Its configured initial version is `0.1.0`. The baseline and initial-version setting prepare the proposal only: neither creates a release, tag, or versioned image. Once that release pull request is eventually merged, Release Please records the released version in its manifest and no longer uses either initial setting.
 
-Release Please proposes the initial version from the eligible commits after the baseline. `0.1.0` is appropriate while behavior and operational expectations may still change; reserve `1.0.0` for a production-ready product with stable public contracts.
+Subsequent versions follow the eligible Conventional Commits after the recorded release. `0.1.0` is appropriate while behavior and operational expectations may still change; reserve `1.0.0` for a production-ready product with stable public contracts.
 
 To intentionally override the proposed next version, use a `Release-As` footer:
 
