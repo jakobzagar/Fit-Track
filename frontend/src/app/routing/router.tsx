@@ -1,5 +1,6 @@
 import {createBrowserRouter, Link, RouterProvider} from "react-router";
 import {AppLayout} from "../../components/layout/shell/AppLayout";
+import {SessionLayout} from "../../components/layout/shell/SessionLayout";
 import {ProtectedRoute} from "../../features/auth/components/ProtectedRoute";
 import {LoginPage} from "../../features/auth/pages/LoginPage";
 import {RegisterPage} from "../../features/auth/pages/RegisterPage";
@@ -55,6 +56,11 @@ function createAppRouter() {
                                 {path: "/exercises", element: <ExercisesPage />},
                                 {path: "/workouts", element: <WorkoutsPage />},
                                 {path: "/workouts/:workoutId", element: <WorkoutDetailPage />},
+                            ],
+                        },
+                        {
+                            element: <SessionLayout />,
+                            children: [
                                 {
                                     path: "/workouts/:workoutId/session",
                                     element: <ActiveWorkoutPage />,

@@ -4,6 +4,7 @@ import {describe, expect, test, vi} from "vitest";
 import {AuthContext} from "../../../../features/auth/context/auth.context";
 import {user} from "../../../../test/fixtures/users";
 import {AppLayout} from "../AppLayout";
+import {SessionLayout} from "../SessionLayout";
 
 const authValue = {
     currentUser: user,
@@ -19,6 +20,8 @@ function renderLayout(route: string) {
                 <Routes>
                     <Route element={<AppLayout />}>
                         <Route path="/workouts" element={<h1>Workouts page</h1>} />
+                    </Route>
+                    <Route element={<SessionLayout />}>
                         <Route
                             path="/workouts/:id/session"
                             element={<h1>Active workout page</h1>}
