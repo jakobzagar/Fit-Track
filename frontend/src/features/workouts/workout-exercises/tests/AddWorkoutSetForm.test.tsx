@@ -5,14 +5,16 @@ import {ApiError} from "../../../../common/errors/api.error";
 import {AddWorkoutSetForm} from "../components/sets/AddWorkoutSetForm";
 
 describe("AddWorkoutSetForm", () => {
-    test("requires reps or duration", async () => {
+    test("requires at least one performance metric", async () => {
         const user = userEvent.setup();
         const onSubmit = vi.fn();
         render(<AddWorkoutSetForm onSubmit={onSubmit} />);
 
         await user.click(screen.getByRole("button", {name: "Add set"}));
 
-        expect(screen.getByText("Either reps or durationSeconds is required")).toBeInTheDocument();
+        expect(
+            screen.getByText("At least one of reps or durationSeconds is required"),
+        ).toBeInTheDocument();
         expect(onSubmit).not.toHaveBeenCalled();
     });
 
@@ -34,7 +36,7 @@ describe("AddWorkoutSetForm", () => {
         const onSubmit = vi.fn().mockRejectedValue(
             new ApiError("Validation failed", 400, {
                 fieldErrors: {},
-                formErrors: ["Reps or duration must be provided"],
+                formErrors: ["At least one of reps or duration must be provided"],
             }),
         );
         render(<AddWorkoutSetForm onSubmit={onSubmit} />);
@@ -42,6 +44,8 @@ describe("AddWorkoutSetForm", () => {
         await user.type(screen.getByLabelText("Reps"), "8");
         await user.click(screen.getByRole("button", {name: "Add set"}));
 
-        expect(screen.getByText("Reps or duration must be provided")).toBeInTheDocument();
+        expect(
+            screen.getByText("At least one of reps or duration must be provided"),
+        ).toBeInTheDocument();
     });
 });

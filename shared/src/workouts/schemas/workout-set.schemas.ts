@@ -1,6 +1,9 @@
 import {z} from "zod";
 import {messageResponseSchema} from "../../common/schemas/response.schemas.js";
 
+export const workoutSetMetricRequiredMessage =
+    "At least one of reps or durationSeconds is required";
+
 const workoutSetWeightSchema = z.number().nonnegative().max(999999.99).multipleOf(0.01);
 
 const serializedWorkoutSetWeightSchema = z.union([
@@ -48,7 +51,7 @@ export const createWorkoutSetSchema = z
     })
     .strict()
     .refine((data) => data.reps !== undefined || data.durationSeconds !== undefined, {
-        message: "Either reps or durationSeconds is required",
+        message: workoutSetMetricRequiredMessage,
     });
 
 const workoutSetValuesSchema = z

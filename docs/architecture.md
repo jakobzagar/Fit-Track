@@ -162,7 +162,7 @@ Database constraints and indexes:
 - `User.email`, `Exercise(userId, name)`, `WorkoutExercise(workoutId, exerciseId)`, `WorkoutExercise(workoutId, position)`, and `WorkoutSet(workoutExerciseId, setNumber)` are unique; a partial unique index additionally allows at most one `ACTIVE` workout per user;
 - indexes support `Exercise(userId, isArchived)`, `Workout(userId, status, completedAt DESC)`, and `WorkoutExercise(exerciseId)`;
 - deleting a user cascades to that user's exercises and workouts; deleting a workout cascades to its workout exercises and sets; deleting an exercise referenced by a workout is restricted;
-- database checks require positive positions, set numbers, reps, and durations; weight is `0` through `999999.99`; each set has either reps or duration; workout timestamps must match the `DRAFT`, `ACTIVE`, or `COMPLETED` lifecycle state.
+- database checks require positive positions, set numbers, reps, and durations; weight is `0` through `999999.99`; each set has `reps`, `durationSeconds`, or both; workout timestamps must match the `DRAFT`, `ACTIVE`, or `COMPLETED` lifecycle state.
 
 Application invariants complement the database rules: protected reads and mutations are scoped to the authenticated owner, while ordering mutations run in serializable transactions with retry handling. Services temporarily move conflicting positions or numbers and then close gaps in a deterministic order.
 

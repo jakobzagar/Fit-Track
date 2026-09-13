@@ -2,6 +2,7 @@ import {z} from "zod";
 import {
     createWorkoutSetSchema,
     updateWorkoutSetSchema,
+    workoutSetMetricRequiredMessage,
     type CreateWorkoutSetInput,
     type UpdateWorkoutSetInput,
 } from "@fit-track/shared/workouts";
@@ -54,7 +55,7 @@ export function parseEditedWorkoutSet(
     if (values.reps === "" && values.durationSeconds === "") {
         return {
             success: false,
-            errors: {form: "Either reps or durationSeconds is required"},
+            errors: {form: workoutSetMetricRequiredMessage},
         };
     }
 

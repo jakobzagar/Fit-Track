@@ -4,13 +4,15 @@ import {describe, expect, test, vi} from "vitest";
 import {NewWorkoutSetInlineRow} from "../components/sets/NewWorkoutSetInlineRow";
 
 describe("NewWorkoutSetInlineRow", () => {
-    test("requires reps or duration and submits numeric values", async () => {
+    test("requires at least one performance metric and submits numeric values", async () => {
         const user = userEvent.setup();
         const onSubmit = vi.fn().mockResolvedValue(undefined);
         render(<NewWorkoutSetInlineRow setNumber={2} onSubmit={onSubmit} />);
 
         await user.click(screen.getByRole("button", {name: "Add"}));
-        expect(screen.getByText("Either reps or durationSeconds is required")).toBeInTheDocument();
+        expect(
+            screen.getByText("At least one of reps or durationSeconds is required"),
+        ).toBeInTheDocument();
 
         await user.type(screen.getByLabelText("Weight (kg)"), "80");
         await user.type(screen.getByLabelText("Reps"), "10");

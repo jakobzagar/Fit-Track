@@ -21,7 +21,7 @@ An occurrence of an exercise inside one workout, including its position, workout
 _Avoid_: Exercise, movement
 
 **Workout set**:
-One planned or recorded effort belonging to a workout exercise, expressed with repetitions or duration and optionally weight.
+One planned or recorded effort belonging to a workout exercise, expressed with repetitions, duration, or both, and optionally weight.
 _Avoid_: Exercise set, result
 
 **Active workout**:

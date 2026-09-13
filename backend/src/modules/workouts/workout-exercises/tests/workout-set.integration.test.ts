@@ -37,7 +37,7 @@ describe("workout sets", () => {
         expect(stored.map(({setNumber}) => setNumber)).toEqual([1, 2]);
     });
 
-    it("adds repetition and duration sets with sequential numbers", async () => {
+    it("adds repetition, duration, and combined sets with sequential numbers", async () => {
         const owner = await createTestUser("owner@example.com");
         const workout = await createTestWorkout(owner.user.id);
         const exercise = await createTestExercise(owner.user.id);
@@ -53,6 +53,11 @@ describe("workout sets", () => {
             `/api/workouts/${workout.id}/exercises/${item.id}/sets`,
             owner.cookie,
         ).send({durationSeconds: 60});
+        const third = await requestAsUser(
+            "post",
+            `/api/workouts/${workout.id}/exercises/${item.id}/sets`,
+            owner.cookie,
+        ).send({reps: 8, durationSeconds: 45});
 
         expect(first.status).toBe(201);
         expect(addWorkoutSetResponseSchema.parse(first.body).workoutSet).toMatchObject({
@@ -63,6 +68,12 @@ describe("workout sets", () => {
         expect(addWorkoutSetResponseSchema.parse(second.body).workoutSet).toMatchObject({
             setNumber: 2,
             durationSeconds: 60,
+        });
+        expect(third.status).toBe(201);
+        expect(addWorkoutSetResponseSchema.parse(third.body).workoutSet).toMatchObject({
+            setNumber: 3,
+            reps: 8,
+            durationSeconds: 45,
         });
     });
 
@@ -124,7 +135,7 @@ describe("workout sets", () => {
         });
         expect(invalid.status).toBe(400);
         expect(messageResponseSchema.parse(invalid.body)).toEqual({
-            message: "Either reps or durationSeconds is required",
+            message: "At least one of reps or durationSeconds is required",
         });
     });
 

@@ -11,6 +11,10 @@ describe("workout set input parsing", () => {
             success: true,
             data: {reps: null, weight: null, durationSeconds: 45},
         });
+        expect(parseNewWorkoutSet({reps: "8", weight: "", durationSeconds: "45"})).toEqual({
+            success: true,
+            data: {reps: 8, durationSeconds: 45},
+        });
     });
 
     test.each([
@@ -26,10 +30,10 @@ describe("workout set input parsing", () => {
             expect(result.errors[field as keyof typeof result.errors]).toBeDefined();
     });
 
-    test("requires reps or duration when editing", () => {
+    test("requires at least one performance metric when editing", () => {
         expect(parseEditedWorkoutSet({reps: "", weight: "20", durationSeconds: ""})).toEqual({
             success: false,
-            errors: {form: "Either reps or durationSeconds is required"},
+            errors: {form: "At least one of reps or durationSeconds is required"},
         });
     });
 });
