@@ -1,10 +1,23 @@
 import {prisma} from "../../../db/prisma.js";
 import {AppError} from "../../../common/errors/app.error.js";
+import {normalizeExerciseName} from "../utils/exercise-name.js";
 import type {
     CreateExerciseInput,
     GetExercisesQuery,
     UpdateExerciseInput,
 } from "@fit-track/shared/exercises";
+
+function isUniqueConstraintError(error: unknown): error is {code: string} {
+    return typeof error === "object" && error !== null && "code" in error && error.code === "P2002";
+}
+
+function rethrowExerciseNameConflict(error: unknown): never {
+    if (isUniqueConstraintError(error)) {
+        throw new AppError("Exercise already exists", 409);
+    }
+
+    throw error;
+}
 
 export async function getExercisesService(userId: string, query: GetExercisesQuery) {
     return prisma.exercise.findMany({
@@ -35,11 +48,12 @@ export async function getExerciseByIdService(userId: string, exerciseId: string)
 }
 
 export async function createExerciseService(userId: string, data: CreateExerciseInput) {
+    const normalizedName = normalizeExerciseName(data.name);
     const existingExercise = await prisma.exercise.findUnique({
         where: {
-            userId_name: {
+            userId_normalizedName: {
                 userId,
-                name: data.name,
+                normalizedName,
             },
         },
     });
@@ -48,14 +62,17 @@ export async function createExerciseService(userId: string, data: CreateExercise
         throw new AppError("Exercise already exists", 409);
     }
 
-    return prisma.exercise.create({
-        data: {
-            name: data.name,
-            muscleGroup: data.muscleGroup,
-            equipment: data.equipment ?? null,
-            userId,
-        },
-    });
+    return prisma.exercise
+        .create({
+            data: {
+                name: data.name,
+                normalizedName,
+                muscleGroup: data.muscleGroup,
+                equipment: data.equipment ?? null,
+                userId,
+            },
+        })
+        .catch(rethrowExerciseNameConflict);
 }
 
 export async function archiveExerciseService(userId: string, exerciseId: string) {
@@ -122,11 +139,12 @@ export async function updateExerciseService(
     }
 
     if (data.name !== undefined) {
+        const normalizedName = normalizeExerciseName(data.name);
         const existingExercise = await prisma.exercise.findUnique({
             where: {
-                userId_name: {
+                userId_normalizedName: {
                     userId,
-                    name: data.name,
+                    normalizedName,
                 },
             },
         });
@@ -136,14 +154,19 @@ export async function updateExerciseService(
         }
     }
 
-    return prisma.exercise.update({
-        where: {
-            id: exerciseId,
-        },
-        data: {
-            ...(data.name !== undefined && {name: data.name}),
-            ...(data.muscleGroup !== undefined && {muscleGroup: data.muscleGroup}),
-            ...(data.equipment !== undefined && {equipment: data.equipment}),
-        },
-    });
+    return prisma.exercise
+        .update({
+            where: {
+                id: exerciseId,
+            },
+            data: {
+                ...(data.name !== undefined && {
+                    name: data.name,
+                    normalizedName: normalizeExerciseName(data.name),
+                }),
+                ...(data.muscleGroup !== undefined && {muscleGroup: data.muscleGroup}),
+                ...(data.equipment !== undefined && {equipment: data.equipment}),
+            },
+        })
+        .catch(rethrowExerciseNameConflict);
 }

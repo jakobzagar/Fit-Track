@@ -4,6 +4,7 @@ import type {WorkoutStatus} from "@fit-track/shared/workouts";
 import {app} from "../../app.js";
 import {env} from "../../config/env.js";
 import {prisma} from "../../db/prisma.js";
+import {normalizeExerciseName} from "../../modules/exercises/utils/exercise-name.js";
 
 export const testOrigin = env.clientOrigin;
 
@@ -46,15 +47,19 @@ export const createTestExercise = (
         equipment?: string | null;
         isArchived?: boolean;
     } = {},
-) =>
-    prisma.exercise.create({
+) => {
+    const name = overrides.name ?? "Test exercise";
+
+    return prisma.exercise.create({
         data: {
-            name: "Test exercise",
+            name,
+            normalizedName: normalizeExerciseName(name),
             muscleGroup: "Chest",
             userId,
             ...overrides,
         },
     });
+};
 
 export const createTestWorkoutExercise = (
     workoutId: string,

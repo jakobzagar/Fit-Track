@@ -9,7 +9,7 @@ The person who owns an isolated exercise library and workout history.
 _Avoid_: Account, athlete
 
 **Exercise**:
-A reusable, user-owned movement definition that may appear in many workouts. Archiving removes it from new selection without deleting historical references.
+A reusable, user-owned movement definition that may appear in many workouts. Exercise names are unique per user without regard to letter case, while their chosen casing is preserved for display. Archiving removes an exercise from new selection without releasing its name or deleting historical references.
 _Avoid_: Workout exercise, movement record
 
 **Workout**:

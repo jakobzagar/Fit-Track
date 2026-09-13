@@ -11,4 +11,11 @@ const adapter = new PrismaPg({
     application_name: "fit-track-backend",
 });
 
-export const prisma = new PrismaClient({adapter});
+export const prisma = new PrismaClient({
+    adapter,
+    omit: {
+        exercise: {
+            normalizedName: true,
+        },
+    },
+});

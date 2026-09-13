@@ -105,6 +105,7 @@ erDiagram
         text id PK
         text userId FK
         text name
+        text normalizedName UK
         text muscleGroup
         text equipment "NULL"
         boolean isArchived
@@ -156,10 +157,12 @@ erDiagram
 
 The ERD includes every persisted scalar field and relation from the five Prisma models. Prisma relation arrays such as `User.workouts` are represented by the connecting lines rather than repeated as database columns.
 
+`Exercise.normalizedName` is an internal lowercase identity key omitted from API responses; `Exercise.name` retains the user's display casing. The migration backfills this key from existing names and stops without changing the schema if one user already has names that differ only by case, because automatically merging those exercises could corrupt workout references.
+
 Database constraints and indexes:
 
 - `WorkoutStatus` is a PostgreSQL enum: `DRAFT`, `ACTIVE`, or `COMPLETED`, with `DRAFT` as the default;
-- `User.email`, `Exercise(userId, name)`, `WorkoutExercise(workoutId, exerciseId)`, `WorkoutExercise(workoutId, position)`, and `WorkoutSet(workoutExerciseId, setNumber)` are unique; a partial unique index additionally allows at most one `ACTIVE` workout per user;
+- `User.email`, `Exercise(userId, normalizedName)`, `WorkoutExercise(workoutId, exerciseId)`, `WorkoutExercise(workoutId, position)`, and `WorkoutSet(workoutExerciseId, setNumber)` are unique; `normalizedName` is a lowercase key while `name` preserves display casing, and a partial unique index additionally allows at most one `ACTIVE` workout per user;
 - indexes support `Exercise(userId, isArchived)`, `Workout(userId, status, completedAt DESC)`, and `WorkoutExercise(exerciseId)`;
 - deleting a user cascades to that user's exercises and workouts; deleting a workout cascades to its workout exercises and sets; deleting an exercise referenced by a workout is restricted;
 - database checks require positive positions, set numbers, reps, and durations; weight is `0` through `999999.99`; each set has `reps`, `durationSeconds`, or both; workout timestamps must match the `DRAFT`, `ACTIVE`, or `COMPLETED` lifecycle state.
@@ -261,7 +264,7 @@ An in-memory substitute would be faster but could not reproduce PostgreSQL const
 
 ### Archived exercises
 
-Archiving removes an exercise from new workout selection without destroying historical references. An archived name remains reserved because exercise names are unique per user. Permanent removal of unused archived exercises is not currently part of the product.
+Archiving removes an exercise from new workout selection without destroying historical references. An archived name remains reserved case-insensitively because exercise names are unique per user through a normalized lowercase key. Permanent removal of unused archived exercises is not currently part of the product.
 
 ### Explicit workout reopening
 
