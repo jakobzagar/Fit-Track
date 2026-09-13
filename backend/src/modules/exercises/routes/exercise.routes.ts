@@ -26,7 +26,11 @@ router.get("/:exerciseId", validate(exerciseIdSchema, "params"), getExerciseById
 
 router.post("/", validate(createExerciseSchema), createExerciseController);
 
-router.delete("/:exerciseId", validate(exerciseIdSchema, "params"), archiveExerciseController);
+router.patch(
+    "/:exerciseId/archive",
+    validate(exerciseIdSchema, "params"),
+    archiveExerciseController,
+);
 
 router.patch(
     "/:exerciseId/restore",

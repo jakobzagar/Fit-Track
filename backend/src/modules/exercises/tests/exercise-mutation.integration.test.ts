@@ -231,14 +231,14 @@ describe("PATCH /api/exercises/:exerciseId", () => {
     });
 });
 
-describe("DELETE /api/exercises/:exerciseId", () => {
+describe("PATCH /api/exercises/:exerciseId/archive", () => {
     it("archives an owned exercise without deleting it", async () => {
         const owner = await createTestUser("owner@example.com");
         const exercise = await createExerciseRecord(owner.user.id);
 
         const response = await requestAsUser(
-            "delete",
-            `/api/exercises/${exercise.id}`,
+            "patch",
+            `/api/exercises/${exercise.id}/archive`,
             owner.cookie,
         );
 
@@ -255,8 +255,8 @@ describe("DELETE /api/exercises/:exerciseId", () => {
         const exercise = await createExerciseRecord(other.user.id);
 
         const response = await requestAsUser(
-            "delete",
-            `/api/exercises/${exercise.id}`,
+            "patch",
+            `/api/exercises/${exercise.id}/archive`,
             owner.cookie,
         );
 

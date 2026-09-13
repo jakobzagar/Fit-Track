@@ -267,6 +267,7 @@ An in-memory substitute would be faster but could not reproduce PostgreSQL const
 ### Archived exercises
 
 Archiving removes an exercise from new workout selection without destroying historical references. An archived name remains reserved case-insensitively because exercise names are unique per user through a normalized lowercase key. Permanent removal of unused archived exercises is not currently part of the product.
+The exercise interface represents these lifecycle commands explicitly: `PATCH /api/exercises/:exerciseId/archive` archives an active exercise, while `PATCH /api/exercises/:exerciseId/restore` restores an archived exercise. `DELETE` is reserved for permanent removal and is not supported for exercises.
 
 ### Explicit workout reopening
 

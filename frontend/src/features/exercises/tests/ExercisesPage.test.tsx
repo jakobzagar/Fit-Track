@@ -108,7 +108,7 @@ describe("ExercisesPage", () => {
     test("archives an exercise after confirmation", async () => {
         server.use(
             handleExerciseList(),
-            http.delete(`${API_URL}/exercises/${exercise.id}`, () =>
+            http.patch(`${API_URL}/exercises/${exercise.id}/archive`, () =>
                 HttpResponse.json({exercise: {...exercise, isArchived: true}}),
             ),
         );
@@ -138,7 +138,7 @@ describe("ExercisesPage", () => {
     test("shows an archive error without removing the exercise", async () => {
         server.use(
             handleExerciseList(),
-            http.delete(`${API_URL}/exercises/${exercise.id}`, () =>
+            http.patch(`${API_URL}/exercises/${exercise.id}/archive`, () =>
                 HttpResponse.json({message: "Exercise is still in use"}, {status: 409}),
             ),
         );
