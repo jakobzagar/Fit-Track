@@ -20,8 +20,8 @@ interface UpdateWorkoutFormProps {
 }
 
 interface UpdateWorkoutErrors {
-    name?: string;
-    notes?: string;
+    name?: string | undefined;
+    notes?: string | undefined;
 }
 
 export function UpdateWorkoutForm({workout, onSubmit, onCancel}: UpdateWorkoutFormProps) {

@@ -14,10 +14,10 @@ export interface WorkoutSetInputValues {
 }
 
 export interface WorkoutSetInputErrors {
-    reps?: string;
-    weight?: string;
-    durationSeconds?: string;
-    form?: string;
+    reps?: string | undefined;
+    weight?: string | undefined;
+    durationSeconds?: string | undefined;
+    form?: string | undefined;
 }
 
 type ParseResult<T> = {success: true; data: T} | {success: false; errors: WorkoutSetInputErrors};

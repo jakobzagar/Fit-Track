@@ -14,8 +14,8 @@ interface LoginFormProps {
 }
 
 interface LoginErrors {
-    email?: string;
-    password?: string;
+    email?: string | undefined;
+    password?: string | undefined;
 }
 
 export function LoginForm({onSubmit}: LoginFormProps) {

@@ -87,24 +87,30 @@ export function ActiveWorkoutPage() {
                 </Card>
             )}
 
-            {workout.workoutExercises.map((workoutExercise) => (
-                <ActiveWorkoutExerciseCard
-                    key={workoutExercise.id}
-                    workoutExercise={workoutExercise}
-                    previous={previousByExerciseId.get(workoutExercise.exerciseId)}
-                    disabled={workout.status !== "ACTIVE"}
-                    isCopying={copyingExerciseId === workoutExercise.id}
-                    onAddSet={(data) => handleAddSet(workoutExercise.id, data)}
-                    onCopyLastSet={(lastSet) => void handleCopyLastSet(workoutExercise.id, lastSet)}
-                    onSaveSet={(workoutSetId, data) =>
-                        handleSaveSet(workoutExercise.id, workoutSetId, data)
-                    }
-                    onToggleSet={(workoutSetId, completed, data) =>
-                        handleToggleSet(workoutExercise.id, workoutSetId, completed, data)
-                    }
-                    onDirtyChange={handleDirtyChange}
-                />
-            ))}
+            {workout.workoutExercises.map((workoutExercise) => {
+                const previous = previousByExerciseId.get(workoutExercise.exerciseId);
+
+                return (
+                    <ActiveWorkoutExerciseCard
+                        key={workoutExercise.id}
+                        workoutExercise={workoutExercise}
+                        {...(previous !== undefined && {previous})}
+                        disabled={workout.status !== "ACTIVE"}
+                        isCopying={copyingExerciseId === workoutExercise.id}
+                        onAddSet={(data) => handleAddSet(workoutExercise.id, data)}
+                        onCopyLastSet={(lastSet) =>
+                            void handleCopyLastSet(workoutExercise.id, lastSet)
+                        }
+                        onSaveSet={(workoutSetId, data) =>
+                            handleSaveSet(workoutExercise.id, workoutSetId, data)
+                        }
+                        onToggleSet={(workoutSetId, completed, data) =>
+                            handleToggleSet(workoutExercise.id, workoutSetId, completed, data)
+                        }
+                        onDirtyChange={handleDirtyChange}
+                    />
+                );
+            })}
 
             <ActiveWorkoutActionBar
                 completedSetCount={completedSetCount}

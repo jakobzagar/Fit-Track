@@ -5,7 +5,7 @@ interface StatusMessageProps {
     children: ReactNode;
     tone?: "error" | "info" | "success";
     onDismiss?: () => void;
-    autoDismissMs?: number;
+    autoDismissMs?: number | undefined;
 }
 
 const tones = {

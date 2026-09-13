@@ -14,9 +14,9 @@ interface CreateExerciseFormProps {
 }
 
 interface CreateExerciseErrors {
-    name?: string;
-    muscleGroup?: string;
-    equipment?: string;
+    name?: string | undefined;
+    muscleGroup?: string | undefined;
+    equipment?: string | undefined;
 }
 
 export function CreateExerciseForm({onSubmit}: CreateExerciseFormProps) {

@@ -14,7 +14,9 @@ export class ApiError extends Error {
         super(message);
         this.name = "ApiError";
         this.status = status;
-        this.fieldErrors = validation?.fieldErrors;
-        this.formErrors = validation?.formErrors;
+        if (validation) {
+            this.fieldErrors = validation.fieldErrors;
+            if (validation.formErrors !== undefined) this.formErrors = validation.formErrors;
+        }
     }
 }

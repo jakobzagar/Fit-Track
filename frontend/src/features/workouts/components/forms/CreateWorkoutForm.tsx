@@ -14,8 +14,8 @@ interface CreateWorkoutFormProps {
 }
 
 interface CreateWorkoutErrors {
-    name?: string;
-    notes?: string;
+    name?: string | undefined;
+    notes?: string | undefined;
 }
 
 export function CreateWorkoutForm({onSubmit}: CreateWorkoutFormProps) {

@@ -33,7 +33,7 @@ export function Navbar() {
 
                     <DesktopNavigation />
                     <NavbarUser
-                        name={currentUser?.name}
+                        {...(currentUser?.name !== undefined && {name: currentUser.name})}
                         isLoggingOut={isLoggingOut}
                         onLogout={() => void handleLogout()}
                     />

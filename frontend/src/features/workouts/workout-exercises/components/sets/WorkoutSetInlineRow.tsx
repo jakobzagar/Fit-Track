@@ -122,7 +122,7 @@ interface SetInputProps {
     step?: string;
     inputMode: "decimal" | "numeric";
     disabled: boolean;
-    errorId?: string;
+    errorId?: string | undefined;
     onChange: (value: string) => void;
 }
 
