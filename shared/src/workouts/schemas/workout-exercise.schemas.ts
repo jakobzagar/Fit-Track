@@ -1,9 +1,15 @@
 import {z} from "zod";
 import {messageResponseSchema} from "../../common/schemas/response.schemas.js";
-import {exerciseSummarySchema} from "../../exercises/schemas/exercise.schemas.js";
 import {workoutSetSchema} from "./workout-set.schemas.js";
 
 const workoutExerciseNotesSchema = z.string().trim().max(1000, "Notes are too long").nullable();
+const exerciseSnapshotSchema = z
+    .object({
+        name: z.string(),
+        muscleGroup: z.string(),
+        equipment: z.string().nullable(),
+    })
+    .strict();
 
 export const workoutExerciseSchema = z
     .object({
@@ -12,7 +18,7 @@ export const workoutExerciseSchema = z
         notes: z.string().nullable(),
         workoutId: z.uuid(),
         exerciseId: z.uuid(),
-        exercise: exerciseSummarySchema,
+        exerciseSnapshot: exerciseSnapshotSchema,
         sets: z.array(workoutSetSchema),
     })
     .strict();

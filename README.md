@@ -73,7 +73,7 @@ stateDiagram-v2
     Completed --> Active: Reopen
 ```
 
-A user can have only one active workout. Cancellation preserves entered set values but clears completion marks. Reopening preserves a completed record while making the correction deliberate. Any owned workout can be deleted together with its nested exercises and sets.
+A user can have only one active workout. Cancellation preserves entered set values but clears completion marks. Each workout exercise preserves the exercise name, muscle group, and equipment from when it was added, so later library edits do not rewrite workout history. Reopening preserves a completed record while making the correction deliberate. Any owned workout can be deleted together with its nested exercises and sets.
 
 ## System overview
 

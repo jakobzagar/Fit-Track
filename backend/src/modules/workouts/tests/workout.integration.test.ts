@@ -111,6 +111,59 @@ describe("GET /api/workouts/:workoutId", () => {
         expect(body.workout.workoutExercises[0]?.sets.map((set) => set.setNumber)).toEqual([1, 2]);
     });
 
+    it("preserves the exercise snapshot after a completed workout's exercise is edited", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const workout = await createTestWorkout(owner.user.id);
+        const exercise = await createTestExercise(owner.user.id, {
+            name: "Bench press",
+            muscleGroup: "Chest",
+            equipment: "Barbell",
+        });
+        const addResponse = await requestAsUser(
+            "post",
+            `/api/workouts/${workout.id}/exercises`,
+            owner.cookie,
+        ).send({exerciseId: exercise.id});
+        expect(addResponse.status).toBe(201);
+
+        await prisma.workout.update({
+            where: {id: workout.id},
+            data: {
+                status: "COMPLETED",
+                startedAt: new Date("2026-09-13T10:00:00.000Z"),
+                completedAt: new Date("2026-09-13T11:00:00.000Z"),
+            },
+        });
+        const updateResponse = await requestAsUser(
+            "patch",
+            `/api/exercises/${exercise.id}`,
+            owner.cookie,
+        ).send({
+            name: "Barbell bench press",
+            muscleGroup: "Upper body",
+            equipment: "Olympic barbell",
+        });
+        expect(updateResponse.status).toBe(200);
+
+        const response = await requestAsUser("get", `/api/workouts/${workout.id}`, owner.cookie);
+        const body = workoutResponseSchema.parse(response.body);
+
+        expect(response.status).toBe(200);
+        expect(body.workout.workoutExercises[0]?.exerciseSnapshot).toEqual({
+            name: "Bench press",
+            muscleGroup: "Chest",
+            equipment: "Barbell",
+        });
+        await expect(
+            prisma.workoutExercise.findFirstOrThrow({where: {workoutId: workout.id}}),
+        ).resolves.toMatchObject({
+            exerciseId: exercise.id,
+            exerciseName: "Bench press",
+            exerciseMuscleGroup: "Chest",
+            exerciseEquipment: "Barbell",
+        });
+    });
+
     it("does not expose another user's workout", async () => {
         const owner = await createTestUser("owner@example.com");
         const other = await createTestUser("other@example.com");

@@ -29,8 +29,7 @@ export const workoutExercise: WorkoutExercise = {
     exerciseId,
     position: 1,
     notes: "Controlled reps",
-    exercise: {
-        id: exerciseId,
+    exerciseSnapshot: {
         name: exercise.name,
         muscleGroup: exercise.muscleGroup,
         equipment: exercise.equipment,

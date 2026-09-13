@@ -9,6 +9,7 @@ FitTrack treats tests as evidence for backend, persistence, security, and delive
 | Frontend and backend contract drift | Shared strict Zod matrices, backend response parsing, and frontend runtime response parsing                      |
 | Cross-user data exposure            | Integration tests for owned resources, nested-resource mismatches, and previous-performance isolation            |
 | Invalid lifecycle transitions       | Service and integration coverage for start, cancel, finish, reopen, and delete behavior                          |
+| Historical workout drift            | Contract, integration, and frontend tests proving exercise snapshots survive later library edits                 |
 | Concurrent ordering corruption      | PostgreSQL integration tests for simultaneous exercise/set insertion, reordering, and lifecycle transitions      |
 | Browser component regressions       | Testing Library interactions, MSW network behavior, route/session tests, and axe-core accessibility smoke checks |
 | Critical user-journey regressions   | Playwright Chromium journeys through the real frontend, API, and migrated PostgreSQL                             |

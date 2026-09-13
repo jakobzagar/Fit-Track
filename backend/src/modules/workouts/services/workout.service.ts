@@ -2,6 +2,7 @@ import {prisma} from "../../../db/prisma.js";
 import {AppError} from "../../../common/errors/app.error.js";
 import type {CreateWorkoutInput, UpdateWorkoutInput} from "@fit-track/shared/workouts";
 import {assertWorkoutIsMutable} from "../policies/workout-edit.policy.js";
+import {toWorkoutExerciseResponse} from "../workout-exercises/utils/workout-exercise.mapper.js";
 
 export async function getWorkoutsService(userId: string) {
     return prisma.workout.findMany({
@@ -33,14 +34,6 @@ export async function getWorkoutByIdService(userId: string, workoutId: string) {
                     position: "asc",
                 },
                 include: {
-                    exercise: {
-                        select: {
-                            id: true,
-                            name: true,
-                            muscleGroup: true,
-                            equipment: true,
-                        },
-                    },
                     sets: {
                         orderBy: {
                             setNumber: "asc",
@@ -55,7 +48,10 @@ export async function getWorkoutByIdService(userId: string, workoutId: string) {
         throw new AppError("Workout not found", 404);
     }
 
-    return workout;
+    return {
+        ...workout,
+        workoutExercises: workout.workoutExercises.map(toWorkoutExerciseResponse),
+    };
 }
 
 export async function getPreviousPerformancesService(userId: string, workoutId: string) {
