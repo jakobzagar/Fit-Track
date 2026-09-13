@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState, type ReactNode} from "react";
+import {useCallback, useEffect, useRef, useState, type ReactNode} from "react";
 import {getCurrentUser, logout} from "../api/auth.api";
 import type {User} from "@fit-track/shared/auth";
 import {AuthContext} from "./auth.context";
@@ -34,38 +34,35 @@ export function AuthProvider({children}: AuthProviderProps) {
         setCurrentUser(null);
     }
 
-    useEffect(() => {
+    const runSessionRestore = useCallback(async () => {
         const requestId = ++requestIdRef.current;
-        void restoreCurrentUser()
-            .then((restoredUser) => {
-                if (requestId === requestIdRef.current) setCurrentUser(restoredUser);
-            })
-            .catch(() => {
-                if (requestId === requestIdRef.current) setHasSessionRestoreError(true);
-            })
-            .finally(() => {
-                if (requestId === requestIdRef.current) setIsRestoringSession(false);
-            });
 
-        return () => {
-            requestIdRef.current += 1;
-        };
+        try {
+            const restoredUser = await restoreCurrentUser();
+            if (requestId === requestIdRef.current) setCurrentUser(restoredUser);
+        } catch {
+            if (requestId === requestIdRef.current) setHasSessionRestoreError(true);
+        } finally {
+            if (requestId === requestIdRef.current) setIsRestoringSession(false);
+        }
     }, []);
 
+    useEffect(() => {
+        let isCurrent = true;
+        queueMicrotask(() => {
+            if (isCurrent) void runSessionRestore();
+        });
+
+        return () => {
+            isCurrent = false;
+            requestIdRef.current += 1;
+        };
+    }, [runSessionRestore]);
+
     function retryCurrentUser() {
-        const requestId = ++requestIdRef.current;
         setIsRestoringSession(true);
         setHasSessionRestoreError(false);
-        void restoreCurrentUser()
-            .then((restoredUser) => {
-                if (requestId === requestIdRef.current) setCurrentUser(restoredUser);
-            })
-            .catch(() => {
-                if (requestId === requestIdRef.current) setHasSessionRestoreError(true);
-            })
-            .finally(() => {
-                if (requestId === requestIdRef.current) setIsRestoringSession(false);
-            });
+        void runSessionRestore();
     }
 
     if (hasSessionRestoreError) {

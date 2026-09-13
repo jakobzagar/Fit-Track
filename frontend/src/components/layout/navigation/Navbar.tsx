@@ -1,6 +1,6 @@
 import {useState} from "react";
 import {useNavigate} from "react-router";
-import {useAuth} from "../../../features/auth/hooks/useAuth";
+import {useAuth} from "../../../features/auth";
 import {BrandMark} from "../../ui/display/BrandMark";
 import {DesktopNavigation, MobileNavigation} from "./NavigationLinks";
 import {NavbarUser} from "./NavbarUser";
