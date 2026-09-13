@@ -243,7 +243,7 @@ The repository implements the application and container behavior in this table. 
 
 The backend uses Pino for application events and `pino-http` for one completion record per HTTP request. Every request receives a generated `X-Request-Id` response header. Completion records contain the request ID, method, path without query values, response status, and duration; successful health probes use the `debug` level to avoid noisy production logs. Authenticated request-scoped error records also include the user ID.
 
-Production writes newline-delimited JSON to standard output for collection by the runtime platform. Development uses `pino-pretty` for readable terminal output, while automated tests keep the application logger silent and test logging behavior with isolated capture streams. Passwords, tokens, authentication headers, cookies, and `Set-Cookie` values are redacted as defense in depth; request bodies and query values are not logged.
+Production writes newline-delimited JSON to standard output for collection by the runtime platform. Development uses `pino-pretty` for readable terminal output, while automated tests keep the application logger silent and test logging behavior with isolated capture streams. Structured password, token, authentication header, cookie, and `Set-Cookie` fields are redacted by path. Error serialization additionally removes URL credentials, Bearer and JWT values, connection-string secrets, and sensitive query-parameter values from messages, stacks, and nested error metadata. Request bodies and raw query values are not logged.
 
 ## Design decisions and trade-offs
 

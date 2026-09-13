@@ -1,8 +1,9 @@
 import {randomUUID} from "node:crypto";
 import type {Request, Response} from "express";
-import pino, {type Level, type Logger} from "pino";
+import type {Level, Logger} from "pino";
 import {pinoHttp} from "pino-http";
 import {logger} from "./logger.js";
+import {serializeErrorForLog} from "./utils/sanitize-log-value.js";
 
 function getRequestLogLevel(request: Request, response: Response, error?: Error): Level {
     if (error || response.statusCode >= 500) return "error";
@@ -34,7 +35,7 @@ export function createHttpLogger(parentLogger: Logger) {
             res: (response: Response) => ({
                 statusCode: response.statusCode,
             }),
-            err: pino.stdSerializers.err,
+            err: serializeErrorForLog,
         },
         customLogLevel: getRequestLogLevel,
         customSuccessMessage: () => "request completed",

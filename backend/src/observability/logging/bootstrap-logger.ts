@@ -1,4 +1,5 @@
 import pino from "pino";
+import {serializeErrorForLog} from "./utils/sanitize-log-value.js";
 
 export const bootstrapLogger = pino({
     level: "error",
@@ -6,6 +7,6 @@ export const bootstrapLogger = pino({
         service: "fit-track-backend",
     },
     serializers: {
-        err: pino.stdSerializers.err,
+        err: serializeErrorForLog,
     },
 });

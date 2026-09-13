@@ -1,5 +1,6 @@
 import pino, {type DestinationStream, type Level, type LoggerOptions} from "pino";
 import {env} from "../../config/env.js";
+import {serializeErrorForLog} from "./utils/sanitize-log-value.js";
 
 interface LoggerConfig {
     environment: "development" | "test" | "production";
@@ -32,7 +33,7 @@ const loggerOptions: Pick<LoggerOptions, "redact" | "serializers"> = {
         censor: "[REDACTED]",
     },
     serializers: {
-        err: pino.stdSerializers.err,
+        err: serializeErrorForLog,
     },
 };
 
