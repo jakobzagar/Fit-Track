@@ -17,7 +17,7 @@ A user-owned ordered training plan or record that moves through draft, active, a
 _Avoid_: Routine, session record
 
 **Workout exercise**:
-An occurrence of an exercise inside one workout, including its position, workout-specific notes, and the exercise description preserved when the occurrence was added.
+The single occurrence of an exercise inside one workout, including its position, workout-specific notes, and the exercise description preserved when the occurrence was added. Each exercise may appear at most once in a workout; repeated efforts belong to its workout sets rather than separate workout exercise blocks.
 _Avoid_: Exercise, movement
 
 **Workout set**:
