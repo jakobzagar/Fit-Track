@@ -1,5 +1,5 @@
 import {Link} from "react-router";
-import {useAuth} from "../../../features/auth/hooks/useAuth";
+import {useAuth} from "../../../features/auth";
 import {BrandMark} from "../../ui/display/BrandMark";
 import {Icon} from "../../ui/display/Icon";
 
