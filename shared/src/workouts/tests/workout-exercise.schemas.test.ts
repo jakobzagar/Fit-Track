@@ -46,9 +46,23 @@ describe("createWorkoutSetSchema", () => {
     test.each([
         ["a repetition set", {reps: 10, weight: 80}],
         ["a duration set", {durationSeconds: 60}],
+        ["a combined repetition and duration set", {reps: 10, durationSeconds: 60}],
         ["a bodyweight set", {reps: 12, weight: 0}],
     ])("accepts %s", (_case, input) => {
         expect(createWorkoutSetSchema.safeParse(input).success).toBe(true);
+    });
+
+    test("requires at least one performance metric", () => {
+        const result = createWorkoutSetSchema.safeParse({weight: 80});
+
+        expect(result.success).toBe(false);
+        if (!result.success) {
+            expect(result.error.issues).toContainEqual(
+                expect.objectContaining({
+                    message: "At least one of reps or durationSeconds is required",
+                }),
+            );
+        }
     });
 
     test.each([

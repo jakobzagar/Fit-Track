@@ -15,7 +15,7 @@ const workoutSet: WorkoutSet = {
 };
 
 describe("UpdateWorkoutSetForm", () => {
-    test("requires reps or duration and submits converted values", async () => {
+    test("requires at least one performance metric and submits converted values", async () => {
         const user = userEvent.setup();
         const onSubmit = vi.fn().mockResolvedValue(undefined);
         render(
@@ -24,7 +24,9 @@ describe("UpdateWorkoutSetForm", () => {
 
         await user.clear(screen.getByLabelText("Reps"));
         await user.click(screen.getByRole("button", {name: "Save set"}));
-        expect(screen.getByText("Either reps or durationSeconds is required")).toBeInTheDocument();
+        expect(
+            screen.getByText("At least one of reps or durationSeconds is required"),
+        ).toBeInTheDocument();
 
         await user.type(screen.getByLabelText("Duration in seconds"), "45");
         await user.clear(screen.getByLabelText("Weight"));

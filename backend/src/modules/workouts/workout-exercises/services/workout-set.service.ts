@@ -5,10 +5,11 @@ import {
     loadOwnedMutableWorkoutExercise,
     loadOwnedMutableWorkoutSet,
 } from "./owned-workout-resource.loader.js";
-import type {
-    CreateWorkoutSetInput,
-    SetWorkoutSetCompletionInput,
-    UpdateWorkoutSetInput,
+import {
+    workoutSetMetricRequiredMessage,
+    type CreateWorkoutSetInput,
+    type SetWorkoutSetCompletionInput,
+    type UpdateWorkoutSetInput,
 } from "@fit-track/shared/workouts";
 
 export async function addWorkoutSetService(
@@ -67,7 +68,7 @@ export async function updateWorkoutSetService(
             data.durationSeconds !== undefined ? data.durationSeconds : existingSet.durationSeconds;
 
         if (reps === null && durationSeconds === null) {
-            throw new AppError("Either reps or durationSeconds is required", 400);
+            throw new AppError(workoutSetMetricRequiredMessage, 400);
         }
 
         return tx.workoutSet.update({
@@ -157,7 +158,7 @@ export async function setWorkoutSetCompletionService(
             data.durationSeconds !== undefined ? data.durationSeconds : workoutSet.durationSeconds;
 
         if (reps === null && durationSeconds === null) {
-            throw new AppError("Either reps or durationSeconds is required", 400);
+            throw new AppError(workoutSetMetricRequiredMessage, 400);
         }
 
         const isCompleted = workoutSet.completedAt !== null;
