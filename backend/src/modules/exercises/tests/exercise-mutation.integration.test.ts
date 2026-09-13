@@ -56,14 +56,39 @@ describe("POST /api/exercises", () => {
         expect(exerciseResponseSchema.parse(response.body).exercise.equipment).toBeNull();
     });
 
-    it("rejects a duplicate name for the same user", async () => {
+    it("rejects a case-insensitive duplicate name for the same user", async () => {
         const {user, cookie} = await createTestUser("owner@example.com");
         await createExerciseRecord(user.id);
 
-        const response = await requestAsUser("post", "/api/exercises", cookie).send(exerciseInput);
+        const response = await requestAsUser("post", "/api/exercises", cookie).send({
+            ...exerciseInput,
+            name: "bench PRESS",
+        });
 
         expect(response.status).toBe(409);
         expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Exercise already exists",
+        });
+        expect(await prisma.exercise.count()).toBe(1);
+    });
+
+    it("allows only one of two concurrent case variants", async () => {
+        const {cookie} = await createTestUser("owner@example.com");
+
+        const responses = await Promise.all([
+            requestAsUser("post", "/api/exercises", cookie).send({
+                ...exerciseInput,
+                name: "Squat",
+            }),
+            requestAsUser("post", "/api/exercises", cookie).send({
+                ...exerciseInput,
+                name: "sQUAT",
+            }),
+        ]);
+
+        expect(responses.map(({status}) => status).sort()).toEqual([201, 409]);
+        const conflict = responses.find(({status}) => status === 409);
+        expect(messageResponseSchema.parse(conflict?.body)).toEqual({
             message: "Exercise already exists",
         });
         expect(await prisma.exercise.count()).toBe(1);
@@ -74,12 +99,14 @@ describe("POST /api/exercises", () => {
         const other = await createTestUser("other@example.com");
         await createExerciseRecord(owner.user.id);
 
-        const response = await requestAsUser("post", "/api/exercises", other.cookie).send(
-            exerciseInput,
-        );
+        const response = await requestAsUser("post", "/api/exercises", other.cookie).send({
+            ...exerciseInput,
+            name: "BENCH PRESS",
+        });
 
         expect(response.status).toBe(201);
-        expect(await prisma.exercise.count({where: {name: exerciseInput.name}})).toBe(2);
+        expect(exerciseResponseSchema.parse(response.body).exercise.name).toBe("BENCH PRESS");
+        expect(await prisma.exercise.count()).toBe(2);
     });
 
     it("rejects invalid data without creating an exercise", async () => {
@@ -136,6 +163,20 @@ describe("PATCH /api/exercises/:exerciseId", () => {
         });
     });
 
+    it("allows changing only the display casing of an exercise name", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const exercise = await createExerciseRecord(owner.user.id);
+
+        const response = await requestAsUser(
+            "patch",
+            `/api/exercises/${exercise.id}`,
+            owner.cookie,
+        ).send({name: "BENCH PRESS"});
+
+        expect(response.status).toBe(200);
+        expect(exerciseResponseSchema.parse(response.body).exercise.name).toBe("BENCH PRESS");
+    });
+
     it("rejects an empty update", async () => {
         const owner = await createTestUser("owner@example.com");
         const exercise = await createExerciseRecord(owner.user.id);
@@ -152,7 +193,7 @@ describe("PATCH /api/exercises/:exerciseId", () => {
         );
     });
 
-    it("rejects a name already used by another owned exercise", async () => {
+    it("rejects a case-insensitive name already used by another owned exercise", async () => {
         const owner = await createTestUser("owner@example.com");
         const exercise = await createExerciseRecord(owner.user.id);
         await createExerciseRecord(owner.user.id, {name: "Squat", muscleGroup: "Legs"});
@@ -161,7 +202,7 @@ describe("PATCH /api/exercises/:exerciseId", () => {
             "patch",
             `/api/exercises/${exercise.id}`,
             owner.cookie,
-        ).send({name: "Squat"});
+        ).send({name: "sQUAT"});
 
         expect(response.status).toBe(409);
         expect(messageResponseSchema.parse(response.body)).toEqual({
