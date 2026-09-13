@@ -19,8 +19,8 @@ interface AddExerciseToWorkoutFormProps {
 }
 
 interface AddExerciseToWorkoutErrors {
-    exerciseId?: string;
-    notes?: string;
+    exerciseId?: string | undefined;
+    notes?: string | undefined;
 }
 
 export function AddExerciseToWorkoutForm({exercises, onSubmit}: AddExerciseToWorkoutFormProps) {

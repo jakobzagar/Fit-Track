@@ -27,12 +27,16 @@ export async function apiRequest<T>(
     schema: z.ZodType<T>,
     options: ApiOptions = {},
 ): Promise<T> {
-    const response = await fetch(`${env.apiBasePath}${path}`, {
+    const requestInit: RequestInit = {
         method: options.method ?? "GET",
         credentials: "include",
-        headers: options.body === undefined ? undefined : {"Content-Type": "application/json"},
-        body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    });
+    };
+    if (options.body !== undefined) {
+        requestInit.headers = {"Content-Type": "application/json"};
+        requestInit.body = JSON.stringify(options.body);
+    }
+
+    const response = await fetch(`${env.apiBasePath}${path}`, requestInit);
 
     const result = await readResponseBody(response);
 
@@ -45,10 +49,13 @@ export async function apiRequest<T>(
         }
 
         if (response.status === 400 && parsedValidationError.success) {
-            throw new ApiError(parsedValidationError.data.message, response.status, {
+            const validation = {
                 fieldErrors: parsedValidationError.data.errors,
-                formErrors: parsedValidationError.data.formErrors,
-            });
+                ...(parsedValidationError.data.formErrors !== undefined && {
+                    formErrors: parsedValidationError.data.formErrors,
+                }),
+            };
+            throw new ApiError(parsedValidationError.data.message, response.status, validation);
         }
 
         throw new ApiError(

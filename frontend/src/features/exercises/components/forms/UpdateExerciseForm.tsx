@@ -20,9 +20,9 @@ interface UpdateExerciseFormProps {
 }
 
 interface EditExerciseErrors {
-    name?: string;
-    muscleGroup?: string;
-    equipment?: string;
+    name?: string | undefined;
+    muscleGroup?: string | undefined;
+    equipment?: string | undefined;
 }
 
 export const UpdateExerciseForm = ({exercise, onSubmit, onCancel}: UpdateExerciseFormProps) => {

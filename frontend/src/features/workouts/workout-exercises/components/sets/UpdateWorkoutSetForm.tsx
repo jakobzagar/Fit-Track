@@ -17,10 +17,10 @@ interface UpdateWorkoutSetFormProps {
 }
 
 interface UpdateWorkoutSetErrors {
-    reps?: string;
-    weight?: string;
-    durationSeconds?: string;
-    form?: string;
+    reps?: string | undefined;
+    weight?: string | undefined;
+    durationSeconds?: string | undefined;
+    form?: string | undefined;
 }
 
 export function UpdateWorkoutSetForm({workoutSet, onSubmit, onCancel}: UpdateWorkoutSetFormProps) {

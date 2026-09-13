@@ -7,6 +7,7 @@
         "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
         "strict": true,
         "noUncheckedIndexedAccess": true,
+        "exactOptionalPropertyTypes": true,
         "allowArbitraryExtensions": true,
         "skipLibCheck": true,
 

@@ -11,7 +11,7 @@ export default defineConfig({
     testDir: "./e2e",
     outputDir: "./test-results",
     fullyParallel: false,
-    workers: process.env.CI ? 1 : undefined,
+    ...(process.env.CI ? {workers: 1} : {}),
     retries: process.env.CI ? 1 : 0,
     reporter: [["line"], ["html", {open: "never", outputFolder: "playwright-report"}]],
     use: {

@@ -144,7 +144,7 @@ describe("apiRequest", () => {
                 () =>
                     new HttpResponse(body, {
                         status: 502,
-                        headers: contentType ? {"Content-Type": contentType} : undefined,
+                        ...(contentType && {headers: {"Content-Type": contentType}}),
                     }),
             ),
         );
@@ -170,7 +170,7 @@ describe("apiRequest", () => {
                     () =>
                         new HttpResponse(body, {
                             status: 200,
-                            headers: contentType ? {"Content-Type": contentType} : undefined,
+                            ...(contentType && {headers: {"Content-Type": contentType}}),
                         }),
                 ),
             );

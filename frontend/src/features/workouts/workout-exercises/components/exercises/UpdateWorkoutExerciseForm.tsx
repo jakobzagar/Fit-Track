@@ -20,8 +20,8 @@ interface UpdateWorkoutExerciseFormProps {
 }
 
 interface UpdateWorkoutExerciseErrors {
-    position?: string;
-    notes?: string;
+    position?: string | undefined;
+    notes?: string | undefined;
 }
 
 export function UpdateWorkoutExerciseForm({

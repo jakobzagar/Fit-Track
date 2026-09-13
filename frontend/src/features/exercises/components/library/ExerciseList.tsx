@@ -28,7 +28,7 @@ export function ExerciseList({
                     onEdit={onEdit}
                     isUpdatingStatus={updatingExerciseStatusId === exercise.id}
                     isArchivedView={isArchivedView}
-                    onRestore={onRestore}
+                    {...(onRestore !== undefined && {onRestore})}
                 />
             ))}
         </section>
