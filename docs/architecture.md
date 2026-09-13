@@ -25,6 +25,8 @@ FitTrack is intentionally backend-led. The React application proves the public H
 
 Shared contracts describe data crossing the HTTP boundary. They do not contain React, Express, or Prisma behavior, keeping the package portable and preventing infrastructure details from leaking into domain contracts.
 
+All three TypeScript workspaces use `strict` checking and `noUncheckedIndexedAccess`; the frontend applies these settings to both its application and Node/E2E projects. The stricter `exactOptionalPropertyTypes` setting remains limited to `backend` and `shared` until the frontend payload and component APIs are migrated deliberately.
+
 ## Request flow
 
 ```mermaid

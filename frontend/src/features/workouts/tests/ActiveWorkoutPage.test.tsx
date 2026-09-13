@@ -138,7 +138,7 @@ describe("ActiveWorkoutPage", () => {
     test("finishes a workout with completed sets and returns to detail", async () => {
         const completedSet = {...workoutSet, completedAt: "2026-07-26T10:20:00.000Z"};
         const active = createWorkout({
-            workoutExercises: [{...createWorkout().workoutExercises[0], sets: [completedSet]}],
+            workoutExercises: [{...createWorkout().workoutExercises[0]!, sets: [completedSet]}],
         });
         mockLoadRequests(active);
         server.use(
@@ -191,7 +191,7 @@ describe("ActiveWorkoutPage", () => {
         const completedSet = {...workoutSet, completedAt: "2026-07-26T10:20:00.000Z"};
         mockLoadRequests(
             createWorkout({
-                workoutExercises: [{...createWorkout().workoutExercises[0], sets: [completedSet]}],
+                workoutExercises: [{...createWorkout().workoutExercises[0]!, sets: [completedSet]}],
             }),
         );
         server.use(
@@ -256,7 +256,7 @@ describe("ActiveWorkoutPage", () => {
         };
         const active = createWorkout({
             workoutExercises: [
-                {...createWorkout().workoutExercises[0], sets: [completedSet, editableSet]},
+                {...createWorkout().workoutExercises[0]!, sets: [completedSet, editableSet]},
             ],
         });
         mockLoadRequests(active);
@@ -271,8 +271,8 @@ describe("ActiveWorkoutPage", () => {
         await screen.findByRole("heading", {name: "Push day"});
 
         const repsInputs = screen.getAllByLabelText("Reps");
-        await user.clear(repsInputs[1]);
-        await user.type(repsInputs[1], "10");
+        await user.clear(repsInputs[1]!);
+        await user.type(repsInputs[1]!, "10");
         await user.click(screen.getByRole("button", {name: "Finish workout"}));
 
         expect(screen.getByRole("alert")).toHaveTextContent(
@@ -286,7 +286,7 @@ describe("ActiveWorkoutPage", () => {
         const {user, router} = renderPage();
         await screen.findByRole("heading", {name: "Push day"});
 
-        const repsInput = screen.getAllByLabelText("Reps")[0];
+        const repsInput = screen.getAllByLabelText("Reps")[0]!;
         await user.clear(repsInput);
         await user.type(repsInput, "10");
         void router.navigate("/workouts");

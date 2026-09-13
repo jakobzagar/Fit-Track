@@ -124,7 +124,7 @@ describe("useActiveWorkout", () => {
         await expect(
             act(() => hook.current?.addWorkoutSet(workoutExerciseId, {reps: 10, weight: 80})),
         ).rejects.toThrow("Set rejected");
-        expect(hook.current?.workout?.workoutExercises[0].sets).toHaveLength(1);
+        expect(hook.current?.workout?.workoutExercises[0]?.sets).toHaveLength(1);
     });
 
     test("keeps a set unchanged when saving fails", async () => {
@@ -148,7 +148,7 @@ describe("useActiveWorkout", () => {
             ),
         ).rejects.toThrow("Set update rejected");
 
-        expect(hook.current?.workout?.workoutExercises[0].sets[0]).toEqual(workoutSet);
+        expect(hook.current?.workout?.workoutExercises[0]?.sets[0]).toEqual(workoutSet);
     });
 
     test("keeps completion unchanged when toggling a set fails", async () => {
@@ -172,7 +172,7 @@ describe("useActiveWorkout", () => {
             ),
         ).rejects.toThrow("Completion rejected");
 
-        expect(hook.current?.workout?.workoutExercises[0].sets[0].completedAt).toBeNull();
+        expect(hook.current?.workout?.workoutExercises[0]?.sets[0]?.completedAt).toBeNull();
         expect(hook.current?.completedSetCount).toBe(0);
     });
 

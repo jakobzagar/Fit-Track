@@ -56,8 +56,8 @@ describe("useUnsavedWorkoutGuard", () => {
         void router.navigate("/workouts");
 
         await waitFor(() => expect(confirm).toHaveBeenCalledOnce());
-        expect(confirm.mock.calls[0][0].title).toBe("Discard unsaved set changes?");
-        expect(confirm.mock.calls[0][0].message).toContain("2 sets have unsaved changes");
+        expect(confirm.mock.calls[0]![0].title).toBe("Discard unsaved set changes?");
+        expect(confirm.mock.calls[0]![0].message).toContain("2 sets have unsaved changes");
         await waitFor(() => expect(router.state.location.pathname).toBe("/workouts"));
     });
 });

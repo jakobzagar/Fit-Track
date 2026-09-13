@@ -232,7 +232,7 @@ describe("WorkoutDetailPage", () => {
 
         const exerciseCard = screen.getByRole("heading", {name: "Bench press"}).closest("article");
         if (!exerciseCard) throw new Error("Exercise card is missing");
-        await user.click(within(exerciseCard).getAllByRole("button", {name: "Delete"})[0]);
+        await user.click(within(exerciseCard).getAllByRole("button", {name: "Delete"})[0]!);
         await user.click(
             within(screen.getByRole("alertdialog")).getByRole("button", {
                 name: "Remove exercise",
