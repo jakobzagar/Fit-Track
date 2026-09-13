@@ -30,7 +30,7 @@ describe("Navbar", () => {
         renderNavbar();
 
         expect(screen.getByText("Jakob")).toBeInTheDocument();
-        expect(screen.getAllByRole("link", {name: "Workouts"})[0]).toHaveAttribute(
+        expect(screen.getAllByRole("link", {name: "Workouts"})[0]!).toHaveAttribute(
             "aria-current",
             "page",
         );
@@ -45,7 +45,7 @@ describe("Navbar", () => {
         authValue.signOut.mockClear();
         renderNavbar();
 
-        await user.click(screen.getAllByRole("button", {name: "Log out"})[0]);
+        await user.click(screen.getAllByRole("button", {name: "Log out"})[0]!);
 
         expect(authValue.signOut).toHaveBeenCalledOnce();
     });
@@ -55,9 +55,9 @@ describe("Navbar", () => {
         authValue.signOut.mockRejectedValueOnce(new Error("Logout unavailable"));
         renderNavbar();
 
-        await user.click(screen.getAllByRole("button", {name: "Log out"})[1]);
+        await user.click(screen.getAllByRole("button", {name: "Log out"})[1]!);
 
         expect(await screen.findByText("Logout unavailable")).toBeInTheDocument();
-        expect(screen.getAllByRole("button", {name: "Log out"})[1]).toBeEnabled();
+        expect(screen.getAllByRole("button", {name: "Log out"})[1]!).toBeEnabled();
     });
 });

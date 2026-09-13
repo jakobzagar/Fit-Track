@@ -146,7 +146,7 @@ describe("useWorkoutDetail", () => {
 
         expect(caught).toEqual(expect.objectContaining({message: "Position unavailable"}));
         expect(result.current.editingWorkoutExercise?.id).toBe(workoutExerciseId);
-        expect(result.current.workout?.workoutExercises[0].position).toBe(1);
+        expect(result.current.workout?.workoutExercises[0]?.position).toBe(1);
         expect(result.current.mutationError).toBe("Position unavailable");
     });
 
