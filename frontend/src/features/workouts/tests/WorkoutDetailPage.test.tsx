@@ -66,6 +66,30 @@ describe("WorkoutDetailPage", () => {
         expect(screen.getByRole("button", {name: "Reopen workout"})).toBeInTheDocument();
     });
 
+    test("renders a completed workout's exercise snapshot", async () => {
+        mockLoadRequests(
+            createWorkout({
+                status: "COMPLETED",
+                completedAt: "2026-07-26T11:00:00.000Z",
+            }),
+            [
+                {
+                    ...exercise,
+                    name: "Barbell bench press",
+                    muscleGroup: "Upper body",
+                    equipment: "Olympic barbell",
+                },
+            ],
+        );
+        renderPage();
+
+        expect(await screen.findByRole("heading", {name: "Bench press"})).toBeInTheDocument();
+        expect(screen.getByText("Chest")).toBeInTheDocument();
+        expect(
+            screen.queryByRole("heading", {name: "Barbell bench press"}),
+        ).not.toBeInTheDocument();
+    });
+
     test("reopens a completed workout after confirmation", async () => {
         const completed = createWorkout({
             status: "COMPLETED",

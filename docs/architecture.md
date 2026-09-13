@@ -64,7 +64,7 @@ Shared Zod schemas validate input at the API boundary and successful responses a
 
 ## Feature organization
 
-Backend modules live under `backend/src/modules/`. Every existing responsibility uses a predictable directory such as `controllers/`, `middleware/`, `routes/`, `services/`, `policies/`, or `tests/`, even when that directory currently contains one file. Workout lifecycle operations are separated from general workout CRUD because they coordinate status transitions and serializable transactions. Workout exercise and set mutations remain nested under `modules/workouts/workout-exercises/`; the application mounts only the workout router, which owns the nested routes.
+Backend modules live under `backend/src/modules/`. Every existing responsibility uses a predictable directory such as `controllers/`, `middleware/`, `routes/`, `services/`, `policies/`, `utils/`, or `tests/`, even when that directory currently contains one file. Workout lifecycle operations are separated from general workout CRUD because they coordinate status transitions and serializable transactions. Workout exercise and set mutations remain nested under `modules/workouts/workout-exercises/`; the application mounts only the workout router, which owns the nested routes.
 
 Frontend features live under `frontend/src/features/`. Feature APIs, hooks, pages, components, styles, utilities, and local tests stay together in responsibility directories. Workout exercise and set interactions live under `features/workouts/workout-exercises/` because they have no independent page or user flow outside a workout. Reusable primitives live under `frontend/src/components/`, separated into layout and UI responsibilities with tests under their owning component area.
 
@@ -130,6 +130,9 @@ erDiagram
         text exerciseId FK
         int position
         text notes "NULL"
+        text exerciseName
+        text exerciseMuscleGroup
+        text exerciseEquipment "NULL"
     }
 
     WorkoutSet {
@@ -149,7 +152,7 @@ erDiagram
     WorkoutExercise ||--o{ WorkoutSet : records
 ```
 
-`WorkoutExercise` is the join table between `Workout` and `Exercise`. It stores the position and notes specific to that workout. `WorkoutSet` belongs to this join table, so recorded values stay attached to a particular workout exercise rather than changing the reusable exercise definition. `WorkoutSet.weight` is `DECIMAL(8,2)`.
+`WorkoutExercise` is the join table between `Workout` and `Exercise`. It stores the position, notes, and a snapshot of the exercise name, muscle group, and equipment from when the exercise was added to the workout. Workout responses expose these values as `exerciseSnapshot`, while `exerciseId` preserves the stable identity used to find previous performances. Renaming, regrouping, or changing the equipment of the reusable exercise therefore does not rewrite draft, active, or completed workouts. Reopening a completed workout preserves the same snapshot; removing and re-adding an exercise creates a new snapshot from its current definition. The snapshot migration initializes existing workout exercises from their current linked exercise because earlier descriptions cannot be reconstructed. `WorkoutSet` belongs to this join table, so recorded values stay attached to a particular workout exercise rather than changing the reusable exercise definition. `WorkoutSet.weight` is `DECIMAL(8,2)`.
 
 The ERD includes every persisted scalar field and relation from the five Prisma models. Prisma relation arrays such as `User.workouts` are represented by the connecting lines rather than repeated as database columns.
 
@@ -165,13 +168,13 @@ Application invariants complement the database rules: protected reads and mutati
 
 ## Workout lifecycle
 
-| Operation | Required state                | Result      | Preserved data                                             |
-| --------- | ----------------------------- | ----------- | ---------------------------------------------------------- |
-| Start     | `DRAFT`                       | `ACTIVE`    | Exercises and planned sets                                 |
-| Cancel    | `ACTIVE`                      | `DRAFT`     | Set values; completion marks are cleared                   |
-| Finish    | `ACTIVE` with a completed set | `COMPLETED` | Full recorded workout                                      |
-| Reopen    | `COMPLETED`                   | `ACTIVE`    | Original start time, exercises, sets, and completion marks |
-| Delete    | Any owned state               | Removed     | Nothing; nested rows cascade                               |
+| Operation | Required state                | Result      | Preserved data                                           |
+| --------- | ----------------------------- | ----------- | -------------------------------------------------------- |
+| Start     | `DRAFT`                       | `ACTIVE`    | Exercises and planned sets                               |
+| Cancel    | `ACTIVE`                      | `DRAFT`     | Set values; completion marks are cleared                 |
+| Finish    | `ACTIVE` with a completed set | `COMPLETED` | Full recorded workout, including exercise snapshots      |
+| Reopen    | `COMPLETED`                   | `ACTIVE`    | Original start time, exercise snapshots, sets, and marks |
+| Delete    | Any owned state               | Removed     | Nothing; nested rows cascade                             |
 
 Only one workout may be active for a user. Start and reopen enforce this invariant inside serializable transactions, including concurrent requests; PostgreSQL's partial unique index is the final persistence-level guard. `completedAt` is set only when an active workout is finished; draft and active workouts have no completion time, and reopening clears it.
 

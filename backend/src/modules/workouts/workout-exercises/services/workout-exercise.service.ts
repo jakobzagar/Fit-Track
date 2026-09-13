@@ -1,6 +1,7 @@
 import {AppError} from "../../../../common/errors/app.error.js";
 import {runSerializableTransaction} from "../../../../db/transaction.js";
 import {assertWorkoutIsMutable} from "../../policies/workout-edit.policy.js";
+import {toWorkoutExerciseResponse} from "../utils/workout-exercise.mapper.js";
 import {loadOwnedMutableWorkoutExercise} from "./owned-workout-resource.loader.js";
 import type {
     AddExerciseToWorkoutInput,
@@ -65,24 +66,19 @@ export async function addExerciseToWorkoutService(
 
         const position: number = (lastExercise?.position ?? 0) + 1;
 
-        return tx.workoutExercise.create({
+        const workoutExercise = await tx.workoutExercise.create({
             data: {
                 workoutId,
-                exerciseId: data.exerciseId,
+                exerciseId: exercise.id,
+                exerciseName: exercise.name,
+                exerciseMuscleGroup: exercise.muscleGroup,
+                exerciseEquipment: exercise.equipment,
                 position,
                 ...(data.notes !== undefined && {notes: data.notes}),
             },
-            include: {
-                exercise: {
-                    select: {
-                        id: true,
-                        name: true,
-                        muscleGroup: true,
-                        equipment: true,
-                    },
-                },
-            },
         });
+
+        return toWorkoutExerciseResponse(workoutExercise);
     });
 }
 
@@ -157,7 +153,7 @@ export async function updateWorkoutExerciseService(
             }
         }
 
-        return tx.workoutExercise.update({
+        const updatedWorkoutExercise = await tx.workoutExercise.update({
             where: {
                 id: workoutExerciseId,
             },
@@ -166,14 +162,6 @@ export async function updateWorkoutExerciseService(
                 ...(data.notes !== undefined && {notes: data.notes}),
             },
             include: {
-                exercise: {
-                    select: {
-                        id: true,
-                        name: true,
-                        muscleGroup: true,
-                        equipment: true,
-                    },
-                },
                 sets: {
                     orderBy: {
                         setNumber: "asc",
@@ -181,6 +169,8 @@ export async function updateWorkoutExerciseService(
                 },
             },
         });
+
+        return toWorkoutExerciseResponse(updatedWorkoutExercise);
     });
 }
 

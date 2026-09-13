@@ -61,10 +61,21 @@ export const createTestWorkoutExercise = (
     exerciseId: string,
     position = 1,
     notes: string | null = null,
-) =>
-    prisma.workoutExercise.create({
-        data: {workoutId, exerciseId, position, notes},
-    });
+) => {
+    return prisma.exercise.findUniqueOrThrow({where: {id: exerciseId}}).then((exercise) =>
+        prisma.workoutExercise.create({
+            data: {
+                workoutId,
+                exerciseId,
+                position,
+                notes,
+                exerciseName: exercise.name,
+                exerciseMuscleGroup: exercise.muscleGroup,
+                exerciseEquipment: exercise.equipment,
+            },
+        }),
+    );
+};
 
 export const createTestSet = (
     workoutExerciseId: string,

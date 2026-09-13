@@ -9,6 +9,7 @@ import {
     setWorkoutSetCompletionSchema,
     updateWorkoutExerciseSchema,
     updateWorkoutSetSchema,
+    workoutExerciseSchema,
     workoutSetIdParamsSchema,
     workoutSetResponseSchema,
 } from "../index.js";
@@ -132,6 +133,36 @@ describe("workout set parameters", () => {
 });
 
 describe("workout exercise responses", () => {
+    test("accepts an exercise snapshot and rejects the former live exercise shape", () => {
+        const workoutExercise = {
+            id: "123e4567-e89b-42d3-a456-426614174000",
+            position: 1,
+            notes: null,
+            workoutId: "123e4567-e89b-42d3-a456-426614174001",
+            exerciseId: "123e4567-e89b-42d3-a456-426614174002",
+            exerciseSnapshot: {
+                name: "Bench press",
+                muscleGroup: "Chest",
+                equipment: "Barbell",
+            },
+            sets: [],
+        };
+
+        expect(workoutExerciseSchema.parse(workoutExercise).exerciseSnapshot).toEqual(
+            workoutExercise.exerciseSnapshot,
+        );
+        expect(
+            workoutExerciseSchema.safeParse({
+                ...workoutExercise,
+                exerciseSnapshot: undefined,
+                exercise: {
+                    id: workoutExercise.exerciseId,
+                    ...workoutExercise.exerciseSnapshot,
+                },
+            }).success,
+        ).toBe(false);
+    });
+
     test("rejects additional response fields", () => {
         expect(
             deleteWorkoutSetResponseSchema.safeParse({message: "Set deleted", deletedId: "hidden"})

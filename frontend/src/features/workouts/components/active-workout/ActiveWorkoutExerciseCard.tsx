@@ -44,10 +44,10 @@ export function ActiveWorkoutExerciseCard({
                         Exercise {workoutExercise.position}
                     </p>
                     <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-cream">
-                        {workoutExercise.exercise.name}
+                        {workoutExercise.exerciseSnapshot.name}
                     </h2>
                     <p className="mt-1 text-xs font-semibold tracking-[0.08em] text-dim uppercase">
-                        {workoutExercise.exercise.muscleGroup}
+                        {workoutExercise.exerciseSnapshot.muscleGroup}
                     </p>
                 </div>
                 <span className="shrink-0 rounded-full border border-line bg-white/[0.03] px-3 py-1.5 text-[10px] font-extrabold tracking-[0.08em] text-dim uppercase">

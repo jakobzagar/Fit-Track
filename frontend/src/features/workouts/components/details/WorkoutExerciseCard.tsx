@@ -50,10 +50,10 @@ export function WorkoutExerciseCard({
                         Exercise {workoutExercise.position}
                     </p>
                     <h3 className="mt-1 text-2xl font-black tracking-[-0.04em] text-cream">
-                        {workoutExercise.exercise.name}
+                        {workoutExercise.exerciseSnapshot.name}
                     </h3>
                     <p className="mt-1 text-xs font-semibold tracking-[0.08em] text-dim uppercase">
-                        {workoutExercise.exercise.muscleGroup}
+                        {workoutExercise.exerciseSnapshot.muscleGroup}
                     </p>
                 </div>
 
