@@ -105,7 +105,7 @@ describe("useExercises", () => {
             http.get(`${API_URL}/exercises`, () =>
                 HttpResponse.json({exercises: [activeExercise]}),
             ),
-            http.delete(`${API_URL}/exercises/${activeExercise.id}`, () =>
+            http.patch(`${API_URL}/exercises/${activeExercise.id}/archive`, () =>
                 HttpResponse.json({message: "Exercise in use"}, {status: 409}),
             ),
         );

@@ -20,8 +20,8 @@ export function createExercise(data: CreateExerciseInput): Promise<ExerciseRespo
 }
 
 export function archiveExercise(exerciseId: string): Promise<ExerciseResponse> {
-    return apiRequest(`/exercises/${exerciseId}`, exerciseResponseSchema, {
-        method: "DELETE",
+    return apiRequest(`/exercises/${exerciseId}/archive`, exerciseResponseSchema, {
+        method: "PATCH",
     });
 }
 
