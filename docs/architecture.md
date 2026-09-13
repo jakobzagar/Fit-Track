@@ -168,15 +168,15 @@ Application invariants complement the database rules: protected reads and mutati
 
 ## Workout lifecycle
 
-| Operation | Required state                | Result      | Preserved data                                           |
-| --------- | ----------------------------- | ----------- | -------------------------------------------------------- |
-| Start     | `DRAFT`                       | `ACTIVE`    | Exercises and planned sets                               |
-| Cancel    | `ACTIVE`                      | `DRAFT`     | Set values; completion marks are cleared                 |
-| Finish    | `ACTIVE` with a completed set | `COMPLETED` | Full recorded workout, including exercise snapshots      |
-| Reopen    | `COMPLETED`                   | `ACTIVE`    | Original start time, exercise snapshots, sets, and marks |
-| Delete    | Any owned state               | Removed     | Nothing; nested rows cascade                             |
+| Operation | Required state                  | Result      | Preserved data                                           |
+| --------- | ------------------------------- | ----------- | -------------------------------------------------------- |
+| Start     | `DRAFT` or already `ACTIVE`     | `ACTIVE`    | Exercises and planned sets                               |
+| Cancel    | `ACTIVE`                        | `DRAFT`     | Set values; completion marks are cleared                 |
+| Finish    | `ACTIVE` with a completed set   | `COMPLETED` | Full recorded workout, including exercise snapshots      |
+| Reopen    | `COMPLETED` or already `ACTIVE` | `ACTIVE`    | Original start time, exercise snapshots, sets, and marks |
+| Delete    | Any owned state                 | Removed     | Nothing; nested rows cascade                             |
 
-Only one workout may be active for a user. Start and reopen enforce this invariant inside serializable transactions, including concurrent requests; PostgreSQL's partial unique index is the final persistence-level guard. `completedAt` is set only when an active workout is finished; draft and active workouts have no completion time, and reopening clears it.
+Only one workout may be active for a user. Repeating start or reopen for that same active workout returns its current state without changing timestamps or data, making both operations safe to retry. Start and reopen enforce the single-active-workout invariant inside serializable transactions, including concurrent requests; PostgreSQL's partial unique index is the final persistence-level guard. `completedAt` is set only when an active workout is finished; draft and active workouts have no completion time, and reopening clears it.
 
 ## Trust and validation boundaries
 

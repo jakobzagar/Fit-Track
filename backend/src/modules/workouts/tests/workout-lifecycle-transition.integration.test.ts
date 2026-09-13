@@ -208,6 +208,38 @@ describe("workout lifecycle transitions", () => {
         ).not.toBeNull();
     });
 
+    it("treats repeated reopens of the same workout as idempotent", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const startedAt = new Date("2026-07-26T10:00:00.000Z");
+        const workout = await createTestWorkout(owner.user.id, {
+            status: "COMPLETED",
+            startedAt,
+            completedAt: new Date("2026-07-26T11:00:00.000Z"),
+        });
+
+        const first = await requestAsUser(
+            "post",
+            `/api/workouts/${workout.id}/reopen`,
+            owner.cookie,
+        );
+        const firstBody = workoutRecordResponseSchema.parse(first.body);
+        const second = await requestAsUser(
+            "post",
+            `/api/workouts/${workout.id}/reopen`,
+            owner.cookie,
+        );
+        const secondBody = workoutRecordResponseSchema.parse(second.body);
+
+        expect(first.status).toBe(200);
+        expect(second.status).toBe(200);
+        expect(secondBody.workout).toMatchObject({
+            status: "ACTIVE",
+            startedAt: startedAt.toISOString(),
+            completedAt: null,
+        });
+        expect(secondBody.workout).toEqual(firstBody.workout);
+    });
+
     it("does not reopen a completed workout while another workout is active", async () => {
         const owner = await createTestUser("owner@example.com");
         await createTestWorkout(owner.user.id, {status: "ACTIVE", startedAt: new Date()});
