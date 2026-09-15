@@ -120,7 +120,7 @@ Playwright owns a deliberately small set of critical user journeys through the p
 The suite currently proves that:
 
 - a new user can create an exercise and workout, start it, add and complete a set, finish, log out, log back in, and observe the persisted completed workout;
-- an authenticated page returns to sign-in when the browser cookie expires and the next protected request receives `401`.
+- an already-open authenticated page returns to sign-in when its cookie expires and a subsequent protected API request receives `401`.
 
 Install the version-matched Chromium binary once after installing dependencies:
 
