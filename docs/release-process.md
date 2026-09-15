@@ -102,6 +102,8 @@ Release Please treats the monorepo as one versioned product. Conventional Commit
 
 The release pull request coordinates the root, backend, frontend, and shared package versions. Release Please owns the product versions, root lockfile entries, manifest, changelog, version tag, and GitHub Release. Do not edit those release artifacts manually during ordinary development.
 
+The unreleased bootstrap state pins the first proposed release to `0.0.1` and limits its changelog history with `bootstrap-sha`. After that release is published, the manifest records the released version and subsequent proposals follow Conventional Commits normally.
+
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. This token allows Release Please-created pull requests and tags to trigger the repository workflows.
 
 Before building release images, `scripts/release/validate.sh` requires a semantic version tag and matching package, lockfile, and Release Please manifest versions. After the exact build digests pass the production smoke test, `scripts/release/promote-images.sh` accepts only digest references and refuses to move an existing version tag to different content. `npm run test:release-tools` covers these critical rules.
