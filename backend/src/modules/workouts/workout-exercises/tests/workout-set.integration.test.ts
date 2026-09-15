@@ -266,6 +266,33 @@ describe("workout set completion", () => {
         });
     });
 
+    it("rejects completion changes for a completed workout", async () => {
+        const owner = await createTestUser("owner@example.com");
+        const workout = await createTestWorkout(owner.user.id, {
+            status: "COMPLETED",
+            startedAt: new Date(),
+            completedAt: new Date(),
+        });
+        const exercise = await createTestExercise(owner.user.id);
+        const item = await createTestWorkoutExercise(workout.id, exercise.id);
+        const set = await createTestSet(item.id, 1, {completedAt: new Date()});
+        const originalCompletedAt = set.completedAt;
+
+        const response = await requestAsUser(
+            "patch",
+            `/api/workouts/${workout.id}/exercises/${item.id}/sets/${set.id}/completion`,
+            owner.cookie,
+        ).send({completed: false});
+
+        expect(response.status).toBe(409);
+        expect(messageResponseSchema.parse(response.body)).toEqual({
+            message: "Sets can only be completed during an active workout",
+        });
+        await expect(
+            prisma.workoutSet.findUniqueOrThrow({where: {id: set.id}}),
+        ).resolves.toMatchObject({completedAt: originalCompletedAt});
+    });
+
     it("does not change completion for another user's set or mismatched parents", async () => {
         const owner = await createTestUser("owner@example.com");
         const other = await createTestUser("other@example.com");
