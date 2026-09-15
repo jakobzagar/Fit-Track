@@ -67,10 +67,18 @@ test("user completes a workout and sees it after signing in again", async ({page
     await expect(completedWorkout.getByText("COMPLETED", {exact: true})).toBeVisible();
 });
 
-test("expired session returns the user to sign in", async ({page, context}) => {
+test("a protected request on an open page handles an expired session", async ({page, context}) => {
     await registerUser(page, "expired-session");
-    await context.clearCookies({name: "token"});
     await page.goto("/exercises");
+    await expect(page.getByRole("heading", {name: "Exercises", exact: true})).toBeVisible();
+
+    await context.clearCookies({name: "token"});
+    const protectedResponse = page.waitForResponse(
+        (response) =>
+            response.url().includes("/api/exercises?status=archived") && response.status() === 401,
+    );
+    await page.getByRole("tab", {name: "Archived"}).click();
+    await protectedResponse;
 
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole("heading", {name: "Sign in"})).toBeVisible();
