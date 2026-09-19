@@ -10,7 +10,7 @@ This file records the supported dependency lines and update rules for the monore
 | npm                 | `11.x`          | Workspace package management                  |
 | Prisma packages     | `7.10.0`        | Client, PostgreSQL adapter, CLI, migrations   |
 | TypeScript          | `6.0.x`         | All workspaces                                |
-| React and React DOM | `19.2.8`        | Frontend runtime                              |
+| React and React DOM | `19.3.0`        | Frontend runtime                              |
 | Zod                 | `4.6.x`         | Shared and application contracts              |
 | ESLint              | `10.x`          | Static analysis                               |
 | typescript-eslint   | `8.x`           | TypeScript lint integration                   |
