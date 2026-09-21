@@ -1,6 +1,6 @@
 # Release and container process
 
-FitTrack uses protected pull requests for source changes, publishes verified container images from `main`, and uses Release Please for versions, changelog entries, tags, and GitHub Releases.
+FitTrack uses protected pull requests for source changes, publishes verified container images from `main`, and uses Release Please for versions, changelog entries, tags, and GitHub Releases. Product tags use the canonical `vMAJOR.MINOR.PATCH` format, for example `v0.0.1`; the component name is never included in a tag.
 
 ## Pipeline overview
 
@@ -21,7 +21,7 @@ Every pull request runs the complete quality gate. A push to `main` has two inde
 - Release Please creates or updates one release pull request from Conventional Commits;
 - after the `Test` workflow succeeds for a source or configuration change, the image workflow builds all three production images, smoke-tests their exact digests, and publishes the `main` tags. Markdown-only pushes do not rebuild images.
 
-Merging the Release Please pull request is the explicit release action. Release Please then creates the version tag and GitHub Release. The tag starts the release-image workflow, which rebuilds that revision, smoke-tests the returned digests, and publishes the version and `latest` image tags.
+Merging the Release Please pull request is the explicit release action. Release Please then creates the `vMAJOR.MINOR.PATCH` tag and GitHub Release. The tag starts the release-image workflow, which rebuilds that revision, smoke-tests the returned digests, and publishes the version and `latest` image tags.
 
 ## Protected main workflow
 
@@ -102,11 +102,11 @@ Release Please treats the monorepo as one versioned product. Conventional Commit
 
 The release pull request coordinates the root, backend, frontend, and shared package versions. Release Please owns the product versions, root lockfile entries, manifest, changelog, version tag, and GitHub Release. Do not edit those release artifacts manually during ordinary development.
 
-The unreleased bootstrap state pins the first proposed release to `0.0.1` and limits its changelog history with `bootstrap-sha`. After that release is published, the manifest records the released version and subsequent proposals follow Conventional Commits normally.
+The first release is `v0.0.1`. The manifest records `0.0.1`, and subsequent proposals follow Conventional Commits normally. Release Please omits the component from Git tags so the tag consumed by the release-image workflow remains `vMAJOR.MINOR.PATCH`.
 
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. This token allows Release Please-created pull requests and tags to trigger the repository workflows.
 
-Before building release images, `scripts/release/validate.sh` requires a semantic version tag and matching package, lockfile, and Release Please manifest versions. After the exact build digests pass the production smoke test, `scripts/release/promote-images.sh` accepts only digest references and refuses to move an existing version tag to different content. `npm run test:release-tools` covers these critical rules.
+Before building release images, `scripts/release/validate.sh` requires the exact `vMAJOR.MINOR.PATCH` tag format and matching package, lockfile, and Release Please manifest versions. After the exact build digests pass the production smoke test, `scripts/release/promote-images.sh` accepts only digest references and refuses to move an existing version tag to different content. `npm run test:release-tools` covers these critical rules, including alignment between the Release Please tag configuration and release workflow trigger.
 
 ## Workflow validation
 
