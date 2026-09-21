@@ -50,6 +50,29 @@ expect_failure \
     "Release tag must use the vMAJOR.MINOR.PATCH format" \
     bash "$repository_root/scripts/release/validate.sh" 1.2.3
 
+expect_failure \
+    "Release tag must use the vMAJOR.MINOR.PATCH format" \
+    bash "$repository_root/scripts/release/validate.sh" fit-track-v1.2.3
+
+node - "$repository_root" <<'NODE'
+const {readFileSync} = require("node:fs");
+const {join} = require("node:path");
+
+const root = process.argv[2];
+const releasePleaseConfig = JSON.parse(
+    readFileSync(join(root, ".github/release-please/config.json"), "utf8"),
+);
+const releaseWorkflow = readFileSync(join(root, ".github/workflows/release.yaml"), "utf8");
+
+if (releasePleaseConfig["include-component-in-tag"] !== false) {
+    throw new Error("Release Please must create tags without the component prefix");
+}
+
+if (!releaseWorkflow.includes('- "v*.*.*"')) {
+    throw new Error("Release workflow must trigger for vMAJOR.MINOR.PATCH tags");
+}
+NODE
+
 workspace_fixture="$temporary_directory/workspace-mismatch"
 create_release_fixture "$workspace_fixture"
 printf '{"name":"fixture","version":"9.9.9"}\n' >"$workspace_fixture/backend/package.json"
