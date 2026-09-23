@@ -32,5 +32,6 @@ This file records the supported dependency lines and update rules for the monore
 - Minor and patch updates are allowed after the required checks pass. Review major updates in a dedicated pull request with migration notes where needed.
 - Do not hide a vulnerable transitive dependency with a forced downgrade or override unless the replacement is supported and verified.
 - Regenerate and commit every lockfile affected by a manifest change.
+- Pin database and local-tool images to an explicit version and multi-platform index digest. When updating an image, verify its upstream tag and digest, change both together across every Compose file and CI service that uses it, and run the affected container checks. The PostgreSQL image is for local and test databases; pgAdmin is an optional local tool. Docker Hub lists the [PostgreSQL](https://hub.docker.com/_/postgres/tags) and [pgAdmin](https://hub.docker.com/r/dpage/pgadmin4/tags) image releases.
 
-Dependabot checks GitHub Actions, the root npm workspace, and the standalone migration-runtime package weekly. Its pull requests use the same protected-branch checks as other changes and are not merged automatically.
+Dependabot checks Dockerfiles, root Docker Compose files, GitHub Actions, the root npm workspace, and the standalone migration-runtime package weekly. Review image tag and digest changes together in its pull requests. Its pull requests use the same protected-branch checks as other changes and are not merged automatically.
