@@ -54,6 +54,20 @@ The `main` ruleset requires:
 
 Release Please pull requests use the same merge gate. Review the proposed version and changelog, and merge only when publishing a release is intentional. Opening, updating, or closing the pull request publishes nothing.
 
+## Pull request scope and description
+
+Give each human-authored pull request one reviewable outcome. Include the contracts, application layers, migration, tests, configuration, and documentation needed to deliver that outcome together. Put independent fixes, dependency updates, and release-process changes in separate pull requests. If a planned baseline or milestone needs a broad PR, explain why its parts belong together and how each was verified.
+
+Use a scope-free Conventional Commit subject with a concise imperative summary for human-authored commits and PR titles. Choose the type for the substantive change: `feat:` for new behavior, `fix:` for corrected behavior, `perf:` for performance, `refactor:` for internal restructuring without behavior change, `test:` for tests, `docs:` for documentation, `ci:` for CI, `build:` for build or dependency changes, and `chore:` for other maintenance. Do not use a generic `chore:` title for a PR whose main outcome is a feature or fix. A PR may contain commits of different types when they all serve its outcome; Release Please reads the commits to determine the release proposal.
+
+The [pull request template](../.github/PULL_REQUEST_TEMPLATE.md) prompts for:
+
+- **Summary:** what changed and why, including the scope of a broad PR;
+- **Validation:** exact checks run and their results, plus any required checks that failed or were not run with a reason;
+- **Deployment or release impact:** migrations, environment or secret changes, image or runtime changes, rollout or rollback requirements, or `None`.
+
+Keep the body current when the scope or validation changes. Dependabot and Release Please PRs retain their generated titles and descriptions; review their diffs and required checks under the same merge gate.
+
 ## Published images
 
 | Image                 | Docker target | Purpose                                                  |
@@ -98,7 +112,7 @@ Release Please treats the monorepo as one versioned product. Conventional Commit
 - `fix:` and `perf:` propose a patch;
 - `feat:` proposes a minor;
 - `!` or a `BREAKING CHANGE` footer proposes a major;
-- `build:`, `chore:`, `ci:`, `docs:`, and `test:` do not by themselves propose a release.
+- `build:`, `chore:`, `ci:`, `docs:`, `refactor:`, and `test:` do not by themselves propose a release.
 
 The release pull request coordinates the root, backend, frontend, and shared package versions. Release Please owns the product versions, root lockfile entries, manifest, changelog, version tag, and GitHub Release. Do not edit those release artifacts manually during ordinary development.
 
