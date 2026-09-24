@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {useNavigate} from "react-router";
 import {useAuth} from "../../../features/auth";
-import {BrandMark} from "../../ui/display/BrandMark";
+import {BrandLogo} from "../../ui/display/BrandLogo";
 import {DesktopNavigation, MobileNavigation} from "./NavigationLinks";
 import {NavbarUser} from "./NavbarUser";
 
@@ -29,7 +29,7 @@ export function Navbar() {
         <>
             <header className="sticky top-0 z-40 border-b border-line bg-ink/90 backdrop-blur-xl">
                 <div className="mx-auto flex h-18 max-w-[1180px] items-center justify-between px-4 sm:px-6">
-                    <BrandMark />
+                    <BrandLogo />
 
                     <DesktopNavigation />
                     <NavbarUser
