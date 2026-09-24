@@ -1,13 +1,13 @@
 import {MemoryRouter} from "react-router";
 import {render, screen} from "@testing-library/react";
 import {describe, expect, test} from "vitest";
-import {BrandMark} from "../BrandMark";
+import {BrandLogo} from "../BrandLogo";
 
-describe("BrandMark", () => {
+describe("BrandLogo", () => {
     test("links both logo variants to the home page by default", () => {
         render(
             <MemoryRouter>
-                <BrandMark />
+                <BrandLogo />
             </MemoryRouter>,
         );
 
@@ -17,7 +17,7 @@ describe("BrandMark", () => {
     test("can render without a link", () => {
         render(
             <MemoryRouter>
-                <BrandMark linked={false} />
+                <BrandLogo linked={false} />
             </MemoryRouter>,
         );
 

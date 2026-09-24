@@ -1,6 +1,6 @@
 import {Link} from "react-router";
 import {useAuth} from "../../../features/auth";
-import {BrandMark} from "../../ui/display/BrandMark";
+import {BrandLogo} from "../../ui/display/BrandLogo";
 import {Icon} from "../../ui/display/Icon";
 
 interface FooterProps {
@@ -16,7 +16,7 @@ export function Footer({variant = "app"}: FooterProps) {
             <footer className="site-footer">
                 <div className="site-footer-main">
                     <div className="site-footer-brand">
-                        <BrandMark />
+                        <BrandLogo />
                         <p>Plan your workouts. Track every set. Keep progressing.</p>
                     </div>
 
@@ -54,7 +54,7 @@ export function Footer({variant = "app"}: FooterProps) {
     return (
         <footer className="app-footer">
             <div>
-                <BrandMark />
+                <BrandLogo />
                 <p>© {currentYear} · Built for the work</p>
             </div>
             <nav aria-label="Footer navigation">

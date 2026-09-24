@@ -1,15 +1,15 @@
 import {Link} from "react-router";
 
-interface BrandMarkProps {
+interface BrandLogoProps {
     linked?: boolean;
 }
 
-export function BrandMark({linked = true}: BrandMarkProps) {
-    const mark = (
+export function BrandLogo({linked = true}: BrandLogoProps) {
+    const logo = (
         <span className="inline-flex items-center">
             <img
                 className="brand-logo brand-logo-dark h-10 w-auto max-w-[180px] object-contain"
-                src="/brand/fittrack-logo.png"
+                src="/brand/fittrack-logo-dark.png"
                 alt="FitTrack"
             />
             <img
@@ -20,5 +20,5 @@ export function BrandMark({linked = true}: BrandMarkProps) {
         </span>
     );
 
-    return linked ? <Link to="/">{mark}</Link> : mark;
+    return linked ? <Link to="/">{logo}</Link> : logo;
 }

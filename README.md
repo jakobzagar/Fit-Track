@@ -1,6 +1,6 @@
 # FitTrack
 
-![FitTrack](frontend/public/brand/fittrack-logo.png)
+![FitTrack](frontend/public/brand/fittrack-logo-dark.png)
 
 [![Test](https://github.com/jakobzagar/Fit-Track/actions/workflows/test.yaml/badge.svg)](https://github.com/jakobzagar/Fit-Track/actions/workflows/test.yaml)
 

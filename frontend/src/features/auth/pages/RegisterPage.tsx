@@ -1,6 +1,6 @@
 import {useState} from "react";
 import {Link, useNavigate} from "react-router";
-import {BrandMark} from "../../../components/ui/display/BrandMark";
+import {BrandLogo} from "../../../components/ui/display/BrandLogo";
 import {StatusMessage} from "../../../components/ui/feedback/StatusMessage";
 import {RegisterForm} from "../components/RegisterForm";
 import {register} from "../api/auth.api";
@@ -28,7 +28,7 @@ export function RegisterPage() {
     return (
         <main className="auth-shell">
             <section className="auth-visual">
-                <BrandMark linked={false} />
+                <BrandLogo linked={false} />
                 <div className="relative z-10 max-w-2xl pb-12">
                     <p className="eyebrow">Build your record</p>
                     <h1 className="mt-5 max-w-xl text-[clamp(3rem,8vw,7rem)] font-black tracking-[-0.07em] text-cream uppercase leading-[0.8]">

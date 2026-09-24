@@ -1,5 +1,5 @@
 import {Link} from "react-router";
-import {BrandMark} from "../../../components/ui/display/BrandMark";
+import {BrandLogo} from "../../../components/ui/display/BrandLogo";
 import {Icon} from "../../../components/ui/display/Icon";
 import {useAuth} from "../../auth";
 import {Footer} from "../../../components/layout/footer/Footer";
@@ -15,7 +15,7 @@ export function LandingPage() {
     return (
         <main id="top" className="landing-shell">
             <header className="landing-nav">
-                <BrandMark linked={false} />
+                <BrandLogo linked={false} />
                 <div className="flex items-center gap-2 sm:gap-3">
                     <ThemeToggle />
                     {!currentUser && (
