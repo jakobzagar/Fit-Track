@@ -1,151 +1,186 @@
-# AWS deployment plan
+# FitTrack AWS deployment plan
 
-This document defines the next learning and implementation phase for FitTrack: deploying the existing backend and container artifacts on AWS with infrastructure as code. None of the AWS resources described below exist in this repository yet.
+This is the working record for building FitTrack's first AWS production environment manually in the AWS Console. Add actual resource identifiers, settings, and verification results here as each step is completed. A planned resource is not evidence that it exists or has been tested.
 
-The goal is not to collect cloud services. The goal is to demonstrate a reproducible deployment, least-privilege access, safe database migration ordering, observable runtime behavior, and recovery from a failed application rollout.
+The infrastructure will be built incrementally and documented in this file as we go. It is not managed by CloudFormation or Terraform yet.
 
-## Current state
+## Decisions and scope
 
-The repository currently provides:
+| Topic                   | Current decision                                                                          | Status                                                         |
+| ----------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| AWS region              | `eu-central-1` (Europe Frankfurt)                                                         | Proposed; confirm in the AWS Console before creating resources |
+| Environment             | One production environment to start                                                       | Planned                                                        |
+| Infrastructure workflow | Create resources manually in AWS Console and record the resulting configuration here      | Planned                                                        |
+| DNS                     | Keep DNS with the current domain provider; do not create Route 53 resources               | Decided                                                        |
+| Frontend                | Private S3 bucket served through CloudFront                                               | Planned                                                        |
+| API entry point         | Application Load Balancer (ALB), the Elastic Load Balancing service                       | Planned                                                        |
+| Backend runtime         | ECS service using the EC2 launch type / EC2 capacity                                      | Planned                                                        |
+| Database                | Amazon RDS for PostgreSQL, initially Single-AZ, in private subnets                        | Planned                                                        |
+| Infrastructure as code  | Not used for the initial manual build; revisit after learning and validating the topology | Planned                                                        |
+| Staging                 | Not part of the first environment                                                         | Deferred                                                       |
 
-- matching backend, migration, and Nginx frontend images built from one Git revision;
-- exact-digest smoke verification before moving image tags;
-- append-only Prisma migrations in a dedicated one-off image;
-- separate backend liveness and PostgreSQL-dependent readiness checks;
-- structured, redacted logs on standard output;
-- graceful backend shutdown;
-- critical browser journeys against an isolated migrated PostgreSQL database.
+The region is a working proposal, not a final selection. Confirm it before creating resources because most resources must be colocated, while the CloudFront viewer certificate has a separate regional requirement.
 
-There is no live environment or AWS infrastructure definition. HTTPS, DNS, IAM, managed secrets, networking, database backups, centralized observability, deployment orchestration, and cloud recovery have not been verified.
+## Naming convention
 
-## Portfolio objective
+Use `fit-track-prod-<resource>-eu-central-1` for named resources where AWS permits it. Some AWS resource names have their own constraints; record the actual name or identifier below when created. Do not put secrets in resource names or this document.
 
-The AWS phase should provide evidence for these backend, DevOps, and cloud responsibilities:
+| Resource                    | Proposed name                                           |
+| --------------------------- | ------------------------------------------------------- |
+| VPC                         | `fit-track-prod-vpc-eu-central-1`                       |
+| Public subnets              | `fit-track-prod-public-<az>`                            |
+| Private application subnets | `fit-track-prod-app-<az>`                               |
+| Private database subnets    | `fit-track-prod-db-<az>`                                |
+| ALB                         | `fit-track-prod-alb-eu-central-1`                       |
+| ECS cluster                 | `fit-track-prod-cluster-eu-central-1`                   |
+| ECS service                 | `fit-track-prod-backend-eu-central-1`                   |
+| EC2 Auto Scaling group      | `fit-track-prod-ecs-asg-eu-central-1`                   |
+| ECR backend repository      | `fit-track/backend`                                     |
+| S3 frontend bucket          | `fit-track-prod-frontend-<account-id>-eu-central-1`     |
+| CloudFront distribution     | AWS-generated ID; description `fit-track-prod-frontend` |
+| RDS instance                | `fit-track-prod-postgres-eu-central-1`                  |
+| CloudWatch log group        | `/fit-track/prod/backend`                               |
 
-| Responsibility         | Evidence to produce                                                                                   |
-| ---------------------- | ----------------------------------------------------------------------------------------------------- |
-| Infrastructure as code | Reviewed Terraform plans and reproducible environment creation                                        |
-| Workload identity      | GitHub Actions assumes a restricted AWS role through OIDC without stored AWS access keys              |
-| Network isolation      | Public traffic enters through one load balancer; application tasks and PostgreSQL remain private      |
-| Secret handling        | Runtime credentials come from a managed secret store rather than images, source, or workflow output   |
-| Safe delivery          | A matching migration task succeeds before backend rollout; unhealthy revisions do not receive traffic |
-| Artifact integrity     | ECS task definitions use exact image digests from the verified release                                |
-| Observability          | Central logs, useful metrics, actionable alarms, and retained deployment evidence                     |
-| Recovery               | A failed rollout and a PostgreSQL restore procedure are rehearsed and documented                      |
-
-## Planned topology
+## Architecture outline
 
 ```mermaid
-flowchart TB
-    User([User]) --> DNS[DNS]
-    DNS --> ALB[Application Load Balancer<br/>HTTPS entry point]
-    ALB -->|Default route| Frontend[ECS frontend service<br/>Nginx static files]
-    ALB -->|/api and /api/*| Backend[ECS backend service]
-    Migration[ECS one-off migration task] --> RDS[(RDS PostgreSQL)]
-    Backend --> RDS
-    Backend --> Logs[Central logs and metrics]
-    Frontend --> Logs
+flowchart LR
+    User[Browser] --> DNS[Existing DNS provider]
+    DNS --> CF[CloudFront]
+    CF -->|Default: frontend assets| S3[(Private S3 bucket)]
+    CF -->|/api and /api/*| ALB[Application Load Balancer]
+    ALB --> ECS[ECS backend service on EC2]
+    ECS --> RDS[(RDS PostgreSQL)]
+    ECS --> CW[CloudWatch Logs]
 ```
 
-The intended request path is:
+CloudFront will serve the frontend from S3 and forward `/api` and `/api/*` to the ALB. The ALB will route requests to healthy backend tasks managed by ECS on EC2 capacity. RDS will accept database connections only from the backend workload. The domain's DNS records stay with the existing DNS provider and point to CloudFront; Route 53 is not included.
 
-- a public Application Load Balancer terminates HTTPS;
-- its default rule forwards browser and SPA requests to the frontend target group;
-- higher-priority `/api` and `/api/*` rules forward API requests directly to the backend target group;
-- frontend and backend tasks run in private application subnets without public IP addresses;
-- PostgreSQL runs privately and accepts connections only from the backend and migration tasks;
-- a one-off migration task must succeed before the matching backend revision is deployed;
-- the backend receives exactly one trusted proxy hop from the load balancer.
+## Resource implementation record
 
-The current Nginx image assumes an upstream named `backend:3001` because local and production-smoke Compose use Nginx as the API proxy. Separate AWS services do not automatically provide that hostname. Before AWS deployment, the frontend artifact must either use an AWS-specific static-serving configuration without the unused API proxy or receive deliberate service discovery. The planned direct ALB-to-backend route favors the first option; it must preserve the existing SPA fallback, security headers, cache policy, non-root runtime, port, and health endpoint.
+For each resource, update **Actual configuration**, **Connections**, and **Verification** after creating it. Until then, keep its status as `Not created` and its verification as `Not run`.
 
-## Production-readiness gap
+### 1. Region and account
 
-| Capability            | Verified today                                                              | Required before AWS launch                                                               |
-| --------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Application artifacts | Multi-platform images from one tested Git revision                          | Make exact verified digests available to task definitions                                |
-| Database changes      | Append-only migrations and a dedicated migration image                      | RDS, backups, restore rehearsal, and a deployment gate around the one-off migration task |
-| Runtime health        | Separate liveness/readiness and graceful shutdown                           | ECS container health checks, target-group health checks, rollback policy, and capacity   |
-| End-to-end behavior   | Critical Chromium journeys against the real backend and isolated PostgreSQL | Run a post-deployment journey against the environment entry point                        |
-| Security              | Application cookies, CSRF, CORS, request limits, headers, and redacted logs | TLS, managed secrets, restricted IAM, private networking, and security-group rules       |
-| Observability         | Structured request-correlated logs on standard output                       | Retained central logs, dashboards, alarms, and an alert destination                      |
-| Frontend delivery     | Verified Nginx behavior for the current Compose topology                    | Static-only AWS Nginx configuration or deliberate service discovery                      |
-| Deployment recovery   | Exact-digest release artifacts and backend readiness                        | Automated failed-rollout handling plus a tested operator procedure                       |
+- **Status:** Not confirmed
+- **Proposed region:** `eu-central-1` (Europe Frankfurt)
+- **Actual account/region:** Not recorded
+- **Settings:** Confirm the AWS account and region selector before creating resources. CloudFront is global; its ACM viewer certificate must be requested in `us-east-1`. Other ACM certificates must be in the region of the service that uses them.
+- **Connections:** Most resources below use the selected workload region. CloudFront connects the browser-facing hostname to S3 and the ALB origins.
+- **Verification:** Not run. Confirm the account ID and selected region in the Console before proceeding; do not record credentials.
 
-This table is a gap analysis, not a claim that planned infrastructure is complete.
+### 2. VPC, subnets, and routing
 
-## Planned implementation stages
+- **Status:** Not created
+- **Proposed name:** `fit-track-prod-vpc-eu-central-1`
+- **Actual VPC ID/CIDR:** Not recorded
+- **Settings:** Plan public subnets for the internet-facing ALB and private subnets for ECS/EC2 and RDS across at least two Availability Zones. RDS is initially Single-AZ, but its DB subnet group still needs subnets in at least two AZs. Decide and record outbound access (NAT or required VPC endpoints) before launching private EC2 instances.
+- **Connections:** ALB reaches ECS targets; ECS reaches RDS. ECS instances also need a path to retrieve ECR images and send logs to CloudWatch.
+- **Verification:** Not run. After creation, verify subnet AZs, route tables, internet gateway/NAT or endpoints, and that database subnets have no public route.
 
-### 1. Terraform foundation
+### 3. Security groups
 
-- choose a remote, encrypted Terraform state backend and locking strategy;
-- define provider and tool versions;
-- create environment-specific configuration without copying complete stacks;
-- make `terraform fmt`, validation, and plan review part of the pull-request workflow;
-- keep apply permissions outside untrusted pull-request execution.
+- **Status:** Not created
+- **Proposed names:** `fit-track-prod-alb-sg`, `fit-track-prod-ecs-sg`, `fit-track-prod-rds-sg`
+- **Actual IDs/rules:** Not recorded
+- **Settings:** ALB accepts only the intended web traffic. ECS accepts the backend port only from the ALB security group. RDS accepts PostgreSQL only from the ECS security group. Keep RDS private; do not allow inbound database access from `0.0.0.0/0`.
+- **Connections:** ALB security group → ECS security group → RDS security group.
+- **Verification:** Not run. Inspect inbound and outbound rules and confirm the permitted source is the preceding tier's security group.
 
-### 2. Network and identity
+### 4. ECR
 
-- create a multi-Availability-Zone VPC layout with public load-balancer and private application/database subnets;
-- restrict security groups to the required ALB → frontend/backend and backend/migration → PostgreSQL paths;
-- configure GitHub OIDC and separate least-privilege plan/deploy roles;
-- define ECS execution and task roles independently.
+- **Status:** Not created
+- **Proposed repository:** `fit-track/backend`
+- **Actual URI/settings:** Not recorded
+- **Settings:** Store the backend container image. Choose image scanning and retention settings when creating the repository; record the chosen policy and image tag/digest used for deployment.
+- **Connections:** ECS EC2 instances authenticate to ECR and pull the backend image using the instance/task execution permissions and network egress.
+- **Verification:** Not run. Later, push a known image, confirm its digest in ECR, and confirm an ECS instance can pull it.
 
-### 3. Database and secrets
+### 5. IAM roles and instance profile
 
-- provision private RDS PostgreSQL with encryption, explicit backup retention, deletion protection, and a final-snapshot policy;
-- place application and migration credentials in a managed secret store;
-- size backend connection pools against the maximum task count and database connection budget;
-- verify encrypted database connections and rehearse a restore before calling the environment production-ready.
+- **Status:** Not created
+- **Proposed names:** `fit-track-prod-ecs-instance-role`, `fit-track-prod-ecs-task-execution-role`, `fit-track-prod-backend-task-role`
+- **Actual ARNs/policies:** Not recorded
+- **Settings:** Separate EC2 host permissions from ECS task execution permissions and application permissions. Grant only the actions needed for image pulls, log delivery, and application access to AWS resources. Never place access keys in the image, repository, or this document.
+- **Connections:** The EC2 instance profile lets ECS container instances join the cluster; the task execution role supports image/log startup; the task role is available to backend application code.
+- **Verification:** Not run. Review attached policies and confirm no broad administrator permissions are attached.
 
-### 4. Runtime services
+### 6. RDS PostgreSQL
 
-- define exact-digest task definitions for frontend, backend, and migration workloads;
-- configure container health checks explicitly in ECS rather than relying only on Dockerfile metadata;
-- route both `/api` and `/api/*` to the backend and default traffic to the frontend;
-- set backend origin, proxy trust, pool, and logging configuration for the real request path;
-- start with explicit task counts and scaling limits rather than undocumented defaults.
+- **Status:** Not created
+- **Proposed identifier:** `fit-track-prod-postgres-eu-central-1`
+- **Actual endpoint/engine/size:** Not recorded
+- **Settings:** Private DB subnet group spanning at least two AZs; Single-AZ instance initially; encryption at rest; backups, retention, deletion protection, and credential/authentication approach to be recorded when selected. Do not record passwords or secret values.
+- **Connections:** Backend tasks connect to the RDS endpoint on PostgreSQL's configured port. The RDS security group allows that port only from the ECS security group.
+- **Verification:** Not run. Confirm the instance is not publicly accessible, backup and encryption settings are enabled as intended, and a test connection succeeds from the backend network.
 
-### 5. Deployment workflow
+### 7. ECS cluster, EC2 capacity, and backend service
 
-1. select the three verified digests from one release;
-2. run the matching migration task and wait for a successful exit code;
-3. stop the deployment immediately if migration fails;
-4. register and deploy the backend task definition;
-5. wait for readiness and healthy load-balancer targets;
-6. deploy the frontend when required;
-7. run a critical post-deployment check against the public entry point;
-8. retain the deployed revision and result as release evidence.
+- **Status:** Not created
+- **Proposed names:** `fit-track-prod-cluster-eu-central-1`, `fit-track-prod-ecs-asg-eu-central-1`, `fit-track-prod-backend-eu-central-1`
+- **Actual cluster/service/task definition:** Not recorded
+- **Settings:** ECS cluster with EC2 capacity, an Auto Scaling group/capacity provider, backend task definition, explicit CPU/memory, port mapping, health check, desired count, and deployment settings. Place instances/tasks in private application subnets. Record the image digest, not just a moving tag.
+- **Connections:** Tasks receive traffic from the ALB, connect to RDS, pull from ECR, and send container logs to CloudWatch.
+- **Verification:** Not run. Confirm container instances register in the cluster, tasks become healthy, and the service replaces a stopped task.
 
-Database migrations must remain backward-compatible with the previous backend revision because an application rollback cannot automatically reverse an applied schema migration.
+### 8. Application Load Balancer (ELB)
 
-### 6. Observability and recovery
+- **Status:** Not created
+- **Proposed name:** `fit-track-prod-alb-eu-central-1`
+- **Actual DNS name/listeners/target group:** Not recorded
+- **Settings:** Internet-facing ALB in public subnets across at least two AZs; target group for the backend port; health check path matching the implemented backend health endpoint; listener and TLS certificate settings to be decided. ALB forwards to ECS targets.
+- **Connections:** CloudFront's `/api` and `/api/*` behaviors use the ALB as their origin; ALB forwards to healthy ECS tasks.
+- **Verification:** Not run. Confirm target health, listener rules, certificate, and that the backend is reachable through the ALB.
 
-- retain structured application and platform logs for a defined period;
-- alarm on missing healthy targets, elevated server errors, failed deployments, resource saturation, and database capacity risks;
-- record a clear diagnostic path from an alarm to request-correlated logs;
-- rehearse an unhealthy backend rollout, task replacement, secret rotation, and database restore;
-- document measured recovery results rather than promising untested availability.
+### 9. S3 frontend bucket
 
-## Environment strategy
+- **Status:** Not created
+- **Proposed name:** `fit-track-prod-frontend-<account-id>-eu-central-1`
+- **Actual bucket name/region/policy:** Not recorded
+- **Settings:** Private bucket, public access blocked, static frontend build files uploaded by the release process. CloudFront Origin Access Control (OAC) grants the distribution access; the bucket is not configured for public website hosting.
+- **Connections:** CloudFront fetches the frontend assets from S3 through OAC.
+- **Verification:** Not run. Confirm direct public bucket access is denied and the frontend loads through CloudFront.
 
-Use the same Terraform Modules and container artifacts for staging and production, with environment-specific inputs for names, capacity, retention, domains, and protection settings. Staging exists to rehearse migrations, deployment behavior, and infrastructure changes before production; it should not become a separate architecture.
+### 10. CloudFront and TLS
 
-Cost-sensitive development may use smaller capacity or create resources only when needed. Production safeguards such as deletion protection, retained backups, and restricted apply permissions must not be weakened merely to make both environments textually identical.
+- **Status:** Not created
+- **Proposed description:** `fit-track-prod-frontend`
+- **Actual distribution ID/domain/behaviors:** Not recorded
+- **Settings:** Default behavior serves the S3 frontend origin; `/api` and `/api/*` route to the ALB origin. Configure cache behavior, forwarded headers/cookies/query strings, HTTPS redirect, and the required application security headers. The CloudFront viewer certificate must be in `us-east-1`; record certificate ARN and DNS validation status, not private key material.
+- **Connections:** Browser → CloudFront → S3 for frontend and ALB for API. The existing DNS provider maps the chosen application hostname to the distribution.
+- **Verification:** Not run. Confirm HTTPS, SPA route fallback, both API path patterns, expected cache behavior, and response headers using the public hostname.
 
-## Definition of AWS-ready
+### 11. CloudWatch Logs
 
-FitTrack should be described as deployed on AWS only after all of the following are true:
+- **Status:** Not created
+- **Proposed log group:** `/fit-track/prod/backend`
+- **Actual ARN/retention:** Not recorded
+- **Settings:** ECS awslogs driver, region matching the workload, explicit retention, and no sensitive values in application logs.
+- **Connections:** ECS backend container stdout/stderr streams to this log group. Pino already writes structured logs to stdout/stderr.
+- **Verification:** Not run. Confirm a test request produces a structured log with its request ID and that secrets and request bodies are absent.
 
-- Terraform can reproduce the intended environment from reviewed configuration;
-- HTTPS serves the reference client and both `/api` and `/api/*` reach the backend correctly;
-- ECS runs exact verified image digests and reports explicit container and target health;
-- secrets are absent from source, images, Terraform output, and long-lived GitHub credentials;
-- a matching migration is required to succeed before backend rollout;
-- central logs and actionable alarms work during an induced failure;
-- a failed application revision rolls back without manual image retagging;
-- a PostgreSQL restore has been completed successfully in a non-production environment;
-- the critical user journey passes against the deployed entry point;
-- the real architecture, operating procedure, costs, and remaining limitations are documented.
+### 12. DNS at the existing provider
 
-Until then, the accurate portfolio claim is that FitTrack has production-oriented application artifacts and an explicit AWS implementation plan.
+- **Status:** Not configured for AWS
+- **Provider/hostname/record:** Not recorded
+- **Settings:** Keep the domain's DNS hosted by the existing provider. Once CloudFront is ready, configure the provider's supported alias/CNAME record for the application hostname to the CloudFront distribution. Route 53 hosted zones and records are intentionally excluded.
+- **Connections:** The hostname resolves to CloudFront; CloudFront forwards to S3 or the ALB based on the request path.
+- **Verification:** Not run. Confirm DNS resolution and HTTPS after the record is published.
+
+## Implementation order
+
+1. Confirm AWS account, region, domain/DNS provider, and resource names.
+2. Create VPC, subnets, routing, and security groups; verify the network boundaries.
+3. Create ECR and IAM roles needed for ECS image pulls and logs.
+4. Create the RDS subnet group and private Single-AZ PostgreSQL instance; verify its settings.
+5. Create the ECS cluster and EC2 capacity, then deploy the backend service and verify health and database connectivity.
+6. Create the ALB and verify healthy ECS targets and API access.
+7. Create the private S3 bucket and CloudFront distribution; configure frontend and API behaviors and TLS.
+8. Configure DNS at the existing provider and run public end-to-end checks.
+9. Add deployment automation and alarms after the manual path is understood and verified.
+
+## Update log
+
+| Date       | Resource/decision updated                        | Evidence and result                                            |
+| ---------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| 2026-09-28 | Initial plan recorded; no AWS resources verified | Plan only; resource creation and verification have not started |
