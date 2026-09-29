@@ -10,7 +10,7 @@ Planned resources, configured resources, and independently verified settings are
 - DNS remains with the current domain provider; Route 53 is excluded.
 - Resources remain private unless public access is required for the ALB or CloudFront.
 - Continuously billed resources should not remain idle during learning or long pauses. The app is unavailable when its runtime is stopped or deleted.
-- CloudFormation templates are stored under `infra/cloudformation/`; stacks are deployed and inspected through CloudFormation. Actual outcomes and verification are recorded in this document.
+- CloudFormation templates are stored under `infra/`; stacks are deployed and inspected through CloudFormation. Actual outcomes and verification are recorded in this document.
 
 ## CloudFormation template checks
 
@@ -41,21 +41,36 @@ The static frontend is planned for a private S3 bucket served through CloudFront
 
 ## Architecture decisions
 
-| Area                 | Current direction                                                                                        | Status                                                                        |
-| -------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Region               | `eu-central-1` (Frankfurt)                                                                               | Proposed; confirm before creating regional resources                          |
-| Network              | One VPC, two AZs, each with a public ALB subnet, private application subnet, and private database subnet | VPC foundation created in the AWS Console; configuration verification pending |
-| Internet egress      | No NAT Gateway; add only necessary VPC endpoints when the EC2/ECS step requires them                     | Planned                                                                       |
-| Network ACL          | Keep the default NACL initially; control workload access with security groups                            | Planned                                                                       |
-| Frontend             | Private S3 origin with CloudFront Origin Access Control                                                  | Planned                                                                       |
-| API entry            | Application Load Balancer (ELB) in public subnets                                                        | Planned                                                                       |
-| Backend              | ECS service using EC2 capacity in private application subnets                                            | Planned                                                                       |
-| Database             | RDS for PostgreSQL, initially Single-AZ, with a DB subnet group spanning both AZs                        | Planned                                                                       |
-| Logs                 | Pino JSON on stdout/stderr, collected by ECS into CloudWatch Logs                                        | Planned                                                                       |
-| DNS                  | Existing provider; no Route 53 hosted zone                                                               | Decided                                                                       |
-| Environment sequence | Production first; staging deferred                                                                       | Decided                                                                       |
+| Area                 | Current direction                                                                                                                                                          | Status                                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Region               | `eu-central-1` (Frankfurt)                                                                                                                                                 | Decided                                                                   |
+| Network              | One VPC (`10.20.0.0/20`) across two AZs, with public ALB, private application, and private database subnets in each AZ; one IGW; separate public, app, and DB route tables | CloudFormation template drafted; not deployed; AWS resources not verified |
+| Internet egress      | No NAT Gateway; add only necessary VPC endpoints when the EC2/ECS step requires them                                                                                       | Planned                                                                   |
+| Network ACL          | Keep the default NACL initially; control workload access with security groups                                                                                              | Planned                                                                   |
+| Frontend             | Private S3 origin with CloudFront Origin Access Control                                                                                                                    | Planned                                                                   |
+| API entry            | Application Load Balancer (ELB) in public subnets                                                                                                                          | Planned                                                                   |
+| Backend              | ECS service using EC2 capacity in private application subnets                                                                                                              | Planned                                                                   |
+| Database             | RDS for PostgreSQL, initially Single-AZ, with a DB subnet group spanning both AZs                                                                                          | Planned                                                                   |
+| Logs                 | Pino JSON on stdout/stderr, collected by ECS into CloudWatch Logs                                                                                                          | Planned                                                                   |
+| DNS                  | Existing provider; no Route 53 hosted zone                                                                                                                                 | Decided                                                                   |
+| Environment sequence | Production first; staging deferred                                                                                                                                         | Decided                                                                   |
 
 The CloudFront viewer certificate must use ACM in `us-east-1`; certificates for regional services use the service's region. Record certificate and DNS validation details here when configured.
+
+## Network foundation template
+
+`infra/cloudformation/network.yaml` defines the production VPC foundation. Its `Name` tags follow `fit-track-prod-<resource>-eu-central-1`; resources also carry `Environment`, `Project`, and `Component` tags.
+
+| Resources           | Name tags                                                                                                          | Settings and connections                                                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| VPC                 | `fit-track-prod-vpc-eu-central-1`                                                                                  | CIDR `10.20.0.0/20`; DNS support and hostnames enabled.                                                                                                    |
+| Public subnets      | `fit-track-prod-public-az1-eu-central-1`, `fit-track-prod-public-az2-eu-central-1`                                 | `10.20.0.0/24` in `euc1-az1`, `10.20.1.0/24` in `euc1-az2`; associated with the public route table.                                                        |
+| Application subnets | `fit-track-prod-app-az1-eu-central-1`, `fit-track-prod-app-az2-eu-central-1`                                       | `10.20.2.0/24` in `euc1-az1`, `10.20.3.0/24` in `euc1-az2`; associated with the private application route table.                                           |
+| Database subnets    | `fit-track-prod-db-az1-eu-central-1`, `fit-track-prod-db-az2-eu-central-1`                                         | `10.20.4.0/24` in `euc1-az1`, `10.20.5.0/24` in `euc1-az2`; associated with the private database route table.                                              |
+| Internet gateway    | `fit-track-prod-igw-eu-central-1`                                                                                  | Attached to the VPC.                                                                                                                                       |
+| Route tables        | `fit-track-prod-rt-public-eu-central-1`, `fit-track-prod-rt-app-eu-central-1`, `fit-track-prod-rt-db-eu-central-1` | Public route table sends `0.0.0.0/0` to the IGW. App and DB route tables have no internet default route; no NAT Gateway or VPC endpoints are included yet. |
+
+All six subnets explicitly disable automatic public IPv4 assignment. The public subnet route prepares the network path for the later internet-facing ALB; its scheme and security groups will be defined with the ALB. Application and database route tables have no internet default route. The template exports its VPC ID and CIDR, subnet IDs, and route table IDs for same-account, same-region stacks. Export names use `<network-stack-name>-<output-name>`; for example, stack `fit-track-prod-network` exports `fit-track-prod-network-AppSubnetAz1Id`. A consuming template can import these values with `Fn::ImportValue`. CloudFormation prevents changing or deleting an export while another stack imports it. `npm run infra:check` validates formatting and the CloudFormation template locally. The template has not been deployed, so no AWS resource configuration has been independently verified.
 
 ## Cost and lifecycle direction
 

@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: AWS infrastructure for my application.
+Description: FitTrack production VPC, subnets, and routing.
 
 Parameters:
   Environment:
@@ -10,7 +10,7 @@ Parameters:
       - prod
 
 Resources:
-  MyVPC:
+  FitTrackVpc:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.20.0.0/20
@@ -20,7 +20,7 @@ Resources:
 
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpc-eu-central-1
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -31,9 +31,10 @@ Resources:
   PublicSubnetAz1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.0.0/24
       AvailabilityZoneId: euc1-az1
+      MapPublicIpOnLaunch: false
 
       Tags:
         - Key: Name
@@ -48,9 +49,10 @@ Resources:
   PublicSubnetAz2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.1.0/24
       AvailabilityZoneId: euc1-az2
+      MapPublicIpOnLaunch: false
 
       Tags:
         - Key: Name
@@ -65,9 +67,10 @@ Resources:
   AppSubnetAz1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.2.0/24
       AvailabilityZoneId: euc1-az1
+      MapPublicIpOnLaunch: false
 
       Tags:
         - Key: Name
@@ -82,9 +85,10 @@ Resources:
   AppSubnetAz2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.3.0/24
       AvailabilityZoneId: euc1-az2
+      MapPublicIpOnLaunch: false
 
       Tags:
         - Key: Name
@@ -96,16 +100,17 @@ Resources:
         - Key: Component
           Value: network
 
-  DatabaseSubnetAz1:
+  DbSubnetAz1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.4.0/24
       AvailabilityZoneId: euc1-az1
+      MapPublicIpOnLaunch: false
 
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-database-az1-eu-central-1
+          Value: !Sub fit-track-${Environment}-db-az1-eu-central-1
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -113,28 +118,192 @@ Resources:
         - Key: Component
           Value: network
 
-  DatabaseSubnetAz2:
+  DbSubnetAz2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.5.0/24
       AvailabilityZoneId: euc1-az2
+      MapPublicIpOnLaunch: false
 
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-database-az2-eu-central-1
+          Value: !Sub fit-track-${Environment}-db-az2-eu-central-1
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
           Value: network
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-igw-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref FitTrackVpc
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rt-public-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  AppRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rt-app-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  DbRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rt-db-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  PublicSubnetAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetAz1
+
+  PublicSubnetAz2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetAz2
+
+  AppSubnetAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref AppRouteTable
+      SubnetId: !Ref AppSubnetAz1
+
+  AppSubnetAz2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref AppRouteTable
+      SubnetId: !Ref AppSubnetAz2
+
+  DbSubnetAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref DbRouteTable
+      SubnetId: !Ref DbSubnetAz1
+
+  DbSubnetAz2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref DbRouteTable
+      SubnetId: !Ref DbSubnetAz2
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
 
 Outputs:
   VpcId:
     Description: ID of the application VPC
-    Value: !Ref MyVPC
+    Value: !Ref FitTrackVpc
+    Export:
+      Name: !Sub "${AWS::StackName}-VpcId"
 
   VpcCidrBlock:
     Description: IPv4 CIDR block of the application VPC
-    Value: !GetAtt MyVPC.CidrBlock
+    Value: !GetAtt FitTrackVpc.CidrBlock
+    Export:
+      Name: !Sub "${AWS::StackName}-VpcCidrBlock"
+
+  PublicSubnetAz1Id:
+    Description: Public subnet ID in eu-central-1 AZ 1 for the internet-facing ALB
+    Value: !Ref PublicSubnetAz1
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnetAz1Id"
+
+  PublicSubnetAz2Id:
+    Description: Public subnet ID in eu-central-1 AZ 2 for the internet-facing ALB
+    Value: !Ref PublicSubnetAz2
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnetAz2Id"
+
+  AppSubnetAz1Id:
+    Description: Private application subnet ID in eu-central-1 AZ 1
+    Value: !Ref AppSubnetAz1
+    Export:
+      Name: !Sub "${AWS::StackName}-AppSubnetAz1Id"
+
+  AppSubnetAz2Id:
+    Description: Private application subnet ID in eu-central-1 AZ 2
+    Value: !Ref AppSubnetAz2
+    Export:
+      Name: !Sub "${AWS::StackName}-AppSubnetAz2Id"
+
+  DbSubnetAz1Id:
+    Description: Private database subnet ID in eu-central-1 AZ 1
+    Value: !Ref DbSubnetAz1
+    Export:
+      Name: !Sub "${AWS::StackName}-DbSubnetAz1Id"
+
+  DbSubnetAz2Id:
+    Description: Private database subnet ID in eu-central-1 AZ 2
+    Value: !Ref DbSubnetAz2
+    Export:
+      Name: !Sub "${AWS::StackName}-DbSubnetAz2Id"
+
+  PublicRouteTableId:
+    Description: Public route table ID associated with both public subnets
+    Value: !Ref PublicRouteTable
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicRouteTableId"
+
+  AppRouteTableId:
+    Description: Private application route table associated with both application subnets
+    Value: !Ref AppRouteTable
+    Export:
+      Name: !Sub "${AWS::StackName}-AppRouteTableId"
+
+  DbRouteTableId:
+    Description: Private database route table associated with both database subnets
+    Value: !Ref DbRouteTable
+    Export:
+      Name: !Sub "${AWS::StackName}-DbRouteTableId"
