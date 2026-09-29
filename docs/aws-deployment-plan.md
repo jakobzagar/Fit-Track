@@ -59,7 +59,7 @@ The CloudFront viewer certificate must use ACM in `us-east-1`; certificates for 
 
 ## Network foundation template
 
-`infra/cloudformation/network.yaml` defines the production VPC foundation. Its `Name` tags follow `fit-track-prod-<resource>-eu-central-1`; resources also carry `Environment`, `Project`, and `Component` tags.
+`infra/network/template.yaml` defines the production VPC foundation. Its `Name` tags follow `fit-track-prod-<resource>-eu-central-1`; resources also carry `Environment`, `Project`, and `Component` tags.
 
 | Resources           | Name tags                                                                                                          | Settings and connections                                                                                                                                   |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
