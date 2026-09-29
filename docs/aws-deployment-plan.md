@@ -10,7 +10,18 @@ Planned resources, configured resources, and independently verified settings are
 - DNS remains with the current domain provider; Route 53 is excluded.
 - Resources remain private unless public access is required for the ALB or CloudFront.
 - Continuously billed resources should not remain idle during learning or long pauses. The app is unavailable when its runtime is stopped or deleted.
-- AWS resources are created and inspected through the AWS Console; actual outcomes and verification are recorded in this document.
+- CloudFormation templates are stored under `infra/cloudformation/`; stacks are deployed and inspected through CloudFormation. Actual outcomes and verification are recorded in this document.
+
+## CloudFormation template checks
+
+Install `cfn-lint` with Homebrew on macOS, then run the repository checks before creating or updating a stack:
+
+```bash
+brew install cfn-lint
+npm run infra:check
+```
+
+`infra:check` runs Prettier against the CloudFormation templates and validates them with `cfn-lint` for `eu-central-1`. `cfn-lint` is a local tool and is not installed by `npm install`.
 
 ## Target request and data flow
 

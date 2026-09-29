@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: AWS infrastructure for my application.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.20.0.0/20
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  PublicSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.20.0.0/24
+      AvailabilityZoneId: euc1-az1
+
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-public-az1-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  PublicSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.20.1.0/24
+      AvailabilityZoneId: euc1-az2
+
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-public-az2-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  AppSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.20.2.0/24
+      AvailabilityZoneId: euc1-az1
+
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-app-az1-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  AppSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.20.3.0/24
+      AvailabilityZoneId: euc1-az2
+
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-app-az2-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  DatabaseSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.20.4.0/24
+      AvailabilityZoneId: euc1-az1
+
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-database-az1-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  DatabaseSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.20.5.0/24
+      AvailabilityZoneId: euc1-az2
+
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-database-az2-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+Outputs:
+  VpcId:
+    Description: ID of the application VPC
+    Value: !Ref MyVPC
+
+  VpcCidrBlock:
+    Description: IPv4 CIDR block of the application VPC
+    Value: !GetAtt MyVPC.CidrBlock
