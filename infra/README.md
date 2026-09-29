@@ -1,6 +1,6 @@
 # AWS infrastructure
 
-CloudFormation templates are grouped by independently deployed stack and lifecycle. Each stack lives in `<stack-name>/template.yaml`; stack-specific parameters and resources stay together. The network stack is the only template in this directory so far. AWS deployment state and verification are tracked in [the AWS deployment plan](../docs/aws-deployment-plan.md).
+CloudFormation templates are grouped by independently deployed stack and lifecycle. Each stack lives in `<stack-name>/template.yaml`; stack-specific parameters and resources stay together. The `network/` and `endpoints/` templates are in progress. AWS deployment state and verification are tracked in [the AWS deployment plan](../docs/aws-deployment-plan.md).
 
 ## Stack boundaries
 
