@@ -1,8 +1,8 @@
 # FitTrack AWS architecture
 
-This document describes FitTrack's planned AWS architecture and the decisions behind it. The [AWS implementation log](aws-implementation-log.md) records the AWS resources that have actually been created.
+This document is the single AWS record for FitTrack. It describes the planned architecture and decisions and records implementation state and verification as resources are created.
 
-Proposed decisions, deployed resources, and independently verified settings are clearly distinguished.
+Planned resources, configured resources, and independently verified settings are clearly distinguished.
 
 ## Goals and constraints
 
@@ -10,7 +10,7 @@ Proposed decisions, deployed resources, and independently verified settings are 
 - DNS remains with the current domain provider; Route 53 is excluded.
 - Resources remain private unless public access is required for the ALB or CloudFront.
 - Continuously billed resources should not remain idle during learning or long pauses. The app is unavailable when its runtime is stopped or deleted.
-- The AWS Console is used to inspect resources; actual outcomes are recorded in the implementation log.
+- AWS resources are created and inspected through the AWS Console; actual outcomes and verification are recorded in this document.
 
 ## Target request and data flow
 
@@ -30,22 +30,22 @@ The static frontend is planned for a private S3 bucket served through CloudFront
 
 ## Architecture decisions
 
-| Area                 | Current direction                                                                                        | Status                                               |
-| -------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Region               | `eu-central-1` (Frankfurt)                                                                               | Proposed; confirm before creating regional resources |
-| Network              | One VPC, two AZs, each with a public ALB subnet, private application subnet, and private database subnet | Planned; six subnets total                           |
-| Internet egress      | No NAT Gateway; add only necessary VPC endpoints when the EC2/ECS step requires them                     | Planned                                              |
-| Network ACL          | Keep the default NACL initially; control workload access with security groups                            | Planned                                              |
-| Frontend             | Private S3 origin with CloudFront Origin Access Control                                                  | Planned                                              |
-| API entry            | Application Load Balancer (ELB) in public subnets                                                        | Planned                                              |
-| Backend              | ECS service using EC2 capacity in private application subnets                                            | Planned                                              |
-| Database             | RDS for PostgreSQL, initially Single-AZ, with a DB subnet group spanning both AZs                        | Planned                                              |
-| Logs                 | Pino JSON on stdout/stderr, collected by ECS into CloudWatch Logs                                        | Planned                                              |
-| DNS                  | Existing provider; no Route 53 hosted zone                                                               | Decided                                              |
-| Environment sequence | Production first; staging deferred                                                                       | Decided                                              |
+| Area                 | Current direction                                                                                        | Status                                                                        |
+| -------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Region               | `eu-central-1` (Frankfurt)                                                                               | Proposed; confirm before creating regional resources                          |
+| Network              | One VPC, two AZs, each with a public ALB subnet, private application subnet, and private database subnet | VPC foundation created in the AWS Console; configuration verification pending |
+| Internet egress      | No NAT Gateway; add only necessary VPC endpoints when the EC2/ECS step requires them                     | Planned                                                                       |
+| Network ACL          | Keep the default NACL initially; control workload access with security groups                            | Planned                                                                       |
+| Frontend             | Private S3 origin with CloudFront Origin Access Control                                                  | Planned                                                                       |
+| API entry            | Application Load Balancer (ELB) in public subnets                                                        | Planned                                                                       |
+| Backend              | ECS service using EC2 capacity in private application subnets                                            | Planned                                                                       |
+| Database             | RDS for PostgreSQL, initially Single-AZ, with a DB subnet group spanning both AZs                        | Planned                                                                       |
+| Logs                 | Pino JSON on stdout/stderr, collected by ECS into CloudWatch Logs                                        | Planned                                                                       |
+| DNS                  | Existing provider; no Route 53 hosted zone                                                               | Decided                                                                       |
+| Environment sequence | Production first; staging deferred                                                                       | Decided                                                                       |
 
-The CloudFront viewer certificate must use ACM in `us-east-1`; certificates for regional services use the service's region. Certificate and DNS validation details are recorded in the implementation log when configured.
+The CloudFront viewer certificate must use ACM in `us-east-1`; certificates for regional services use the service's region. Record certificate and DNS validation details here when configured.
 
 ## Cost and lifecycle direction
 
-This architecture cannot remain continuously available at zero cost. An ALB, running EC2 capacity, running RDS, NAT Gateways, and some VPC endpoints can create ongoing charges. Runtime resources should be created when needed for testing or deployment. During a long pause, billable runtime resources can be stopped or deleted while retaining only data or artifacts worth their storage cost. Retained, stopped, or removed resources and the verification results are recorded in the implementation log.
+This architecture cannot remain continuously available at zero cost. An ALB, running EC2 capacity, running RDS, NAT Gateways, and some VPC endpoints can create ongoing charges. Runtime resources should be created when needed for testing or deployment. During a long pause, billable runtime resources can be stopped or deleted while retaining only data or artifacts worth their storage cost. Record retained, stopped, or removed resources and their verification results here.
