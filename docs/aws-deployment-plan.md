@@ -50,6 +50,7 @@ The static frontend is planned for a private S3 bucket served through CloudFront
 | Frontend             | Private S3 origin with CloudFront Origin Access Control                                                                                                                    | Planned                                                                    |
 | API entry            | Application Load Balancer (ELB) in public subnets                                                                                                                          | Planned                                                                    |
 | Backend              | ECS service using EC2 capacity in private application subnets                                                                                                              | Compute stack drafted; ECS service stack planned; not deployed             |
+| Container images     | Private backend and migration repositories; BASIC scan-on-push on `fit-track-prod-*`; immutable SHA/version tags with mutable `main` and `latest` tags                     | ECR template drafted; not deployed; registry settings not verified         |
 | Database             | RDS for PostgreSQL, initially Single-AZ, with a DB subnet group spanning both AZs                                                                                          | Planned                                                                    |
 | Logs                 | ECS `awslogs` driver sends backend stdout/stderr to CloudWatch Logs; `/fit-track/prod/backend`, 30-day retention, AWS-managed encryption                                   | Logs group and endpoint templates drafted; task definition not yet created |
 | DNS                  | Existing provider; no Route 53 hosted zone                                                                                                                                 | Decided                                                                    |
@@ -108,6 +109,28 @@ The `Environment` parameter is currently restricted to `prod`. Physical names an
 | `S3GatewayEndpointId`                                                                                                                                | Same as logical ID      | Operational inspection; subnet routing is configured directly in this stack.            |
 | `InterfaceEndpointsSecurityGroupId`                                                                                                                  | Same as logical ID      | Imported by compute to add the ECS-instance-only HTTPS ingress rule.                    |
 
+## ECR scanning template
+
+`infra/ecr/template.yaml` defines stack `fit-track-prod-ecr` with backend and migration repositories and configures the regional private registry in `eu-central-1` for BASIC image scanning on push. The `fit-track-${Environment}-*` wildcard covers both repositories; repositories outside that prefix remain on manual scanning.
+
+| Logical resource ID                | Physical name or Name tag               | Configuration and connections                                                                                         | Tags                                                              |
+| ---------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `EcrRegistryScanningConfiguration` | Regional private registry               | `ScanType: BASIC`; `SCAN_ON_PUSH` for repositories matching `fit-track-prod-*`; unmatched repositories remain manual. | Registry scanning configuration is not taggable.                  |
+| `EcrBackendRepository`             | `fit-track-prod-backend-eu-central-1`   | Private repo; AES-256 encryption; immutable tags except `main` and `latest`; retain the 10 newest images.             | `Name`, `Environment=prod`, `Project=fit-track`, `Component=ecr`. |
+| `EcrMigrationRepository`           | `fit-track-prod-migration-eu-central-1` | Private repo; AES-256 encryption; immutable tags except `main` and `latest`; retain the 10 newest images.             | `Name`, `Environment=prod`, `Project=fit-track`, `Component=ecr`. |
+
+Basic scanning detects operating-system package vulnerabilities. It is the lowest-cost option and avoids Amazon Inspector charges; it does not continuously rescan images or cover application-language packages. Enhanced scanning adds OS and language package findings through Amazon Inspector and can incur Inspector charges. Check the current registry scanning settings in `eu-central-1` before deploying: the CloudFormation resource manages the registry-wide scanning configuration, while the filter limits which repositories get scan-on-push. Repository-level scan-on-push settings are omitted because the registry rule owns scanning behavior. Each repository's lifecycle policy keeps the 10 most recently pushed images and expires older ones; ECR may take up to 24 hours to apply expiration. This limits rollback images to the retained set, including release tags attached to those images. `EmptyOnDelete: true` means deleting this stack deletes all images in both repositories. The stack is not deployed or AWS-verified.
+
+| Output logical ID            | Export suffix      | Consumer                                               |
+| ---------------------------- | ------------------ | ------------------------------------------------------ |
+| `EcrRegistryId`              | Same as logical ID | Account ID for ECR login and registry identification.  |
+| `EcrBackendRepositoryName`   | Same as logical ID | CI push target and future ECS task definition.         |
+| `EcrBackendRepositoryUri`    | Same as logical ID | URI prefix for backend image tags or digests.          |
+| `EcrBackendRepositoryArn`    | Same as logical ID | IAM repository scope for image pull and publish roles. |
+| `EcrMigrationRepositoryName` | Same as logical ID | CI push target and future migration task definition.   |
+| `EcrMigrationRepositoryUri`  | Same as logical ID | URI prefix for migration image tags or digests.        |
+| `EcrMigrationRepositoryArn`  | Same as logical ID | IAM repository scope for image pull and publish roles. |
+
 ## Compute template
 
 `infra/compute/template.yaml` defines stack `fit-track-prod-compute` and creates the ECS cluster and EC2 capacity. It imports VPC and app subnet IDs from `fit-track-prod-network`, plus the interface endpoint security group from `fit-track-prod-endpoints`. The ASG depends on the endpoint ingress rule so instances launch after HTTPS access to private AWS endpoints is available.
@@ -148,7 +171,7 @@ The stack exports `BackendLogGroupName` for `awslogs-group` and `BackendLogGroup
 | `BackendLogGroupName` | Same as logical ID | Future ECS task definition's `awslogs-group` option.                                      |
 | `BackendLogGroupArn`  | Same as logical ID | Future task execution role's `logs:CreateLogStream` and `logs:PutLogEvents` resource ARN. |
 
-All four templates are drafts only. `npm run infra:check` validates their local formatting and CloudFormation schema; no AWS resources have been independently verified.
+All five templates are drafts only. `npm run infra:check` validates their local formatting and CloudFormation schema; no AWS resources have been independently verified.
 
 ## Cost and lifecycle direction
 
