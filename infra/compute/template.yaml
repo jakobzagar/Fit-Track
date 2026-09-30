@@ -1,0 +1,186 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack ECS cluster and EC2 capacity.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+  NetworkStackName:
+    Type: String
+    Description: Name of the deployed network stack
+  InstanceType:
+    Type: String
+    Description: EC2 instance type
+    Default: "t3.small"
+    AllowedValues:
+      - t3.micro
+      - t3.small
+  DesiredCapacity:
+    Type: Number
+    Default: 2
+    MinValue: 2
+    Description: Initial and minimum multi-AZ EC2 capacity for the ECS cluster.
+  MaxSize:
+    Type: Number
+    Default: 3
+    MinValue: 2
+    Description: Maximum number of EC2 instances available to ECS capacity scaling.
+  MinSize:
+    Type: Number
+    Default: 2
+    MinValue: 2
+    Description: Minimum number of EC2 instances available to ECS capacity scaling.
+  EcsOptimizedAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
+
+Resources:
+  EcsInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-ecs-instance-role-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: compute
+
+  EcsInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EcsInstanceRole
+
+  EcsInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ECS container instance network access in private application subnets
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "${NetworkStackName}-VpcId"
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-ecs-instance-sg-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: compute
+
+  Ec2InstanceLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: !Ref EcsOptimizedAmiId
+        InstanceType: !Ref InstanceType
+        IamInstanceProfile:
+          Name: !Ref EcsInstanceProfile
+        SecurityGroupIds:
+          - !Ref EcsInstanceSecurityGroup
+        MetadataOptions:
+          HttpEndpoint: enabled
+          HttpTokens: required
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeSize: 30
+              VolumeType: gp3
+              Encrypted: true
+              DeleteOnTermination: true
+        UserData:
+          Fn::Base64:
+            Fn::Sub: |
+              #!/bin/bash
+              echo "ECS_CLUSTER=${EcsCluster}" >> /etc/ecs/ecs.config
+
+  Ec2AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZoneDistribution:
+        CapacityDistributionStrategy: balanced-best-effort
+      AvailabilityZoneIds:
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AvailabilityZoneAz1Id"
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AvailabilityZoneAz2Id"
+      AvailabilityZoneImpairmentPolicy:
+        ImpairedZoneHealthCheckBehavior: ReplaceUnhealthy
+        ZonalShiftEnabled: true
+      DesiredCapacity: !Ref DesiredCapacity
+      LaunchTemplate:
+        LaunchTemplateId: !Ref Ec2InstanceLaunchTemplate
+        Version: !GetAtt Ec2InstanceLaunchTemplate.LatestVersionNumber
+      MaxSize: !Ref MaxSize
+      MinSize: !Ref MinSize
+      NewInstancesProtectedFromScaleIn: true
+      TerminationPolicies:
+        - OldestInstance
+      VPCZoneIdentifier:
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+
+  EcsCapacityProvider:
+    Type: AWS::ECS::CapacityProvider
+    Properties:
+      Name: !Sub fit-track-${Environment}-ecs-cp-eu-central-1
+      AutoScalingGroupProvider:
+        AutoScalingGroupArn: !GetAtt Ec2AutoScalingGroup.AutoScalingGroupARN
+        ManagedScaling:
+          MaximumScalingStepSize: 1
+          MinimumScalingStepSize: 1
+          InstanceWarmupPeriod: 300
+          Status: ENABLED
+          TargetCapacity: 100
+        ManagedTerminationProtection: ENABLED
+        ManagedDraining: ENABLED
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-ecs-cp-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: compute
+
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub fit-track-${Environment}-ecs-cluster-eu-central-1
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-ecs-cluster-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: compute
+
+  EcsCapacityProviderAssociations:
+    Type: AWS::ECS::ClusterCapacityProviderAssociations
+    Properties:
+      CapacityProviders:
+        - !Ref EcsCapacityProvider
+      Cluster: !Ref EcsCluster
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: !Ref EcsCapacityProvider
+          Weight: 1

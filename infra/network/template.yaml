@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack production VPC, subnets, and routing.
+Description: FitTrack VPC, subnets, and routing.
 
 Parameters:
   Environment:
@@ -242,6 +242,18 @@ Resources:
       GatewayId: !Ref InternetGateway
 
 Outputs:
+  AvailabilityZoneAz1Id:
+    Description: Availability Zone ID used by the AZ 1 subnets
+    Value: euc1-az1
+    Export:
+      Name: !Sub "${AWS::StackName}-AvailabilityZoneAz1Id"
+
+  AvailabilityZoneAz2Id:
+    Description: Availability Zone ID used by the AZ 2 subnets
+    Value: euc1-az2
+    Export:
+      Name: !Sub "${AWS::StackName}-AvailabilityZoneAz2Id"
+
   VpcId:
     Description: ID of the application VPC
     Value: !Ref FitTrackVpc
