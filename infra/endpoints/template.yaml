@@ -1,36 +1,30 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack VPC interface and gateway endpoints.
+Description: FitTrack private ECR, ECS, and Systems Manager VPC endpoints.
 
 Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
   NetworkStackName:
-    Description: Name of the deployed network stack
+    Description: Name of the deployed network stack.
     Type: String
 
 Resources:
   InterfaceEndpointsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow HTTPS from application subnets to VPC endpoints
+      GroupDescription: Security group for HTTPS access from ECS instances to interface endpoints.
       VpcId:
         Fn::ImportValue:
           Fn::Sub: "${NetworkStackName}-VpcId"
-      SecurityGroupIngress:
-        - Description: HTTPS from application subnet AZ 1
-          IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 10.20.2.0/24
-        - Description: HTTPS from application subnet AZ 2
-          IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 10.20.3.0/24
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpc-endpoints-sg-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpc-endpoints-sg-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -54,9 +48,9 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpce-ecr-api-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecr-api-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -80,9 +74,9 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpce-ecr-dkr-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecr-dkr-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -106,9 +100,9 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpce-ecs-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecs-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -132,9 +126,9 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpce-ecs-agent-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecs-agent-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -158,9 +152,9 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpce-ecs-telemetry-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecs-telemetry-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -184,9 +178,9 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpce-ssm-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ssm-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -210,9 +204,9 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpce-ssm-messages-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ssmmessages-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -236,9 +230,9 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpce-ec2-messages-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ec2messages-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -267,9 +261,9 @@ Resources:
             Fn::Sub: "${NetworkStackName}-AppRouteTableId"
       Tags:
         - Key: Name
-          Value: fit-track-prod-vpce-s3-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-s3-eu-central-1
         - Key: Environment
-          Value: prod
+          Value: !Ref Environment
         - Key: Project
           Value: fit-track
         - Key: Component
@@ -277,55 +271,61 @@ Resources:
 
 Outputs:
   EcrApiInterfaceEndpointId:
-    Description: ID of the Amazon ECR API interface endpoint
+    Description: ID of the Amazon ECR API interface endpoint.
     Value: !Ref EcrApiInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-EcrApiInterfaceEndpointId"
 
   EcrDkrInterfaceEndpointId:
-    Description: ID of the Amazon ECR Docker Registry interface endpoint
+    Description: ID of the Amazon ECR Docker Registry interface endpoint.
     Value: !Ref EcrDkrInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-EcrDkrInterfaceEndpointId"
 
   EcsInterfaceEndpointId:
-    Description: ID of the Amazon ECS interface endpoint
+    Description: ID of the Amazon ECS interface endpoint.
     Value: !Ref EcsInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-EcsInterfaceEndpointId"
 
   EcsAgentInterfaceEndpointId:
-    Description: ID of the Amazon ECS agent interface endpoint
+    Description: ID of the Amazon ECS agent interface endpoint.
     Value: !Ref EcsAgentInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-EcsAgentInterfaceEndpointId"
 
   EcsTelemetryInterfaceEndpointId:
-    Description: ID of the Amazon ECS telemetry interface endpoint
+    Description: ID of the Amazon ECS telemetry interface endpoint.
     Value: !Ref EcsTelemetryInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-EcsTelemetryInterfaceEndpointId"
 
   SsmInterfaceEndpointId:
-    Description: ID of the AWS Systems Manager interface endpoint
+    Description: ID of the AWS Systems Manager interface endpoint.
     Value: !Ref SsmInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-SsmInterfaceEndpointId"
 
   SsmMessagesInterfaceEndpointId:
-    Description: ID of the AWS Systems Manager Messages interface endpoint
+    Description: ID of the AWS Systems Manager Messages interface endpoint.
     Value: !Ref SsmMessagesInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-SsmMessagesInterfaceEndpointId"
 
   Ec2MessagesInterfaceEndpointId:
-    Description: ID of the Amazon EC2 Messages interface endpoint
+    Description: ID of the Amazon EC2 Messages interface endpoint.
     Value: !Ref Ec2MessagesInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-Ec2MessagesInterfaceEndpointId"
 
   S3GatewayEndpointId:
-    Description: ID of the Amazon S3 gateway endpoint
+    Description: ID of the Amazon S3 gateway endpoint.
     Value: !Ref S3GatewayEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-S3GatewayEndpointId"
+
+  InterfaceEndpointsSecurityGroupId:
+    Description: Security group ID attached to all interface endpoints.
+    Value: !GetAtt InterfaceEndpointsSecurityGroup.GroupId
+    Export:
+      Name: !Sub "${AWS::StackName}-InterfaceEndpointsSecurityGroupId"
