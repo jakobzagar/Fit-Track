@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack private ECR, ECS, and Systems Manager VPC endpoints.
+Description: FitTrack private ECR, ECS, Systems Manager, and CloudWatch Logs VPC endpoints.
 
 Parameters:
   Environment:
@@ -238,6 +238,42 @@ Resources:
         - Key: Component
           Value: endpoints
 
+  CloudWatchLogsInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "${NetworkStackName}-VpcId"
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+      SecurityGroupIds:
+        - !Ref InterfaceEndpointsSecurityGroup
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowWriteLogEvents
+            Effect: Allow
+            Principal: "*"
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-vpce-logs-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: endpoints
+
   S3GatewayEndpoint:
     Type: "AWS::EC2::VPCEndpoint"
     Properties:
@@ -317,6 +353,12 @@ Outputs:
     Value: !Ref Ec2MessagesInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-Ec2MessagesInterfaceEndpointId"
+
+  CloudWatchLogsInterfaceEndpointId:
+    Description: ID of the Amazon CloudWatch Logs interface endpoint.
+    Value: !Ref CloudWatchLogsInterfaceEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-CloudWatchLogsInterfaceEndpointId"
 
   S3GatewayEndpointId:
     Description: ID of the Amazon S3 gateway endpoint.
