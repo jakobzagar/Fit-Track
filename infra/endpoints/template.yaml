@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack production VPC interface and gateway endpoints.
+Description: FitTrack VPC interface and gateway endpoints.
 
 Parameters:
   NetworkStackName:
@@ -8,7 +8,7 @@ Parameters:
     Type: String
 
 Resources:
-  EndpointsSecurityGroup:
+  InterfaceEndpointsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow HTTPS from application subnets to VPC endpoints
@@ -51,7 +51,7 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
       SecurityGroupIds:
-        - !Ref EndpointsSecurityGroup
+        - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
           Value: fit-track-prod-vpce-ecr-api-eu-central-1
@@ -77,7 +77,7 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
       SecurityGroupIds:
-        - !Ref EndpointsSecurityGroup
+        - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
           Value: fit-track-prod-vpce-ecr-dkr-eu-central-1
@@ -103,7 +103,7 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
       SecurityGroupIds:
-        - !Ref EndpointsSecurityGroup
+        - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
           Value: fit-track-prod-vpce-ecs-eu-central-1
@@ -129,7 +129,7 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
       SecurityGroupIds:
-        - !Ref EndpointsSecurityGroup
+        - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
           Value: fit-track-prod-vpce-ecs-agent-eu-central-1
@@ -155,7 +155,7 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
       SecurityGroupIds:
-        - !Ref EndpointsSecurityGroup
+        - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
           Value: fit-track-prod-vpce-ecs-telemetry-eu-central-1
