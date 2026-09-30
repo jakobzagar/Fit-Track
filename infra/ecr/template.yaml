@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack production ECR repositories and image scanning configuration.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+Resources:
+  EcrRegistryScanningConfiguration:
+    Type: AWS::ECR::RegistryScanningConfiguration
+    Properties:
+      Rules:
+        - RepositoryFilters:
+            - Filter: !Sub "fit-track-${Environment}-*"
+              FilterType: WILDCARD
+          ScanFrequency: SCAN_ON_PUSH
+      ScanType: BASIC
+
+  EcrBackendRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      EmptyOnDelete: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      ImageTagMutability: IMMUTABLE_WITH_EXCLUSION
+      ImageTagMutabilityExclusionFilters:
+        - ImageTagMutabilityExclusionFilterType: WILDCARD
+          ImageTagMutabilityExclusionFilterValue: main
+        - ImageTagMutabilityExclusionFilterType: WILDCARD
+          ImageTagMutabilityExclusionFilterValue: latest
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep the 10 most recently pushed images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 10
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+      RepositoryName: !Sub fit-track-${Environment}-backend-eu-central-1
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-backend-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: ecr
+
+  EcrMigrationRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      EmptyOnDelete: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      ImageTagMutability: IMMUTABLE_WITH_EXCLUSION
+      ImageTagMutabilityExclusionFilters:
+        - ImageTagMutabilityExclusionFilterType: WILDCARD
+          ImageTagMutabilityExclusionFilterValue: main
+        - ImageTagMutabilityExclusionFilterType: WILDCARD
+          ImageTagMutabilityExclusionFilterValue: latest
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep the 10 most recently pushed images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 10
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+      RepositoryName: !Sub fit-track-${Environment}-migration-eu-central-1
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-migration-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: ecr
+
+Outputs:
+  EcrRegistryId:
+    Description: AWS account ID for the regional private ECR registry.
+    Value: !GetAtt EcrRegistryScanningConfiguration.RegistryId
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrRegistryId"
+
+  EcrBackendRepositoryName:
+    Description: Name of the private ECR repository for the backend image.
+    Value: !Ref EcrBackendRepository
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrBackendRepositoryName"
+
+  EcrBackendRepositoryArn:
+    Description: ARN of the private ECR backend repository for IAM permissions.
+    Value: !GetAtt EcrBackendRepository.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrBackendRepositoryArn"
+
+  EcrBackendRepositoryUri:
+    Description: URI of the private ECR backend repository for image push and pull.
+    Value: !GetAtt EcrBackendRepository.RepositoryUri
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrBackendRepositoryUri"
+
+  EcrMigrationRepositoryName:
+    Description: Name of the private ECR repository for the migration image.
+    Value: !Ref EcrMigrationRepository
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrMigrationRepositoryName"
+
+  EcrMigrationRepositoryArn:
+    Description: ARN of the private ECR migration repository for IAM permissions.
+    Value: !GetAtt EcrMigrationRepository.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrMigrationRepositoryArn"
+
+  EcrMigrationRepositoryUri:
+    Description: URI of the private ECR migration repository for image push and pull.
+    Value: !GetAtt EcrMigrationRepository.RepositoryUri
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrMigrationRepositoryUri"
