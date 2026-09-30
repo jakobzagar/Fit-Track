@@ -166,6 +166,84 @@ Resources:
         - Key: Component
           Value: endpoints
 
+  SsmInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssm"
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "${NetworkStackName}-VpcId"
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+      SecurityGroupIds:
+        - !Ref InterfaceEndpointsSecurityGroup
+      Tags:
+        - Key: Name
+          Value: fit-track-prod-vpce-ssm-eu-central-1
+        - Key: Environment
+          Value: prod
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: endpoints
+
+  SsmMessagesInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssmmessages"
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "${NetworkStackName}-VpcId"
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+      SecurityGroupIds:
+        - !Ref InterfaceEndpointsSecurityGroup
+      Tags:
+        - Key: Name
+          Value: fit-track-prod-vpce-ssm-messages-eu-central-1
+        - Key: Environment
+          Value: prod
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: endpoints
+
+  Ec2MessagesInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      VpcEndpointType: "Interface"
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ec2messages"
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "${NetworkStackName}-VpcId"
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+        - Fn::ImportValue:
+            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+      SecurityGroupIds:
+        - !Ref InterfaceEndpointsSecurityGroup
+      Tags:
+        - Key: Name
+          Value: fit-track-prod-vpce-ec2-messages-eu-central-1
+        - Key: Environment
+          Value: prod
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: endpoints
+
   S3GatewayEndpoint:
     Type: "AWS::EC2::VPCEndpoint"
     Properties:
@@ -227,6 +305,24 @@ Outputs:
     Value: !Ref EcsTelemetryInterfaceEndpoint
     Export:
       Name: !Sub "${AWS::StackName}-EcsTelemetryInterfaceEndpointId"
+
+  SsmInterfaceEndpointId:
+    Description: ID of the AWS Systems Manager interface endpoint
+    Value: !Ref SsmInterfaceEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-SsmInterfaceEndpointId"
+
+  SsmMessagesInterfaceEndpointId:
+    Description: ID of the AWS Systems Manager Messages interface endpoint
+    Value: !Ref SsmMessagesInterfaceEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-SsmMessagesInterfaceEndpointId"
+
+  Ec2MessagesInterfaceEndpointId:
+    Description: ID of the Amazon EC2 Messages interface endpoint
+    Value: !Ref Ec2MessagesInterfaceEndpoint
+    Export:
+      Name: !Sub "${AWS::StackName}-Ec2MessagesInterfaceEndpointId"
 
   S3GatewayEndpointId:
     Description: ID of the Amazon S3 gateway endpoint
