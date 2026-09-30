@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack production backend CloudWatch Logs group.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+Resources:
+  BackendLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /fit-track/${Environment}/backend
+      LogGroupClass: STANDARD
+      RetentionInDays: 30
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-logs-backend-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: logs
+
+Outputs:
+  BackendLogGroupName:
+    Description: Name of the backend log group for the ECS task definition.
+    Value: !Ref BackendLogGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-BackendLogGroupName"
+  BackendLogGroupArn:
+    Description: Log group ARN, including the stream wildcard, for scoped IAM permissions.
+    Value: !GetAtt BackendLogGroup.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-BackendLogGroupArn"
