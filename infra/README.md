@@ -7,7 +7,7 @@ CloudFormation templates are grouped by independently deployed stack and lifecyc
 | Stack directory | Owns                                                    |
 | --------------- | ------------------------------------------------------- |
 | `network/`      | VPC, subnets, internet gateway, route tables            |
-| `endpoints/`    | Private AWS service endpoints                           |
+| `endpoints/`    | Private ECR, ECS, and Systems Manager endpoints         |
 | `compute/`      | ECS cluster and EC2 capacity                            |
 | `database/`     | RDS PostgreSQL and DB subnet group                      |
 | `ingress/`      | Application Load Balancer, listeners, and target groups |
