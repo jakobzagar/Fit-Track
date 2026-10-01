@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack ECS migration task, execution roles, and backend runtime secrets.
+Description: FitTrack ECS backend and migration tasks, execution roles, and runtime secrets.
 
 Parameters:
   Environment:
@@ -9,14 +9,34 @@ Parameters:
     AllowedValues:
       - prod
 
+  BackendImageDigest:
+    Type: String
+    Description: Verified backend image digest from the ECR backend repository.
+    AllowedPattern: "^sha256:[a-f0-9]{64}$"
+  BackendCpu:
+    Type: Number
+    Default: 256
+    AllowedValues: [256, 512, 1024]
+    Description: CPU units allocated to the backend task (1024 units equal one vCPU).
+  BackendMemory:
+    Type: Number
+    Default: 512
+    AllowedValues: [512, 1024, 2048]
+    Description: Hard memory limit for the backend task in MiB.
+  ClientOrigin:
+    Type: String
+    Description: HTTPS frontend origin without a path, used for credentialed CORS and CSRF checks.
+    AllowedPattern: "^https://[^/\\s?#]+$"
+  TrustProxyHops:
+    Type: Number
+    Default: 2
+    AllowedValues: [0, 1, 2, 3]
+    Description: Trusted proxy hops; two for the planned CloudFront to ALB to backend path.
+
   MigrationImageDigest:
     Type: String
     Description: Verified migration image digest from the ECR migration repository.
     AllowedPattern: "^sha256:[a-f0-9]{64}$"
-  MigrationDatabaseSecretArn:
-    Type: String
-    Description: ARN of an existing secret with a DATABASE_URL JSON key for the migration database user.
-    AllowedPattern: "^arn:[^:]+:secretsmanager:[^:]+:[0-9]{12}:secret:.+$"
   MigrationCpu:
     Type: Number
     Default: 256
@@ -37,6 +57,21 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub fit-track-${Environment}-backend-secret-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+  MigrationSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub fit-track/${Environment}/migration
+      Description: FitTrack migration database connection secret.
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-migration-secret-eu-central-1
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -133,7 +168,7 @@ Resources:
               - Sid: ReadMigrationDatabaseSecret
                 Effect: Allow
                 Action: secretsmanager:GetSecretValue
-                Resource: !Ref MigrationDatabaseSecretArn
+                Resource: !Ref MigrationSecret
       Tags:
         - Key: Name
           Value: !Sub fit-track-${Environment}-migration-task-execution-role-eu-central-1
@@ -171,7 +206,7 @@ Resources:
               Value: production
           Secrets:
             - Name: DATABASE_URL
-              ValueFrom: !Sub "${MigrationDatabaseSecretArn}:DATABASE_URL::"
+              ValueFrom: !Sub "${MigrationSecret}:DATABASE_URL::"
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -192,16 +227,96 @@ Resources:
         - Key: Component
           Value: service
 
+  BackendTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities:
+        - EC2
+      ExecutionRoleArn: !GetAtt BackendTaskExecutionRole.Arn
+      Cpu: !Ref BackendCpu
+      Memory: !Ref BackendMemory
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ContainerDefinitions:
+        - Name: backend
+          Image:
+            Fn::Sub:
+              - "${RepositoryUri}@${BackendImageDigest}"
+              - RepositoryUri:
+                  Fn::ImportValue: !Sub "fit-track-${Environment}-ecr-EcrBackendRepositoryUri"
+          Essential: true
+          StopTimeout: 30
+          LinuxParameters:
+            InitProcessEnabled: true
+          PortMappings:
+            - Name: backend-http
+              ContainerPort: 3001
+              Protocol: tcp
+              AppProtocol: http
+          HealthCheck:
+            Command:
+              - CMD
+              - node
+              - -e
+              - "fetch('http://127.0.0.1:3001/api/health/live').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+            Interval: 30
+            Timeout: 5
+            StartPeriod: 10
+            Retries: 3
+          Environment:
+            - Name: NODE_ENV
+              Value: production
+            - Name: PORT
+              Value: "3001"
+            - Name: CLIENT_ORIGIN
+              Value: !Ref ClientOrigin
+            - Name: TRUST_PROXY_HOPS
+              Value: !Sub "${TrustProxyHops}"
+            - Name: LOG_LEVEL
+              Value: info
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub "${BackendSecret}:DATABASE_URL::"
+            - Name: JWT_SECRET
+              ValueFrom: !Sub "${BackendSecret}:JWT_SECRET::"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Fn::ImportValue: !Sub "fit-track-${Environment}-logs-BackendLogGroupName"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: backend
+              mode: non-blocking
+              max-buffer-size: 1m
+      Family: !Sub fit-track-${Environment}-backend-eu-central-1
+      NetworkMode: awsvpc
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-backend-task-definition-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
 Outputs:
   BackendSecretArn:
     Description: ARN of the backend runtime secret.
     Value: !Ref BackendSecret
+  MigrationSecretArn:
+    Description: ARN of the migration database connection secret.
+    Value: !Ref MigrationSecret
   BackendTaskExecutionRoleArn:
     Description: ARN of the backend task execution role.
     Value: !GetAtt BackendTaskExecutionRole.Arn
   MigrationTaskExecutionRoleArn:
     Description: ARN of the migration task execution role.
     Value: !GetAtt MigrationTaskExecutionRole.Arn
+  BackendTaskDefinitionArn:
+    Description: ARN of the backend task definition for the ECS service.
+    Value: !Ref BackendTaskDefinition
   MigrationTaskDefinitionArn:
     Description: ARN of the migration task definition for one-off ECS RunTask operations.
     Value: !Ref MigrationTaskDefinition
