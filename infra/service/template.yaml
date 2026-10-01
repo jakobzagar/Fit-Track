@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack ECS task execution role and backend runtime secrets.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+Resources:
+  BackendSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub fit-track/${Environment}/backend
+      Description: FitTrack backend runtime secrets.
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-backend-secret-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+  EcsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub fit-track-${Environment}-ecs-task-execution-role-eu-central-1
+      Description: ECS task execution role for ECR image pulls, CloudWatch Logs, and backend secret retrieval.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: !Sub fit-track-${Environment}-backend-secret-read
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref BackendSecret
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-ecs-task-execution-role-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+Outputs:
+  BackendSecretArn:
+    Description: ARN of the backend runtime secret.
+    Value: !Ref BackendSecret
+  EcsTaskExecutionRoleArn:
+    Description: ARN of the ECS task execution role.
+    Value: !GetAtt EcsTaskExecutionRole.Arn
