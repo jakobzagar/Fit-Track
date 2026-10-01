@@ -8,9 +8,6 @@ Parameters:
     Default: prod
     AllowedValues:
       - prod
-  NetworkStackName:
-    Description: Name of the deployed network stack.
-    Type: String
 
 Resources:
   InterfaceEndpointsSecurityGroup:
@@ -19,7 +16,7 @@ Resources:
       GroupDescription: Security group for HTTPS access from ECS instances to interface endpoints.
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       Tags:
         - Key: Name
           Value: !Sub fit-track-${Environment}-vpc-endpoints-sg-eu-central-1
@@ -37,13 +34,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.api"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
@@ -63,13 +60,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.dkr"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
@@ -89,13 +86,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecs"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
@@ -115,13 +112,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecs-agent"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
@@ -141,13 +138,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecs-telemetry"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
@@ -167,13 +164,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssm"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
@@ -193,13 +190,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssmmessages"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
@@ -219,13 +216,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ec2messages"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
@@ -245,13 +242,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       PolicyDocument:
@@ -281,13 +278,13 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.secretsmanager"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       PrivateDnsEnabled: true
       SubnetIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
       SecurityGroupIds:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
@@ -306,7 +303,7 @@ Resources:
       VpcEndpointType: "Gateway"
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
       PolicyDocument:
         Version: 2012-10-17
@@ -320,7 +317,7 @@ Resources:
               - !Sub "arn:${AWS::Partition}:s3:::prod-${AWS::Region}-starport-layer-bucket/*"
       RouteTableIds:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppRouteTableId"
+            Fn::Sub: "fit-track-${Environment}-network-AppRouteTableId"
       Tags:
         - Key: Name
           Value: !Sub fit-track-${Environment}-vpce-s3-eu-central-1

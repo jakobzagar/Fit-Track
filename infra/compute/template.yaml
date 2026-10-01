@@ -8,12 +8,6 @@ Parameters:
     Default: prod
     AllowedValues:
       - prod
-  NetworkStackName:
-    Type: String
-    Description: Name of the deployed network stack.
-  EndpointsStackName:
-    Type: String
-    Description: Name of the deployed VPC endpoints stack.
   InstanceType:
     Type: String
     Description: EC2 instance type.
@@ -80,7 +74,7 @@ Resources:
       GroupDescription: ECS container instance network access in private application subnets.
       VpcId:
         Fn::ImportValue:
-          Fn::Sub: "${NetworkStackName}-VpcId"
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
       Tags:
         - Key: Name
           Value: !Sub fit-track-${Environment}-ecs-instance-sg-eu-central-1
@@ -97,7 +91,7 @@ Resources:
       Description: Allow ECS instances to connect to interface endpoints over HTTPS.
       GroupId:
         Fn::ImportValue:
-          Fn::Sub: "${EndpointsStackName}-InterfaceEndpointsSecurityGroupId"
+          Fn::Sub: "fit-track-${Environment}-endpoints-InterfaceEndpointsSecurityGroupId"
       IpProtocol: tcp
       FromPort: 443
       ToPort: 443
@@ -184,9 +178,9 @@ Resources:
           PropagateAtLaunch: true
       VPCZoneIdentifier:
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz1Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
         - Fn::ImportValue:
-            Fn::Sub: "${NetworkStackName}-AppSubnetAz2Id"
+            Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
     UpdatePolicy:
       AutoScalingInstanceRefresh:
         Strategy: Rolling
