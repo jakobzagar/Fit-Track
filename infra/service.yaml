@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack ECS backend and migration tasks, execution roles, and runtime secrets.
+Description: FitTrack ECS backend service, migration task, IAM roles, runtime secrets, and task networking.
 
 Parameters:
   Environment:
@@ -8,6 +8,18 @@ Parameters:
     Default: prod
     AllowedValues:
       - prod
+
+  BackendDesiredCount:
+    Type: Number
+    Default: 2
+    MinValue: 0
+    Description: Number of backend tasks; use zero for bootstrap and at least two for multi-AZ operation.
+  BackendHealthCheckGracePeriodSeconds:
+    Type: Number
+    Default: 60
+    MinValue: 0
+    MaxValue: 300
+    Description: Startup grace period before ECS acts on unhealthy backend health checks.
 
   BackendImageDigest:
     Type: String
@@ -47,6 +59,12 @@ Parameters:
     Default: 512
     AllowedValues: [512, 1024, 2048]
     Description: Hard memory limit for the migration task in MiB.
+
+Rules:
+  BackendMultiAzDesiredCount:
+    Assertions:
+      - Assert: !Not [!Equals [!Ref BackendDesiredCount, "1"]]
+        AssertDescription: Use zero backend tasks for bootstrap or at least two for multi-AZ operation.
 
 Resources:
   BackendSecret:
@@ -333,9 +351,71 @@ Resources:
         Fn::ImportValue: !Sub "fit-track-${Environment}-ingress-AlbSecurityGroupId"
 
   BackendService:
-    Type: AWS::
+    Type: AWS::ECS::Service
+    DependsOn:
+      - BackendTaskSecurityGroupIngressFromAlb
+    Properties:
+      ServiceName: !Sub fit-track-${Environment}-backend-service-eu-central-1
+      Cluster:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-compute-EcsClusterArn"
+      TaskDefinition: !Ref BackendTaskDefinition
+      CapacityProviderStrategy:
+        - CapacityProvider:
+            Fn::ImportValue: !Sub "fit-track-${Environment}-compute-EcsCapacityProviderName"
+          Weight: 1
+      DesiredCount: !Ref BackendDesiredCount
+      SchedulingStrategy: REPLICA
+      AvailabilityZoneRebalancing: ENABLED
+      PlacementStrategies:
+        - Type: spread
+          Field: attribute:ecs.availability-zone
+        - Type: binpack
+          Field: memory
+      DeploymentController:
+        Type: ECS
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 150
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      HealthCheckGracePeriodSeconds: !Ref BackendHealthCheckGracePeriodSeconds
+      EnableECSManagedTags: true
+      PropagateTags: SERVICE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets:
+            - Fn::ImportValue: !Sub "fit-track-${Environment}-network-AppSubnetAz1Id"
+            - Fn::ImportValue: !Sub "fit-track-${Environment}-network-AppSubnetAz2Id"
+          SecurityGroups:
+            - !GetAtt BackendTaskSecurityGroup.GroupId
+      LoadBalancers:
+        - TargetGroupArn:
+            Fn::ImportValue: !Sub "fit-track-${Environment}-ingress-BackendTargetGroupArn"
+          ContainerName: backend
+          ContainerPort: 3001
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-backend-service-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
 
 Outputs:
+  BackendServiceArn:
+    Description: ARN of the backend ECS service.
+    Value: !Ref BackendService
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendServiceArn"
+  BackendServiceName:
+    Description: Name of the backend ECS service for deployments and operations.
+    Value: !GetAtt BackendService.Name
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendServiceName"
   BackendTaskSecurityGroupId:
     Description: ID of the backend task security group for ECS service network configuration.
     Value: !GetAtt BackendTaskSecurityGroup.GroupId

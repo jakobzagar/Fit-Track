@@ -111,24 +111,24 @@ Outputs:
     Description: ID of the ALB security group for backend task traffic rules.
     Value: !GetAtt AlbSecurityGroup.GroupId
     Export:
-      Name: !Sub "${AWS::StackName}-AlbSecurityGroupId"
+      Name: !Sub "fit-track-${Environment}-ingress-AlbSecurityGroupId"
   AlbArn:
     Description: ARN of the Application Load Balancer.
     Value: !Ref Alb
     Export:
-      Name: !Sub "${AWS::StackName}-AlbArn"
+      Name: !Sub "fit-track-${Environment}-ingress-AlbArn"
   AlbDnsName:
     Description: ALB DNS name for the CloudFront HTTP origin.
     Value: !GetAtt Alb.DNSName
     Export:
-      Name: !Sub "${AWS::StackName}-AlbDnsName"
+      Name: !Sub "fit-track-${Environment}-ingress-AlbDnsName"
   BackendTargetGroupArn:
     Description: Backend IP target group ARN for the ECS service load balancer configuration.
     Value: !Ref BackendTargetGroup
     Export:
-      Name: !Sub "${AWS::StackName}-BackendTargetGroupArn"
+      Name: !Sub "fit-track-${Environment}-ingress-BackendTargetGroupArn"
   AlbHttpListenerArn:
     Description: ARN of the HTTP listener forwarding to the backend target group.
     Value: !Ref AlbHttpListener
     Export:
-      Name: !Sub "${AWS::StackName}-AlbHttpListenerArn"
+      Name: !Sub "fit-track-${Environment}-ingress-AlbHttpListenerArn"

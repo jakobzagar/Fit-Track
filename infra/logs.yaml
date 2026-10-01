@@ -47,19 +47,19 @@ Outputs:
     Description: Name of the backend log group for the ECS task definition.
     Value: !Ref BackendLogGroup
     Export:
-      Name: !Sub "${AWS::StackName}-BackendLogGroupName"
+      Name: !Sub "fit-track-${Environment}-logs-BackendLogGroupName"
   BackendLogGroupArn:
     Description: Log group ARN, including the stream wildcard, for scoped IAM permissions.
     Value: !GetAtt BackendLogGroup.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-BackendLogGroupArn"
+      Name: !Sub "fit-track-${Environment}-logs-BackendLogGroupArn"
   MigrationLogGroupName:
     Description: Name of the migration log group for the ECS task definition.
     Value: !Ref MigrationLogGroup
     Export:
-      Name: !Sub "${AWS::StackName}-MigrationLogGroupName"
+      Name: !Sub "fit-track-${Environment}-logs-MigrationLogGroupName"
   MigrationLogGroupArn:
     Description: Migration log group ARN, including the stream wildcard, for scoped IAM permissions.
     Value: !GetAtt MigrationLogGroup.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-MigrationLogGroupArn"
+      Name: !Sub "fit-track-${Environment}-logs-MigrationLogGroupArn"
