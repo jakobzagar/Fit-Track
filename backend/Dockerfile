@@ -94,6 +94,7 @@ ENV NODE_ENV=production
 
 COPY --from=production-dependencies /user/src/app/package.json ./package.json
 COPY --from=production-dependencies /user/src/app/node_modules ./node_modules
+COPY --from=production-dependencies /user/src/app/backend/node_modules ./backend/node_modules
 
 COPY --from=build /user/src/app/shared/package.json ./shared/package.json
 COPY --from=build /user/src/app/shared/dist ./shared/dist
