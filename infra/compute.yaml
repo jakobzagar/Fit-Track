@@ -244,24 +244,24 @@ Outputs:
     Description: Name of the ECS cluster for service stacks.
     Value: !Ref EcsCluster
     Export:
-      Name: !Sub "${AWS::StackName}-EcsClusterName"
+      Name: !Sub "fit-track-${Environment}-compute-EcsClusterName"
   EcsClusterArn:
     Description: ARN of the ECS cluster for service stacks.
     Value: !GetAtt EcsCluster.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-EcsClusterArn"
+      Name: !Sub "fit-track-${Environment}-compute-EcsClusterArn"
   EcsCapacityProviderName:
     Description: Name of the ECS capacity provider associated with the cluster.
     Value: !Ref EcsCapacityProvider
     Export:
-      Name: !Sub "${AWS::StackName}-EcsCapacityProviderName"
+      Name: !Sub "fit-track-${Environment}-compute-EcsCapacityProviderName"
   EcsInstanceSecurityGroupId:
     Description: Security group ID for ECS container instances.
     Value: !GetAtt EcsInstanceSecurityGroup.GroupId
     Export:
-      Name: !Sub "${AWS::StackName}-EcsInstanceSecurityGroupId"
+      Name: !Sub "fit-track-${Environment}-compute-EcsInstanceSecurityGroupId"
   EcsAutoScalingGroupName:
     Description: Name of the EC2 Auto Scaling group providing ECS capacity.
     Value: !Ref Ec2AutoScalingGroup
     Export:
-      Name: !Sub "${AWS::StackName}-EcsAutoScalingGroupName"
+      Name: !Sub "fit-track-${Environment}-compute-EcsAutoScalingGroupName"

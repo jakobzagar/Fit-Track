@@ -33,7 +33,7 @@
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "infra:format:check": "prettier --check infra",
-        "infra:lint": "cfn-lint --regions eu-central-1 -- infra/*/*.yaml",
+        "infra:lint": "cfn-lint --regions eu-central-1 -- infra/*.yaml",
         "infra:check": "npm run infra:format:check && npm run infra:lint",
         "actions:lint": "actionlint",
         "actions:list": "act --list",

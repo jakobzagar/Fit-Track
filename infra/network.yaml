@@ -239,76 +239,76 @@ Outputs:
     Description: Availability Zone ID used by the AZ 1 subnets.
     Value: euc1-az1
     Export:
-      Name: !Sub "${AWS::StackName}-AvailabilityZoneAz1Id"
+      Name: !Sub "fit-track-${Environment}-network-AvailabilityZoneAz1Id"
 
   AvailabilityZoneAz2Id:
     Description: Availability Zone ID used by the AZ 2 subnets.
     Value: euc1-az2
     Export:
-      Name: !Sub "${AWS::StackName}-AvailabilityZoneAz2Id"
+      Name: !Sub "fit-track-${Environment}-network-AvailabilityZoneAz2Id"
 
   VpcId:
     Description: ID of the application VPC.
     Value: !Ref FitTrackVpc
     Export:
-      Name: !Sub "${AWS::StackName}-VpcId"
+      Name: !Sub "fit-track-${Environment}-network-VpcId"
 
   VpcCidrBlock:
     Description: IPv4 CIDR block of the application VPC.
     Value: !GetAtt FitTrackVpc.CidrBlock
     Export:
-      Name: !Sub "${AWS::StackName}-VpcCidrBlock"
+      Name: !Sub "fit-track-${Environment}-network-VpcCidrBlock"
 
   PublicSubnetAz1Id:
     Description: Public subnet ID in eu-central-1 AZ 1 for the internet-facing ALB.
     Value: !Ref PublicSubnetAz1
     Export:
-      Name: !Sub "${AWS::StackName}-PublicSubnetAz1Id"
+      Name: !Sub "fit-track-${Environment}-network-PublicSubnetAz1Id"
 
   PublicSubnetAz2Id:
     Description: Public subnet ID in eu-central-1 AZ 2 for the internet-facing ALB.
     Value: !Ref PublicSubnetAz2
     Export:
-      Name: !Sub "${AWS::StackName}-PublicSubnetAz2Id"
+      Name: !Sub "fit-track-${Environment}-network-PublicSubnetAz2Id"
 
   AppSubnetAz1Id:
     Description: Private application subnet ID in eu-central-1 AZ 1.
     Value: !Ref AppSubnetAz1
     Export:
-      Name: !Sub "${AWS::StackName}-AppSubnetAz1Id"
+      Name: !Sub "fit-track-${Environment}-network-AppSubnetAz1Id"
 
   AppSubnetAz2Id:
     Description: Private application subnet ID in eu-central-1 AZ 2.
     Value: !Ref AppSubnetAz2
     Export:
-      Name: !Sub "${AWS::StackName}-AppSubnetAz2Id"
+      Name: !Sub "fit-track-${Environment}-network-AppSubnetAz2Id"
 
   DbSubnetAz1Id:
     Description: Private database subnet ID in eu-central-1 AZ 1.
     Value: !Ref DbSubnetAz1
     Export:
-      Name: !Sub "${AWS::StackName}-DbSubnetAz1Id"
+      Name: !Sub "fit-track-${Environment}-network-DbSubnetAz1Id"
 
   DbSubnetAz2Id:
     Description: Private database subnet ID in eu-central-1 AZ 2.
     Value: !Ref DbSubnetAz2
     Export:
-      Name: !Sub "${AWS::StackName}-DbSubnetAz2Id"
+      Name: !Sub "fit-track-${Environment}-network-DbSubnetAz2Id"
 
   PublicRouteTableId:
     Description: Public route table ID associated with both public subnets.
     Value: !Ref PublicRouteTable
     Export:
-      Name: !Sub "${AWS::StackName}-PublicRouteTableId"
+      Name: !Sub "fit-track-${Environment}-network-PublicRouteTableId"
 
   AppRouteTableId:
     Description: Private application route table associated with both application subnets.
     Value: !Ref AppRouteTable
     Export:
-      Name: !Sub "${AWS::StackName}-AppRouteTableId"
+      Name: !Sub "fit-track-${Environment}-network-AppRouteTableId"
 
   DbRouteTableId:
     Description: Private database route table associated with both database subnets.
     Value: !Ref DbRouteTable
     Export:
-      Name: !Sub "${AWS::StackName}-DbRouteTableId"
+      Name: !Sub "fit-track-${Environment}-network-DbRouteTableId"
