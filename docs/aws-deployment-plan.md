@@ -7,7 +7,7 @@ Planned resources, configured resources, and independently verified settings are
 ## Goals and constraints
 
 - The initial scope is one production environment; staging is deferred.
-- DNS remains with the current domain provider; Route 53 is excluded.
+- No custom domain is configured; the initial public entry point will use the default CloudFront hostname. Route 53 is excluded.
 - Resources remain private unless public access is required for the ALB or CloudFront.
 - Continuously billed resources should not remain idle during learning or long pauses. The app is unavailable when its runtime is stopped or deleted.
 - CloudFormation templates are stored under `infra/`; stacks are deployed and inspected through CloudFormation. Actual outcomes and verification are recorded in this document.
@@ -27,17 +27,16 @@ npm run infra:check
 
 ```mermaid
 flowchart LR
-    Browser[Browser] --> DNS[Existing DNS provider]
-    DNS --> CF[CloudFront]
+    Browser[Browser] -->|HTTPS| CF[CloudFront]
     CF -->|Default behavior| S3[(Private S3 frontend)]
-    CF -->|/api and /api/*| ALB[Application Load Balancer]
+    CF -->|HTTP; /api and /api/*| ALB[Application Load Balancer]
     ALB --> ECS[ECS backend tasks on EC2]
     ECS --> RDS[(Private RDS PostgreSQL)]
     ECS --> CW[CloudWatch Logs]
     EC2[Private EC2 capacity] -->|ECR, ECS, SSM, Secrets Manager and CloudWatch Logs APIs| VPCE[VPC endpoints]
 ```
 
-The static frontend is planned for a private S3 bucket served through CloudFront. CloudFront forwards `/api` and `/api/*` to an internet-facing Application Load Balancer. The ALB routes requests to healthy ECS backend tasks running on EC2 capacity in private application subnets. The backend connects to private RDS PostgreSQL and sends structured logs to CloudWatch. Private EC2 instances use only the VPC endpoints needed for AWS service access; no NAT Gateway is planned. DNS remains with the current provider and points the application hostname to CloudFront.
+The static frontend is planned for a private S3 bucket served through CloudFront. CloudFront forwards `/api` and `/api/*` to an internet-facing Application Load Balancer. The ALB routes requests to healthy ECS backend tasks running on EC2 capacity in private application subnets. The backend connects to private RDS PostgreSQL and sends structured logs to CloudWatch. Private EC2 instances use only the VPC endpoints needed for AWS service access; no NAT Gateway is planned. The initial public entry point uses the AWS-provided CloudFront hostname over HTTPS. CloudFront connects to the ALB DNS name over HTTP on port 80; this hop is unencrypted.
 
 ## Architecture decisions
 
@@ -48,15 +47,15 @@ The static frontend is planned for a private S3 bucket served through CloudFront
 | Internet egress      | No NAT Gateway; private ECR, ECS, Systems Manager, Secrets Manager, CloudWatch Logs, and S3 endpoint templates                                                             | Templates drafted; not deployed; AWS resources not verified                                 |
 | Network ACL          | Keep the default NACL initially; control workload access with security groups                                                                                              | Planned                                                                                     |
 | Frontend             | Private S3 origin with CloudFront Origin Access Control                                                                                                                    | Planned                                                                                     |
-| API entry            | Application Load Balancer (ELB) in public subnets                                                                                                                          | Planned                                                                                     |
+| API entry            | Application Load Balancer (ELB) in public subnets                                                                                                                          | Ingress template drafted; not deployed or AWS-verified                                      |
 | Backend              | ECS service using EC2 capacity in private application subnets                                                                                                              | Compute and service stack templates drafted; service incomplete and not deployed            |
 | Container images     | Private backend and migration repositories; BASIC scan-on-push on `fit-track-prod-*`; immutable SHA/version tags with mutable `main` and `latest` tags                     | ECR template drafted; not deployed; registry settings not verified                          |
 | Database             | RDS for PostgreSQL, initially Single-AZ, with a DB subnet group spanning both AZs                                                                                          | Planned                                                                                     |
 | Logs                 | ECS `awslogs` driver sends backend stdout/stderr to CloudWatch Logs; `/fit-track/prod/backend`, 30-day retention, AWS-managed encryption                                   | Logs group and endpoint templates drafted; backend task definition drafted; service pending |
-| DNS                  | Existing provider; no Route 53 hosted zone                                                                                                                                 | Decided                                                                                     |
+| DNS                  | Default CloudFront hostname; no custom domain or Route 53 hosted zone                                                                                                      | Decided                                                                                     |
 | Environment sequence | Production first; staging deferred                                                                                                                                         | Decided                                                                                     |
 
-The CloudFront viewer certificate must use ACM in `us-east-1`; certificates for regional services use the service's region. Record certificate and DNS validation details here when configured.
+The default CloudFront hostname uses the AWS-provided viewer certificate; no custom ACM certificate is required. The ALB uses HTTP and has no certificate. If a custom domain is added later, CloudFront viewer certificates must use ACM in `us-east-1`, and an HTTPS ALB listener requires a certificate in `eu-central-1`.
 
 ## Network foundation template
 
@@ -175,6 +174,27 @@ The stack exports `BackendLogGroupName` for `awslogs-group` and `BackendLogGroup
 | `MigrationLogGroupName` | Same as logical ID | Migration task definition's `awslogs-group` option.                                |
 | `MigrationLogGroupArn`  | Same as logical ID | Migration execution role's log stream permissions.                                 |
 
+## ALB ingress template
+
+`infra/ingress/template.yaml` defines the ALB, HTTP listener, and target group for stack `fit-track-prod-ingress`. It imports the VPC ID and both public subnet IDs from `fit-track-${Environment}-network`. The HTTP listener on port 80 forwards requests to `BackendTargetGroup`. No certificate ARN, TLS policy, or ACM resource is configured. The future CloudFront custom origin will use `AlbDnsName` with `OriginProtocolPolicy: http-only` and HTTP port 80; viewers will use HTTPS with the default CloudFront certificate. The security group, CloudFront access restrictions, and ECS service association are not yet configured. If deployed without an explicit security group, AWS assigns the VPC default security group; a dedicated ALB security group must be added before enabling request routing.
+
+| Logical resource ID  | Physical name or Name tag                                                                    | Configuration and connections                                                                                                                                                                                                                                                         | Tags                                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `Alb`                | `fit-track-prod-alb-eu-central-1`                                                            | Internet-facing IPv4 Application Load Balancer in both public subnets; invalid header fields dropped; defensive desync mitigation; cross-zone routing enabled by default.                                                                                                             | `Name`, `Environment=prod`, `Project=fit-track`, `Component=ingress`. |
+| `BackendTargetGroup` | Physical name `fit-track-prod-backend-tg`; Name tag `fit-track-prod-backend-tg-eu-central-1` | HTTP 3001; target type `ip`; readiness path `/api/health/ready`, success code 200; interval 30 seconds, timeout 5 seconds, healthy threshold 2, unhealthy threshold 3; deregistration delay 30 seconds. No static targets. Physical name is shortened to meet the 32-character limit. | Standard ingress tags.                                                |
+| `AlbHttpListener`    | AWS-generated ARN                                                                            | HTTP 80; no certificate; default action forwards to `BackendTargetGroup`.                                                                                                                                                                                                             | No explicit tags configured.                                          |
+
+The target group is attached to `AlbHttpListener`; it is not yet attached to an ECS service. The future ECS service associates it with container `backend`, port 3001. ECS registers task private IP addresses as targets and removes them as tasks stop. Migration tasks are not registered. See [ECS ALB integration](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/alb.html).
+
+| Output logical ID       | Export suffix      | Consumer                                                          |
+| ----------------------- | ------------------ | ----------------------------------------------------------------- |
+| `AlbArn`                | Same as logical ID | Listener association and ALB identification.                      |
+| `AlbDnsName`            | Same as logical ID | CloudFront custom origin domain name.                             |
+| `BackendTargetGroupArn` | Same as logical ID | HTTP listener and future ECS service load balancer configuration. |
+| `AlbHttpListenerArn`    | Same as logical ID | HTTP listener identification and future rule configuration.       |
+
+Verification: `npm run infra:check` passes local formatting and CloudFormation schema validation for `eu-central-1`. The stack has not been deployed; subnet placement and AWS resource creation have not been verified. The HTTP listener has not been AWS-verified. Request routing and target health cannot be verified until security groups and the ECS service are configured. ALB runtime charges apply when deployed, including when no targets are registered.
+
 ## ECS service template
 
 `infra/service/template.yaml` defines stack `fit-track-prod-service`. It defines two empty runtime secrets, backend and migration execution roles, a backend task definition, and a one-off migration task definition. The secrets are named `fit-track/prod/backend` and `fit-track/prod/migration`; their values are deliberately omitted from CloudFormation and must be added through Secrets Manager after the stack is deployed, before starting tasks. Both JSON secrets use the key `DATABASE_URL` for the same database and endpoint, with separate database users: the backend user has application data permissions, while the migration user has schema migration permissions. Database users and grants are not created by this service template. Store only sensitive production values needed by the backend in the JSON secret; supply ordinary runtime configuration as ECS environment variables. Do not copy local `.env` files or frontend build variables into this secret. Database credential handling depends on the selected RDS authentication method. Both task definitions are configured in the template; the ECS service remains pending.
@@ -189,7 +209,7 @@ The backend execution role imports `EcrBackendRepositoryArn` and `BackendLogGrou
 
 The backend task uses family `fit-track-prod-backend-eu-central-1`, container `backend`, and Name tag `fit-track-prod-backend-task-definition-eu-central-1`, with the standard service tags. It imports the backend ECR repository URI and pins `BackendImageDigest`. `BackendCpu` and `BackendMemory` default to 256 CPU units and 512 MiB; these are provisional until measured. It uses Linux x86 EC2 capacity and `awsvpc`, exposes TCP port 3001, retains the image's non-root user and Node startup command, enables an init process, and allows 30 seconds to stop (the application shutdown deadline is 10 seconds).
 
-The backend secret requires `DATABASE_URL` and a `JWT_SECRET` of at least 32 characters. Non-sensitive settings are supplied through environment variables: `NODE_ENV=production`, `PORT=3001`, `LOG_LEVEL=info`, required HTTPS `ClientOrigin`, and `TrustProxyHops` (default 2 for CloudFront → ALB → backend). The current application defaults remain in effect for database pool settings. Validate proxy trust against the deployed path and restrict direct ALB/backend access before accepting the default; the ingress stack is not yet configured. Both database connections require production TLS configuration; certificate packaging and AWS connectivity remain unverified.
+The backend secret requires `DATABASE_URL` and a `JWT_SECRET` of at least 32 characters. Non-sensitive settings are supplied through environment variables: `NODE_ENV=production`, `PORT=3001`, `LOG_LEVEL=info`, required HTTPS `ClientOrigin`, and `TrustProxyHops` (default 2 for CloudFront → ALB → backend). The current application defaults remain in effect for database pool settings. Validate proxy trust against the deployed path and restrict direct ALB/backend access before accepting the default; ingress security groups and CloudFront access restrictions are not yet configured. Both database connections require production TLS configuration; certificate packaging and AWS connectivity remain unverified.
 
 ECS explicitly checks `/api/health/live` using the image's existing Node command (30-second interval, 5-second timeout, 10-second start period, three retries). The future ALB target group should check `/api/health/ready` to include database readiness. Backend logging uses the `backend` stream prefix and non-blocking delivery with a 1 MiB buffer to keep the API responsive during log delivery failures; logs can be dropped if the buffer fills. Migration logging remains blocking. Subnets, task security groups, service desired count, and ALB attachment belong to the future ECS service configuration. See [AWS EC2 task definition parameters](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters_ec2.html).
 
@@ -217,7 +237,7 @@ Run the migration through ECS `RunTask` with the existing EC2 capacity provider,
 
 Local verification: `npm run infra:check` passes formatting and CloudFormation schema validation for `eu-central-1`. Task execution, database connectivity, TLS, permissions, and resource sizing have not been verified in AWS.
 
-All six templates are drafts only. `npm run infra:check` validates their local formatting and CloudFormation schema; no AWS resources have been independently verified.
+All seven templates are drafts only. `npm run infra:check` validates their local formatting and CloudFormation schema; no AWS resources have been independently verified.
 
 ## Cost and lifecycle direction
 
