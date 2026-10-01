@@ -10,6 +10,33 @@ Parameters:
       - prod
 
 Resources:
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: HTTP access from CloudFront to the application load balancer.
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "fit-track-${Environment}-network-VpcId"
+      SecurityGroupIngress:
+        - Description: HTTP from CloudFront origin-facing servers.
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourcePrefixListId: pl-a3a144ca
+      SecurityGroupEgress:
+        - Description: Allow all outbound IPv4 traffic.
+          IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-alb-sg-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: ingress
+
   Alb:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -17,6 +44,8 @@ Resources:
       Type: application
       Scheme: internet-facing
       IpAddressType: ipv4
+      SecurityGroups:
+        - !GetAtt AlbSecurityGroup.GroupId
       Subnets:
         - Fn::ImportValue: !Sub "fit-track-${Environment}-network-PublicSubnetAz1Id"
         - Fn::ImportValue: !Sub "fit-track-${Environment}-network-PublicSubnetAz2Id"
@@ -78,6 +107,11 @@ Resources:
           Value: ingress
 
 Outputs:
+  AlbSecurityGroupId:
+    Description: ID of the ALB security group for backend task traffic rules.
+    Value: !GetAtt AlbSecurityGroup.GroupId
+    Export:
+      Name: !Sub "${AWS::StackName}-AlbSecurityGroupId"
   AlbArn:
     Description: ARN of the Application Load Balancer.
     Value: !Ref Alb

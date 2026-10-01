@@ -301,7 +301,44 @@ Resources:
         - Key: Component
           Value: service
 
+  BackendTaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Backend task HTTP access from the application load balancer.
+      VpcId:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-network-VpcId"
+      SecurityGroupEgress:
+        - Description: Allow all outbound IPv4 traffic.
+          IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-backend-task-sg-eu-central-1
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+  BackendTaskSecurityGroupIngressFromAlb:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Backend HTTP and readiness health checks from the ALB.
+      GroupId: !GetAtt BackendTaskSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 3001
+      ToPort: 3001
+      SourceSecurityGroupId:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-ingress-AlbSecurityGroupId"
+
+  BackendService:
+    Type: AWS::
+
 Outputs:
+  BackendTaskSecurityGroupId:
+    Description: ID of the backend task security group for ECS service network configuration.
+    Value: !GetAtt BackendTaskSecurityGroup.GroupId
   BackendSecretArn:
     Description: ARN of the backend runtime secret.
     Value: !Ref BackendSecret
