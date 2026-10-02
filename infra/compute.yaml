@@ -8,6 +8,11 @@ Parameters:
     Default: prod
     AllowedValues:
       - prod
+  CapacityMode:
+    Type: String
+    Default: bootstrap
+    AllowedValues: [bootstrap, active]
+    Description: Create with bootstrap to associate an empty ASG; update to active before running tasks.
   InstanceType:
     Type: String
     Description: EC2 instance type.
@@ -19,7 +24,7 @@ Parameters:
     Type: Number
     Default: 2
     MinValue: 2
-    Description: Initial and minimum multi-AZ EC2 capacity for the ECS cluster.
+    Description: Initial EC2 capacity in active mode; must be between MinSize and MaxSize.
   MaxSize:
     Type: Number
     Default: 3
@@ -29,11 +34,14 @@ Parameters:
     Type: Number
     Default: 2
     MinValue: 2
-    Description: Minimum number of EC2 instances available to ECS capacity scaling.
+    Description: Minimum EC2 capacity in active mode; bootstrap uses zero.
   EcsOptimizedAmiId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
     Description: Recommended Amazon Linux 2023 ECS-optimized AMI ID from Parameter Store.
+
+Conditions:
+  BootstrapCapacity: !Equals [!Ref CapacityMode, bootstrap]
 
 Resources:
   EcsInstanceRole:
@@ -154,12 +162,12 @@ Resources:
       AutoScalingGroupName: !Sub fit-track-${Environment}-ecs-asg-${AWS::Region}
       AvailabilityZoneDistribution:
         CapacityDistributionStrategy: balanced-best-effort
-      DesiredCapacity: !Ref DesiredCapacity
+      DesiredCapacity: !If [BootstrapCapacity, 0, !Ref DesiredCapacity]
       LaunchTemplate:
         LaunchTemplateId: !Ref Ec2InstanceLaunchTemplate
         Version: !GetAtt Ec2InstanceLaunchTemplate.LatestVersionNumber
       MaxSize: !Ref MaxSize
-      MinSize: !Ref MinSize
+      MinSize: !If [BootstrapCapacity, 0, !Ref MinSize]
       NewInstancesProtectedFromScaleIn: true
       TerminationPolicies:
         - OldestInstance

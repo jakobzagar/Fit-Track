@@ -22,7 +22,7 @@ A valid creation order is:
 
 1. `network`, `ecr`, and `logs` (independent stacks).
 2. `endpoints` and `ingress` after `network`.
-3. `compute` after `endpoints`; `frontend` after `ingress`.
+3. `compute` after `endpoints`, created with `CapacityMode=bootstrap`; `frontend` after `ingress`. Activate the completed compute stack with `CapacityMode=active` and verify instance registration before running tasks, following the linked AWS bootstrap procedure.
 4. `service` after `network`, `compute`, `ingress`, `ecr`, and `logs`, initially with `BackendDesiredCount=0`.
 5. `database` after `service`, because its security group imports the service task security group.
 
