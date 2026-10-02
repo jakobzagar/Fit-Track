@@ -1,0 +1,210 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack private frontend S3 origin and CloudFront distribution with backend API routing.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+Resources:
+  CfOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Description: Signed CloudFront access to the private FitTrack frontend S3 origin.
+        Name: !Sub fit-track-${Environment}-cf-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !GetAtt FrontendBucket.Arn
+              - !Sub "${FrontendBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${CfDistribution}"
+
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub fit-track-${Environment}-frontend-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-previous-versions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-frontend-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: frontend
+
+  FrontendCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub fit-track-${Environment}-frontend-cache
+        Comment: Respect frontend cache metadata without forcing stale HTML caching.
+        MinTTL: 0
+        DefaultTTL: 0
+        MaxTTL: 86400
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+
+  CfDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: !Sub FitTrack ${Environment} frontend and backend API.
+        Enabled: true
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        DefaultCacheBehavior:
+          TargetOriginId: frontend-s3
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          CachePolicyId: !Ref FrontendCachePolicy
+        CacheBehaviors:
+          - PathPattern: /api
+            TargetOriginId: backend-alb
+            ViewerProtocolPolicy: https-only
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            # AWS-managed CachingDisabled and AllViewer policies.
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3
+          - PathPattern: /api/*
+            TargetOriginId: backend-alb
+            ViewerProtocolPolicy: https-only
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            # AWS-managed CachingDisabled and AllViewer policies
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3
+          - PathPattern: /assets/*
+            TargetOriginId: frontend-s3
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            # AWS-managed CachingOptimized policy for hashed build assets.
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        Origins:
+          - Id: frontend-s3
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt CfOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+          - Id: backend-alb
+            DomainName:
+              Fn::ImportValue: !Sub "fit-track-${Environment}-ingress-AlbDnsName"
+            CustomOriginConfig:
+              HTTPPort: 80
+              OriginProtocolPolicy: http-only
+              OriginReadTimeout: 30
+              OriginKeepaliveTimeout: 5
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-cf-distribution
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: frontend
+
+Outputs:
+  FrontendBucketName:
+    Description: Name of the private frontend bucket for deployment uploads.
+    Value: !Ref FrontendBucket
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-FrontendBucketName"
+  FrontendBucketArn:
+    Description: ARN of the private frontend bucket for scoped IAM permissions.
+    Value: !GetAtt FrontendBucket.Arn
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-FrontendBucketArn"
+  FrontendBucketRegionalDomainName:
+    Description: Regional S3 REST endpoint for the CloudFront origin.
+    Value: !GetAtt FrontendBucket.RegionalDomainName
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-FrontendBucketRegionalDomainName"
+  CfOriginAccessControlId:
+    Description: OAC ID to associate with the CloudFront S3 origin.
+    Value: !GetAtt CfOriginAccessControl.Id
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-CfOriginAccessControlId"
+  CfDistributionId:
+    Description: Distribution ID for frontend deployments and invalidations.
+    Value: !Ref CfDistribution
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-CfDistributionId"
+  CfDistributionDomainName:
+    Description: Default CloudFront hostname serving the frontend and API.
+    Value: !GetAtt CfDistribution.DomainName
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-CfDistributionDomainName"
+  FrontendUrl:
+    Description: HTTPS application origin for the ECS ClientOrigin parameter.
+    Value: !Sub "https://${CfDistribution.DomainName}"
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-FrontendUrl"
