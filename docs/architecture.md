@@ -4,7 +4,7 @@ This document explains how FitTrack's backend, persistence, delivery-facing runt
 
 ## Architectural priorities
 
-FitTrack is intentionally backend-led. The React application proves the public HTTP Interface, but the authoritative behavior lives in the backend and PostgreSQL.
+FitTrack is intentionally backend-led. The React application proves the public HTTP interface, but the authoritative behavior lives in the backend and PostgreSQL.
 
 | Priority                    | Design response                                                                                                 |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -13,7 +13,7 @@ FitTrack is intentionally backend-led. The React application proves the public H
 | Reject contract drift       | Validate input at the backend and parse real responses through shared strict Zod schemas                        |
 | Expose safe runtime signals | Separate process liveness from database readiness and shut down gracefully on termination                       |
 | Verify deployable artifacts | Build non-root runtime images, isolate migrations, and smoke-test exact image digests before promotion          |
-| Keep claims evidence-based  | Separate implemented application behavior from unimplemented cloud infrastructure                               |
+| Keep claims evidence-based  | Separate implemented application behavior from infrastructure templates and unverified AWS runtime behavior     |
 
 ## Workspace responsibilities
 
@@ -60,7 +60,7 @@ The diagram shows the successful path for a protected feature request. Express r
 | Service         | Ownership rules → Prisma transaction when required               | Enforce domain rules and persist a consistent result                                   |
 | Final handler   | Not-found middleware → error middleware                          | Return stable responses for unknown routes and failures                                |
 
-Public health routes and login or registration omit JWT authentication. Health checks also bypass the general limiter so runtime probes remain independent of client traffic. Login and registration use their own endpoint rate limiters in addition to the general limiter.
+HTTP request logging runs before the middleware in the table. CORS preflight responses can complete before API no-store and rate limiting. Public health routes and login or registration omit JWT authentication. Health checks also bypass the general limiter so runtime probes remain independent of client traffic. Login and registration use their own endpoint rate limiters in addition to the general limiter.
 
 Shared Zod schemas validate input at the API boundary and successful responses at the frontend boundary. Inside the API, routes define middleware, controllers translate HTTP concerns, services contain lifecycle, ownership, and transaction rules, and Prisma owns persistence. The final not-found and error middleware convert unmatched routes, expected `AppError` instances, Prisma errors, malformed JSON, and unexpected failures into stable HTTP responses.
 
@@ -70,23 +70,23 @@ Backend modules live under `backend/src/modules/`. Every existing responsibility
 
 Frontend features live under `frontend/src/features/`. Feature APIs, hooks, pages, components, styles, utilities, and local tests stay together in responsibility directories. Workout exercise and set interactions live under `features/workouts/workout-exercises/` because they have no independent page or user flow outside a workout. Reusable primitives live under `frontend/src/components/`, separated into layout and UI responsibilities with tests under their owning component area.
 
-Shared domains follow the same convention with `schemas/` and `tests/` directories while preserving stable public package subpaths. The workout contract Implementation is split into workout, workout-exercise, and workout-set schema files, while `@fit-track/shared/workouts` is their single public Interface. Directories are created only for responsibilities that exist; entrypoints and conventional configuration files remain at their expected roots.
+Shared domains follow the same convention with `schemas/` and `tests/` directories while preserving stable public package subpaths. The workout contract implementation is split into workout, workout-exercise, and workout-set schema files, while `@fit-track/shared/workouts` is their single public interface. Directories are created only for responsibilities that exist; entrypoints and conventional configuration files remain at their expected roots.
 
 The same ownership model is visible in every workspace:
 
 ```text
-Workout Module
+Workout module
 ├── Workout
 ├── WorkoutExercise
 └── WorkoutSet
 
-shared/src/workouts/                              public contract Interface
-backend/src/modules/workouts/                     authoritative Implementation
-frontend/src/features/workouts/                   user-facing Implementation
+shared/src/workouts/                              public contract interface
+backend/src/modules/workouts/                     authoritative implementation
+frontend/src/features/workouts/                   user-facing implementation
 └── workout-exercises/                            nested exercise and set behavior
 ```
 
-The `Workout` Module is the external Seam because callers act on exercises and sets only in the context of an owned workout. A single shared Interface gives callers Leverage without exposing the schema file layout. Keeping routes, domain rules, UI flows, and tests near that Seam improves Locality: a nested-workout change has one predictable home in each workspace.
+Callers act on exercises and sets in the context of an owned workout. The shared workout entrypoint exposes their contracts without exposing the schema file layout. Routes, domain rules, UI flows, and tests have one predictable home in each workspace.
 
 ## PostgreSQL data model
 
@@ -207,15 +207,15 @@ The Express application also provides:
 
 - Helmet security headers;
 - credentialed CORS limited to `CLIENT_ORIGIN`;
-- `Cache-Control: no-store` on every API response so authenticated data, authentication results, and API errors are not retained by browsers or shared caches;
+- `Cache-Control: no-store` on API responses that continue past CORS preflight handling so authenticated data, authentication results, and API errors carry an explicit non-retention directive; cloud error-caching exceptions are documented in the AWS plan;
 - 100 KB JSON and form payload limits;
 - general, login, and registration rate limiters;
 - sanitized unexpected error responses;
 - an explicit `TRUST_PROXY_HOPS` count that defaults to no trusted proxy.
 
-The proxy count must match the only network path to the API because Express uses it to determine the client address from `X-Forwarded-For`. The development and production-smoke Compose stacks use one proxy hop; a directly started backend uses zero. Rate-limit counters currently use process memory. A multi-process runtime needs a shared store before treating those counters as global.
+The proxy count must match the only network path to the API because Express uses it to determine the client address from `X-Forwarded-For`. The development and production-smoke Compose stacks use one proxy hop; direct requests to Express use zero, while a directly started backend behind Vite uses one. Rate-limit counters currently use process memory. A multi-process runtime needs a shared store before treating those counters as global.
 
-The production frontend applies its browser security policy at the static-serving boundary. Its Content Security Policy permits only same-origin application resources and API connections, blocks embedding and plugins, and does not allow inline scripts. The synchronous theme initializer is therefore a normal static file loaded before the React bundle. Referrer, permissions, content-type, framing, and cross-origin isolation headers complement the CSP. Hashed Vite assets remain immutable for one year, while `index.html` and the stable theme initializer require revalidation. A different static-serving platform must preserve these header and cache policies; they are runtime controls and cannot be encoded reliably in the static files themselves.
+The production frontend applies its browser security policy at the static-serving boundary. Its Content Security Policy permits only same-origin application resources and API connections, blocks embedding and plugins, and does not allow inline scripts. The synchronous theme initializer is therefore a normal static file loaded before the React bundle. Referrer, permissions, content-type, framing, and cross-origin opener/resource policies complement the CSP. Hashed Vite assets remain immutable for one year, while `index.html` and the stable theme initializer require revalidation. A different static-serving platform must preserve these header and cache policies; they are runtime controls and cannot be encoded reliably in the static files themselves.
 
 ## Runtime lifecycle
 
@@ -228,21 +228,21 @@ On `SIGTERM` or `SIGINT`, the server stops accepting new connections, waits for 
 
 ## Failure and recovery behavior
 
-Failure behavior is part of each Module's Interface rather than an afterthought at deployment time.
+Failure behavior is part of each module's interface rather than an afterthought at deployment time.
 
 | Scenario                            | Implemented behavior                                                                                                     | Recovery owner                                               |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
 | Invalid request                     | Zod validation rejects the request before the controller and returns structured field or form errors                     | Caller corrects the request                                  |
 | Expired authenticated session       | The backend returns `401`; the reference client clears local session state and returns the user to sign-in               | User authenticates again                                     |
 | Ownership or nested-parent mismatch | The mutation is rejected without exposing or changing another user's resource                                            | Caller uses an owned resource                                |
-| Serializable transaction conflict   | The transaction Adapter retries a bounded number of times; exhaustion becomes a stable `503` response                    | Caller retries later                                         |
+| Serializable transaction conflict   | The transaction adapter retries a bounded number of times; exhaustion becomes a stable `503` response                    | Caller retries later                                         |
 | PostgreSQL unavailable              | Liveness remains independent, readiness returns `503`, and persistence-dependent requests fail through central handling  | Runtime platform withholds traffic and operators investigate |
 | Unexpected backend exception        | The client receives a sanitized error while structured logs retain request context without credentials or request bodies | Operator traces the request ID                               |
 | Process termination                 | The server stops accepting traffic, drains HTTP connections, disconnects Prisma, and force-closes after a timeout        | Runtime platform replaces or stops the process               |
 | Migration failure                   | The one-off migration process exits unsuccessfully; Compose does not start the dependent backend                         | Deployment must stop before application rollout              |
 | Container smoke failure             | The workflow does not promote the build digest to a moving or version tag                                                | Maintainer fixes the source or build configuration           |
 
-The repository implements the application and container behavior in this table. Automated cloud traffic shifting, alarms, backup recovery, and deployment rollback do not exist yet and remain responsibilities of the planned platform.
+The repository implements the application and container behavior in this table. AWS templates define ALB health routing, ECS deployment rollback, and RDS backups. Their runtime behavior and restore procedures remain unverified; deployment automation and alarms are not implemented.
 
 ## Structured logging
 
@@ -275,7 +275,7 @@ Completed workouts are immutable during normal editing. A deliberate reopen acti
 
 ### Separate migration image
 
-The runtime backend image contains only compiled application files and production dependencies. A separate migration image contains a minimal locked runtime with the Prisma CLI and `dotenv`, plus the Prisma configuration, schema, and committed migrations. It does not contain the backend build output, generated Prisma Client, shared workspace, or application dependencies. This increases the number of artifacts and introduces a second lockfile, but reduces migration-image transfer and attack surface while making schema changes an explicit one-off step rather than a side effect of every application start. Dependency alignment rules are recorded in the [dependency policy](dependency-audit.md).
+The runtime backend image contains compiled application files, the generated Prisma client, shared contracts, production dependencies, and the public RDS CA bundle. A separate migration image contains a minimal locked runtime with the Prisma CLI and `dotenv`, plus the Prisma configuration, schema, committed migrations, and public RDS CA bundle. It does not contain the backend build output, generated Prisma Client, shared workspace, or application dependencies. This increases the number of artifacts and introduces a second lockfile, but reduces migration-image transfer and attack surface while making schema changes an explicit one-off step rather than a side effect of every application start. Dependency alignment rules are recorded in the [dependency policy](dependency-audit.md).
 
 ### Protected integration branch
 
@@ -303,7 +303,7 @@ The backend passes bounded pool settings directly to the PostgreSQL driver adapt
 
 ## Local development without Docker
 
-Requirements are Node.js 24.21.x, npm 11.x, and a reachable PostgreSQL server. The manifests reject other Node major versions and unsupported npm major versions. CI and container builds use the npm release bundled with the selected official Node distribution, avoiding a redundant package-manager installation layer.
+Requirements are Node.js `>=24.21.0 <25`, npm `11.x`, and a reachable PostgreSQL server. The manifests reject other Node major versions and unsupported npm major versions. CI and container builds use the npm release bundled with the selected official Node distribution, avoiding a redundant package-manager installation layer.
 
 ```bash
 npm ci
@@ -311,7 +311,7 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-Set a valid PostgreSQL `DATABASE_URL`, strong `JWT_SECRET`, matching origin-only `CLIENT_ORIGIN`, and `TRUST_PROXY_HOPS=0` in `backend/.env`. Apply migrations from the repository root:
+Set a valid PostgreSQL `DATABASE_URL`, strong `JWT_SECRET`, matching origin-only `CLIENT_ORIGIN`, and `TRUST_PROXY_HOPS=1` in `backend/.env` when using the Vite `/api` proxy. Use `0` for requests sent directly to Express. Apply migrations from the repository root:
 
 ```bash
 npm exec --workspace @fit-track/backend -- prisma migrate deploy
@@ -330,7 +330,8 @@ The frontend requests relative `/api` paths. Vite forwards them to `API_PROXY_TA
 
 The repository's current production artifacts and planned AWS topology are summarized in the [AWS deployment plan](aws-deployment-plan.md).
 
-- The repository does not configure an external log aggregation, metrics, or distributed-tracing destination.
-- The repository publishes containers but does not include a platform deployment definition.
+- CloudFormation defines AWS infrastructure, including task log delivery, viewer HTTPS, secrets, and RDS backups; the stacks are not deployed or runtime-verified.
+- GitHub Actions publishes GHCR images; ECR publication, S3 uploads, and AWS rollout automation are not implemented.
 - Production containers are not started together by the normal fast verification command.
-- HTTPS termination, managed secrets, backup automation, monitoring, and deployment are not configured yet.
+- Metrics alarms, distributed tracing, and backup restore verification remain pending.
+- CloudFront-to-ALB HTTP is unencrypted; the AWS plan records this deployment boundary.

@@ -76,6 +76,8 @@ Keep the body current when the scope or validation changes. Dependabot and Relea
 | `fit-track-frontend`  | `production`  | Static React assets served by unprivileged Nginx         |
 | `fit-track-migration` | `migration`   | Minimal Prisma CLI runtime and committed migrations      |
 
+The current registry is GHCR: `ghcr.io/jakobzagar/<image-name>`. The AWS ECR repositories are defined separately; no workflow currently authenticates to AWS or publishes to ECR. The AWS frontend will use the static build in S3 rather than the Nginx image; that upload pipeline is also pending.
+
 Images are built for `linux/amd64` and `linux/arm64` with an SBOM and provenance attestation.
 
 Successful `main` builds publish:
@@ -100,7 +102,7 @@ Deploy each schema and application change in this order:
 2. smoke-test the exact image digests;
 3. run the migration image once with the target database connection;
 4. require a successful migration exit;
-5. deploy the matching backend and frontend digests;
+5. deploy the matching backend and frontend digests for the container deployment; the planned AWS frontend instead publishes the matching static build to S3;
 6. confirm backend readiness before routing traffic.
 
 Backend replicas never run migrations during startup. Changes that cannot tolerate old and new application revisions at the same time require an expand-and-contract migration across separate releases.
@@ -116,7 +118,7 @@ Release Please treats the monorepo as one versioned product. Conventional Commit
 
 The release pull request coordinates the root, backend, frontend, and shared package versions. Release Please owns the product versions, root lockfile entries, manifest, changelog, version tag, and GitHub Release. Do not edit those release artifacts manually during ordinary development.
 
-The first release is `v0.0.1`. The manifest records `0.0.1`, and subsequent proposals follow Conventional Commits normally. Release Please omits the component from Git tags so the tag consumed by the release-image workflow remains `vMAJOR.MINOR.PATCH`.
+The recorded initial release is `v0.0.1`. The manifest records `0.0.1`, and subsequent proposals follow Conventional Commits normally. Release Please omits the component from Git tags so the tag consumed by the release-image workflow remains `vMAJOR.MINOR.PATCH`.
 
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. This token allows Release Please-created pull requests and tags to trigger the repository workflows.
 

@@ -2,6 +2,8 @@
 
 This file records the supported dependency lines and update rules for the monorepo. Runtime responsibilities belong in the [architecture guide](architecture.md), and validation commands belong in the [testing guide](testing.md).
 
+The manifests define supported ranges; committed lockfiles record resolved npm versions. Image references are maintained in Dockerfiles, Compose files, and CI rather than duplicated here.
+
 ## Supported versions
 
 | Dependency          | Supported line  | Used for                                      |

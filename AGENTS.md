@@ -8,7 +8,7 @@ FitTrack is a TypeScript monorepo:
 - `backend/`: Express, Prisma, PostgreSQL, and API tests;
 - `shared/`: framework-independent Zod contracts used by both applications;
 - `backend/prisma/`: schema and append-only migrations;
-- `docs/`: architecture, testing, release, and planned deployment documentation.
+- `docs/`: architecture, testing, release, and deployment documentation;
 - `infra/`: AWS CloudFormation stacks, each in its own `infra/<stack-key>.yaml` file.
 
 Do not edit generated Prisma files under `backend/generated/`.
@@ -33,6 +33,7 @@ Never commit credentials, `.env` files, database dumps, generated secrets, or us
 | Browser end-to-end behavior or configuration | `npm run verify` and `npm run test:e2e`                                            |
 | Docker, Nginx, health checks, startup        | `npm run verify` and the production-container smoke procedure in `docs/testing.md` |
 | GitHub Actions workflow or local action      | `npm run actions:lint` plus the relevant repository checks                         |
+| CloudFormation templates                     | `npm run infra:check`, link/content review, and `git diff --check`                 |
 | Markdown or non-workflow YAML only           | Prettier on changed files, link/content review, and `git diff --check`             |
 
 Useful commands:
@@ -43,6 +44,7 @@ npm run test:docker
 npm run test:docker:down
 npm run test:e2e
 npm run actions:lint
+npm run infra:check
 ```
 
 `npm run verify` covers linting, type checking, formatting, fast tests, and builds without requiring PostgreSQL. `npm run test:docker` uses an isolated temporary PostgreSQL database. Never point integration tests at development or production data, and never claim a check passed when it was not run.
@@ -79,7 +81,7 @@ Detailed suite responsibilities and smoke commands belong in [docs/testing.md](d
 - Never log passwords, JWTs, cookies, authorization headers, secrets, or sensitive request bodies.
 - Keep liveness independent of external services and readiness dependent on PostgreSQL.
 - Keep container logs on standard output and error.
-- The current production frontend is Nginx and proxies `/api` to `backend:3001`. Changes to that contract, Docker stages, ports, health checks, or startup commands require production-container smoke validation and matching documentation.
+- The current production frontend image uses Nginx and proxies `/api` to `backend:3001`. Changes to that contract, Docker stages, ports, health checks, or startup commands require production-container smoke validation and matching documentation. The AWS frontend template uses S3 and CloudFront; its deployment state belongs in the AWS plan.
 - AWS implementation has begun. Use [docs/aws-deployment-plan.md](docs/aws-deployment-plan.md) as the single record of the architecture, decisions, implementation state, and verification. Keep proposed resources clearly marked as planned until they are created.
 
 Environment ownership is strict: `.env.dev` belongs to Docker Compose; `backend/.env` and `frontend/.env` belong to directly started processes. Their tracked `*.example` files are authoritative. Full environment rules belong in [docs/architecture.md](docs/architecture.md#environment-configuration).
