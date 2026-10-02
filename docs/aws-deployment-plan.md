@@ -285,10 +285,34 @@ This architecture cannot remain continuously available at zero cost. An ALB, run
 
 `RdsDatabase` uses identifier and Name tag `fit-track-prod-rds-eu-central-1`, database `fittrack`, port 5432, `db.t4g.micro` by default, and 20 GiB encrypted gp3 storage using the default RDS KMS key. It is not publicly accessible. `DatabaseEngineVersion` requires an explicit PostgreSQL 17 minor version; verify engine version and instance class availability in `eu-central-1` before deployment. Automatic minor upgrades are enabled; major upgrades are disabled. Storage autoscaling is not configured; monitor available storage before production use.
 
-`RdsParameterGroup` is named `fit-track-prod-rds-parameters-eu-central-1`, uses family `postgres17`, and sets `rds.force_ssl=1`. Clients must additionally verify the server certificate and hostname using the RDS CA bundle; TLS client configuration has not been implemented or verified. See [RDS PostgreSQL TLS guidance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html).
+`RdsParameterGroup` is named `fit-track-prod-rds-parameters-eu-central-1`, uses family `postgres17`, and sets `rds.force_ssl=1`. The backend and migration images include `backend/certs/eu-central-1-bundle.pem` at `/user/src/app/backend/certs/eu-central-1-bundle.pem`. Clients must verify the server certificate and hostname using this CA bundle; production secret configuration and an actual RDS connection remain unverified. See [RDS PostgreSQL TLS guidance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html).
 
 RDS generates and manages the `fittrack_admin` password in a separate Secrets Manager secret. This administrator credential is not injected into application tasks; create distinct backend and migration users and populate their existing secrets separately. The managed administrator secret adds Secrets Manager charges. See [RDS-managed password documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-secrets-manager.html).
 
 Backups are retained for seven days, snapshots copy resource tags, and automated backups are retained on deletion. Deletion and replacement take a snapshot; deletion protection must be disabled explicitly before deleting the instance or stack. Retained snapshots and backups can incur storage charges. Enhanced Monitoring and Performance Insights are disabled. Standard database tags apply to the instance and parameter group.
 
 The stack exports the endpoint, port, database name, and administrator secret ARN under `fit-track-${Environment}-database-<output-logical-ID>`. Do not import these exports into the service stack: database already imports the service task SG, so a reverse dependency would create a cycle. Populate runtime connection secrets outside CloudFormation. Local schema and formatting checks passed; AWS availability, database creation, TLS, user permissions, backups, and connectivity remain unverified.
+
+### Runtime database TLS configuration
+
+The public Frankfurt RDS CA bundle is versioned in `backend/certs/eu-central-1-bundle.pem` and copied into both production and migration images. It contains CA certificates, not private keys or application credentials. Update it from the [official RDS certificate bundles](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html) when required for certificate rotation.
+
+Populate the backend secret’s `DATABASE_URL` with the dedicated backend user and the actual RDS endpoint:
+
+```text
+postgresql://BACKEND_USER:URL_ENCODED_PASSWORD@RDS_ENDPOINT:5432/fittrack?sslmode=verify-full&sslrootcert=/user/src/app/backend/certs/eu-central-1-bundle.pem
+```
+
+The backend’s Prisma adapter uses node-postgres, which reads `sslrootcert` as the trusted CA and verifies the certificate and hostname with `sslmode=verify-full`. Do not add `sslcert` to this URL: node-postgres treats that parameter as a client certificate. See [node-postgres TLS configuration](https://node-postgres.com/features/ssl).
+
+Populate the migration secret’s `DATABASE_URL` with the migration user and Prisma CLI’s TLS parameters:
+
+```text
+postgresql://MIGRATION_USER:URL_ENCODED_PASSWORD@RDS_ENDPOINT:5432/fittrack?sslmode=require&sslcert=/user/src/app/backend/certs/eu-central-1-bundle.pem&sslaccept=strict
+```
+
+Prisma Migrate uses its own connector: `sslcert` supplies the server CA, and `sslaccept=strict` enables certificate validation, including hostname checks. Its documented SSL modes differ from node-postgres. See [Prisma PostgreSQL TLS parameters](https://docs.prisma.io/docs/orm/v6/overview/databases/postgresql).
+
+Use the RDS DNS endpoint, not an IP address or a custom alias. URL-encode usernames and passwords. Neither secret has been populated by this change. Publish both updated images, set the corresponding image digests, run the migration successfully, and deploy backend tasks after configuring the secrets. Local Compose connections retain their existing settings. RDS TLS success, rejection of an incorrect CA or hostname, and rejection of plaintext connections must be verified after deployment.
+
+Local verification passed: `npm run verify`, `npm run test:docker`, and `npm run smoke:production` against rebuilt backend and migration images. Both images expose the CA file to their non-root runtime user; node-postgres loads the CA and preserves certificate and hostname verification. These tests use isolated local PostgreSQL and do not establish RDS TLS connectivity.
