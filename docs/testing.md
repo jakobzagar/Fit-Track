@@ -77,7 +77,7 @@ Useful narrower commands are:
 npm run infra:check
 ```
 
-This checks template formatting and runs local `cfn-lint` schema validation for `eu-central-1`. Install `cfn-lint` separately with `brew install cfn-lint`. The check does not contact AWS or prove account eligibility, permissions, quotas, deployability, connectivity, or runtime behavior. It is not included in `npm run verify` or the current GitHub Actions jobs. Stack dependencies belong in [the infrastructure guide](infrastructure.md), and deployment evidence belongs in [the AWS plan](aws-deployment-plan.md).
+This checks template formatting and runs local `cfn-lint` schema validation for `eu-central-1`. Install `cfn-lint` separately with `brew install cfn-lint`. The check does not contact AWS or prove account eligibility, permissions, quotas, deployability, connectivity, or runtime behavior. It is not included in `npm run verify` or the current GitHub Actions jobs. Stack dependencies belong in [the variant infrastructure guides](../infra/ec2-multi-az/README.md) and [Fargate guide](../infra/fargate-single-az/README.md), and deployment evidence belongs in [the AWS plan](aws-deployment-plan.md).
 
 ## Isolated PostgreSQL verification
 

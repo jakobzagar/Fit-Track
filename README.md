@@ -154,7 +154,8 @@ These are documented gaps, not hidden production claims. The intended next phase
 - [Dependency policy](docs/dependency-audit.md)
 - [Release and container process](docs/release-process.md)
 - [AWS deployment plan](docs/aws-deployment-plan.md)
-- [CloudFormation stack layout](docs/infrastructure.md)
+- [EC2 / Multi-AZ infrastructure](infra/ec2-multi-az/README.md)
+- [Fargate / Single-AZ infrastructure](infra/fargate-single-az/README.md)
 
 ## Author
 
