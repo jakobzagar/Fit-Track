@@ -385,7 +385,7 @@ Local checks covered navigation, static and reserved paths, methods, query prese
 
 ## Fargate / Single-AZ deployment variant
 
-The selected deployment direction uses Fargate tasks in one private application AZ and a private Single-AZ RDS instance. The ALB spans two public subnets, and the database subnet group spans two AZs. Private image pulls, secret retrieval, and logging use ECR API/ECR DKR, Secrets Manager, CloudWatch Logs, and S3 endpoints. EC2 capacity and SSM endpoints are omitted. The directory and [variant README](../infra/fargate-single-az/README.md) are present; CloudFormation templates, resource creation, and runtime verification remain pending. The existing EC2/Multi-AZ templates are preserved separately.
+The EC2/Multi-AZ variant is the advanced reference architecture for demonstrating AWS infrastructure design. The Fargate/Single-AZ variant is intended for actual application hosting on the project's AWS free-plan account, with a smaller infrastructure footprint and less capacity-management work. Account eligibility and costs remain subject to verification. The selected deployment direction uses Fargate tasks in one private application AZ and a private Single-AZ RDS instance. The ALB spans two public subnets, and the database subnet group spans two AZs. Private image pulls, secret retrieval, and logging use ECR API/ECR DKR, Secrets Manager, CloudWatch Logs, and S3 endpoints. EC2 capacity and SSM endpoints are omitted. The directory and [variant README](../infra/fargate-single-az/README.md) are present; CloudFormation templates, resource creation, and runtime verification remain pending. The existing EC2/Multi-AZ templates are preserved separately.
 
 ## Static infrastructure review
 
