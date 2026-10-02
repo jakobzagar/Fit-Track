@@ -42,6 +42,7 @@ COPY --from=migration-dependencies --chown=node:node /user/src/migration/node_mo
 COPY --chown=node:node backend/migration-runtime/package.json ./package.json
 COPY --chown=node:node backend/prisma.config.ts ./prisma.config.ts
 COPY --chown=node:node backend/prisma ./prisma
+COPY --chown=node:node backend/certs ./certs
 
 USER node
 
@@ -102,6 +103,7 @@ COPY --from=build /user/src/app/shared/dist ./shared/dist
 COPY --from=build /user/src/app/backend/package.json ./backend/package.json
 COPY --from=build /user/src/app/backend/dist ./backend/dist
 COPY --from=build /user/src/app/backend/generated ./backend/generated
+COPY --from=build /user/src/app/backend/certs ./backend/certs
 
 WORKDIR /user/src/app/backend
 
