@@ -221,8 +221,7 @@ Resources:
           AllowedMethods: [GET, HEAD]
           CachedMethods: [GET, HEAD]
           Compress: true
-          # AWS-managed CachingDisabled policy.
-          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS-managed CachingDisabled: normal cache TTLs are zero.
           ResponseHeadersPolicyId: !Ref FrontendResponseHeadersPolicy
           FunctionAssociations:
             - EventType: viewer-request
@@ -234,18 +233,16 @@ Resources:
             AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
             CachedMethods: [GET, HEAD]
             Compress: true
-            # AWS-managed CachingDisabled and AllViewer policies.
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS-managed CachingDisabled: normal cache TTLs are zero.
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS-managed AllViewer: forward all viewer headers, cookies, and query strings.
           - PathPattern: /api/*
             TargetOriginId: backend-alb
             ViewerProtocolPolicy: https-only
             AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
             CachedMethods: [GET, HEAD]
             Compress: true
-            # AWS-managed CachingDisabled and AllViewer policies
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS-managed CachingDisabled: normal cache TTLs are zero.
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS-managed AllViewer: forward all viewer headers, cookies, and query strings.
           - PathPattern: /assets/*
             TargetOriginId: frontend-s3
             ViewerProtocolPolicy: redirect-to-https

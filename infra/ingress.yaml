@@ -22,7 +22,7 @@ Resources:
           IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          SourcePrefixListId: pl-a3a144ca
+          SourcePrefixListId: pl-a3a144ca # AWS-managed CloudFront origin-facing IPv4 ranges in eu-central-1; permits all distributions.
       SecurityGroupEgress:
         - Description: Allow all outbound IPv4 traffic.
           IpProtocol: "-1"
