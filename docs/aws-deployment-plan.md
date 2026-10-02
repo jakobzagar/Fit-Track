@@ -316,3 +316,9 @@ Prisma Migrate uses its own connector: `sslcert` supplies the server CA, and `ss
 Use the RDS DNS endpoint, not an IP address or a custom alias. URL-encode usernames and passwords. Neither secret has been populated by this change. Publish both updated images, set the corresponding image digests, run the migration successfully, and deploy backend tasks after configuring the secrets. Local Compose connections retain their existing settings. RDS TLS success, rejection of an incorrect CA or hostname, and rejection of plaintext connections must be verified after deployment.
 
 Local verification passed: `npm run verify`, `npm run test:docker`, and `npm run smoke:production` against rebuilt backend and migration images. Both images expose the CA file to their non-root runtime user; node-postgres loads the CA and preserves certificate and hostname verification. These tests use isolated local PostgreSQL and do not establish RDS TLS connectivity.
+
+## Regional naming verification
+
+All regional name suffixes and Name tags in the templates derive from `${AWS::Region}`. Deploying in the selected `eu-central-1` Region produces the resource names recorded above. IAM managed-policy ARNs derive their partition from `${AWS::Partition}`. Shared tags remain `Environment`, `Project: fit-track`, and `Component` matching the owning stack. Global OAC, path-based secrets/log groups, and the shortened ALB target group name follow the exceptions documented in [infrastructure naming](infrastructure.md#resource-naming).
+
+Local formatting and CloudFormation schema checks passed. AZ IDs and the CloudFront managed prefix-list ID remain explicitly Frankfurt-specific, as does the RDS CA bundle. No deployment or cross-region compatibility has been verified.

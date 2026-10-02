@@ -19,7 +19,7 @@ Resources:
       InstanceTenancy: default
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpc-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpc-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -36,7 +36,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-public-az1-eu-central-1
+          Value: !Sub fit-track-${Environment}-public-az1-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -53,7 +53,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-public-az2-eu-central-1
+          Value: !Sub fit-track-${Environment}-public-az2-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -70,7 +70,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-app-az1-eu-central-1
+          Value: !Sub fit-track-${Environment}-app-az1-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -87,7 +87,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-app-az2-eu-central-1
+          Value: !Sub fit-track-${Environment}-app-az2-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -104,7 +104,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-db-az1-eu-central-1
+          Value: !Sub fit-track-${Environment}-db-az1-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -121,7 +121,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-db-az2-eu-central-1
+          Value: !Sub fit-track-${Environment}-db-az2-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -134,7 +134,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-igw-eu-central-1
+          Value: !Sub fit-track-${Environment}-igw-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -154,7 +154,7 @@ Resources:
       VpcId: !Ref FitTrackVpc
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-rt-public-eu-central-1
+          Value: !Sub fit-track-${Environment}-rt-public-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -168,7 +168,7 @@ Resources:
       VpcId: !Ref FitTrackVpc
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-rt-app-eu-central-1
+          Value: !Sub fit-track-${Environment}-rt-app-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -182,7 +182,7 @@ Resources:
       VpcId: !Ref FitTrackVpc
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-rt-db-eu-central-1
+          Value: !Sub fit-track-${Environment}-rt-db-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -260,37 +260,37 @@ Outputs:
       Name: !Sub "fit-track-${Environment}-network-VpcCidrBlock"
 
   PublicSubnetAz1Id:
-    Description: Public subnet ID in eu-central-1 AZ 1 for the internet-facing ALB.
+    Description: Public subnet ID in AZ 1 for the internet-facing ALB.
     Value: !Ref PublicSubnetAz1
     Export:
       Name: !Sub "fit-track-${Environment}-network-PublicSubnetAz1Id"
 
   PublicSubnetAz2Id:
-    Description: Public subnet ID in eu-central-1 AZ 2 for the internet-facing ALB.
+    Description: Public subnet ID in AZ 2 for the internet-facing ALB.
     Value: !Ref PublicSubnetAz2
     Export:
       Name: !Sub "fit-track-${Environment}-network-PublicSubnetAz2Id"
 
   AppSubnetAz1Id:
-    Description: Private application subnet ID in eu-central-1 AZ 1.
+    Description: Private application subnet ID in AZ 1.
     Value: !Ref AppSubnetAz1
     Export:
       Name: !Sub "fit-track-${Environment}-network-AppSubnetAz1Id"
 
   AppSubnetAz2Id:
-    Description: Private application subnet ID in eu-central-1 AZ 2.
+    Description: Private application subnet ID in AZ 2.
     Value: !Ref AppSubnetAz2
     Export:
       Name: !Sub "fit-track-${Environment}-network-AppSubnetAz2Id"
 
   DbSubnetAz1Id:
-    Description: Private database subnet ID in eu-central-1 AZ 1.
+    Description: Private database subnet ID in AZ 1.
     Value: !Ref DbSubnetAz1
     Export:
       Name: !Sub "fit-track-${Environment}-network-DbSubnetAz1Id"
 
   DbSubnetAz2Id:
-    Description: Private database subnet ID in eu-central-1 AZ 2.
+    Description: Private database subnet ID in AZ 2.
     Value: !Ref DbSubnetAz2
     Export:
       Name: !Sub "fit-track-${Environment}-network-DbSubnetAz2Id"

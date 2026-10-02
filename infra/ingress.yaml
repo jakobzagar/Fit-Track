@@ -29,7 +29,7 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-alb-sg-eu-central-1
+          Value: !Sub fit-track-${Environment}-alb-sg-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -40,7 +40,7 @@ Resources:
   Alb:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub fit-track-${Environment}-alb-eu-central-1
+      Name: !Sub fit-track-${Environment}-alb-${AWS::Region}
       Type: application
       Scheme: internet-facing
       IpAddressType: ipv4
@@ -56,7 +56,7 @@ Resources:
           Value: defensive
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-alb-eu-central-1
+          Value: !Sub fit-track-${Environment}-alb-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -98,7 +98,7 @@ Resources:
           Value: "30"
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-backend-tg-eu-central-1
+          Value: !Sub fit-track-${Environment}-backend-tg-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project

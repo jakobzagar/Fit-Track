@@ -20,3 +20,9 @@ Deploy `network` → `endpoints` → `compute`. The `database` stack creates the
 Add an `infra/<stack-key>.yaml` file when its stack template is ready. The frontend stack is not present yet; add it here when its template is created.
 
 Run `npm run infra:check` to format-check and lint the CloudFormation templates for `eu-central-1`.
+
+## Resource naming
+
+Regional resource names and Name tags use `fit-track-${Environment}-<resource>-${AWS::Region}`. S3 bucket names additionally include `${AWS::AccountId}` for global uniqueness. Region-scoped secrets and log groups keep their path names, and cross-stack exports retain `fit-track-${Environment}-<stack-key>-<output-logical-ID>`. IAM managed-policy ARNs use `${AWS::Partition}`. The global CloudFront OAC has no regional suffix. The ALB target group's physical name omits the region to stay within its 32-character limit; its Name tag includes the region.
+
+The selected deployment Region remains `eu-central-1`. Network AZ IDs `euc1-az1` and `euc1-az2`, ingress CloudFront prefix-list ID `pl-a3a144ca`, and the bundled RDS CA certificates are region-specific. Dynamic names alone do not make these stacks deployable in another Region; validate or change these settings first.

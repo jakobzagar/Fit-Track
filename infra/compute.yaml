@@ -39,7 +39,7 @@ Resources:
   EcsInstanceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub fit-track-${Environment}-ecs-instance-role-eu-central-1
+      RoleName: !Sub fit-track-${Environment}-ecs-instance-role-${AWS::Region}
       Description: EC2 instance role for ECS container management and Systems Manager access.
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -49,11 +49,11 @@ Resources:
               Service: ec2.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-instance-role-eu-central-1
+          Value: !Sub fit-track-${Environment}-ecs-instance-role-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -64,7 +64,7 @@ Resources:
   EcsInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      InstanceProfileName: !Sub fit-track-${Environment}-ecs-instance-profile-eu-central-1
+      InstanceProfileName: !Sub fit-track-${Environment}-ecs-instance-profile-${AWS::Region}
       Roles:
         - !Ref EcsInstanceRole
 
@@ -77,7 +77,7 @@ Resources:
           Fn::Sub: "fit-track-${Environment}-network-VpcId"
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-instance-sg-eu-central-1
+          Value: !Sub fit-track-${Environment}-ecs-instance-sg-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -100,12 +100,12 @@ Resources:
   Ec2InstanceLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: !Sub fit-track-${Environment}-ecs-launch-template-eu-central-1
+      LaunchTemplateName: !Sub fit-track-${Environment}-ecs-launch-template-${AWS::Region}
       TagSpecifications:
         - ResourceType: launch-template
           Tags:
             - Key: Name
-              Value: !Sub fit-track-${Environment}-ecs-launch-template-eu-central-1
+              Value: !Sub fit-track-${Environment}-ecs-launch-template-${AWS::Region}
             - Key: Environment
               Value: !Ref Environment
             - Key: Project
@@ -133,7 +133,7 @@ Resources:
           - ResourceType: volume
             Tags:
               - Key: Name
-                Value: !Sub fit-track-${Environment}-ecs-root-volume-eu-central-1
+                Value: !Sub fit-track-${Environment}-ecs-root-volume-${AWS::Region}
               - Key: Environment
                 Value: !Ref Environment
               - Key: Project
@@ -151,7 +151,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn: EndpointSecurityGroupIngressFromEcsInstances
     Properties:
-      AutoScalingGroupName: !Sub fit-track-${Environment}-ecs-asg-eu-central-1
+      AutoScalingGroupName: !Sub fit-track-${Environment}-ecs-asg-${AWS::Region}
       AvailabilityZoneDistribution:
         CapacityDistributionStrategy: balanced-best-effort
       DesiredCapacity: !Ref DesiredCapacity
@@ -165,7 +165,7 @@ Resources:
         - OldestInstance
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-instance-eu-central-1
+          Value: !Sub fit-track-${Environment}-ecs-instance-${AWS::Region}
           PropagateAtLaunch: true
         - Key: Environment
           Value: !Ref Environment
@@ -194,7 +194,7 @@ Resources:
   EcsCapacityProvider:
     Type: AWS::ECS::CapacityProvider
     Properties:
-      Name: !Sub fit-track-${Environment}-ecs-cp-eu-central-1
+      Name: !Sub fit-track-${Environment}-ecs-cp-${AWS::Region}
       AutoScalingGroupProvider:
         AutoScalingGroupArn: !GetAtt Ec2AutoScalingGroup.AutoScalingGroupARN
         ManagedScaling:
@@ -207,7 +207,7 @@ Resources:
         ManagedDraining: ENABLED
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-cp-eu-central-1
+          Value: !Sub fit-track-${Environment}-ecs-cp-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -218,10 +218,10 @@ Resources:
   EcsCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub fit-track-${Environment}-ecs-cluster-eu-central-1
+      ClusterName: !Sub fit-track-${Environment}-ecs-cluster-${AWS::Region}
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-cluster-eu-central-1
+          Value: !Sub fit-track-${Environment}-ecs-cluster-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
