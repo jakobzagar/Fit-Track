@@ -108,7 +108,7 @@ Resources:
       VPCSecurityGroups:
         - !GetAtt RdsSecurityGroup.GroupId
       PubliclyAccessible: false
-      MultiAZ: false
+      MultiAZ: true
       StorageType: gp3
       AllocatedStorage: "20"
       StorageEncrypted: true
