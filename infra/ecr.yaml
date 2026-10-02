@@ -50,10 +50,10 @@ Resources:
               }
             ]
           }
-      RepositoryName: !Sub fit-track-${Environment}-backend-eu-central-1
+      RepositoryName: !Sub fit-track-${Environment}-backend-${AWS::Region}
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-backend-eu-central-1
+          Value: !Sub fit-track-${Environment}-backend-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -91,10 +91,10 @@ Resources:
               }
             ]
           }
-      RepositoryName: !Sub fit-track-${Environment}-migration-eu-central-1
+      RepositoryName: !Sub fit-track-${Environment}-migration-${AWS::Region}
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-migration-eu-central-1
+          Value: !Sub fit-track-${Environment}-migration-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project

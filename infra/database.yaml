@@ -12,7 +12,7 @@ Parameters:
   DatabaseEngineVersion:
     Type: String
     AllowedPattern: '^17\.[0-9]+$'
-    Description: PostgreSQL 17 minor version verified as available in eu-central-1 before deployment.
+    Description: PostgreSQL 17 minor version verified as available in the deployment Region before deployment.
   DatabaseInstanceClass:
     Type: String
     Default: db.t4g.micro
@@ -24,7 +24,7 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Private database subnets across two Availability Zones.
-      DBSubnetGroupName: !Sub fit-track-${Environment}-rds-subnet-group-eu-central-1
+      DBSubnetGroupName: !Sub fit-track-${Environment}-rds-subnet-group-${AWS::Region}
       SubnetIds:
         - Fn::ImportValue:
             Fn::Sub: fit-track-${Environment}-network-DbSubnetAz1Id
@@ -32,7 +32,7 @@ Resources:
             Fn::Sub: fit-track-${Environment}-network-DbSubnetAz2Id
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-rds-subnet-group-eu-central-1
+          Value: !Sub fit-track-${Environment}-rds-subnet-group-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -52,7 +52,7 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-rds-sg-eu-central-1
+          Value: !Sub fit-track-${Environment}-rds-sg-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -74,14 +74,14 @@ Resources:
   RdsParameterGroup:
     Type: AWS::RDS::DBParameterGroup
     Properties:
-      DBParameterGroupName: !Sub fit-track-${Environment}-rds-parameters-eu-central-1
+      DBParameterGroupName: !Sub fit-track-${Environment}-rds-parameters-${AWS::Region}
       Description: PostgreSQL 17 parameters requiring encrypted client connections.
       Family: postgres17
       Parameters:
         rds.force_ssl: "1"
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-rds-parameters-eu-central-1
+          Value: !Sub fit-track-${Environment}-rds-parameters-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -95,7 +95,7 @@ Resources:
     UpdateReplacePolicy: Snapshot
     DependsOn: RdsSecurityGroupIngressFromTasks
     Properties:
-      DBInstanceIdentifier: !Sub fit-track-${Environment}-rds-eu-central-1
+      DBInstanceIdentifier: !Sub fit-track-${Environment}-rds-${AWS::Region}
       Engine: postgres
       EngineVersion: !Ref DatabaseEngineVersion
       DBInstanceClass: !Ref DatabaseInstanceClass
@@ -122,7 +122,7 @@ Resources:
       EnablePerformanceInsights: false
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-rds-eu-central-1
+          Value: !Sub fit-track-${Environment}-rds-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project

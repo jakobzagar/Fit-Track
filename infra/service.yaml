@@ -74,7 +74,7 @@ Resources:
       Description: FitTrack backend runtime secrets.
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-backend-secret-eu-central-1
+          Value: !Sub fit-track-${Environment}-backend-secret-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -89,7 +89,7 @@ Resources:
       Description: FitTrack migration database connection secret.
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-migration-secret-eu-central-1
+          Value: !Sub fit-track-${Environment}-migration-secret-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -100,7 +100,7 @@ Resources:
   BackendTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub fit-track-${Environment}-backend-task-execution-role-eu-central-1
+      RoleName: !Sub fit-track-${Environment}-backend-task-execution-role-${AWS::Region}
       Description: ECS execution role scoped to backend image pulls, backend logs, and backend secret retrieval.
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -139,7 +139,7 @@ Resources:
                 Resource: !Ref BackendSecret
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-backend-task-execution-role-eu-central-1
+          Value: !Sub fit-track-${Environment}-backend-task-execution-role-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -150,7 +150,7 @@ Resources:
   MigrationTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub fit-track-${Environment}-migration-task-execution-role-eu-central-1
+      RoleName: !Sub fit-track-${Environment}-migration-task-execution-role-${AWS::Region}
       Description: ECS execution role scoped to migration image pulls, migration logs, and database secret retrieval.
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -189,7 +189,7 @@ Resources:
                 Resource: !Ref MigrationSecret
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-migration-task-execution-role-eu-central-1
+          Value: !Sub fit-track-${Environment}-migration-task-execution-role-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -233,11 +233,11 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: migration
               mode: blocking
-      Family: !Sub fit-track-${Environment}-migration-eu-central-1
+      Family: !Sub fit-track-${Environment}-migration-${AWS::Region}
       NetworkMode: awsvpc
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-migration-task-definition-eu-central-1
+          Value: !Sub fit-track-${Environment}-migration-task-definition-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -307,11 +307,11 @@ Resources:
               awslogs-stream-prefix: backend
               mode: non-blocking
               max-buffer-size: 1m
-      Family: !Sub fit-track-${Environment}-backend-eu-central-1
+      Family: !Sub fit-track-${Environment}-backend-${AWS::Region}
       NetworkMode: awsvpc
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-backend-task-definition-eu-central-1
+          Value: !Sub fit-track-${Environment}-backend-task-definition-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -331,7 +331,7 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-backend-task-sg-eu-central-1
+          Value: !Sub fit-track-${Environment}-backend-task-sg-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -355,7 +355,7 @@ Resources:
     DependsOn:
       - BackendTaskSecurityGroupIngressFromAlb
     Properties:
-      ServiceName: !Sub fit-track-${Environment}-backend-service-eu-central-1
+      ServiceName: !Sub fit-track-${Environment}-backend-service-${AWS::Region}
       Cluster:
         Fn::ImportValue: !Sub "fit-track-${Environment}-compute-EcsClusterArn"
       TaskDefinition: !Ref BackendTaskDefinition
@@ -397,7 +397,7 @@ Resources:
           ContainerPort: 3001
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-backend-service-eu-central-1
+          Value: !Sub fit-track-${Environment}-backend-service-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project

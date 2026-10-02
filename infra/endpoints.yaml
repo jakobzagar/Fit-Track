@@ -19,7 +19,7 @@ Resources:
           Fn::Sub: "fit-track-${Environment}-network-VpcId"
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpc-endpoints-sg-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpc-endpoints-sg-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -45,7 +45,7 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ecr-api-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecr-api-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -71,7 +71,7 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ecr-dkr-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecr-dkr-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -97,7 +97,7 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ecs-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecs-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -123,7 +123,7 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ecs-agent-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecs-agent-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -149,7 +149,7 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ecs-telemetry-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ecs-telemetry-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -175,7 +175,7 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ssm-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ssm-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -201,7 +201,7 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ssmmessages-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ssmmessages-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -227,7 +227,7 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ec2messages-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-ec2messages-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -263,7 +263,7 @@ Resources:
             Resource: "*"
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-logs-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-logs-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -289,7 +289,7 @@ Resources:
         - !Ref InterfaceEndpointsSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-secretsmanager-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-secretsmanager-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
@@ -320,7 +320,7 @@ Resources:
             Fn::Sub: "fit-track-${Environment}-network-AppRouteTableId"
       Tags:
         - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-s3-eu-central-1
+          Value: !Sub fit-track-${Environment}-vpce-s3-${AWS::Region}
         - Key: Environment
           Value: !Ref Environment
         - Key: Project
