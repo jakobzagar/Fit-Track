@@ -178,6 +178,31 @@ Resources:
               Override: true
               Value: same-origin
 
+  FrontendSpaFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub fit-track-${Environment}-frontend-spa
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Rewrite frontend navigation to index.html while preserving static files.
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var uri = request.uri;
+          var lastSegment = uri.substring(uri.lastIndexOf("/") + 1);
+          var reservedPath = uri === "/api" || uri.indexOf("/api/") === 0 ||
+            uri === "/assets" || uri.indexOf("/assets/") === 0 ||
+            uri === "/brand" || uri.indexOf("/brand/") === 0;
+
+          if ((request.method === "GET" || request.method === "HEAD") &&
+              !reservedPath && lastSegment.indexOf(".") === -1) {
+            request.uri = "/index.html";
+          }
+
+          return request;
+        }
+
   CfDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -199,6 +224,9 @@ Resources:
           # AWS-managed CachingDisabled policy.
           CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
           ResponseHeadersPolicyId: !Ref FrontendResponseHeadersPolicy
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt FrontendSpaFunction.FunctionARN
         CacheBehaviors:
           - PathPattern: /api
             TargetOriginId: backend-alb
