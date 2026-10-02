@@ -83,15 +83,15 @@ Resources:
         - Key: Component
           Value: frontend
 
-  FrontendCachePolicy:
+  AssetsCachePolicy:
     Type: AWS::CloudFront::CachePolicy
     Properties:
       CachePolicyConfig:
-        Name: !Sub fit-track-${Environment}-frontend-cache
-        Comment: Respect frontend cache metadata without forcing stale HTML caching.
-        MinTTL: 0
-        DefaultTTL: 0
-        MaxTTL: 86400
+        Name: !Sub fit-track-${Environment}-assets-cache-policy
+        Comment: One-year cache for immutable assets with content hashes in their names.
+        MinTTL: 31536000
+        DefaultTTL: 31536000
+        MaxTTL: 31536000
         ParametersInCacheKeyAndForwardedToOrigin:
           EnableAcceptEncodingBrotli: true
           EnableAcceptEncodingGzip: true
@@ -101,6 +101,82 @@ Resources:
             HeaderBehavior: none
           QueryStringsConfig:
             QueryStringBehavior: none
+
+  FrontendResponseHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub fit-track-${Environment}-frontend-headers-policy
+        Comment: Frontend security headers and browser cache revalidation.
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' data:; form-action 'self'; frame-ancestors 'none'; frame-src 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'"
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: "DENY"
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: "strict-origin-when-cross-origin"
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: false
+            Preload: false
+            Override: true
+        CustomHeadersConfig:
+          Items:
+            - Header: Cache-Control
+              Override: true
+              Value: no-cache
+            - Header: Permissions-Policy
+              Override: true
+              Value: "camera=(), geolocation=(), microphone=()"
+            - Header: "Cross-Origin-Opener-Policy"
+              Override: true
+              Value: "same-origin"
+            - Header: "Cross-Origin-Resource-Policy"
+              Override: true
+              Value: "same-origin"
+
+  AssetsResponseHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub fit-track-${Environment}-assets-headers-policy
+        Comment: Frontend security headers and one-year browser cache for immutable assets.
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' data:; form-action 'self'; frame-ancestors 'none'; frame-src 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'"
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: "DENY"
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: "strict-origin-when-cross-origin"
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: false
+            Preload: false
+            Override: true
+        CustomHeadersConfig:
+          Items:
+            - Header: Cache-Control
+              Override: true
+              Value: public,max-age=31536000,immutable
+            - Header: Permissions-Policy
+              Override: true
+              Value: camera=(), geolocation=(), microphone=()
+            - Header: Cross-Origin-Opener-Policy
+              Override: true
+              Value: same-origin
+            - Header: Cross-Origin-Resource-Policy
+              Override: true
+              Value: same-origin
 
   CfDistribution:
     Type: AWS::CloudFront::Distribution
@@ -120,7 +196,9 @@ Resources:
           AllowedMethods: [GET, HEAD]
           CachedMethods: [GET, HEAD]
           Compress: true
-          CachePolicyId: !Ref FrontendCachePolicy
+          # AWS-managed CachingDisabled policy.
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+          ResponseHeadersPolicyId: !Ref FrontendResponseHeadersPolicy
         CacheBehaviors:
           - PathPattern: /api
             TargetOriginId: backend-alb
@@ -146,8 +224,8 @@ Resources:
             AllowedMethods: [GET, HEAD]
             CachedMethods: [GET, HEAD]
             Compress: true
-            # AWS-managed CachingOptimized policy for hashed build assets.
-            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+            CachePolicyId: !Ref AssetsCachePolicy
+            ResponseHeadersPolicyId: !Ref AssetsResponseHeadersPolicy
         Origins:
           - Id: frontend-s3
             DomainName: !GetAtt FrontendBucket.RegionalDomainName
