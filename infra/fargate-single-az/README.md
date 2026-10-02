@@ -1,8 +1,8 @@
 # Fargate / Single-AZ infrastructure
 
-This directory holds the deployment variant using ECS Fargate in one private application subnet and a private Single-AZ RDS PostgreSQL instance. CloudFormation templates will be added as each stack is implemented; none are present yet. Architecture decisions, implementation state, and verification belong in the [AWS deployment plan](../../docs/aws-deployment-plan.md).
+This is the deployment architecture intended for actual application hosting on the project's AWS free-plan account. It reduces the infrastructure footprint and operational work through ECS Fargate in one private application subnet, one backend task, and a private Single-AZ RDS PostgreSQL instance. CloudFormation templates will be added as each stack is implemented; none are present yet. Architecture decisions, implementation state, and verification belong in the [AWS deployment plan](../../docs/aws-deployment-plan.md).
 
-The [EC2 / Multi-AZ variant](../ec2-multi-az/README.md) contains the existing templates. The two directories represent alternative architectures, not staging and production environments. Single-AZ describes application task placement and the database instance; the ALB and RDS subnet group still require subnets in two Availability Zones.
+The [EC2 / Multi-AZ variant](../ec2-multi-az/README.md) preserves the advanced reference templates for demonstrating AWS infrastructure design, managed EC2 capacity, and Multi-AZ availability. The two directories represent alternative architectures, not staging and production environments. Single-AZ describes application task placement and the database instance; the ALB and RDS subnet group still require subnets in two Availability Zones.
 
 ## Planned stack boundaries
 

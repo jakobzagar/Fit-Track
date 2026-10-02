@@ -2,7 +2,7 @@
 
 CloudFormation templates are grouped by independently deployed stack and lifecycle. Each stack lives in its own `<stack-key>.yaml` file under `infra/ec2-multi-az/`; stack-specific parameters and resources stay together. AWS architecture, decisions, deployment state, and verification are tracked in [the AWS deployment plan](../../docs/aws-deployment-plan.md).
 
-It uses EC2-backed ECS capacity across two Availability Zones and a private Multi-AZ RDS instance. The separate [Fargate / Single-AZ variant](../fargate-single-az/README.md) is being prepared for deployment. These directories are alternative architectures, not staging and production environments.
+This is the advanced reference architecture, designed to demonstrate AWS infrastructure design through EC2-backed ECS capacity, capacity-provider scaling, private endpoint connectivity, and a Multi-AZ PostgreSQL database. It prioritizes availability and infrastructure depth over the constraints of the project's AWS free-plan account. It uses EC2-backed ECS capacity across two Availability Zones and a private Multi-AZ RDS instance. The separate [Fargate / Single-AZ variant](../fargate-single-az/README.md) is being prepared for actual application hosting on the project's AWS free-plan account. These directories are alternative architectures, not staging and production environments.
 
 ## Stack boundaries
 
