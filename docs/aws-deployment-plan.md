@@ -12,16 +12,11 @@ Planned resources, configured resources, and independently verified settings are
 - Continuously billed resources should not remain idle during learning or long pauses. The app is unavailable when its runtime is stopped or deleted.
 - CloudFormation templates are stored under `infra/`; stacks are deployed and inspected through CloudFormation. Actual outcomes and verification are recorded in this document.
 
-## CloudFormation template checks
+## Verification scope
 
-Install `cfn-lint` with Homebrew on macOS, then run the repository checks before creating or updating a stack:
+All nine templates are prepared and have passed local formatting and CloudFormation schema checks. They are not deployed, and AWS runtime behavior is not verified. Local application and container test results are evidence for those artifacts only.
 
-```bash
-brew install cfn-lint
-npm run infra:check
-```
-
-`infra:check` runs Prettier against the CloudFormation templates and validates them with `cfn-lint` for `eu-central-1`. `cfn-lint` is a local tool and is not installed by `npm install`.
+Run `npm run infra:check` before creating or updating a stack. Prerequisites and check limitations belong in [infrastructure validation](testing.md#infrastructure-validation); stack creation order and export contracts belong in [the infrastructure guide](infrastructure.md). Record deployed resource IDs and actual verification results here as implementation proceeds.
 
 ## Target request and data flow
 
@@ -36,7 +31,7 @@ flowchart LR
     EC2[Private EC2 capacity] -->|ECR, ECS, SSM, Secrets Manager and CloudWatch Logs APIs| VPCE[VPC endpoints]
 ```
 
-The static frontend is configured in the template for a private S3 bucket served through CloudFront; deployment is pending. CloudFront forwards `/api` and `/api/*` to an internet-facing Application Load Balancer. The ALB routes requests to healthy ECS backend tasks running on EC2 capacity in private application subnets. The backend connects to private RDS PostgreSQL and sends structured logs to CloudWatch. Private EC2 instances use only the VPC endpoints needed for AWS service access; no NAT Gateway is planned. The initial public entry point uses the AWS-provided CloudFront hostname over HTTPS. CloudFront connects to the ALB DNS name over HTTP on port 80; this hop is unencrypted.
+The following describes the template-defined target flow; deployment is pending. The static frontend uses a private S3 bucket served through CloudFront. CloudFront forwards `/api` and `/api/*` to an internet-facing Application Load Balancer. The ALB routes requests to healthy ECS backend tasks running on EC2 capacity in private application subnets. Backend tasks connect to private RDS PostgreSQL; the awslogs driver forwards container output to CloudWatch. Private EC2 instances use only the VPC endpoints needed for AWS service access; no NAT Gateway is planned. The initial public entry point uses the AWS-provided CloudFront hostname over HTTPS. CloudFront connects to the ALB DNS name over HTTP on port 80; this hop is unencrypted.
 
 ## Architecture decisions
 
@@ -59,6 +54,8 @@ The default CloudFront hostname uses the AWS-provided viewer certificate; no cus
 
 All cross-stack exports and imports use the same `fit-track-${Environment}-<stack-key>-<output-logical-ID>` naming scheme. `Environment` is currently `prod`; no export name uses `AWS::StackName`. The export suffixes in the tables below follow this shared prefix. All nine templates pass local formatting and CloudFormation schema validation with `npm run infra:check`; deployed exports and imports have not been verified in AWS.
 
+Resource naming, regional exceptions, and cross-stack contracts are defined in [the infrastructure guide](infrastructure.md#resource-naming). Concrete names below are the results for `Environment=prod` in `eu-central-1`.
+
 ## Network foundation template
 
 `infra/network.yaml` defines the production VPC foundation for stack `fit-track-prod-network`. Tagged resources use `Name: fit-track-prod-<resource>-eu-central-1` and also carry `Environment: prod`, `Project: fit-track`, and `Component: network`. Resources without tags in the table do not expose tag properties in CloudFormation.
@@ -77,18 +74,18 @@ All cross-stack exports and imports use the same `fit-track-${Environment}-<stac
 
 The network stack exports AZ IDs, VPC ID and CIDR, all six subnet IDs, and all three route table IDs. Import and export names both use `fit-track-${Environment}-<stack-key>-<output-logical-ID>`, independently of the deployed stack name; for example, `fit-track-prod-network-AppSubnetAz1Id`. The AZ exports match the AZ IDs assigned to the subnets. Exports are for same-account, same-region stacks, and CloudFormation prevents changing or deleting an export while another stack imports it.
 
-| Output logical ID                                         | Export suffix      | Consumer                                                                             |
-| --------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------ |
-| `AvailabilityZoneAz1Id`, `AvailabilityZoneAz2Id`          | Same as logical ID | Reference to the selected AZ IDs; not currently imported by compute.                 |
-| `VpcId`, `VpcCidrBlock`                                   | Same as logical ID | Endpoint and compute stacks import `VpcId`; VPC CIDR is available to future stacks.  |
-| `PublicSubnetAz1Id`, `PublicSubnetAz2Id`                  | Same as logical ID | Future ALB stack.                                                                    |
-| `AppSubnetAz1Id`, `AppSubnetAz2Id`                        | Same as logical ID | Endpoint and compute stacks.                                                         |
-| `DbSubnetAz1Id`, `DbSubnetAz2Id`                          | Same as logical ID | Future RDS subnet group.                                                             |
-| `PublicRouteTableId`, `AppRouteTableId`, `DbRouteTableId` | Same as logical ID | Endpoint stack imports `AppRouteTableId`; the others are available to future stacks. |
+| Output logical ID                                         | Export suffix      | Consumer                                                                                                 |
+| --------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------- |
+| `AvailabilityZoneAz1Id`, `AvailabilityZoneAz2Id`          | Same as logical ID | Reference to the selected AZ IDs; not currently imported by compute.                                     |
+| `VpcId`, `VpcCidrBlock`                                   | Same as logical ID | Endpoints, compute, ingress, service, and database import `VpcId`; VPC CIDR is available for inspection. |
+| `PublicSubnetAz1Id`, `PublicSubnetAz2Id`                  | Same as logical ID | Ingress ALB subnet selection.                                                                            |
+| `AppSubnetAz1Id`, `AppSubnetAz2Id`                        | Same as logical ID | Endpoint, compute, and service stacks.                                                                   |
+| `DbSubnetAz1Id`, `DbSubnetAz2Id`                          | Same as logical ID | Database subnet group.                                                                                   |
+| `PublicRouteTableId`, `AppRouteTableId`, `DbRouteTableId` | Same as logical ID | Endpoint stack imports `AppRouteTableId`; the others are available to future stacks.                     |
 
 ## VPC endpoints template
 
-`infra/endpoints.yaml` defines stack `fit-track-prod-endpoints` with ten interface endpoints in both application subnets and one S3 gateway endpoint on the application route table. The Secrets Manager endpoint lets private ECS tasks retrieve injected secrets without NAT or public internet access. The interface endpoint security group has no ingress rules in this stack; compute adds an HTTPS ingress rule from the ECS instance security group. This keeps endpoint access limited to the intended instances and avoids duplicated subnet CIDRs. The interface endpoints create 20 billable endpoint-AZ attachments across two AZs; the three SSM endpoints account for six, CloudWatch Logs for two, and Secrets Manager for two.
+`infra/endpoints.yaml` defines stack `fit-track-prod-endpoints` with ten interface endpoints in both application subnets and one S3 gateway endpoint on the application route table. The Secrets Manager endpoint lets the ECS agent retrieve secrets for private ECS tasks without NAT or public internet access. Secrets are retrieved by the ECS agent using each task execution role; application containers receive the values as environment variables. The interface endpoint security group has no ingress rules in this stack; compute adds an HTTPS ingress rule from the ECS instance security group. This keeps endpoint access limited to the intended instances and avoids duplicated subnet CIDRs. The interface endpoints create 20 billable endpoint-AZ attachments across two AZs; the three SSM endpoints account for six, CloudWatch Logs for two, and Secrets Manager for two.
 
 | Logical resource ID                                                                    | Physical Name tag                                                                                                                      | Service and placement                                                                                                                       | Tags                                                     |
 | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
@@ -121,15 +118,15 @@ The `Environment` parameter is currently restricted to `prod`. Physical names an
 | `EcrBackendRepository`             | `fit-track-prod-backend-eu-central-1`   | Private repo; AES-256 encryption; immutable tags except `main` and `latest`; retain the 10 newest images.             | `Name`, `Environment=prod`, `Project=fit-track`, `Component=ecr`. |
 | `EcrMigrationRepository`           | `fit-track-prod-migration-eu-central-1` | Private repo; AES-256 encryption; immutable tags except `main` and `latest`; retain the 10 newest images.             | `Name`, `Environment=prod`, `Project=fit-track`, `Component=ecr`. |
 
-Basic scanning detects operating-system package vulnerabilities. It is the lowest-cost option and avoids Amazon Inspector charges; it does not continuously rescan images or cover application-language packages. Enhanced scanning adds OS and language package findings through Amazon Inspector and can incur Inspector charges. Check the current registry scanning settings in `eu-central-1` before deploying: the CloudFormation resource manages the registry-wide scanning configuration, while the filter limits which repositories get scan-on-push. Repository-level scan-on-push settings are omitted because the registry rule owns scanning behavior. Each repository's lifecycle policy keeps the 10 most recently pushed images and expires older ones; ECR may take up to 24 hours to apply expiration. This limits rollback images to the retained set, including release tags attached to those images. `EmptyOnDelete: true` means deleting this stack deletes all images in both repositories. The stack is not deployed or AWS-verified.
+Basic scanning detects operating-system package vulnerabilities. It is the lowest-cost option and avoids Amazon Inspector charges; it does not continuously rescan images or cover application-language packages. Enhanced scanning adds OS and language package findings through Amazon Inspector and can incur Inspector charges. Check the current registry scanning settings in `eu-central-1` before deploying: the CloudFormation resource manages the registry-wide scanning configuration, while the filter limits which repositories get scan-on-push. Repository-level scan-on-push settings are omitted because the registry rule owns scanning behavior. Each repository's lifecycle policy keeps the 10 most recently pushed images, across all tags and expires older ones; ECR may take up to 24 hours to apply expiration. This limits rollback images to the retained set, including release tags attached to those images. `EmptyOnDelete: true` means deleting this stack deletes all images in both repositories. The stack is not deployed or AWS-verified.
 
 | Output logical ID            | Export suffix      | Consumer                                               |
 | ---------------------------- | ------------------ | ------------------------------------------------------ |
 | `EcrRegistryId`              | Same as logical ID | Account ID for ECR login and registry identification.  |
-| `EcrBackendRepositoryName`   | Same as logical ID | CI push target and future ECS task definition.         |
+| `EcrBackendRepositoryName`   | Same as logical ID | Repository identification; CI publication is pending.  |
 | `EcrBackendRepositoryUri`    | Same as logical ID | URI prefix for backend image tags or digests.          |
 | `EcrBackendRepositoryArn`    | Same as logical ID | IAM repository scope for image pull and publish roles. |
-| `EcrMigrationRepositoryName` | Same as logical ID | CI push target and future migration task definition.   |
+| `EcrMigrationRepositoryName` | Same as logical ID | Repository identification; CI publication is pending.  |
 | `EcrMigrationRepositoryUri`  | Same as logical ID | URI prefix for migration image tags or digests.        |
 | `EcrMigrationRepositoryArn`  | Same as logical ID | IAM repository scope for image pull and publish roles. |
 
@@ -151,12 +148,12 @@ Basic scanning detects operating-system package vulnerabilities. It is the lowes
 
 The stack imports network and endpoint exports using `fit-track-${Environment}-network` and `fit-track-${Environment}-endpoints`; no stack-name parameters are required. `Environment` is currently restricted to `prod`. `MinSize`, `DesiredCapacity`, and `MaxSize` must be configured so the maximum is at least the minimum and desired capacity. The selected instance size is provisional until backend workload CPU and memory are measured. The security group has no inbound application rule; the service stack owns task networking and the ALB-to-backend rule. No compute network change is needed for CloudWatch Logs: the existing HTTPS rule from the ECS instance security group covers all interface endpoints, and the attached `AmazonEC2ContainerServiceforEC2Role` managed policy already grants `logs:CreateLogStream` and `logs:PutLogEvents`. The service stack task definitions configure the `awslogs` driver, log groups, Region, and stream prefixes; their execution roles allow scoped log writes. The `logs` stack creates the log group; task definitions are drafted and the ECS service is configured in the service template. No zonal shift is enabled. The stack is not deployed or AWS-verified.
 
-| Output logical ID                 | Export suffix           | Consumer                                                |
-| --------------------------------- | ----------------------- | ------------------------------------------------------- |
-| `EcsClusterName`, `EcsClusterArn` | Same as each logical ID | Future ECS service stack.                               |
-| `EcsCapacityProviderName`         | Same as logical ID      | Future ECS service stack.                               |
-| `EcsInstanceSecurityGroupId`      | Same as logical ID      | Future service networking/security rules.               |
-| `EcsAutoScalingGroupName`         | Same as logical ID      | Operational inspection and future scaling integrations. |
+| Output logical ID                 | Export suffix           | Consumer                                                          |
+| --------------------------------- | ----------------------- | ----------------------------------------------------------------- |
+| `EcsClusterName`, `EcsClusterArn` | Same as each logical ID | Cluster name for operations; cluster ARN imported by service.     |
+| `EcsCapacityProviderName`         | Same as logical ID      | Backend service in the service stack.                             |
+| `EcsInstanceSecurityGroupId`      | Same as logical ID      | EC2 instance network inspection; no current cross-stack consumer. |
+| `EcsAutoScalingGroupName`         | Same as logical ID      | Operational inspection and future scaling integrations.           |
 
 ## CloudWatch Logs template
 
@@ -214,13 +211,13 @@ Verification: `npm run infra:check` passes local formatting and CloudFormation s
 
 The service stack also imports the VPC ID from `network` and `AlbSecurityGroupId` from `ingress`. Its standalone ingress rule permits backend HTTP and readiness checks on TCP 3001 only from the ALB SG. Dependencies remain one-way: service imports ingress, while ingress does not import service. Both ALB and backend task SGs explicitly allow all outbound IPv4 traffic; no separate ALB-to-task egress rule is needed. No EC2 instance inbound 3001 rule is added. `BackendService` attaches `BackendTaskSecurityGroup` through its `awsvpc` network configuration and depends on `BackendTaskSecurityGroupIngressFromAlb` before launching tasks.
 
-Database resources and inbound TCP 5432 from the task SG are configured in `infra/database.yaml` but have not been deployed or verified in AWS. Allow-all SG egress does not create routes or internet connectivity; the private subnets still use the existing endpoint-based network without NAT. The EC2 instance and endpoint SGs are unchanged. Migration task networking remains separate and pending; it does not need inbound ALB access.
+Database resources and inbound TCP 5432 from the task SG are configured in `infra/database.yaml` but have not been deployed or verified in AWS. Allow-all SG egress does not create routes or internet connectivity; the private subnets still use the existing endpoint-based network without NAT. The EC2 instance and endpoint SGs are unchanged. Migration task networking is supplied through the RunTask request, using the same task SG for database access. Migration has no ALB target registration.
 
 The backend execution role imports `EcrBackendRepositoryArn` and `BackendLogGroupArn` using the standard ECR and logs stack names. Its `fit-track-prod-backend-task-execution` inline policy replaces the broad AWS-managed execution policy; only ECR authentication uses `Resource: "*"`. It cannot retrieve the migration database secret. The backend secret uses the default Secrets Manager KMS key, so no custom-key decrypt permission is required. No application task role or interactive container access is configured; RDS IAM authentication remains unimplemented. The backend task definition references `BackendTaskExecutionRole`; AWS runtime verification remains pending. See [AWS execution role guidance](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html).
 
 The backend task uses family `fit-track-prod-backend-eu-central-1`, container `backend`, and Name tag `fit-track-prod-backend-task-definition-eu-central-1`, with the standard service tags. It imports the backend ECR repository URI and pins `BackendImageDigest`. `BackendCpu` and `BackendMemory` default to 256 CPU units and 512 MiB; these are provisional until measured. It uses Linux x86 EC2 capacity and `awsvpc`, exposes TCP port 3001, retains the image's non-root user and Node startup command, enables an init process, and allows 30 seconds to stop (the application shutdown deadline is 10 seconds).
 
-The backend secret requires `DATABASE_URL` and a `JWT_SECRET` of at least 32 characters. Non-sensitive settings are supplied through environment variables: `NODE_ENV=production`, `PORT=3001`, `LOG_LEVEL=info`, required HTTPS `ClientOrigin`, and `TrustProxyHops` (default 2 for CloudFront → ALB → backend). The current application defaults remain in effect for database pool settings. Validate proxy trust against the deployed path and restrict direct ALB/backend access before accepting the default; security groups are drafted, and restriction to the application's CloudFront distribution remains pending. Both database connections require production TLS configuration; certificate packaging and AWS connectivity remain unverified.
+The backend secret requires `DATABASE_URL` and a `JWT_SECRET` of at least 32 characters. Non-sensitive settings are supplied through environment variables: `NODE_ENV=production`, `PORT=3001`, `LOG_LEVEL=info`, required HTTPS `ClientOrigin`, and `TrustProxyHops` (default 2 for CloudFront → ALB → backend). The current application defaults remain in effect for database pool settings. Validate proxy trust against the deployed path and restrict direct ALB/backend access before accepting the default; security groups are drafted, and restriction to the application's CloudFront distribution remains pending. Both database connections require production TLS configuration; certificate packaging has been locally checked, while AWS TLS connectivity remains unverified.
 
 ECS explicitly checks `/api/health/live` using the image's existing Node command (30-second interval, 5-second timeout, 10-second start period, three retries). The ALB target group checks `/api/health/ready` to include database readiness. Backend logging uses the `backend` stream prefix and non-blocking delivery with a 1 MiB buffer to keep the API responsive during log delivery failures; logs can be dropped if the buffer fills. Migration logging remains blocking. Subnets, task security groups, desired count, and ALB attachment are configured by `BackendService`. See [AWS EC2 task definition parameters](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters_ec2.html).
 
@@ -242,30 +239,25 @@ Run the migration through ECS `RunTask` with the existing EC2 capacity provider,
 
 `BackendSecretArn` and `MigrationSecretArn` return the respective secret ARNs for inspection and configuration. The service template and endpoint update are not deployed or AWS-verified. No secret values are stored in the repository.
 
-| Output logical ID             | Consumer                                                                    |
-| ----------------------------- | --------------------------------------------------------------------------- |
-| `BackendServiceArn`           | ECS service identification; exported with the shared service prefix.        |
-| `BackendServiceName`          | Deployment and operation commands; exported with the shared service prefix. |
-| `BackendTaskSecurityGroupId`  | Backend ECS service awsvpc security group selection.                        |
-| `BackendSecretArn`            | Backend task definition and scoped task execution role.                     |
-| `BackendTaskDefinitionArn`    | ECS service task definition revision.                                       |
-| `MigrationSecretArn`          | Migration database secret configuration and inspection.                     |
-| `BackendTaskExecutionRoleArn` | Backend task definition's `ExecutionRoleArn`.                               |
+| Output logical ID               | Consumer                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------- |
+| `BackendServiceArn`             | ECS service identification; exported with the shared service prefix.        |
+| `BackendServiceName`            | Deployment and operation commands; exported with the shared service prefix. |
+| `BackendTaskSecurityGroupId`    | Backend ECS service awsvpc security group selection.                        |
+| `BackendSecretArn`              | Backend task definition and scoped task execution role.                     |
+| `BackendTaskDefinitionArn`      | ECS service task definition revision.                                       |
+| `MigrationSecretArn`            | Migration database secret configuration and inspection.                     |
+| `BackendTaskExecutionRoleArn`   | Backend task definition's `ExecutionRoleArn`.                               |
+| `MigrationTaskExecutionRoleArn` | Migration execution role inspection.                                        |
+| `MigrationTaskDefinitionArn`    | ECS RunTask input for the selected migration revision.                      |
 
-| Resource or output              | Configuration or consumer                                                                                                                                       |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MigrationTaskExecutionRole`    | `fit-track-prod-migration-task-execution-role-eu-central-1`; ECS tasks trust; scoped image, log, and database-secret permissions; standard service tags.        |
-| `MigrationTaskDefinition`       | Family `fit-track-prod-migration-eu-central-1`; Name tag `fit-track-prod-migration-task-definition-eu-central-1`; EC2 one-off migration; standard service tags. |
-| `MigrationTaskExecutionRoleArn` | Execution role inspection.                                                                                                                                      |
-| `MigrationTaskDefinitionArn`    | ECS `RunTask` input for the selected migration revision.                                                                                                        |
+`MigrationTaskExecutionRole` is named `fit-track-prod-migration-task-execution-role-eu-central-1`. `MigrationTaskDefinition` uses family `fit-track-prod-migration-eu-central-1` and Name tag `fit-track-prod-migration-task-definition-eu-central-1`; both use standard service tags.
 
 Local verification: `npm run infra:check` passes formatting and CloudFormation schema validation for `eu-central-1`. Task execution, database connectivity, TLS, permissions, and resource sizing have not been verified in AWS.
 
-All nine templates are drafts only. `npm run infra:check` validates their local formatting and CloudFormation schema; no AWS resources have been independently verified.
-
 All service outputs are exported as `fit-track-${Environment}-service-<output-logical-ID>`, including task definitions, execution roles, secrets, and the task security group. Exported secret ARNs contain no secret values. Deploy the database stack after bootstrapping the service with zero tasks; the database stack imports its task SG. Delete the database stack before the service stack.
 
-## Database
+## Database template
 
 `infra/database.yaml` defines the DB subnet group for stack `fit-track-prod-database`. The private Multi-AZ RDS instance and PostgreSQL 17 parameter group are configured in the template but not deployed. The database security group allows inbound TCP 5432 only from the service stack’s `BackendTaskSecurityGroupId` and allows all outbound IPv4 traffic.
 
@@ -273,13 +265,20 @@ All service outputs are exported as `fit-track-${Environment}-service-<output-lo
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `RdsSubnetGroup` | Name and Name tag: `fit-track-prod-rds-subnet-group-eu-central-1`; imports `fit-track-prod-network-DbSubnetAz1Id` and `fit-track-prod-network-DbSubnetAz2Id`; private subnets in `euc1-az1` and `euc1-az2` in the same VPC; tags `Environment: prod`, `Project: fit-track`, `Component: database`. | Local formatting and CloudFormation schema validation passed; not deployed or verified in AWS. |
 
+Additional database resources:
+
+| Logical resource ID                | Name or Name tag                             | Responsibility                                                                                      |
+| ---------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `RdsSecurityGroup`                 | `fit-track-prod-rds-sg-eu-central-1`         | Database ENI security group; task ingress and allow-all IPv4 egress.                                |
+| `RdsSecurityGroupIngressFromTasks` | Not named or taggable                        | TCP 5432 from the exported backend task SG, also used by migration runs.                            |
+| `RdsParameterGroup`                | `fit-track-prod-rds-parameters-eu-central-1` | PostgreSQL 17 parameters requiring TLS.                                                             |
+| `RdsDatabase`                      | `fit-track-prod-rds-eu-central-1`            | Private PostgreSQL primary with a synchronous standby, backups, and managed administrator password. |
+
+All database resources remain template-defined and unverified in AWS.
+
 The `RdsSecurityGroup` Name tag is `fit-track-prod-rds-sg-eu-central-1`; it imports the network VPC ID and uses the standard database tags. The standalone `RdsSecurityGroupIngressFromTasks` rule imports `fit-track-prod-service-BackendTaskSecurityGroupId`, so access is granted to task network interfaces rather than EC2 host interfaces. Its definition passes local schema validation; it has not been deployed or verified in AWS.
 
 The group spans `euc1-az1` and `euc1-az2`. `RdsDatabase` sets `MultiAZ: true` and references `!Ref RdsSubnetGroup`: RDS creates a primary and one synchronous standby in different AZs selected from these subnets. The standby is for automatic failover and does not serve read queries. The application continues using the same RDS endpoint after failover, but must reconnect interrupted connections. This configuration is drafted only; placement and failover have not been verified in AWS. See [RDS single-standby Multi-AZ deployments](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZSingleStandby.html).
-
-## Cost and lifecycle direction
-
-This architecture cannot remain continuously available at zero cost. An ALB, running EC2 capacity, running RDS, NAT Gateways, and some VPC endpoints can create ongoing charges. Runtime resources should be created when needed for testing or deployment. During a long pause, billable runtime resources can be stopped or deleted while retaining only data or artifacts worth their storage cost. Record retained, stopped, or removed resources and their verification results here.
 
 ### Database instance configuration
 
@@ -292,6 +291,13 @@ RDS generates and manages the `fittrack_admin` password in a separate Secrets Ma
 Backups are retained for seven days, snapshots copy resource tags, and automated backups are retained on deletion. Deletion and replacement take a snapshot; deletion protection must be disabled explicitly before deleting the instance or stack. Retained snapshots and backups can incur storage charges. Enhanced Monitoring and Performance Insights are disabled. Standard database tags apply to the instance and parameter group.
 
 The stack exports the endpoint, port, database name, and administrator secret ARN under `fit-track-${Environment}-database-<output-logical-ID>`. Do not import these exports into the service stack: database already imports the service task SG, so a reverse dependency would create a cycle. Populate runtime connection secrets outside CloudFormation. Local schema and formatting checks passed; AWS availability, database creation, TLS, user permissions, backups, and connectivity remain unverified.
+
+| Output logical ID     | Consumer                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| `RdsDatabaseEndpoint` | RDS DNS hostname for backend and migration connection secrets.                           |
+| `RdsDatabasePort`     | PostgreSQL port for connection configuration.                                            |
+| `RdsDatabaseName`     | Database name for connection configuration.                                              |
+| `RdsMasterSecretArn`  | Administrator secret for controlled database setup; not injected into application tasks. |
 
 ### Runtime database TLS configuration
 
@@ -313,17 +319,21 @@ postgresql://MIGRATION_USER:URL_ENCODED_PASSWORD@RDS_ENDPOINT:5432/fittrack?sslm
 
 Prisma Migrate uses its own connector: `sslcert` supplies the server CA, and `sslaccept=strict` enables certificate validation, including hostname checks. Its documented SSL modes differ from node-postgres. See [Prisma PostgreSQL TLS parameters](https://docs.prisma.io/docs/orm/v6/overview/databases/postgresql).
 
-Use the RDS DNS endpoint, not an IP address or a custom alias. URL-encode usernames and passwords. Neither secret has been populated by this change. Publish both updated images, set the corresponding image digests, run the migration successfully, and deploy backend tasks after configuring the secrets. Local Compose connections retain their existing settings. RDS TLS success, rejection of an incorrect CA or hostname, and rejection of plaintext connections must be verified after deployment.
+Use the RDS DNS endpoint, not an IP address or a custom alias. URL-encode usernames and passwords. No populated runtime secret is recorded or verified. Publish both updated images, set the corresponding image digests, run the migration successfully, and deploy backend tasks after configuring the secrets. Local Compose connections retain their existing settings. RDS TLS success, rejection of an incorrect CA or hostname, and rejection of plaintext connections must be verified after deployment.
 
 Local verification passed: `npm run verify`, `npm run test:docker`, and `npm run smoke:production` against rebuilt backend and migration images. Both images expose the CA file to their non-root runtime user; node-postgres loads the CA and preserves certificate and hostname verification. These tests use isolated local PostgreSQL and do not establish RDS TLS connectivity.
 
-## Frontend origin access control
+## Frontend delivery
+
+This stack owns S3, OAC, the distribution, the assets cache policy, two response headers policies, and the SPA function. Upload only the contents of `frontend/dist/`, including `index.html`, `assets/`, `brand/`, and `theme-init.js`; the repository, source files, environment files, and Nginx configuration are not website artifacts. Build with the same-origin `/api` base path.
+
+### Origin access control
 
 `infra/frontend.yaml` defines stack `fit-track-prod-frontend` with `CfOriginAccessControl`, named `fit-track-prod-cf-oac`. The OAC uses origin type `s3`, signing behavior `always`, and signing protocol `sigv4`. It is a global CloudFront resource, so its name has no regional suffix. OAC does not expose CloudFormation tags.
 
 The S3 bucket, bucket policy, OAC, distribution, and cache behaviors are configured in the template but not deployed. Two frontend response headers policies and the SPA function are configured. The distribution S3 origin references OAC, and the bucket policy authorizes only that distribution. Local formatting and CloudFormation schema validation passed; no AWS creation or origin access has been verified. See [CloudFront OAC configuration](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cloudfront-originaccesscontrol.html).
 
-### Frontend S3 bucket
+### S3 bucket
 
 | Resource               | Settings and connections                                                                                                                                                                                                                                         | Verification                                                                                |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -332,15 +342,9 @@ The S3 bucket, bucket policy, OAC, distribution, and cache behaviors are configu
 
 Versioning is enabled; the `expire-previous-versions` lifecycle rule removes noncurrent object versions after 30 days. Current versions are not expired. Both deletion and replacement retain the bucket and its data; retained buckets and object versions continue to incur storage costs. A retained bucket must be imported or otherwise reconciled before redeploying a new stack with the same bucket name. Website hosting, ACLs, and CORS are not configured.
 
-The S3 origin attaches `CfOriginAccessControlId`; the bucket policy permits CloudFront object reads with `AWS:SourceArn` restricted to `CfDistribution` in the same account. No distribution-ID parameter or conditional permission is configured. OAC and the distribution-scoped bucket policy work together. See [AWS OAC bucket policy guidance](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html).
+The S3 origin attaches the ID of `CfOriginAccessControl`; the bucket policy permits CloudFront object reads with `AWS:SourceArn` restricted to `CfDistribution` in the same account. No distribution-ID parameter or conditional permission is configured. OAC and the distribution-scoped bucket policy work together. See [AWS OAC bucket policy guidance](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html).
 
 Exported outputs use `fit-track-${Environment}-frontend-<output-logical-ID>`: `FrontendBucketName`, `FrontendBucketArn`, `FrontendBucketRegionalDomainName`, and `CfOriginAccessControlId`. The regional domain output is a REST origin endpoint, not a public website endpoint. Response headers policies supply `Cache-Control: no-cache` on default frontend responses and `Cache-Control: public,max-age=31536000,immutable` on `/assets/*`. Cache metadata does not need to be set separately during upload for these behaviors. Deployment uploads remain unconfigured and unverified.
-
-## Regional naming verification
-
-All regional name suffixes and Name tags in the templates derive from `${AWS::Region}`. Deploying in the selected `eu-central-1` Region produces the resource names recorded above. IAM managed-policy ARNs derive their partition from `${AWS::Partition}`. Shared tags remain `Environment`, `Project: fit-track`, and `Component` matching the owning stack. Global OAC, path-based secrets/log groups, and the shortened ALB target group name follow the exceptions documented in [infrastructure naming](infrastructure.md#resource-naming).
-
-Local formatting and CloudFormation schema checks passed. AZ IDs and the CloudFront managed prefix-list ID remain explicitly Frankfurt-specific, as does the RDS CA bundle. No deployment or cross-region compatibility has been verified.
 
 ### CloudFront distribution
 
@@ -359,13 +363,13 @@ The `frontend-s3` origin uses the bucket regional REST domain, OAC, an empty leg
 
 The API policy preserves cookie authentication, query parameters, and the `Origin` header required by CSRF checks; these application effects still require AWS runtime verification. See [managed origin request policies](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html) and [managed cache policies](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html). HTML uses managed CachingDisabled rather than a custom policy. Assets use a fixed one-year policy because their filenames include content hashes; publish changed assets under new names, preserve old assets for open clients, and invalidate errors if an asset was requested before upload. See [cache policy TTL reference](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-cachepolicy-cachepolicyconfig.html).
 
-Additional exports are `CfDistributionId`, `CfDistributionDomainName`, and `FrontendUrl`, with the shared frontend export prefix. Set the service `ClientOrigin` parameter to the HTTPS URL after deployment; it is ordinary configuration rather than a secret. Upload the frontend build separately. The default root object handles the site root; the viewer-request SPA function handles extensionless frontend navigation. No global HTML error fallback, custom domain, or ACM certificate is configured. Origin access, cookies, CSRF, caching, and API error responses remain unverified in AWS.
+Additional exports are `CfDistributionId`, `CfDistributionDomainName`, and `FrontendUrl`, with the shared frontend export prefix. Set the service `ClientOrigin` parameter to the HTTPS URL after deployment; it is ordinary configuration rather than a secret. Upload the frontend build separately. The default root object handles the site root; the viewer-request SPA function handles extensionless frontend navigation. No global HTML error fallback, custom domain, or ACM certificate is configured. Error caching is separate from normal cache TTLs: no custom error-caching override is configured, so cacheable origin errors can retain CloudFront's default 10-second minimum even when normal caching is disabled. Backend `no-store` does not suppress caching for every error status. Verify API 5xx and missing-object behavior before rollout; see [CloudFront error cache rules](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/custom-error-pages-expiration.html). Origin access, cookies, CSRF, caching, and API error responses remain unverified in AWS.
 
 ### Frontend response headers
 
-`FrontendResponseHeadersPolicy` is named `fit-track-prod-frontend-headers-policy` and attached to the default behavior. `AssetsResponseHeadersPolicy` is named `fit-track-prod-assets-headers-policy` and attached only to `/assets/*`. Their security settings match `frontend/nginx-security-headers.conf`: CSP, nosniff, frame denial, strict-origin-when-cross-origin referrer policy, disabled camera/geolocation/microphone, same-origin COOP and CORP. Both add HSTS with max-age 31536000, without includeSubDomains or preload, and override origin values. Their browser cache headers differ as recorded in the behavior table.
+`FrontendResponseHeadersPolicy` is named `fit-track-prod-frontend-headers-policy` and attached to the default behavior. `AssetsResponseHeadersPolicy` is named `fit-track-prod-assets-headers-policy` and attached only to `/assets/*`. Their shared security settings match `frontend/nginx-security-headers.conf`: CSP, nosniff, frame denial, strict-origin-when-cross-origin referrer policy, disabled camera/geolocation/microphone, same-origin COOP and CORP. Both add HSTS with max-age 31536000, without includeSubDomains or preload, and override origin values. Their browser cache headers differ as recorded in the behavior table.
 
-Response headers policies affect browser caching only; CloudFront caching is independently controlled by the associated cache policy. See [AWS response headers semantics](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/modifying-response-headers.html). `/api` and `/api/*` have no frontend response headers policy: backend Helmet and `Cache-Control: no-store` remain authoritative. S3 uploads may use a single directory upload; preserve current hashed assets across releases and upload referenced assets before publishing a new index. No upload automation is implemented by this step.
+Response headers policies affect browser caching only; CloudFront caching is independently controlled by the associated cache policy. See [AWS response headers semantics](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/modifying-response-headers.html). `/api` and `/api/*` have no frontend response headers policy: backend Helmet and `Cache-Control: no-store` remain authoritative. S3 uploads may use a single directory upload; preserve current hashed assets across releases and upload referenced assets before publishing a new index. No upload automation is implemented.
 
 Local formatting and CloudFormation schema validation passed. The two CSP values were checked against the existing Nginx configuration. No AWS response header, browser cache, CloudFront cache, or CSP behavior has been verified after deployment. The current local Nginx deployment is unchanged.
 
@@ -375,4 +379,23 @@ Local formatting and CloudFormation schema validation passed. The two CSP values
 
 `/api`, `/api/*`, `/assets`, `/assets/*`, `/brand`, `/brand/*`, and file paths such as `/theme-init.js` are preserved. Non-GET/HEAD methods are unchanged. Missing static files retain their origin error rather than receiving HTML; no global 403/404 fallback is configured. The rewrite convention assumes frontend navigation paths have no dot in their last segment; revisit it if route formats or extensionless public files change. See [AWS SPA rewrite example](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/example_cloudfront_functions_url_rewrite_single_page_apps_section.html).
 
-Local checks covered navigation, static and reserved paths, methods, query preservation, and attachment to the default behavior. Formatting and CloudFormation schema validation passed. AWS function publication, direct navigation, and browser refresh behavior remain unverified after deployment; no AWS resources were deployed by this change.
+Local checks covered navigation, static and reserved paths, methods, query preservation, and attachment to the default behavior. Formatting and CloudFormation schema validation passed. AWS function publication, direct navigation, and browser refresh behavior remain unverified after deployment; no AWS deployment is recorded.
+
+## Production readiness gap
+
+| Area                         | Required before a production rollout                                                                                                                                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Account and deployment       | Confirm account-plan eligibility, regional engine/class availability, quotas, and permissions; deploy stacks and record resource IDs and events.                                                                                     |
+| Delivery                     | Publish verified backend and migration digests to ECR, upload the matching frontend build to S3, and implement AWS rollout automation. Existing workflows publish only to GHCR.                                                      |
+| Database and secrets         | Create separate application and migration database users, populate both runtime secrets, verify their grants and TLS connections, and require a successful migration before starting backend tasks.                                  |
+| Request trust                | Verify cookies, Origin/CSRF handling, forwarded client addresses, and the configured two proxy hops. Restriction to the application's CloudFront distribution remains pending; the prefix list permits all CloudFront distributions. |
+| Transport                    | Viewer-to-CloudFront and database TLS are configured in templates/runtime settings; CloudFront-to-ALB and ALB-to-task traffic use HTTP. End-to-end transport encryption is not implemented.                                          |
+| Capacity and recovery        | Measure task/instance sizing and database connection budget; verify rolling deployments, AZ placement, failover, and restore procedures. Task autoscaling is not configured.                                                         |
+| Observability and protection | Verify task log delivery, add actionable alarms, and decide whether per-process rate limiting is sufficient. A shared rate-limit store and WAF are not configured.                                                                   |
+| Frontend                     | Verify OAC authorization, SPA navigation, response headers, cache behavior, API errors, and safe asset publication against the deployed distribution.                                                                                |
+
+## Cost and lifecycle direction
+
+This architecture cannot remain continuously available at zero cost. An ALB, running EC2 capacity, running RDS, and interface VPC endpoints can create ongoing charges. Runtime resources should be created when needed for testing or deployment. During a long pause, billable runtime resources can be stopped or deleted while retaining only data or artifacts worth their storage cost. Record retained, stopped, or removed resources and their verification results here.
+
+Stopping task execution does not remove endpoint, ALB, storage, secret, or retained-data charges. The current compute template keeps at least two EC2 instances, and RDS is Multi-AZ; no free-plan variant is implemented. Confirm current account-plan restrictions and pricing before deployment. RDS deletion protection and retained S3 buckets, database snapshots, and automated backups require explicit teardown decisions.

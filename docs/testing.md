@@ -1,6 +1,6 @@
 # Testing strategy
 
-FitTrack treats tests as evidence for backend, persistence, security, and delivery risks rather than as a single coverage number. Each layer owns a distinct failure class so a failing check identifies the relevant Seam. The suite uses Vitest throughout, Supertest with migrated PostgreSQL for backend integration, Playwright for complete browser journeys, and final-image smoke tests for runtime artifacts.
+FitTrack treats tests as evidence for backend, persistence, security, and delivery risks rather than as a single coverage number. Each layer owns a distinct failure class so a failing check identifies the responsible layer. The suite uses Vitest throughout, Supertest with migrated PostgreSQL for backend integration, Playwright for complete browser journeys, and final-image smoke tests for runtime artifacts.
 
 ## Risk-to-evidence map
 
@@ -18,7 +18,7 @@ FitTrack treats tests as evidence for backend, persistence, security, and delive
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
 | Invalid release input               | Focused shell tests for version consistency and digest-only image promotion                                      |
 
-Tests cross the same Interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private Implementation details.
+Tests cross the same interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private implementation details.
 
 ```mermaid
 flowchart LR
@@ -33,7 +33,7 @@ flowchart LR
     Merge --> Registry[Build and verify exact registry digests]
 ```
 
-Fast checks protect developer feedback time. PostgreSQL tests own relational and concurrency behavior, browser E2E owns only critical cross-application journeys, and smoke tests prove that the final container Implementations still satisfy their runtime Interfaces. None of these layers substitutes for another.
+Fast checks protect developer feedback time. PostgreSQL tests own relational and concurrency behavior, browser E2E owns only critical cross-application journeys, and smoke tests prove that the final container implementations still satisfy their runtime interfaces. None of these layers substitutes for another.
 
 ## Test layers
 
@@ -70,6 +70,14 @@ Useful narrower commands are:
 | `npm run verify:backend`     | Verify backend unit tests, compilation, and static checks |
 | `npm run verify:frontend`    | Verify frontend checks, tests, and build                  |
 | `npm run test:e2e`           | Run isolated critical Chromium journeys                   |
+
+## Infrastructure validation
+
+```bash
+npm run infra:check
+```
+
+This checks template formatting and runs local `cfn-lint` schema validation for `eu-central-1`. Install `cfn-lint` separately with `brew install cfn-lint`. The check does not contact AWS or prove account eligibility, permissions, quotas, deployability, connectivity, or runtime behavior. It is not included in `npm run verify` or the current GitHub Actions jobs. Stack dependencies belong in [the infrastructure guide](infrastructure.md), and deployment evidence belongs in [the AWS plan](aws-deployment-plan.md).
 
 ## Isolated PostgreSQL verification
 
@@ -115,7 +123,7 @@ The smoke script prints container logs on failure and always removes its tempora
 
 ## Browser end-to-end tests
 
-Playwright owns a deliberately small set of critical user journeys through the public browser Interface. Chromium drives the real React application through its Vite `/api` proxy, Express handles real HTTP and cookies, and Prisma uses a freshly migrated PostgreSQL database. MSW and direct database fixtures are not part of this layer.
+Playwright owns a deliberately small set of critical user journeys through the public browser interface. Chromium drives the real React application through its Vite `/api` proxy, Express handles real HTTP and cookies, and Prisma uses a freshly migrated PostgreSQL database. MSW and direct database fixtures are not part of this layer.
 
 The suite currently proves that:
 

@@ -6,7 +6,7 @@
 
 FitTrack is a backend- and delivery-focused TypeScript system for planning and recording workouts. It demonstrates relational data modelling, authorization, transactional lifecycle invariants, PostgreSQL integration testing, containerized delivery, and release automation. A React application serves as the reference client for the complete API workflow.
 
-> **Current state:** the application and its production container artifacts are implemented and verified locally and in CI. A public environment and AWS infrastructure are not implemented.
+> **Current state:** the application and its production container artifacts are implemented and verified locally and in CI. Nine AWS CloudFormation templates are prepared; deployment and AWS runtime verification remain pending.
 
 ## What this project demonstrates
 
@@ -18,7 +18,7 @@ FitTrack is a backend- and delivery-focused TypeScript system for planning and r
 | Verification        | Contract, unit, PostgreSQL integration, concurrency, browser E2E, accessibility, release-tool, and final-container tests     |
 | Container delivery  | Non-root multi-stage images, a dedicated migration artifact, digest-pinned smoke tests, SBOM, and build provenance           |
 | Release engineering | Protected pull requests, coordinated product versions, exact-digest promotion, and Release Please                            |
-| Cloud direction     | An explicit AWS gap analysis and deployment plan without presenting proposed infrastructure as implemented                   |
+| Cloud direction     | Nine CloudFormation stacks with documented architecture, dependencies, and pending deployment verification                   |
 | Reference client    | A React interface that exercises authentication, lifecycle transitions, validation failures, and persisted state             |
 
 ### Recommended technical review path
@@ -96,13 +96,14 @@ flowchart LR
 | Reference client | React 19, Vite, React Router, Tailwind CSS                    |
 | Shared contracts | Framework-independent Zod schemas and inferred types          |
 
-The backend is the authoritative trust boundary. Shared contracts keep HTTP request and response shapes aligned, while PostgreSQL constraints protect invariants that must survive concurrent requests. See [Architecture and design decisions](docs/architecture.md) for request flow, Module ownership, security controls, runtime behavior, and accepted trade-offs.
+The backend is the authoritative trust boundary. Shared contracts keep HTTP request and response shapes aligned, while PostgreSQL constraints protect invariants that must survive concurrent requests. See [Architecture and design decisions](docs/architecture.md) for request flow, module ownership, security controls, runtime behavior, and accepted trade-offs.
 
 ## Run locally
 
 ### Requirements
 
 - Docker with Docker Compose
+- Node.js `>=24.21.0 <25` and npm `11.x` for the repository commands
 - Git
 
 ```bash
@@ -137,10 +138,11 @@ Pull requests additionally build and exercise the final backend, migration, and 
 
 ## Current operational limits
 
-- There is no public deployment or AWS infrastructure definition yet.
-- HTTPS termination, managed secrets, backups, monitoring, and deployment automation are not configured.
+- No public AWS deployment is verified. CloudFormation defines the network, runtime, database, and frontend, but the stacks remain undeployed.
+- CloudFront viewer HTTPS, runtime secrets, database backups, and task log delivery are defined in templates; AWS deployment automation and runtime verification remain pending.
+- The planned CloudFront-to-ALB connection uses unencrypted HTTP.
 - Rate-limit counters are process-local and are not global across backend replicas.
-- Structured logs are written to standard output, but no external collection or alerting destination is configured.
+- Structured logs are written to standard output. CloudWatch task log delivery is defined but not deployed; alarms are not configured.
 
 These are documented gaps, not hidden production claims. The intended next phase is described in the [AWS deployment plan](docs/aws-deployment-plan.md).
 
@@ -152,6 +154,7 @@ These are documented gaps, not hidden production claims. The intended next phase
 - [Dependency policy](docs/dependency-audit.md)
 - [Release and container process](docs/release-process.md)
 - [AWS deployment plan](docs/aws-deployment-plan.md)
+- [CloudFormation stack layout](docs/infrastructure.md)
 
 ## Author
 
