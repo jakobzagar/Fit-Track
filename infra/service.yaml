@@ -419,21 +419,35 @@ Outputs:
   BackendTaskSecurityGroupId:
     Description: ID of the backend task security group for ECS service network configuration.
     Value: !GetAtt BackendTaskSecurityGroup.GroupId
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendTaskSecurityGroupId"
   BackendSecretArn:
     Description: ARN of the backend runtime secret.
     Value: !Ref BackendSecret
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendSecretArn"
   MigrationSecretArn:
     Description: ARN of the migration database connection secret.
     Value: !Ref MigrationSecret
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-MigrationSecretArn"
   BackendTaskExecutionRoleArn:
     Description: ARN of the backend task execution role.
     Value: !GetAtt BackendTaskExecutionRole.Arn
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendTaskExecutionRoleArn"
   MigrationTaskExecutionRoleArn:
     Description: ARN of the migration task execution role.
     Value: !GetAtt MigrationTaskExecutionRole.Arn
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-MigrationTaskExecutionRoleArn"
   BackendTaskDefinitionArn:
     Description: ARN of the backend task definition for the ECS service.
     Value: !Ref BackendTaskDefinition
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendTaskDefinitionArn"
   MigrationTaskDefinitionArn:
     Description: ARN of the migration task definition for one-off ECS RunTask operations.
     Value: !Ref MigrationTaskDefinition
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-MigrationTaskDefinitionArn"
