@@ -110,6 +110,8 @@ Resources:
         - !GetAtt RdsSecurityGroup.GroupId
       PubliclyAccessible: false
       MultiAZ: false
+      AvailabilityZone:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-network-AvailabilityZoneAz1Name"
       StorageType: gp3
       AllocatedStorage: "20"
       StorageEncrypted: true
