@@ -12,6 +12,8 @@ Parameters:
 Resources:
   EcrRegistryScanningConfiguration:
     Type: AWS::ECR::RegistryScanningConfiguration
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Rules:
         - RepositoryFilters:
@@ -22,8 +24,10 @@ Resources:
 
   EcrBackendRepository:
     Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
-      EmptyOnDelete: true
+      EmptyOnDelete: false
       EncryptionConfiguration:
         EncryptionType: AES256
       ImageTagMutability: IMMUTABLE_WITH_EXCLUSION
@@ -63,8 +67,10 @@ Resources:
 
   EcrMigrationRepository:
     Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
-      EmptyOnDelete: true
+      EmptyOnDelete: false
       EncryptionConfiguration:
         EncryptionType: AES256
       ImageTagMutability: IMMUTABLE_WITH_EXCLUSION

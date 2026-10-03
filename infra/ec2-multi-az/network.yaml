@@ -12,6 +12,8 @@ Parameters:
 Resources:
   FitTrackVpc:
     Type: AWS::EC2::VPC
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       CidrBlock: 10.20.0.0/20
       EnableDnsHostnames: true
@@ -29,6 +31,8 @@ Resources:
 
   PublicSubnetAz1:
     Type: AWS::EC2::Subnet
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.0.0/24
@@ -46,6 +50,8 @@ Resources:
 
   PublicSubnetAz2:
     Type: AWS::EC2::Subnet
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.1.0/24
@@ -63,6 +69,8 @@ Resources:
 
   AppSubnetAz1:
     Type: AWS::EC2::Subnet
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.2.0/24
@@ -80,6 +88,8 @@ Resources:
 
   AppSubnetAz2:
     Type: AWS::EC2::Subnet
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.3.0/24
@@ -97,6 +107,8 @@ Resources:
 
   DbSubnetAz1:
     Type: AWS::EC2::Subnet
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.4.0/24
@@ -114,6 +126,8 @@ Resources:
 
   DbSubnetAz2:
     Type: AWS::EC2::Subnet
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       VpcId: !Ref FitTrackVpc
       CidrBlock: 10.20.5.0/24
@@ -131,6 +145,8 @@ Resources:
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Tags:
         - Key: Name
@@ -144,12 +160,16 @@ Resources:
 
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       InternetGatewayId: !Ref InternetGateway
       VpcId: !Ref FitTrackVpc
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       VpcId: !Ref FitTrackVpc
       Tags:
@@ -164,6 +184,8 @@ Resources:
 
   AppRouteTable:
     Type: AWS::EC2::RouteTable
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       VpcId: !Ref FitTrackVpc
       Tags:
@@ -178,6 +200,8 @@ Resources:
 
   DbRouteTable:
     Type: AWS::EC2::RouteTable
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       VpcId: !Ref FitTrackVpc
       Tags:
@@ -192,42 +216,56 @@ Resources:
 
   PublicSubnetAz1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnetAz1
 
   PublicSubnetAz2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnetAz2
 
   AppSubnetAz1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RouteTableId: !Ref AppRouteTable
       SubnetId: !Ref AppSubnetAz1
 
   AppSubnetAz2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RouteTableId: !Ref AppRouteTable
       SubnetId: !Ref AppSubnetAz2
 
   DbSubnetAz1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RouteTableId: !Ref DbRouteTable
       SubnetId: !Ref DbSubnetAz1
 
   DbSubnetAz2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RouteTableId: !Ref DbRouteTable
       SubnetId: !Ref DbSubnetAz2
 
   PublicDefaultRoute:
     Type: AWS::EC2::Route
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     DependsOn: InternetGatewayAttachment
     Properties:
       RouteTableId: !Ref PublicRouteTable

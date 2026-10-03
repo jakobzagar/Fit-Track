@@ -46,6 +46,8 @@ Conditions:
 Resources:
   EcsInstanceRole:
     Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RoleName: !Sub fit-track-${Environment}-ecs-instance-role-${AWS::Region}
       Description: EC2 instance role for ECS container management and Systems Manager access.
@@ -71,6 +73,8 @@ Resources:
 
   EcsInstanceProfile:
     Type: AWS::IAM::InstanceProfile
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       InstanceProfileName: !Sub fit-track-${Environment}-ecs-instance-profile-${AWS::Region}
       Roles:
@@ -78,6 +82,8 @@ Resources:
 
   EcsInstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       GroupDescription: ECS container instance network access in private application subnets.
       VpcId:
@@ -99,6 +105,8 @@ Resources:
 
   EndpointSecurityGroupIngressFromEcsInstances:
     Type: AWS::EC2::SecurityGroupIngress
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Description: Allow ECS instances to connect to interface endpoints over HTTPS.
       GroupId:
@@ -111,6 +119,8 @@ Resources:
 
   Ec2InstanceLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       LaunchTemplateName: !Sub fit-track-${Environment}-ecs-launch-template-${AWS::Region}
       TagSpecifications:
@@ -161,6 +171,8 @@ Resources:
 
   Ec2AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     DependsOn: EndpointSecurityGroupIngressFromEcsInstances
     Properties:
       AutoScalingGroupName: !Sub fit-track-${Environment}-ecs-asg-${AWS::Region}
@@ -205,6 +217,8 @@ Resources:
 
   EcsCapacityProvider:
     Type: AWS::ECS::CapacityProvider
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Name: !Sub fit-track-${Environment}-ecs-cp-${AWS::Region}
       AutoScalingGroupProvider:
@@ -229,6 +243,8 @@ Resources:
 
   EcsCluster:
     Type: AWS::ECS::Cluster
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       ClusterName: !Sub fit-track-${Environment}-ecs-cluster-${AWS::Region}
       Tags:
@@ -243,6 +259,8 @@ Resources:
 
   EcsCapacityProviderAssociations:
     Type: AWS::ECS::ClusterCapacityProviderAssociations
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       CapacityProviders:
         - !Ref EcsCapacityProvider

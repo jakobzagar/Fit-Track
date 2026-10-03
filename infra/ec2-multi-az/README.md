@@ -61,3 +61,7 @@ The selected deployment Region remains `eu-central-1`. Network AZ IDs `euc1-az1`
 ## Security group conventions
 
 Each `AWS::EC2::SecurityGroup` owns its description, tags, and explicit allow-all IPv4 egress. Inbound permissions are separate `AWS::EC2::SecurityGroupIngress` resources. `ingress` owns CloudFront-to-ALB TCP 80; `service` owns ALB-to-task TCP 3001; `database` owns task-to-RDS TCP 5432. Endpoint HTTPS ingress is owned by `compute` for EC2 instances. Cross-stack rules stay with the consumer stack to keep imports one-way.
+
+## Resource lifecycle
+
+Every resource explicitly declares deletion and replacement policies. S3 buckets, ECR repositories, log groups, and standalone secrets use `Retain`; RDS instances use `Snapshot`; all other resources use `Delete`. The [AWS lifecycle policy table](../../docs/aws-deployment-plan.md#resource-deletion-and-replacement-policies) records the rationale, cleanup requirements, and verification limits. Retained resources require deliberate cleanup or import before recreating stacks with the same names.
