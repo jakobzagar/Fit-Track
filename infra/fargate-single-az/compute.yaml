@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack ECS cluster for Fargate backend and migration tasks.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+Resources:
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub fit-track-${Environment}-ecs-cluster-${AWS::Region}
+      CapacityProviders:
+        - FARGATE
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-ecs-cluster-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: compute
+
+Outputs:
+  EcsClusterName:
+    Description: Name of the ECS cluster for Fargate services and migration tasks.
+    Value: !Ref EcsCluster
+    Export:
+      Name: !Sub "fit-track-${Environment}-compute-EcsClusterName"
+  EcsClusterArn:
+    Description: ARN of the ECS cluster for Fargate services and migration tasks.
+    Value: !GetAtt EcsCluster.Arn
+    Export:
+      Name: !Sub "fit-track-${Environment}-compute-EcsClusterArn"
