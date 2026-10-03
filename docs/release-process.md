@@ -78,7 +78,7 @@ Keep the body current when the scope or validation changes. Dependabot and Relea
 
 The current registry is GHCR: `ghcr.io/jakobzagar/<image-name>`. The AWS ECR repositories are defined separately; no workflow currently authenticates to AWS or publishes to ECR. The AWS frontend will use the static build in S3 rather than the Nginx image; that upload pipeline is also pending.
 
-Images are built for `linux/amd64` and `linux/arm64` with an SBOM and provenance attestation.
+Published backend, migration, and frontend images target only `linux/amd64`, matching the `X86_64` ECS task definitions and x86 EC2 capacity. Builds retain SBOM and provenance attestations. Both publishing workflows run on x86 GitHub runners and do not configure QEMU. Local Docker builds still use the host platform unless explicitly overridden; running published images on ARM hosts requires AMD64 emulation.
 
 Successful `main` builds publish:
 
