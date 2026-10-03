@@ -1,0 +1,426 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack Fargate backend service, migration task, execution roles, and private task networking.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+  BackendDesiredCount:
+    Type: Number
+    Default: 1
+    MinValue: 0
+    Description: Number of backend tasks; use zero for bootstrap and one for normal Single-AZ operation.
+
+  BackendImageDigest:
+    Type: String
+    Description: Verified backend image digest from the ECR backend repository.
+    AllowedPattern: "^sha256:[a-f0-9]{64}$"
+  BackendCpu:
+    Type: Number
+    Default: 256
+    AllowedValues: [256, 512, 1024]
+    Description: CPU units allocated to the backend task (1024 units equal one vCPU).
+  BackendMemory:
+    Type: Number
+    Default: 512
+    AllowedValues: [512, 1024, 2048]
+    Description: Backend Fargate memory limit in MiB; must match the selected CPU size.
+  ClientOrigin:
+    Type: String
+    Description: HTTPS frontend origin without a path, used for credentialed CORS and CSRF checks.
+    AllowedPattern: "^https://[^/\\s?#]+$"
+  TrustProxyHops:
+    Type: Number
+    Default: 2
+    AllowedValues: [0, 1, 2, 3]
+    Description: Trusted proxy hops; two for the planned CloudFront to ALB to backend path.
+
+  MigrationImageDigest:
+    Type: String
+    Description: Verified migration image digest from the ECR migration repository.
+    AllowedPattern: "^sha256:[a-f0-9]{64}$"
+  MigrationCpu:
+    Type: Number
+    Default: 256
+    AllowedValues: [256, 512, 1024]
+    Description: CPU units reserved for the migration task (1024 units equal one vCPU).
+  MigrationMemory:
+    Type: Number
+    Default: 512
+    AllowedValues: [512, 1024, 2048]
+    Description: Migration Fargate memory limit in MiB; must match the selected CPU size.
+
+Rules:
+  BackendFargateTaskSize:
+    Assertions:
+      - Assert: !Or
+          - !Equals [!Ref BackendCpu, "256"]
+          - !And
+            - !Equals [!Ref BackendCpu, "512"]
+            - !Not [!Equals [!Ref BackendMemory, "512"]]
+          - !And
+            - !Equals [!Ref BackendCpu, "1024"]
+            - !Equals [!Ref BackendMemory, "2048"]
+        AssertDescription: Use 256 CPU with 512/1024/2048 MiB, 512 CPU with 1024/2048 MiB, or 1024 CPU with 2048 MiB.
+  MigrationFargateTaskSize:
+    Assertions:
+      - Assert: !Or
+          - !Equals [!Ref MigrationCpu, "256"]
+          - !And
+            - !Equals [!Ref MigrationCpu, "512"]
+            - !Not [!Equals [!Ref MigrationMemory, "512"]]
+          - !And
+            - !Equals [!Ref MigrationCpu, "1024"]
+            - !Equals [!Ref MigrationMemory, "2048"]
+        AssertDescription: Use 256 CPU with 512/1024/2048 MiB, 512 CPU with 1024/2048 MiB, or 1024 CPU with 2048 MiB.
+
+Resources:
+  MigrationTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub fit-track-${Environment}-migration-task-execution-role-${AWS::Region}
+      Description: ECS execution role scoped to migration image pulls, migration logs, and database secret retrieval.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub fit-track-${Environment}-migration-task-execution
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: EcrAuthentication
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: PullMigrationImage
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                Resource:
+                  Fn::ImportValue: !Sub "fit-track-${Environment}-ecr-EcrMigrationRepositoryArn"
+              - Sid: WriteMigrationLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  Fn::ImportValue: !Sub "fit-track-${Environment}-logs-MigrationLogGroupArn"
+              - Sid: ReadMigrationDatabaseSecret
+                Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: /
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-migration-task-execution-role-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+  BackendTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub fit-track-${Environment}-backend-task-execution-role-${AWS::Region}
+      Description: ECS execution role scoped to backend image pulls, backend logs, and backend secret retrieval.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub fit-track-${Environment}-backend-task-execution
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: EcrAuthentication
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: PullBackendImage
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                Resource:
+                  Fn::ImportValue: !Sub "fit-track-${Environment}-ecr-EcrBackendRepositoryArn"
+              - Sid: WriteBackendLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  Fn::ImportValue: !Sub "fit-track-${Environment}-logs-BackendLogGroupArn"
+              - Sid: ReadBackendSecret
+                Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: /
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-backend-task-execution-role-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+  MigrationTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt MigrationTaskExecutionRole.Arn
+      Cpu: !Ref MigrationCpu
+      Memory: !Ref MigrationMemory
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ContainerDefinitions:
+        - Name: migration
+          Image:
+            Fn::Sub:
+              - "${RepositoryUri}@${MigrationImageDigest}"
+              - RepositoryUri:
+                  Fn::ImportValue: !Sub "fit-track-${Environment}-ecr-EcrMigrationRepositoryUri"
+          Essential: true
+          StopTimeout: 120
+          LinuxParameters:
+            InitProcessEnabled: true
+          Environment:
+            - Name: NODE_ENV
+              Value: production
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: /
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Fn::ImportValue: !Sub "fit-track-${Environment}-logs-MigrationLogGroupName"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: migration
+              mode: blocking
+      Family: !Sub fit-track-${Environment}-migration-${AWS::Region}
+      NetworkMode: awsvpc
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-migration-task-definition-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+  BackendTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt BackendTaskExecutionRole.Arn
+      Cpu: !Ref BackendCpu
+      Memory: !Ref BackendMemory
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ContainerDefinitions:
+        - Name: backend
+          Image:
+            Fn::Sub:
+              - "${RepositoryUri}@${BackendImageDigest}"
+              - RepositoryUri:
+                  Fn::ImportValue: !Sub "fit-track-${Environment}-ecr-EcrBackendRepositoryUri"
+          Essential: true
+          StopTimeout: 30
+          LinuxParameters:
+            InitProcessEnabled: true
+          PortMappings:
+            - Name: backend-http
+              ContainerPort: 3001
+              Protocol: tcp
+              AppProtocol: http
+          HealthCheck:
+            Command:
+              - CMD
+              - node
+              - -e
+              - "fetch('http://127.0.0.1:3001/api/health/live').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+            Interval: 30
+            Timeout: 5
+            StartPeriod: 10
+            Retries: 3
+          Environment:
+            - Name: NODE_ENV
+              Value: production
+            - Name: PORT
+              Value: "3001"
+            - Name: CLIENT_ORIGIN
+              Value: !Ref ClientOrigin
+            - Name: TRUST_PROXY_HOPS
+              Value: !Sub "${TrustProxyHops}"
+            - Name: LOG_LEVEL
+              Value: info
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: /
+            - Name: JWT_SECRET
+              ValueFrom: /
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Fn::ImportValue: !Sub "fit-track-${Environment}-logs-BackendLogGroupName"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: backend
+              mode: non-blocking
+              max-buffer-size: 1m
+      Family: !Sub fit-track-${Environment}-backend-${AWS::Region}
+      NetworkMode: awsvpc
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-backend-task-definition-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+  BackendTaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Backend task HTTP access from the application load balancer.
+      VpcId:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-network-VpcId"
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-backend-task-sg-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+  BackendTaskSecurityGroupIngressFromAlb:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Backend HTTP and readiness health checks from the ALB.
+      GroupId: !GetAtt BackendTaskSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 3001
+      ToPort: 3001
+      SourceSecurityGroupId:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-ingress-AlbSecurityGroupId"
+
+  InterfaceEndpointsSecurityGroupIngressFromTasks:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: HTTPS access from backend and migration Fargate tasks to interface endpoints.
+      GroupId:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-endpoints-InterfaceEndpointsSecurityGroupId"
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !GetAtt BackendTaskSecurityGroup.GroupId
+
+  BackendService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - BackendTaskSecurityGroupIngressFromAlb
+      - InterfaceEndpointsSecurityGroupIngressFromTasks
+    Properties:
+      ServiceName: !Sub fit-track-${Environment}-backend-service-${AWS::Region}
+      Cluster:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-compute-EcsClusterArn"
+      TaskDefinition: !Ref BackendTaskDefinition
+      CapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+      DesiredCount: !Ref BackendDesiredCount
+      SchedulingStrategy: REPLICA
+      AvailabilityZoneRebalancing: DISABLED
+      DeploymentController:
+        Type: ECS
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      HealthCheckGracePeriodSeconds: 60
+      EnableECSManagedTags: true
+      PropagateTags: SERVICE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets:
+            - Fn::ImportValue: !Sub "fit-track-${Environment}-network-AppSubnetAz1Id"
+          SecurityGroups:
+            - !GetAtt BackendTaskSecurityGroup.GroupId
+      LoadBalancers:
+        - TargetGroupArn:
+            Fn::ImportValue: !Sub "fit-track-${Environment}-ingress-BackendTargetGroupArn"
+          ContainerName: backend
+          ContainerPort: 3001
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-backend-service-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: service
+
+Outputs:
+  BackendServiceArn:
+    Description: ARN of the backend ECS service.
+    Value: !Ref BackendService
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendServiceArn"
+  BackendServiceName:
+    Description: Name of the backend ECS service for deployments and operations.
+    Value: !GetAtt BackendService.Name
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendServiceName"
+  BackendTaskSecurityGroupId:
+    Description: ID of the backend task security group for ECS service network configuration.
+    Value: !GetAtt BackendTaskSecurityGroup.GroupId
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendTaskSecurityGroupId"
+  BackendTaskExecutionRoleArn:
+    Description: ARN of the backend task execution role.
+    Value: !GetAtt BackendTaskExecutionRole.Arn
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendTaskExecutionRoleArn"
+  MigrationTaskExecutionRoleArn:
+    Description: ARN of the migration task execution role.
+    Value: !GetAtt MigrationTaskExecutionRole.Arn
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-MigrationTaskExecutionRoleArn"
+  BackendTaskDefinitionArn:
+    Description: ARN of the backend task definition for the ECS service.
+    Value: !Ref BackendTaskDefinition
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-BackendTaskDefinitionArn"
+  MigrationTaskDefinitionArn:
+    Description: ARN of the migration task definition for one-off ECS RunTask operations.
+    Value: !Ref MigrationTaskDefinition
+    Export:
+      Name: !Sub "fit-track-${Environment}-service-MigrationTaskDefinitionArn"
