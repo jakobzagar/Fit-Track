@@ -1,0 +1,285 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack VPC, subnets, and routing.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+Resources:
+  FitTrackVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.20.0.0/20
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-vpc-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  PublicSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      CidrBlock: 10.20.0.0/24
+      AvailabilityZoneId: euc1-az1
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-public-az1-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  PublicSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      CidrBlock: 10.20.1.0/24
+      AvailabilityZoneId: euc1-az2
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-public-az2-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  AppSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      CidrBlock: 10.20.2.0/24
+      AvailabilityZoneId: euc1-az1
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-app-az1-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  DbSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      CidrBlock: 10.20.4.0/24
+      AvailabilityZoneId: euc1-az1
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-db-az1-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  DbSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      CidrBlock: 10.20.5.0/24
+      AvailabilityZoneId: euc1-az2
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-db-az2-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-igw-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref FitTrackVpc
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rt-public-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  AppRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rt-app-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  DbRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FitTrackVpc
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rt-db-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: network
+
+  PublicSubnetAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetAz1
+
+  PublicSubnetAz2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetAz2
+
+  AppSubnetAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref AppRouteTable
+      SubnetId: !Ref AppSubnetAz1
+
+  DbSubnetAz1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref DbRouteTable
+      SubnetId: !Ref DbSubnetAz1
+
+  DbSubnetAz2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref DbRouteTable
+      SubnetId: !Ref DbSubnetAz2
+
+Outputs:
+  AvailabilityZoneAz1Id:
+    Description: Availability Zone ID used by the AZ 1 subnets.
+    Value: euc1-az1
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-AvailabilityZoneAz1Id"
+
+  AvailabilityZoneAz2Id:
+    Description: Availability Zone ID used by the AZ 2 subnets.
+    Value: euc1-az2
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-AvailabilityZoneAz2Id"
+
+  VpcId:
+    Description: ID of the application VPC.
+    Value: !Ref FitTrackVpc
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-VpcId"
+
+  VpcCidrBlock:
+    Description: IPv4 CIDR block of the application VPC.
+    Value: !GetAtt FitTrackVpc.CidrBlock
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-VpcCidrBlock"
+
+  PublicSubnetAz1Id:
+    Description: Public subnet ID in AZ 1 for the internet-facing ALB.
+    Value: !Ref PublicSubnetAz1
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-PublicSubnetAz1Id"
+
+  PublicSubnetAz2Id:
+    Description: Public subnet ID in AZ 2 for the internet-facing ALB.
+    Value: !Ref PublicSubnetAz2
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-PublicSubnetAz2Id"
+
+  AppSubnetAz1Id:
+    Description: Private application subnet ID in AZ 1.
+    Value: !Ref AppSubnetAz1
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-AppSubnetAz1Id"
+
+  DbSubnetAz1Id:
+    Description: Private database subnet ID in AZ 1.
+    Value: !Ref DbSubnetAz1
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-DbSubnetAz1Id"
+
+  DbSubnetAz2Id:
+    Description: Private database subnet ID in AZ 2.
+    Value: !Ref DbSubnetAz2
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-DbSubnetAz2Id"
+
+  PublicRouteTableId:
+    Description: Public route table ID associated with both public subnets.
+    Value: !Ref PublicRouteTable
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-PublicRouteTableId"
+
+  AppRouteTableId:
+    Description: Private application route table associated with the application subnet in AZ 1.
+    Value: !Ref AppRouteTable
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-AppRouteTableId"
+
+  DbRouteTableId:
+    Description: Private database route table associated with both database subnets.
+    Value: !Ref DbRouteTable
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-DbRouteTableId"

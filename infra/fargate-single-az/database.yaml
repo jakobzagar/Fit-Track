@@ -1,0 +1,154 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack private PostgreSQL database, subnet group, and security group.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+  DatabaseEngineVersion:
+    Type: String
+    Default: "17.11"
+    AllowedPattern: '^17\.[0-9]+$'
+    Description: PostgreSQL 17 minor version verified as available in the deployment Region before deployment.
+  DatabaseInstanceClass:
+    Type: String
+    Default: db.t4g.micro
+    AllowedValues: [db.t4g.micro, db.t4g.small]
+    Description: Initial burstable database instance size; verify regional engine compatibility.
+
+Resources:
+  RdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private database subnets across two Availability Zones.
+      DBSubnetGroupName: !Sub fit-track-${Environment}-rds-subnet-group-${AWS::Region}
+      SubnetIds:
+        - Fn::ImportValue:
+            Fn::Sub: fit-track-${Environment}-network-DbSubnetAz1Id
+        - Fn::ImportValue:
+            Fn::Sub: fit-track-${Environment}-network-DbSubnetAz2Id
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rds-subnet-group-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: database
+
+  RdsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access control for the private PostgreSQL database.
+      VpcId:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-network-VpcId"
+      SecurityGroupEgress:
+        - Description: Allow all outbound IPv4 traffic.
+          IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rds-sg-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: database
+
+  RdsSecurityGroupIngressFromTasks:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: PostgreSQL access from backend and migration tasks.
+      GroupId: !GetAtt RdsSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      SourceSecurityGroupId:
+        Fn::ImportValue: !Sub "fit-track-${Environment}-service-BackendTaskSecurityGroupId"
+
+  RdsParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      DBParameterGroupName: !Sub fit-track-${Environment}-rds-parameters-${AWS::Region}
+      Description: PostgreSQL 17 parameters requiring encrypted client connections.
+      Family: postgres17
+      Parameters:
+        rds.force_ssl: "1"
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rds-parameters-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: database
+
+  RdsDatabase:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    DependsOn: RdsSecurityGroupIngressFromTasks
+    Properties:
+      DBInstanceIdentifier: !Sub fit-track-${Environment}-rds-${AWS::Region}
+      Engine: postgres
+      EngineVersion: !Ref DatabaseEngineVersion
+      DBInstanceClass: !Ref DatabaseInstanceClass
+      DBName: fittrack
+      Port: 5432
+      MasterUsername: fittrack_admin
+      ManageMasterUserPassword: true
+      DBSubnetGroupName: !Ref RdsSubnetGroup
+      DBParameterGroupName: !Ref RdsParameterGroup
+      VPCSecurityGroups:
+        - !GetAtt RdsSecurityGroup.GroupId
+      PubliclyAccessible: false
+      MultiAZ: false
+      StorageType: gp3
+      AllocatedStorage: "20"
+      StorageEncrypted: true
+      BackupRetentionPeriod: 7
+      CopyTagsToSnapshot: true
+      DeleteAutomatedBackups: false
+      DeletionProtection: true
+      AutoMinorVersionUpgrade: true
+      AllowMajorVersionUpgrade: false
+      MonitoringInterval: 0
+      EnablePerformanceInsights: false
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-rds-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: database
+
+Outputs:
+  RdsDatabaseEndpoint:
+    Description: Private PostgreSQL hostname for verified TLS database connections.
+    Value: !GetAtt RdsDatabase.Endpoint.Address
+    Export:
+      Name: !Sub "fit-track-${Environment}-database-RdsDatabaseEndpoint"
+  RdsDatabasePort:
+    Description: PostgreSQL endpoint port.
+    Value: !GetAtt RdsDatabase.Endpoint.Port
+    Export:
+      Name: !Sub "fit-track-${Environment}-database-RdsDatabasePort"
+  RdsDatabaseName:
+    Description: Initial PostgreSQL database name.
+    Value: fittrack
+    Export:
+      Name: !Sub "fit-track-${Environment}-database-RdsDatabaseName"
+  RdsMasterSecretArn:
+    Description: ARN of the RDS-managed administrator secret; not an application credential.
+    Value: !GetAtt RdsDatabase.MasterUserSecret.SecretArn
+    Export:
+      Name: !Sub "fit-track-${Environment}-database-RdsMasterSecretArn"
