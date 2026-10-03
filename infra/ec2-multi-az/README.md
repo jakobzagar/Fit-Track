@@ -57,3 +57,7 @@ Run `npm run infra:check` before a template change is handed off. See [infrastru
 Regional resource names and Name tags use `fit-track-${Environment}-<resource>-${AWS::Region}`. S3 bucket names additionally include `${AWS::AccountId}` for global uniqueness. Region-scoped secrets and log groups keep their path names, and cross-stack exports retain `fit-track-${Environment}-<stack-key>-<output-logical-ID>`. IAM managed-policy ARNs use `${AWS::Partition}`. Global CloudFront resource names have no regional suffix. The ALB target group's physical name omits the region to stay within its 32-character limit; its Name tag includes the region.
 
 The selected deployment Region remains `eu-central-1`. Network AZ IDs `euc1-az1` and `euc1-az2`, ingress CloudFront prefix-list ID `pl-a3a144ca`, and the bundled RDS CA certificates are region-specific. Dynamic names alone do not make these stacks deployable in another Region; validate or change these settings first.
+
+## Security group conventions
+
+Each `AWS::EC2::SecurityGroup` owns its description, tags, and explicit allow-all IPv4 egress. Inbound permissions are separate `AWS::EC2::SecurityGroupIngress` resources. `ingress` owns CloudFront-to-ALB TCP 80; `service` owns ALB-to-task TCP 3001; `database` owns task-to-RDS TCP 5432. Endpoint HTTPS ingress is owned by `compute` for EC2 instances. Cross-stack rules stay with the consumer stack to keep imports one-way.
