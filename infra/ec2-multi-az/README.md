@@ -30,6 +30,12 @@ A valid creation order is:
 
 The [AWS bootstrap procedure](../../docs/aws-deployment-plan.md#backend-service-scheduling-and-deployment) owns image digests, secrets, database setup, migration execution, and starting backend tasks. Set `ClientOrigin` to the frontend HTTPS URL. Stack creation order alone does not make the application ready.
 
+### Initial database user setup
+
+After RDS creation and before running migrations or starting backend tasks, create separate PostgreSQL migration and backend users, grant their respective schema and data permissions, and set default privileges for future tables and sequences created by the migration user. Populate the existing migration and backend secrets outside CloudFormation. This preparation is performed once per new database; subsequent releases run migrations using the existing users.
+
+For manual setup, use Session Manager port forwarding through an existing ECS EC2 instance and connect with a local PostgreSQL client using the master credentials and verified RDS TLS. Compute already supplies the SSM instance role and endpoint HTTPS ingress. Temporarily allow RDS TCP 5432 ingress from the EC2 instance SG, since the current database SG permits only the task SG; remove that administration rule after setup. No inbound SSH rule or public database access is required. Database-user provisioning and this temporary administration path remain unimplemented and AWS-unverified; deployment prerequisites are recorded in the [AWS review](../../docs/aws-deployment-plan.md#before-deployment).
+
 Delete consumers before producers: `database` before `service`; `service` before `compute`, `ingress`, `ecr`, and `logs`; `frontend` before `ingress`; `compute` before `endpoints`; `ingress` and `endpoints` before `network`. Review retained data and deletion protection in the [AWS plan](../../docs/aws-deployment-plan.md#cost-and-lifecycle-direction) before teardown.
 
 The ECR scanning configuration manages the whole regional registry, although its filter selects only the FitTrack repositories. Check existing registry settings before deployment.
