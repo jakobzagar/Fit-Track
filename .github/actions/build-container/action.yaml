@@ -1,5 +1,5 @@
 name: Build and push container
-description: Generate OCI metadata and publish a cached multi-platform image
+description: Generate OCI metadata and publish a cached Linux AMD64 image
 
 inputs:
   image:
@@ -28,7 +28,7 @@ inputs:
 
 outputs:
   digest:
-    description: Published multi-platform image digest
+    description: Published Linux AMD64 image digest
     value: ${{ steps.build.outputs.digest }}
 
 runs:
@@ -50,7 +50,7 @@ runs:
         context: .
         file: ${{ inputs.dockerfile }}
         target: ${{ inputs.target }}
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64
         push: true
         sbom: true
         provenance: mode=max
