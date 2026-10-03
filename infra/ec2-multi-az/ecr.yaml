@@ -1,41 +1,41 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack production ECR repositories and image scanning configuration.
+Description: "FitTrack production ECR repositories and image scanning configuration."
 
 Parameters:
   Environment:
-    Type: String
-    Default: prod
+    Type: "String"
+    Default: "prod"
     AllowedValues:
-      - prod
+      - "prod"
 
 Resources:
   EcrRegistryScanningConfiguration:
-    Type: AWS::ECR::RegistryScanningConfiguration
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::ECR::RegistryScanningConfiguration"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
       Rules:
         - RepositoryFilters:
             - Filter: !Sub "fit-track-${Environment}-*"
-              FilterType: WILDCARD
-          ScanFrequency: SCAN_ON_PUSH
-      ScanType: BASIC
+              FilterType: "WILDCARD"
+          ScanFrequency: "SCAN_ON_PUSH"
+      ScanType: "BASIC"
 
   EcrBackendRepository:
-    Type: AWS::ECR::Repository
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    Type: "AWS::ECR::Repository"
+    DeletionPolicy: "Retain"
+    UpdateReplacePolicy: "Retain"
     Properties:
       EmptyOnDelete: false
       EncryptionConfiguration:
-        EncryptionType: AES256
-      ImageTagMutability: IMMUTABLE_WITH_EXCLUSION
+        EncryptionType: "AES256"
+      ImageTagMutability: "IMMUTABLE_WITH_EXCLUSION"
       ImageTagMutabilityExclusionFilters:
-        - ImageTagMutabilityExclusionFilterType: WILDCARD
-          ImageTagMutabilityExclusionFilterValue: main
-        - ImageTagMutabilityExclusionFilterType: WILDCARD
-          ImageTagMutabilityExclusionFilterValue: latest
+        - ImageTagMutabilityExclusionFilterType: "WILDCARD"
+          ImageTagMutabilityExclusionFilterValue: "main"
+        - ImageTagMutabilityExclusionFilterType: "WILDCARD"
+          ImageTagMutabilityExclusionFilterValue: "latest"
       LifecyclePolicy:
         LifecyclePolicyText: |
           {
@@ -54,31 +54,31 @@ Resources:
               }
             ]
           }
-      RepositoryName: !Sub fit-track-${Environment}-backend-${AWS::Region}
+      RepositoryName: !Sub "fit-track-${Environment}-backend-${AWS::Region}"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-backend-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: ecr
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-backend-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "ecr"
 
   EcrMigrationRepository:
-    Type: AWS::ECR::Repository
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    Type: "AWS::ECR::Repository"
+    DeletionPolicy: "Retain"
+    UpdateReplacePolicy: "Retain"
     Properties:
       EmptyOnDelete: false
       EncryptionConfiguration:
-        EncryptionType: AES256
-      ImageTagMutability: IMMUTABLE_WITH_EXCLUSION
+        EncryptionType: "AES256"
+      ImageTagMutability: "IMMUTABLE_WITH_EXCLUSION"
       ImageTagMutabilityExclusionFilters:
-        - ImageTagMutabilityExclusionFilterType: WILDCARD
-          ImageTagMutabilityExclusionFilterValue: main
-        - ImageTagMutabilityExclusionFilterType: WILDCARD
-          ImageTagMutabilityExclusionFilterValue: latest
+        - ImageTagMutabilityExclusionFilterType: "WILDCARD"
+          ImageTagMutabilityExclusionFilterValue: "main"
+        - ImageTagMutabilityExclusionFilterType: "WILDCARD"
+          ImageTagMutabilityExclusionFilterValue: "latest"
       LifecyclePolicy:
         LifecyclePolicyText: |
           {
@@ -97,56 +97,56 @@ Resources:
               }
             ]
           }
-      RepositoryName: !Sub fit-track-${Environment}-migration-${AWS::Region}
+      RepositoryName: !Sub "fit-track-${Environment}-migration-${AWS::Region}"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-migration-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: ecr
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-migration-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "ecr"
 
 Outputs:
   EcrRegistryId:
-    Description: AWS account ID for the regional private ECR registry.
-    Value: !GetAtt EcrRegistryScanningConfiguration.RegistryId
+    Description: "AWS account ID for the regional private ECR registry."
+    Value: !GetAtt "EcrRegistryScanningConfiguration.RegistryId"
     Export:
       Name: !Sub "fit-track-${Environment}-ecr-EcrRegistryId"
 
   EcrBackendRepositoryName:
-    Description: Name of the private ECR repository for the backend image.
-    Value: !Ref EcrBackendRepository
+    Description: "Name of the private ECR repository for the backend image."
+    Value: !Ref "EcrBackendRepository"
     Export:
       Name: !Sub "fit-track-${Environment}-ecr-EcrBackendRepositoryName"
 
   EcrBackendRepositoryArn:
-    Description: ARN of the private ECR backend repository for IAM permissions.
-    Value: !GetAtt EcrBackendRepository.Arn
+    Description: "ARN of the private ECR backend repository for IAM permissions."
+    Value: !GetAtt "EcrBackendRepository.Arn"
     Export:
       Name: !Sub "fit-track-${Environment}-ecr-EcrBackendRepositoryArn"
 
   EcrBackendRepositoryUri:
-    Description: URI of the private ECR backend repository for image push and pull.
-    Value: !GetAtt EcrBackendRepository.RepositoryUri
+    Description: "URI of the private ECR backend repository for image push and pull."
+    Value: !GetAtt "EcrBackendRepository.RepositoryUri"
     Export:
       Name: !Sub "fit-track-${Environment}-ecr-EcrBackendRepositoryUri"
 
   EcrMigrationRepositoryName:
-    Description: Name of the private ECR repository for the migration image.
-    Value: !Ref EcrMigrationRepository
+    Description: "Name of the private ECR repository for the migration image."
+    Value: !Ref "EcrMigrationRepository"
     Export:
       Name: !Sub "fit-track-${Environment}-ecr-EcrMigrationRepositoryName"
 
   EcrMigrationRepositoryArn:
-    Description: ARN of the private ECR migration repository for IAM permissions.
-    Value: !GetAtt EcrMigrationRepository.Arn
+    Description: "ARN of the private ECR migration repository for IAM permissions."
+    Value: !GetAtt "EcrMigrationRepository.Arn"
     Export:
       Name: !Sub "fit-track-${Environment}-ecr-EcrMigrationRepositoryArn"
 
   EcrMigrationRepositoryUri:
-    Description: URI of the private ECR migration repository for image push and pull.
-    Value: !GetAtt EcrMigrationRepository.RepositoryUri
+    Description: "URI of the private ECR migration repository for image push and pull."
+    Value: !GetAtt "EcrMigrationRepository.RepositoryUri"
     Export:
       Name: !Sub "fit-track-${Environment}-ecr-EcrMigrationRepositoryUri"

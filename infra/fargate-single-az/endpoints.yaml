@@ -1,42 +1,42 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack private Fargate endpoints and Systems Manager connectivity for database administration.
+Description: "FitTrack private Fargate endpoints and Systems Manager connectivity for database administration."
 
 Parameters:
   Environment:
-    Type: String
-    Default: prod
+    Type: "String"
+    Default: "prod"
     AllowedValues:
-      - prod
+      - "prod"
 
 Resources:
   InterfaceEndpointsSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::SecurityGroup"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      GroupDescription: HTTPS access from Fargate tasks and temporary database administration instances to interface endpoints.
+      GroupDescription: "HTTPS access from Fargate tasks and temporary database administration instances to interface endpoints."
       VpcId:
         Fn::ImportValue:
           Fn::Sub: "fit-track-${Environment}-network-VpcId"
       SecurityGroupEgress:
-        - Description: Allow all outbound IPv4 traffic.
+        - Description: "Allow all outbound IPv4 traffic."
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/0
+          CidrIp: "0.0.0.0/0"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-vpc-endpoints-sg-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: endpoints
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-vpc-endpoints-sg-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "endpoints"
 
   EcrApiInterfaceEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::VPCEndpoint"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
       VpcEndpointType: "Interface"
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.api"
@@ -48,21 +48,21 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
       SecurityGroupIds:
-        - !Ref InterfaceEndpointsSecurityGroup
+        - !Ref "InterfaceEndpointsSecurityGroup"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ecr-api-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: endpoints
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-vpce-ecr-api-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "endpoints"
 
   EcrDkrInterfaceEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::VPCEndpoint"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
       VpcEndpointType: "Interface"
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ecr.dkr"
@@ -74,21 +74,21 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
       SecurityGroupIds:
-        - !Ref InterfaceEndpointsSecurityGroup
+        - !Ref "InterfaceEndpointsSecurityGroup"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ecr-dkr-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: endpoints
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-vpce-ecr-dkr-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "endpoints"
 
   SsmInterfaceEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::VPCEndpoint"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
       VpcEndpointType: "Interface"
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssm"
@@ -100,21 +100,21 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
       SecurityGroupIds:
-        - !Ref InterfaceEndpointsSecurityGroup
+        - !Ref "InterfaceEndpointsSecurityGroup"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ssm-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: endpoints
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-vpce-ssm-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "endpoints"
 
   SsmMessagesInterfaceEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::VPCEndpoint"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
       VpcEndpointType: "Interface"
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssmmessages"
@@ -126,21 +126,21 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
       SecurityGroupIds:
-        - !Ref InterfaceEndpointsSecurityGroup
+        - !Ref "InterfaceEndpointsSecurityGroup"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-ssmmessages-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: endpoints
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-vpce-ssmmessages-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "endpoints"
 
   CloudWatchLogsInterfaceEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::VPCEndpoint"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
       VpcEndpointType: "Interface"
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.logs"
@@ -152,31 +152,31 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
       SecurityGroupIds:
-        - !Ref InterfaceEndpointsSecurityGroup
+        - !Ref "InterfaceEndpointsSecurityGroup"
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: AllowWriteLogEvents
-            Effect: Allow
+          - Sid: "AllowWriteLogEvents"
+            Effect: "Allow"
             Principal: "*"
             Action:
-              - logs:CreateLogStream
-              - logs:PutLogEvents
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
             Resource: "*"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-logs-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: endpoints
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-vpce-logs-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "endpoints"
 
   SecretsManagerInterfaceEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::VPCEndpoint"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
       VpcEndpointType: "Interface"
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.secretsmanager"
@@ -188,21 +188,21 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz1Id"
       SecurityGroupIds:
-        - !Ref InterfaceEndpointsSecurityGroup
+        - !Ref "InterfaceEndpointsSecurityGroup"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-secretsmanager-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: endpoints
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-vpce-secretsmanager-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "endpoints"
 
   S3GatewayEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::VPCEndpoint"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
       VpcEndpointType: "Gateway"
       VpcId:
@@ -210,10 +210,10 @@ Resources:
           Fn::Sub: "fit-track-${Environment}-network-VpcId"
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
       PolicyDocument:
-        Version: 2012-10-17
+        Version: "2012-10-17"
         Statement:
-          - Sid: AllowEcrImageLayers
-            Effect: Allow
+          - Sid: "AllowEcrImageLayers"
+            Effect: "Allow"
             Principal: "*"
             Action:
               - "s3:GetObject"
@@ -223,60 +223,60 @@ Resources:
         - Fn::ImportValue:
             Fn::Sub: "fit-track-${Environment}-network-AppRouteTableId"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-vpce-s3-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: endpoints
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-vpce-s3-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "endpoints"
 
 Outputs:
   EcrApiInterfaceEndpointId:
-    Description: ID of the Amazon ECR API interface endpoint.
-    Value: !Ref EcrApiInterfaceEndpoint
+    Description: "ID of the Amazon ECR API interface endpoint."
+    Value: !Ref "EcrApiInterfaceEndpoint"
     Export:
       Name: !Sub "fit-track-${Environment}-endpoints-EcrApiInterfaceEndpointId"
 
   EcrDkrInterfaceEndpointId:
-    Description: ID of the Amazon ECR Docker Registry interface endpoint.
-    Value: !Ref EcrDkrInterfaceEndpoint
+    Description: "ID of the Amazon ECR Docker Registry interface endpoint."
+    Value: !Ref "EcrDkrInterfaceEndpoint"
     Export:
       Name: !Sub "fit-track-${Environment}-endpoints-EcrDkrInterfaceEndpointId"
 
   SsmInterfaceEndpointId:
-    Description: ID of the AWS Systems Manager interface endpoint.
-    Value: !Ref SsmInterfaceEndpoint
+    Description: "ID of the AWS Systems Manager interface endpoint."
+    Value: !Ref "SsmInterfaceEndpoint"
     Export:
       Name: !Sub "fit-track-${Environment}-endpoints-SsmInterfaceEndpointId"
 
   SsmMessagesInterfaceEndpointId:
-    Description: ID of the AWS Systems Manager Messages interface endpoint.
-    Value: !Ref SsmMessagesInterfaceEndpoint
+    Description: "ID of the AWS Systems Manager Messages interface endpoint."
+    Value: !Ref "SsmMessagesInterfaceEndpoint"
     Export:
       Name: !Sub "fit-track-${Environment}-endpoints-SsmMessagesInterfaceEndpointId"
 
   CloudWatchLogsInterfaceEndpointId:
-    Description: ID of the Amazon CloudWatch Logs interface endpoint.
-    Value: !Ref CloudWatchLogsInterfaceEndpoint
+    Description: "ID of the Amazon CloudWatch Logs interface endpoint."
+    Value: !Ref "CloudWatchLogsInterfaceEndpoint"
     Export:
       Name: !Sub "fit-track-${Environment}-endpoints-CloudWatchLogsInterfaceEndpointId"
 
   SecretsManagerInterfaceEndpointId:
-    Description: ID of the AWS Secrets Manager interface endpoint.
-    Value: !Ref SecretsManagerInterfaceEndpoint
+    Description: "ID of the AWS Secrets Manager interface endpoint."
+    Value: !Ref "SecretsManagerInterfaceEndpoint"
     Export:
       Name: !Sub "fit-track-${Environment}-endpoints-SecretsManagerInterfaceEndpointId"
 
   S3GatewayEndpointId:
-    Description: ID of the Amazon S3 gateway endpoint.
-    Value: !Ref S3GatewayEndpoint
+    Description: "ID of the Amazon S3 gateway endpoint."
+    Value: !Ref "S3GatewayEndpoint"
     Export:
       Name: !Sub "fit-track-${Environment}-endpoints-S3GatewayEndpointId"
 
   InterfaceEndpointsSecurityGroupId:
-    Description: Security group ID attached to all interface endpoints.
-    Value: !GetAtt InterfaceEndpointsSecurityGroup.GroupId
+    Description: "Security group ID attached to all interface endpoints."
+    Value: !GetAtt "InterfaceEndpointsSecurityGroup.GroupId"
     Export:
       Name: !Sub "fit-track-${Environment}-endpoints-InterfaceEndpointsSecurityGroupId"

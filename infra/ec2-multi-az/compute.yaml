@@ -1,167 +1,167 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack ECS cluster, EC2 capacity, and managed instance access.
+Description: "FitTrack ECS cluster, EC2 capacity, and managed instance access."
 
 Parameters:
   Environment:
-    Type: String
-    Default: prod
+    Type: "String"
+    Default: "prod"
     AllowedValues:
-      - prod
+      - "prod"
   CapacityMode:
-    Type: String
-    Default: bootstrap
-    AllowedValues: [bootstrap, active]
-    Description: Create with bootstrap to associate an empty ASG; update to active before running tasks.
+    Type: "String"
+    Default: "bootstrap"
+    AllowedValues: ["bootstrap", "active"]
+    Description: "Create with bootstrap to associate an empty ASG; update to active before running tasks."
   InstanceType:
-    Type: String
-    Description: EC2 instance type.
+    Type: "String"
+    Description: "EC2 instance type."
     Default: "t3.small"
     AllowedValues:
-      - t3.small
-      - t3.medium
+      - "t3.small"
+      - "t3.medium"
   DesiredCapacity:
-    Type: Number
+    Type: "Number"
     Default: 2
     MinValue: 2
-    Description: Initial EC2 capacity in active mode; must be between MinSize and MaxSize.
+    Description: "Initial EC2 capacity in active mode; must be between MinSize and MaxSize."
   MaxSize:
-    Type: Number
+    Type: "Number"
     Default: 3
     MinValue: 2
-    Description: Maximum number of EC2 instances available to ECS capacity scaling.
+    Description: "Maximum number of EC2 instances available to ECS capacity scaling."
   MinSize:
-    Type: Number
+    Type: "Number"
     Default: 2
     MinValue: 2
-    Description: Minimum EC2 capacity in active mode; bootstrap uses zero.
+    Description: "Minimum EC2 capacity in active mode; bootstrap uses zero."
   EcsOptimizedAmiId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id
-    Description: Recommended Amazon Linux 2023 ECS-optimized AMI ID from Parameter Store.
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id"
+    Description: "Recommended Amazon Linux 2023 ECS-optimized AMI ID from Parameter Store."
 
 Conditions:
-  BootstrapCapacity: !Equals [!Ref CapacityMode, bootstrap]
+  BootstrapCapacity: !Equals [!Ref "CapacityMode", "bootstrap"]
 
 Resources:
   EcsInstanceRole:
-    Type: AWS::IAM::Role
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::IAM::Role"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      RoleName: !Sub fit-track-${Environment}-ecs-instance-role-${AWS::Region}
-      Description: EC2 instance role for ECS container management and Systems Manager access.
+      RoleName: !Sub "fit-track-${Environment}-ecs-instance-role-${AWS::Region}"
+      Description: "EC2 instance role for ECS container management and Systems Manager access."
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: Allow
+          - Effect: "Allow"
             Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
+              Service: "ec2.amazonaws.com"
+            Action: "sts:AssumeRole"
       ManagedPolicyArns:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-instance-role-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: compute
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-ecs-instance-role-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "compute"
 
   EcsInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::IAM::InstanceProfile"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      InstanceProfileName: !Sub fit-track-${Environment}-ecs-instance-profile-${AWS::Region}
+      InstanceProfileName: !Sub "fit-track-${Environment}-ecs-instance-profile-${AWS::Region}"
       Roles:
-        - !Ref EcsInstanceRole
+        - !Ref "EcsInstanceRole"
 
   EcsInstanceSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::SecurityGroup"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      GroupDescription: ECS container instance network access in private application subnets.
+      GroupDescription: "ECS container instance network access in private application subnets."
       VpcId:
         Fn::ImportValue:
           Fn::Sub: "fit-track-${Environment}-network-VpcId"
       SecurityGroupEgress:
-        - Description: Allow all outbound IPv4 traffic.
+        - Description: "Allow all outbound IPv4 traffic."
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/0
+          CidrIp: "0.0.0.0/0"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-instance-sg-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: compute
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-ecs-instance-sg-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "compute"
 
   EndpointSecurityGroupIngressFromEcsInstances:
-    Type: AWS::EC2::SecurityGroupIngress
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::SecurityGroupIngress"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      Description: Allow ECS instances to connect to interface endpoints over HTTPS.
+      Description: "Allow ECS instances to connect to interface endpoints over HTTPS."
       GroupId:
         Fn::ImportValue:
           Fn::Sub: "fit-track-${Environment}-endpoints-InterfaceEndpointsSecurityGroupId"
-      IpProtocol: tcp
+      IpProtocol: "tcp"
       FromPort: 443
       ToPort: 443
-      SourceSecurityGroupId: !GetAtt EcsInstanceSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt "EcsInstanceSecurityGroup.GroupId"
 
   Ec2InstanceLaunchTemplate:
-    Type: AWS::EC2::LaunchTemplate
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::LaunchTemplate"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      LaunchTemplateName: !Sub fit-track-${Environment}-ecs-launch-template-${AWS::Region}
+      LaunchTemplateName: !Sub "fit-track-${Environment}-ecs-launch-template-${AWS::Region}"
       TagSpecifications:
-        - ResourceType: launch-template
+        - ResourceType: "launch-template"
           Tags:
-            - Key: Name
-              Value: !Sub fit-track-${Environment}-ecs-launch-template-${AWS::Region}
-            - Key: Environment
-              Value: !Ref Environment
-            - Key: Project
-              Value: fit-track
-            - Key: Component
-              Value: compute
+            - Key: "Name"
+              Value: !Sub "fit-track-${Environment}-ecs-launch-template-${AWS::Region}"
+            - Key: "Environment"
+              Value: !Ref "Environment"
+            - Key: "Project"
+              Value: "fit-track"
+            - Key: "Component"
+              Value: "compute"
       LaunchTemplateData:
-        ImageId: !Ref EcsOptimizedAmiId
-        InstanceType: !Ref InstanceType
+        ImageId: !Ref "EcsOptimizedAmiId"
+        InstanceType: !Ref "InstanceType"
         IamInstanceProfile:
-          Name: !Ref EcsInstanceProfile
+          Name: !Ref "EcsInstanceProfile"
         SecurityGroupIds:
-          - !Ref EcsInstanceSecurityGroup
+          - !Ref "EcsInstanceSecurityGroup"
         MetadataOptions:
-          HttpEndpoint: enabled
-          HttpTokens: required
+          HttpEndpoint: "enabled"
+          HttpTokens: "required"
         BlockDeviceMappings:
-          - DeviceName: /dev/xvda
+          - DeviceName: "/dev/xvda"
             Ebs:
               VolumeSize: 30
-              VolumeType: gp3
+              VolumeType: "gp3"
               Encrypted: true
               DeleteOnTermination: true
         TagSpecifications:
-          - ResourceType: volume
+          - ResourceType: "volume"
             Tags:
-              - Key: Name
-                Value: !Sub fit-track-${Environment}-ecs-root-volume-${AWS::Region}
-              - Key: Environment
-                Value: !Ref Environment
-              - Key: Project
-                Value: fit-track
-              - Key: Component
-                Value: compute
+              - Key: "Name"
+                Value: !Sub "fit-track-${Environment}-ecs-root-volume-${AWS::Region}"
+              - Key: "Environment"
+                Value: !Ref "Environment"
+              - Key: "Project"
+                Value: "fit-track"
+              - Key: "Component"
+                Value: "compute"
         UserData:
           Fn::Base64:
             Fn::Sub: |
@@ -170,35 +170,35 @@ Resources:
               printf 'ECS_CLUSTER=%s\n' '${EcsCluster}' > /etc/ecs/ecs.config
 
   Ec2AutoScalingGroup:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
-    DependsOn: EndpointSecurityGroupIngressFromEcsInstances
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
+    DependsOn: "EndpointSecurityGroupIngressFromEcsInstances"
     Properties:
-      AutoScalingGroupName: !Sub fit-track-${Environment}-ecs-asg-${AWS::Region}
+      AutoScalingGroupName: !Sub "fit-track-${Environment}-ecs-asg-${AWS::Region}"
       AvailabilityZoneDistribution:
-        CapacityDistributionStrategy: balanced-best-effort
-      DesiredCapacity: !If [BootstrapCapacity, 0, !Ref DesiredCapacity]
+        CapacityDistributionStrategy: "balanced-best-effort"
+      DesiredCapacity: !If ["BootstrapCapacity", 0, !Ref "DesiredCapacity"]
       LaunchTemplate:
-        LaunchTemplateId: !Ref Ec2InstanceLaunchTemplate
-        Version: !GetAtt Ec2InstanceLaunchTemplate.LatestVersionNumber
-      MaxSize: !Ref MaxSize
-      MinSize: !If [BootstrapCapacity, 0, !Ref MinSize]
+        LaunchTemplateId: !Ref "Ec2InstanceLaunchTemplate"
+        Version: !GetAtt "Ec2InstanceLaunchTemplate.LatestVersionNumber"
+      MaxSize: !Ref "MaxSize"
+      MinSize: !If ["BootstrapCapacity", 0, !Ref "MinSize"]
       NewInstancesProtectedFromScaleIn: true
       TerminationPolicies:
-        - OldestInstance
+        - "OldestInstance"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-instance-${AWS::Region}
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-ecs-instance-${AWS::Region}"
           PropagateAtLaunch: true
-        - Key: Environment
-          Value: !Ref Environment
+        - Key: "Environment"
+          Value: !Ref "Environment"
           PropagateAtLaunch: true
-        - Key: Project
-          Value: fit-track
+        - Key: "Project"
+          Value: "fit-track"
           PropagateAtLaunch: true
-        - Key: Component
-          Value: compute
+        - Key: "Component"
+          Value: "compute"
           PropagateAtLaunch: true
       VPCZoneIdentifier:
         - Fn::ImportValue:
@@ -207,91 +207,91 @@ Resources:
             Fn::Sub: "fit-track-${Environment}-network-AppSubnetAz2Id"
     UpdatePolicy:
       AutoScalingInstanceRefresh:
-        Strategy: Rolling
+        Strategy: "Rolling"
         Preferences:
           MinHealthyPercentage: 100
           MaxHealthyPercentage: 150
           InstanceWarmup: 300
-          ScaleInProtectedInstances: Refresh
+          ScaleInProtectedInstances: "Refresh"
           SkipMatching: true
 
   EcsCapacityProvider:
-    Type: AWS::ECS::CapacityProvider
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::ECS::CapacityProvider"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      Name: !Sub fit-track-${Environment}-ecs-cp-${AWS::Region}
+      Name: !Sub "fit-track-${Environment}-ecs-cp-${AWS::Region}"
       AutoScalingGroupProvider:
-        AutoScalingGroupArn: !GetAtt Ec2AutoScalingGroup.AutoScalingGroupARN
+        AutoScalingGroupArn: !GetAtt "Ec2AutoScalingGroup.AutoScalingGroupARN"
         ManagedScaling:
           MaximumScalingStepSize: 1
           MinimumScalingStepSize: 1
           InstanceWarmupPeriod: 300
-          Status: ENABLED
+          Status: "ENABLED"
           TargetCapacity: 100
-        ManagedTerminationProtection: ENABLED
-        ManagedDraining: ENABLED
+        ManagedTerminationProtection: "ENABLED"
+        ManagedDraining: "ENABLED"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-cp-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: compute
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-ecs-cp-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "compute"
 
   EcsCluster:
-    Type: AWS::ECS::Cluster
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::ECS::Cluster"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      ClusterName: !Sub fit-track-${Environment}-ecs-cluster-${AWS::Region}
+      ClusterName: !Sub "fit-track-${Environment}-ecs-cluster-${AWS::Region}"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-ecs-cluster-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: compute
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-ecs-cluster-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "compute"
 
   EcsCapacityProviderAssociations:
-    Type: AWS::ECS::ClusterCapacityProviderAssociations
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::ECS::ClusterCapacityProviderAssociations"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
       CapacityProviders:
-        - !Ref EcsCapacityProvider
-      Cluster: !Ref EcsCluster
+        - !Ref "EcsCapacityProvider"
+      Cluster: !Ref "EcsCluster"
       DefaultCapacityProviderStrategy:
-        - CapacityProvider: !Ref EcsCapacityProvider
+        - CapacityProvider: !Ref "EcsCapacityProvider"
           Weight: 1
 
 Outputs:
   EcsClusterName:
-    Description: Name of the ECS cluster for service stacks.
-    Value: !Ref EcsCluster
+    Description: "Name of the ECS cluster for service stacks."
+    Value: !Ref "EcsCluster"
     Export:
       Name: !Sub "fit-track-${Environment}-compute-EcsClusterName"
   EcsClusterArn:
-    Description: ARN of the ECS cluster for service stacks.
-    Value: !GetAtt EcsCluster.Arn
+    Description: "ARN of the ECS cluster for service stacks."
+    Value: !GetAtt "EcsCluster.Arn"
     Export:
       Name: !Sub "fit-track-${Environment}-compute-EcsClusterArn"
   EcsCapacityProviderName:
-    Description: Name of the ECS capacity provider associated with the cluster.
-    Value: !Ref EcsCapacityProvider
+    Description: "Name of the ECS capacity provider associated with the cluster."
+    Value: !Ref "EcsCapacityProvider"
     Export:
       Name: !Sub "fit-track-${Environment}-compute-EcsCapacityProviderName"
   EcsInstanceSecurityGroupId:
-    Description: Security group ID for ECS container instances.
-    Value: !GetAtt EcsInstanceSecurityGroup.GroupId
+    Description: "Security group ID for ECS container instances."
+    Value: !GetAtt "EcsInstanceSecurityGroup.GroupId"
     Export:
       Name: !Sub "fit-track-${Environment}-compute-EcsInstanceSecurityGroupId"
   EcsAutoScalingGroupName:
-    Description: Name of the EC2 Auto Scaling group providing ECS capacity.
-    Value: !Ref Ec2AutoScalingGroup
+    Description: "Name of the EC2 Auto Scaling group providing ECS capacity."
+    Value: !Ref "Ec2AutoScalingGroup"
     Export:
       Name: !Sub "fit-track-${Environment}-compute-EcsAutoScalingGroupName"

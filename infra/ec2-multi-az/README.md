@@ -65,3 +65,7 @@ Each `AWS::EC2::SecurityGroup` owns its description, tags, and explicit allow-al
 ## Resource lifecycle
 
 Every resource explicitly declares deletion and replacement policies. S3 buckets, ECR repositories, log groups, and standalone secrets use `Retain`; RDS instances use `Snapshot`; all other resources use `Delete`. The [AWS lifecycle policy table](../../docs/aws-deployment-plan.md#resource-deletion-and-replacement-policies) records the rationale, cleanup requirements, and verification limits. Retained resources require deliberate cleanup or import before recreating stacks with the same names.
+
+## YAML conventions
+
+String values use double quotes, including resource types, policy values, names, descriptions, and scalar arguments to `!Ref`, `!Sub`, and `!GetAtt`. Mapping keys remain unquoted. Numbers and booleans retain their native YAML types; numeric strings required by AWS schemas remain quoted. Multiline JSON, scripts, and function code use block scalars (`|`) without wrapping the content in quotes.
