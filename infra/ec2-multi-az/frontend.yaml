@@ -12,6 +12,8 @@ Parameters:
 Resources:
   CfOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       OriginAccessControlConfig:
         Description: Signed CloudFront access to the private FitTrack frontend S3 origin.
@@ -22,6 +24,8 @@ Resources:
 
   FrontendBucketPolicy:
     Type: AWS::S3::BucketPolicy
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Bucket: !Ref FrontendBucket
       PolicyDocument:
@@ -85,6 +89,8 @@ Resources:
 
   AssetsCachePolicy:
     Type: AWS::CloudFront::CachePolicy
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       CachePolicyConfig:
         Name: !Sub fit-track-${Environment}-assets-cache-policy
@@ -104,6 +110,8 @@ Resources:
 
   FrontendResponseHeadersPolicy:
     Type: AWS::CloudFront::ResponseHeadersPolicy
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       ResponseHeadersPolicyConfig:
         Name: !Sub fit-track-${Environment}-frontend-headers-policy
@@ -142,6 +150,8 @@ Resources:
 
   AssetsResponseHeadersPolicy:
     Type: AWS::CloudFront::ResponseHeadersPolicy
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       ResponseHeadersPolicyConfig:
         Name: !Sub fit-track-${Environment}-assets-headers-policy
@@ -180,6 +190,8 @@ Resources:
 
   FrontendSpaFunction:
     Type: AWS::CloudFront::Function
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Name: !Sub fit-track-${Environment}-frontend-spa
       AutoPublish: true
@@ -205,6 +217,8 @@ Resources:
 
   CfDistribution:
     Type: AWS::CloudFront::Distribution
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       DistributionConfig:
         Comment: !Sub FitTrack ${Environment} frontend and backend API.

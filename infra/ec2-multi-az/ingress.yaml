@@ -12,6 +12,8 @@ Parameters:
 Resources:
   AlbSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       GroupDescription: HTTP access from CloudFront to the application load balancer.
       VpcId:
@@ -33,6 +35,8 @@ Resources:
 
   AlbSecurityGroupIngressFromCloudFront:
     Type: AWS::EC2::SecurityGroupIngress
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       GroupId: !GetAtt AlbSecurityGroup.GroupId
       Description: HTTP from CloudFront origin-facing servers.
@@ -43,6 +47,8 @@ Resources:
 
   Alb:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     DependsOn: AlbSecurityGroupIngressFromCloudFront
     Properties:
       Name: !Sub fit-track-${Environment}-alb-${AWS::Region}
@@ -71,6 +77,8 @@ Resources:
 
   AlbHttpListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       LoadBalancerArn: !Ref Alb
       Port: 80
@@ -81,6 +89,8 @@ Resources:
 
   BackendTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Name: !Sub fit-track-${Environment}-backend-tg
       VpcId:

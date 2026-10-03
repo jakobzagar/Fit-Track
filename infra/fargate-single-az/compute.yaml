@@ -12,6 +12,8 @@ Parameters:
 Resources:
   EcsCluster:
     Type: AWS::ECS::Cluster
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       ClusterName: !Sub fit-track-${Environment}-ecs-cluster-${AWS::Region}
       CapacityProviders:

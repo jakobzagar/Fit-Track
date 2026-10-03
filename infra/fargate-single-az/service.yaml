@@ -81,6 +81,8 @@ Rules:
 Resources:
   MigrationTaskExecutionRole:
     Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RoleName: !Sub fit-track-${Environment}-migration-task-execution-role-${AWS::Region}
       Description: ECS execution role scoped to migration image pulls, migration logs, and database secret retrieval.
@@ -131,6 +133,8 @@ Resources:
 
   BackendTaskExecutionRole:
     Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RoleName: !Sub fit-track-${Environment}-backend-task-execution-role-${AWS::Region}
       Description: ECS execution role scoped to backend image pulls, backend logs, and backend secret retrieval.
@@ -181,6 +185,8 @@ Resources:
 
   MigrationTaskDefinition:
     Type: AWS::ECS::TaskDefinition
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RequiresCompatibilities:
         - FARGATE
@@ -229,6 +235,8 @@ Resources:
 
   BackendTaskDefinition:
     Type: AWS::ECS::TaskDefinition
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       RequiresCompatibilities:
         - FARGATE
@@ -303,6 +311,8 @@ Resources:
 
   BackendTaskSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       GroupDescription: Backend task HTTP access from the application load balancer.
       VpcId:
@@ -323,6 +333,8 @@ Resources:
 
   BackendTaskSecurityGroupIngressFromAlb:
     Type: AWS::EC2::SecurityGroupIngress
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Description: Backend HTTP and readiness health checks from the ALB.
       GroupId: !GetAtt BackendTaskSecurityGroup.GroupId
@@ -334,6 +346,8 @@ Resources:
 
   InterfaceEndpointsSecurityGroupIngressFromTasks:
     Type: AWS::EC2::SecurityGroupIngress
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Description: HTTPS access from backend and migration Fargate tasks to interface endpoints.
       GroupId:
@@ -345,6 +359,8 @@ Resources:
 
   BackendService:
     Type: AWS::ECS::Service
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     DependsOn:
       - BackendTaskSecurityGroupIngressFromAlb
       - InterfaceEndpointsSecurityGroupIngressFromTasks

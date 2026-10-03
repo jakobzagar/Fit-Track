@@ -12,6 +12,8 @@ Parameters:
 Resources:
   BackendLogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: !Sub /fit-track/${Environment}/backend
       LogGroupClass: STANDARD
@@ -28,6 +30,8 @@ Resources:
 
   MigrationLogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: !Sub /fit-track/${Environment}/migration
       LogGroupClass: STANDARD

@@ -23,6 +23,8 @@ Parameters:
 Resources:
   RdsSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       DBSubnetGroupDescription: Private database subnets across two Availability Zones.
       DBSubnetGroupName: !Sub fit-track-${Environment}-rds-subnet-group-${AWS::Region}
@@ -43,6 +45,8 @@ Resources:
 
   RdsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       GroupDescription: Access control for the private PostgreSQL database.
       VpcId:
@@ -63,6 +67,8 @@ Resources:
 
   RdsSecurityGroupIngressFromTasks:
     Type: AWS::EC2::SecurityGroupIngress
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       Description: PostgreSQL access from backend and migration tasks.
       GroupId: !GetAtt RdsSecurityGroup.GroupId
@@ -74,6 +80,8 @@ Resources:
 
   RdsParameterGroup:
     Type: AWS::RDS::DBParameterGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       DBParameterGroupName: !Sub fit-track-${Environment}-rds-parameters-${AWS::Region}
       Description: PostgreSQL 17 parameters requiring encrypted client connections.
