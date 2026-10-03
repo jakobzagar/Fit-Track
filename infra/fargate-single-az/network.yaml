@@ -10,7 +10,7 @@ Parameters:
       - prod
 
 Resources:
-  FitTrackVpc:
+  Vpc:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.20.0.0/20
@@ -30,7 +30,7 @@ Resources:
   PublicSubnetAz1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref FitTrackVpc
+      VpcId: !Ref Vpc
       CidrBlock: 10.20.0.0/24
       AvailabilityZoneId: euc1-az1
       MapPublicIpOnLaunch: false
@@ -47,7 +47,7 @@ Resources:
   PublicSubnetAz2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref FitTrackVpc
+      VpcId: !Ref Vpc
       CidrBlock: 10.20.1.0/24
       AvailabilityZoneId: euc1-az2
       MapPublicIpOnLaunch: false
@@ -64,7 +64,7 @@ Resources:
   AppSubnetAz1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref FitTrackVpc
+      VpcId: !Ref Vpc
       CidrBlock: 10.20.2.0/24
       AvailabilityZoneId: euc1-az1
       MapPublicIpOnLaunch: false
@@ -81,7 +81,7 @@ Resources:
   DbSubnetAz1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref FitTrackVpc
+      VpcId: !Ref Vpc
       CidrBlock: 10.20.4.0/24
       AvailabilityZoneId: euc1-az1
       MapPublicIpOnLaunch: false
@@ -98,7 +98,7 @@ Resources:
   DbSubnetAz2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref FitTrackVpc
+      VpcId: !Ref Vpc
       CidrBlock: 10.20.5.0/24
       AvailabilityZoneId: euc1-az2
       MapPublicIpOnLaunch: false
@@ -129,12 +129,12 @@ Resources:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       InternetGatewayId: !Ref InternetGateway
-      VpcId: !Ref FitTrackVpc
+      VpcId: !Ref Vpc
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref FitTrackVpc
+      VpcId: !Ref Vpc
       Tags:
         - Key: Name
           Value: !Sub fit-track-${Environment}-rt-public-${AWS::Region}
@@ -156,7 +156,7 @@ Resources:
   AppRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref FitTrackVpc
+      VpcId: !Ref Vpc
       Tags:
         - Key: Name
           Value: !Sub fit-track-${Environment}-rt-app-${AWS::Region}
@@ -170,7 +170,7 @@ Resources:
   DbRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref FitTrackVpc
+      VpcId: !Ref Vpc
       Tags:
         - Key: Name
           Value: !Sub fit-track-${Environment}-rt-db-${AWS::Region}
@@ -218,6 +218,12 @@ Outputs:
     Export:
       Name: !Sub "fit-track-${Environment}-network-AvailabilityZoneAz1Id"
 
+  AvailabilityZoneAz1Name:
+    Description: Account-specific AZ name of the first database subnet for Single-AZ RDS placement.
+    Value: !GetAtt DbSubnetAz1.AvailabilityZone
+    Export:
+      Name: !Sub "fit-track-${Environment}-network-AvailabilityZoneAz1Name"
+
   AvailabilityZoneAz2Id:
     Description: Availability Zone ID used by the AZ 2 subnets.
     Value: euc1-az2
@@ -226,13 +232,13 @@ Outputs:
 
   VpcId:
     Description: ID of the application VPC.
-    Value: !Ref FitTrackVpc
+    Value: !Ref Vpc
     Export:
       Name: !Sub "fit-track-${Environment}-network-VpcId"
 
   VpcCidrBlock:
     Description: IPv4 CIDR block of the application VPC.
-    Value: !GetAtt FitTrackVpc.CidrBlock
+    Value: !GetAtt Vpc.CidrBlock
     Export:
       Name: !Sub "fit-track-${Environment}-network-VpcCidrBlock"
 

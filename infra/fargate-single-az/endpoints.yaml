@@ -160,7 +160,7 @@ Resources:
   SecretsManagerInterfaceEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
-      VpcEndpointType: Interface
+      VpcEndpointType: "Interface"
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.secretsmanager"
       VpcId:
         Fn::ImportValue:
