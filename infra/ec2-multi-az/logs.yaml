@@ -1,69 +1,69 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack production backend and migration CloudWatch Logs groups.
+Description: "FitTrack production backend and migration CloudWatch Logs groups."
 
 Parameters:
   Environment:
-    Type: String
-    Default: prod
+    Type: "String"
+    Default: "prod"
     AllowedValues:
-      - prod
+      - "prod"
 
 Resources:
   BackendLogGroup:
-    Type: AWS::Logs::LogGroup
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    Type: "AWS::Logs::LogGroup"
+    DeletionPolicy: "Retain"
+    UpdateReplacePolicy: "Retain"
     Properties:
-      LogGroupName: !Sub /fit-track/${Environment}/backend
-      LogGroupClass: STANDARD
+      LogGroupName: !Sub "/fit-track/${Environment}/backend"
+      LogGroupClass: "STANDARD"
       RetentionInDays: 30
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-logs-backend-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: logs
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-logs-backend-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "logs"
 
   MigrationLogGroup:
-    Type: AWS::Logs::LogGroup
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    Type: "AWS::Logs::LogGroup"
+    DeletionPolicy: "Retain"
+    UpdateReplacePolicy: "Retain"
     Properties:
-      LogGroupName: !Sub /fit-track/${Environment}/migration
-      LogGroupClass: STANDARD
+      LogGroupName: !Sub "/fit-track/${Environment}/migration"
+      LogGroupClass: "STANDARD"
       RetentionInDays: 30
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-logs-migration-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: logs
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-logs-migration-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "logs"
 
 Outputs:
   BackendLogGroupName:
-    Description: Name of the backend log group for the ECS task definition.
-    Value: !Ref BackendLogGroup
+    Description: "Name of the backend log group for the ECS task definition."
+    Value: !Ref "BackendLogGroup"
     Export:
       Name: !Sub "fit-track-${Environment}-logs-BackendLogGroupName"
   BackendLogGroupArn:
-    Description: Log group ARN, including the stream wildcard, for scoped IAM permissions.
-    Value: !GetAtt BackendLogGroup.Arn
+    Description: "Log group ARN, including the stream wildcard, for scoped IAM permissions."
+    Value: !GetAtt "BackendLogGroup.Arn"
     Export:
       Name: !Sub "fit-track-${Environment}-logs-BackendLogGroupArn"
   MigrationLogGroupName:
-    Description: Name of the migration log group for the ECS task definition.
-    Value: !Ref MigrationLogGroup
+    Description: "Name of the migration log group for the ECS task definition."
+    Value: !Ref "MigrationLogGroup"
     Export:
       Name: !Sub "fit-track-${Environment}-logs-MigrationLogGroupName"
   MigrationLogGroupArn:
-    Description: Migration log group ARN, including the stream wildcard, for scoped IAM permissions.
-    Value: !GetAtt MigrationLogGroup.Arn
+    Description: "Migration log group ARN, including the stream wildcard, for scoped IAM permissions."
+    Value: !GetAtt "MigrationLogGroup.Arn"
     Export:
       Name: !Sub "fit-track-${Environment}-logs-MigrationLogGroupArn"

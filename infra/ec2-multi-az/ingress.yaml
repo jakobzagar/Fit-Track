@@ -1,107 +1,107 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: FitTrack Application Load Balancer, HTTP listener, and backend target group.
+Description: "FitTrack Application Load Balancer, HTTP listener, and backend target group."
 
 Parameters:
   Environment:
-    Type: String
-    Default: prod
+    Type: "String"
+    Default: "prod"
     AllowedValues:
-      - prod
+      - "prod"
 
 Resources:
   AlbSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::SecurityGroup"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      GroupDescription: HTTP access from CloudFront to the application load balancer.
+      GroupDescription: "HTTP access from CloudFront to the application load balancer."
       VpcId:
         Fn::ImportValue:
           Fn::Sub: "fit-track-${Environment}-network-VpcId"
       SecurityGroupEgress:
-        - Description: Allow all outbound IPv4 traffic.
+        - Description: "Allow all outbound IPv4 traffic."
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/0
+          CidrIp: "0.0.0.0/0"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-alb-sg-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: ingress
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-alb-sg-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "ingress"
 
   AlbSecurityGroupIngressFromCloudFront:
-    Type: AWS::EC2::SecurityGroupIngress
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::EC2::SecurityGroupIngress"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      GroupId: !GetAtt AlbSecurityGroup.GroupId
-      Description: HTTP from CloudFront origin-facing servers.
-      IpProtocol: tcp
+      GroupId: !GetAtt "AlbSecurityGroup.GroupId"
+      Description: "HTTP from CloudFront origin-facing servers."
+      IpProtocol: "tcp"
       FromPort: 80
       ToPort: 80
-      SourcePrefixListId: pl-a3a144ca # AWS-managed CloudFront origin-facing IPv4 ranges in eu-central-1; permits all distributions.
+      SourcePrefixListId: "pl-a3a144ca" # AWS-managed CloudFront origin-facing IPv4 ranges in eu-central-1; permits all distributions.
 
   Alb:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
-    DependsOn: AlbSecurityGroupIngressFromCloudFront
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
+    DependsOn: "AlbSecurityGroupIngressFromCloudFront"
     Properties:
-      Name: !Sub fit-track-${Environment}-alb-${AWS::Region}
-      Type: application
-      Scheme: internet-facing
-      IpAddressType: ipv4
+      Name: !Sub "fit-track-${Environment}-alb-${AWS::Region}"
+      Type: "application"
+      Scheme: "internet-facing"
+      IpAddressType: "ipv4"
       SecurityGroups:
-        - !GetAtt AlbSecurityGroup.GroupId
+        - !GetAtt "AlbSecurityGroup.GroupId"
       Subnets:
         - Fn::ImportValue: !Sub "fit-track-${Environment}-network-PublicSubnetAz1Id"
         - Fn::ImportValue: !Sub "fit-track-${Environment}-network-PublicSubnetAz2Id"
       LoadBalancerAttributes:
-        - Key: routing.http.drop_invalid_header_fields.enabled
+        - Key: "routing.http.drop_invalid_header_fields.enabled"
           Value: "true"
-        - Key: routing.http.desync_mitigation_mode
-          Value: defensive
+        - Key: "routing.http.desync_mitigation_mode"
+          Value: "defensive"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-alb-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: ingress
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-alb-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "ingress"
 
   AlbHttpListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      LoadBalancerArn: !Ref Alb
+      LoadBalancerArn: !Ref "Alb"
       Port: 80
-      Protocol: HTTP
+      Protocol: "HTTP"
       DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref BackendTargetGroup
+        - Type: "forward"
+          TargetGroupArn: !Ref "BackendTargetGroup"
 
   BackendTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
     Properties:
-      Name: !Sub fit-track-${Environment}-backend-tg
+      Name: !Sub "fit-track-${Environment}-backend-tg"
       VpcId:
         Fn::ImportValue: !Sub "fit-track-${Environment}-network-VpcId"
-      TargetType: ip
-      Protocol: HTTP
+      TargetType: "ip"
+      Protocol: "HTTP"
       Port: 3001
       HealthCheckEnabled: true
-      HealthCheckProtocol: HTTP
-      HealthCheckPort: traffic-port
-      HealthCheckPath: /api/health/ready
+      HealthCheckProtocol: "HTTP"
+      HealthCheckPort: "traffic-port"
+      HealthCheckPath: "/api/health/ready"
       HealthCheckIntervalSeconds: 30
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
@@ -109,41 +109,41 @@ Resources:
       Matcher:
         HttpCode: "200"
       TargetGroupAttributes:
-        - Key: deregistration_delay.timeout_seconds
+        - Key: "deregistration_delay.timeout_seconds"
           Value: "30"
       Tags:
-        - Key: Name
-          Value: !Sub fit-track-${Environment}-backend-tg-${AWS::Region}
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Project
-          Value: fit-track
-        - Key: Component
-          Value: ingress
+        - Key: "Name"
+          Value: !Sub "fit-track-${Environment}-backend-tg-${AWS::Region}"
+        - Key: "Environment"
+          Value: !Ref "Environment"
+        - Key: "Project"
+          Value: "fit-track"
+        - Key: "Component"
+          Value: "ingress"
 
 Outputs:
   AlbSecurityGroupId:
-    Description: ID of the ALB security group for backend task traffic rules.
-    Value: !GetAtt AlbSecurityGroup.GroupId
+    Description: "ID of the ALB security group for backend task traffic rules."
+    Value: !GetAtt "AlbSecurityGroup.GroupId"
     Export:
       Name: !Sub "fit-track-${Environment}-ingress-AlbSecurityGroupId"
   AlbArn:
-    Description: ARN of the Application Load Balancer.
-    Value: !Ref Alb
+    Description: "ARN of the Application Load Balancer."
+    Value: !Ref "Alb"
     Export:
       Name: !Sub "fit-track-${Environment}-ingress-AlbArn"
   AlbDnsName:
-    Description: ALB DNS name for the CloudFront HTTP origin.
-    Value: !GetAtt Alb.DNSName
+    Description: "ALB DNS name for the CloudFront HTTP origin."
+    Value: !GetAtt "Alb.DNSName"
     Export:
       Name: !Sub "fit-track-${Environment}-ingress-AlbDnsName"
   BackendTargetGroupArn:
-    Description: Backend IP target group ARN for the ECS service load balancer configuration.
-    Value: !Ref BackendTargetGroup
+    Description: "Backend IP target group ARN for the ECS service load balancer configuration."
+    Value: !Ref "BackendTargetGroup"
     Export:
       Name: !Sub "fit-track-${Environment}-ingress-BackendTargetGroupArn"
   AlbHttpListenerArn:
-    Description: ARN of the HTTP listener forwarding to the backend target group.
-    Value: !Ref AlbHttpListener
+    Description: "ARN of the HTTP listener forwarding to the backend target group."
+    Value: !Ref "AlbHttpListener"
     Export:
       Name: !Sub "fit-track-${Environment}-ingress-AlbHttpListenerArn"
