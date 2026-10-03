@@ -1,0 +1,350 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: FitTrack private frontend S3 origin and CloudFront distribution with backend API routing.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+
+Resources:
+  CfOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      OriginAccessControlConfig:
+        Description: Signed CloudFront access to the private FitTrack frontend S3 origin.
+        Name: !Sub fit-track-${Environment}-cf-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !GetAtt FrontendBucket.Arn
+              - !Sub "${FrontendBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${CfDistribution}"
+
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub fit-track-${Environment}-frontend-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-previous-versions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-frontend-${AWS::Region}
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: frontend
+
+  AssetsCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub fit-track-${Environment}-assets-cache-policy
+        Comment: One-year cache for immutable assets with content hashes in their names.
+        MinTTL: 31536000
+        DefaultTTL: 31536000
+        MaxTTL: 31536000
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+
+  FrontendResponseHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub fit-track-${Environment}-frontend-headers-policy
+        Comment: Frontend security headers and browser cache revalidation.
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' data:; form-action 'self'; frame-ancestors 'none'; frame-src 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'"
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: "DENY"
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: "strict-origin-when-cross-origin"
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: false
+            Preload: false
+            Override: true
+        CustomHeadersConfig:
+          Items:
+            - Header: Cache-Control
+              Override: true
+              Value: no-cache
+            - Header: Permissions-Policy
+              Override: true
+              Value: "camera=(), geolocation=(), microphone=()"
+            - Header: "Cross-Origin-Opener-Policy"
+              Override: true
+              Value: "same-origin"
+            - Header: "Cross-Origin-Resource-Policy"
+              Override: true
+              Value: "same-origin"
+
+  AssetsResponseHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub fit-track-${Environment}-assets-headers-policy
+        Comment: Frontend security headers and one-year browser cache for immutable assets.
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' data:; form-action 'self'; frame-ancestors 'none'; frame-src 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'"
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: "DENY"
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: "strict-origin-when-cross-origin"
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: false
+            Preload: false
+            Override: true
+        CustomHeadersConfig:
+          Items:
+            - Header: Cache-Control
+              Override: true
+              Value: public,max-age=31536000,immutable
+            - Header: Permissions-Policy
+              Override: true
+              Value: camera=(), geolocation=(), microphone=()
+            - Header: Cross-Origin-Opener-Policy
+              Override: true
+              Value: same-origin
+            - Header: Cross-Origin-Resource-Policy
+              Override: true
+              Value: same-origin
+
+  FrontendSpaFunction:
+    Type: AWS::CloudFront::Function
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      Name: !Sub fit-track-${Environment}-frontend-spa
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Rewrite frontend navigation to index.html while preserving static files.
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var uri = request.uri;
+          var lastSegment = uri.substring(uri.lastIndexOf("/") + 1);
+          var reservedPath = uri === "/api" || uri.indexOf("/api/") === 0 ||
+            uri === "/assets" || uri.indexOf("/assets/") === 0 ||
+            uri === "/brand" || uri.indexOf("/brand/") === 0;
+
+          if ((request.method === "GET" || request.method === "HEAD") &&
+              !reservedPath && lastSegment.indexOf(".") === -1) {
+            request.uri = "/index.html";
+          }
+
+          return request;
+        }
+
+  CfDistribution:
+    Type: AWS::CloudFront::Distribution
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      DistributionConfig:
+        Comment: !Sub FitTrack ${Environment} frontend and backend API.
+        Enabled: true
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        # Error caching is separate from cache policies; preserve origin status and body.
+        # S3 origins retain a one-second minimum for errors when caching is enabled.
+        CustomErrorResponses:
+          - ErrorCode: 400
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 403
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 405
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 414
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 500
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 501
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 502
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 503
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 504
+            ErrorCachingMinTTL: 0
+        DefaultCacheBehavior:
+          TargetOriginId: frontend-s3
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS-managed CachingDisabled: normal cache TTLs are zero.
+          ResponseHeadersPolicyId: !Ref FrontendResponseHeadersPolicy
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt FrontendSpaFunction.FunctionARN
+        CacheBehaviors:
+          - PathPattern: /api
+            TargetOriginId: backend-alb
+            ViewerProtocolPolicy: https-only
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS-managed CachingDisabled: normal cache TTLs are zero.
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS-managed AllViewer: forward all viewer headers, cookies, and query strings.
+          - PathPattern: /api/*
+            TargetOriginId: backend-alb
+            ViewerProtocolPolicy: https-only
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # AWS-managed CachingDisabled: normal cache TTLs are zero.
+            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AWS-managed AllViewer: forward all viewer headers, cookies, and query strings.
+          - PathPattern: /assets/*
+            TargetOriginId: frontend-s3
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            CachePolicyId: !Ref AssetsCachePolicy
+            ResponseHeadersPolicyId: !Ref AssetsResponseHeadersPolicy
+        Origins:
+          - Id: frontend-s3
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt CfOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+          - Id: backend-alb
+            DomainName:
+              Fn::ImportValue: !Sub "fit-track-${Environment}-ingress-AlbDnsName"
+            CustomOriginConfig:
+              HTTPPort: 80
+              OriginProtocolPolicy: http-only
+              OriginReadTimeout: 30
+              OriginKeepaliveTimeout: 5
+      Tags:
+        - Key: Name
+          Value: !Sub fit-track-${Environment}-cf-distribution
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: fit-track
+        - Key: Component
+          Value: frontend
+
+Outputs:
+  FrontendBucketName:
+    Description: Name of the private frontend bucket for deployment uploads.
+    Value: !Ref FrontendBucket
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-FrontendBucketName"
+  FrontendBucketArn:
+    Description: ARN of the private frontend bucket for scoped IAM permissions.
+    Value: !GetAtt FrontendBucket.Arn
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-FrontendBucketArn"
+  FrontendBucketRegionalDomainName:
+    Description: Regional S3 REST endpoint for the CloudFront origin.
+    Value: !GetAtt FrontendBucket.RegionalDomainName
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-FrontendBucketRegionalDomainName"
+  CfOriginAccessControlId:
+    Description: OAC ID to associate with the CloudFront S3 origin.
+    Value: !GetAtt CfOriginAccessControl.Id
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-CfOriginAccessControlId"
+  CfDistributionId:
+    Description: Distribution ID for frontend deployments and invalidations.
+    Value: !Ref CfDistribution
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-CfDistributionId"
+  CfDistributionDomainName:
+    Description: Default CloudFront hostname serving the frontend and API.
+    Value: !GetAtt CfDistribution.DomainName
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-CfDistributionDomainName"
+  FrontendUrl:
+    Description: HTTPS application origin for the ECS ClientOrigin parameter.
+    Value: !Sub "https://${CfDistribution.DomainName}"
+    Export:
+      Name: !Sub "fit-track-${Environment}-frontend-FrontendUrl"
