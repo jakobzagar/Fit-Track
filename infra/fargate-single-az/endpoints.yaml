@@ -17,6 +17,10 @@ Resources:
       VpcId:
         Fn::ImportValue:
           Fn::Sub: "fit-track-${Environment}-network-VpcId"
+      SecurityGroupEgress:
+        - Description: Allow all outbound IPv4 traffic.
+          IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: !Sub fit-track-${Environment}-vpc-endpoints-sg-${AWS::Region}
