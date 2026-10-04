@@ -17,7 +17,7 @@ Resources:
     Properties:
       LogGroupName: !Sub "/fit-track/${Environment}/backend"
       LogGroupClass: "STANDARD"
-      RetentionInDays: 30
+      RetentionInDays: 7
       Tags:
         - Key: "Name"
           Value: !Sub "fit-track-${Environment}-logs-backend-${AWS::Region}"
@@ -35,7 +35,7 @@ Resources:
     Properties:
       LogGroupName: !Sub "/fit-track/${Environment}/migration"
       LogGroupClass: "STANDARD"
-      RetentionInDays: 30
+      RetentionInDays: 7
       Tags:
         - Key: "Name"
           Value: !Sub "fit-track-${Environment}-logs-migration-${AWS::Region}"
