@@ -120,7 +120,7 @@ Resources:
               - Sid: "ReadMigrationDatabaseSecret"
                 Effect: "Allow"
                 Action: "secretsmanager:GetSecretValue"
-                Resource: "/"
+                Resource: "arn:aws:secretsmanager:eu-central-1:126571942046:secret:fit-track/prod/migration-PBCTqX"
       Tags:
         - Key: "Name"
           Value: !Sub "fit-track-${Environment}-migration-task-execution-role-${AWS::Region}"
@@ -172,7 +172,7 @@ Resources:
               - Sid: "ReadBackendSecret"
                 Effect: "Allow"
                 Action: "secretsmanager:GetSecretValue"
-                Resource: "/"
+                Resource: "arn:aws:secretsmanager:eu-central-1:126571942046:secret:fit-track/prod/backend-Gx6WEn"
       Tags:
         - Key: "Name"
           Value: !Sub "fit-track-${Environment}-backend-task-execution-role-${AWS::Region}"
@@ -212,7 +212,7 @@ Resources:
               Value: "production"
           Secrets:
             - Name: "DATABASE_URL"
-              ValueFrom: "/"
+              ValueFrom: "arn:aws:secretsmanager:eu-central-1:126571942046:secret:fit-track/prod/migration-PBCTqX:DATABASE_URL::"
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -285,9 +285,9 @@ Resources:
               Value: "info"
           Secrets:
             - Name: "DATABASE_URL"
-              ValueFrom: "/"
+              ValueFrom: "arn:aws:secretsmanager:eu-central-1:126571942046:secret:fit-track/prod/backend-Gx6WEn:DATABASE_URL::"
             - Name: "JWT_SECRET"
-              ValueFrom: "/"
+              ValueFrom: "arn:aws:secretsmanager:eu-central-1:126571942046:secret:fit-track/prod/backend-Gx6WEn:JWT_SECRET::"
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
