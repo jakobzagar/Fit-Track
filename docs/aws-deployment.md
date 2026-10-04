@@ -423,6 +423,14 @@ Review scan findings for the pushed images before deployment. Successful image p
 
 AWS deployment is currently operated through the AWS CLI and Console. GitHub Actions verifies source, builds and publishes GHCR images, and runs Release Please; it does not deploy CloudFormation, publish to ECR, upload S3 content, or update ECS. GitHub OIDC deployment roles are not part of the implemented pipeline. Use an authenticated local AWS profile and specify `eu-central-1` explicitly; credentials never belong in the repository.
 
+### Planned AWS infrastructure CD
+
+The next implementation step is a GitHub Actions CD pipeline for the deployed `infra/fargate-single-az/` CloudFormation stacks. This is planned work; the current AWS deployment remains manual.
+
+The pipeline will validate templates, prepare change sets in stack dependency order, expose the proposed changes for review, and require approval before execution. Execution must use the reviewed change set, wait for stack completion, and report failures and deployment verification results. GitHub OIDC and scoped IAM roles will provide temporary AWS credentials without stored AWS access keys.
+
+Infrastructure deployment must preserve application image digests, runtime parameters, and intended service capacity. Database bootstrap and secret values remain outside the pipeline's template artifacts. ECR publication, migration execution, ECS application rollout, and S3 frontend publication require explicit coordination with infrastructure changes; the existing GHCR publication workflows do not provide these AWS deployment steps.
+
 ### First deployment
 
 1. Validate templates with `npm run infra:check` and confirm account permissions, quotas, service availability, and charges.
