@@ -300,6 +300,154 @@ The stack exports the endpoint, port, database name, and administrator secret AR
 | `RdsDatabaseName`     | Database name for connection configuration.                                              |
 | `RdsMasterSecretArn`  | Administrator secret for controlled database setup; not injected into application tasks. |
 
+### PostgreSQL bootstrap and runtime credentials
+
+Run this bootstrap once on an empty `fittrack` database before the first Prisma migration. RDS manages `fittrack_admin`; application tasks use separate PostgreSQL login roles rather than the administrator credential. PostgreSQL roles are distinct from ECS IAM execution roles.
+
+| PostgreSQL role      | Consumer                          | Permissions                                                                                                                                                                                                         |
+| -------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fittrack_admin`     | Controlled initial administration | RDS-managed administrator; never injected into application tasks.                                                                                                                                                   |
+| `fittrack_migration` | One-off migration task            | Owns schema `public` and objects it creates; can create and alter application tables, indexes, and types. No superuser, database creation, role creation, or replication privileges.                                |
+| `fittrack_backend`   | Backend service                   | Connect to `fittrack`, use schema `public`, and select, insert, update, or delete application rows. Sequence usage and select permissions cover future sequence-backed keys. No schema creation or table ownership. |
+
+#### Private administrative connection
+
+Use a temporary EC2 instance in the project VPC with Amazon Linux 2023, an instance profile containing `AmazonSSMManagedInstanceCore`, no public IP, no inbound rules, and outbound IPv4 access. The endpoint SG must allow TCP 443 from the temporary instance SG; the RDS SG must additionally allow TCP 5432 from it. Preserve the existing task SG rules on both groups. EC2 and RDS must share the project VPC. SSM endpoints need private DNS; the instance must appear online in Systems Manager.
+
+Install the Session Manager plugin and PostgreSQL client locally. Open a tunnel in one terminal, replacing the instance ID and endpoint with the deployed values:
+
+```bash
+aws ssm start-session \
+  --region eu-central-1 \
+  --target INSTANCE_ID \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+  --parameters '{"host":["RDS_ENDPOINT"],"portNumber":["5432"],"localPortNumber":["15432"]}' \
+  --no-cli-auto-prompt
+```
+
+Keep that terminal open. From the repository root in another terminal, connect with the RDS-managed administrator password entered at the prompt:
+
+```bash
+psql "host=RDS_ENDPOINT hostaddr=127.0.0.1 port=15432 dbname=fittrack user=fittrack_admin sslmode=verify-full sslrootcert=backend/certs/eu-central-1-bundle.pem connect_timeout=10"
+```
+
+`hostaddr` selects the local tunnel while `host` preserves RDS hostname verification. The local port is 15432; ECS database URLs use the actual RDS port 5432. Check TLS inside the session:
+
+```sql
+SELECT ssl, version, cipher
+FROM pg_stat_ssl
+WHERE pid = pg_backend_pid();
+```
+
+Require `ssl = true`. Do not put passwords in shell commands, SQL files, or repository documentation.
+
+#### Initial roles and grants
+
+At the `psql` prompt, run this meta-command separately and press Enter:
+
+```text
+\set ON_ERROR_STOP on
+```
+
+Then execute the SQL below. Do not repeat `CREATE ROLE` after successful bootstrap. If a statement fails, run `ROLLBACK;` before investigating; the transaction prevents partial bootstrap changes.
+
+```sql
+BEGIN;
+
+CREATE ROLE fittrack_migration
+  LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+
+CREATE ROLE fittrack_backend
+  LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION;
+
+REVOKE ALL ON DATABASE fittrack FROM PUBLIC;
+GRANT CONNECT ON DATABASE fittrack
+  TO fittrack_migration, fittrack_backend;
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+
+GRANT fittrack_migration TO fittrack_admin WITH SET TRUE;
+GRANT CREATE ON DATABASE fittrack TO fittrack_migration;
+ALTER SCHEMA public OWNER TO fittrack_migration;
+REVOKE CREATE ON DATABASE fittrack FROM fittrack_migration;
+
+GRANT USAGE ON SCHEMA public TO fittrack_backend;
+
+ALTER ROLE fittrack_migration IN DATABASE fittrack
+  SET search_path = public;
+ALTER ROLE fittrack_backend IN DATABASE fittrack
+  SET search_path = public;
+
+SET ROLE fittrack_migration;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLES TO fittrack_backend;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT USAGE, SELECT
+  ON SEQUENCES TO fittrack_backend;
+
+RESET ROLE;
+REVOKE fittrack_migration FROM fittrack_admin;
+
+COMMIT;
+```
+
+`PUBLIC` means every PostgreSQL role; it is distinct from schema `public`. Temporary database `CREATE` permission and administrator role membership allow schema ownership transfer and are removed before commit. The migration role retains ownership of `public`; the backend receives only schema usage and data permissions. Default privileges apply to future objects created by `fittrack_migration`, not other users. Changing schema ownership does not transfer existing table ownership. Existing databases need a separate ownership and permission review. See [PostgreSQL grants](https://www.postgresql.org/docs/17/sql-grant.html) and [default privileges](https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html).
+
+Generate two separate passwords locally, running this command once for each role:
+
+```bash
+openssl rand -hex 24
+```
+
+Set each password through its own interactive `psql` command:
+
+```text
+\password fittrack_migration
+```
+
+```text
+\password fittrack_backend
+```
+
+Use the same respective passwords in the existing migration and backend secrets. No additional secret resource is needed solely for a password. Secrets Manager stores values; it does not set PostgreSQL role passwords automatically.
+
+#### Secret configuration and migration order
+
+| Existing secret            | JSON keys                    | Database user        |
+| -------------------------- | ---------------------------- | -------------------- |
+| `fit-track/prod/backend`   | `DATABASE_URL`, `JWT_SECRET` | `fittrack_backend`   |
+| `fit-track/prod/migration` | `DATABASE_URL`               | `fittrack_migration` |
+
+Generate `JWT_SECRET` with `openssl rand -hex 32` and store it only in the backend secret. Keep it stable across ordinary deployments; rotation invalidates existing signed tokens. Runtime secret automatic rotation is not configured. Use the TLS URL formats in the next section, URL-encode non-hex passwords, and enter each URL as one line with no leading or trailing whitespace. Do not create extra Secrets Manager secrets for individual JSON keys.
+
+Run the migration task with its dedicated credentials and confirm container exit code 0. Before starting the backend, connect as `fittrack_admin` and remove application access to Prisma's internal migration table:
+
+```sql
+BEGIN;
+GRANT fittrack_migration TO fittrack_admin WITH SET TRUE;
+SET ROLE fittrack_migration;
+REVOKE ALL ON TABLE public."_prisma_migrations"
+  FROM fittrack_backend;
+RESET ROLE;
+REVOKE fittrack_migration FROM fittrack_admin;
+COMMIT;
+```
+
+This is required after first migration because default table grants also cover `_prisma_migrations`. Ordinary later migrations do not restore its revoked grants; review permissions if the table is recreated.
+
+Set backend desired count to one and verify ALB readiness health and the API through CloudFront. ECS reads secret values at task startup; after editing a secret, start a new deployment. A secret-only update does not require rebuilding the image. Preserve deployed and rollback ECR digests. After successful bootstrap and backend verification, terminate the temporary EC2 instance and remove only its administrative ingress rules; keep task access rules.
+
+#### Bootstrap verification
+
+On 2026-10-04, AWS reported RDS `fit-track-prod-rds-eu-central-1` as available with endpoint `fit-track-prod-rds-eu-central-1.c3sei0y42ozb.eu-central-1.rds.amazonaws.com`, VPC `vpc-0c5fb02e41871d1d5`, and RDS SG `sg-079eea7e43e2b6671`. The migration task completed with exit code 0. A local `psql` connection as `fittrack_backend` through the SSM tunnel successfully returned `SELECT 1`, as verified by its terminal output. Explicit `pg_stat_ssl` output, final grants, and backup restore have not been independently checked.
+
+The backend task uses SG `sg-0bac3287bdded2a29`; RDS TCP 5432 and endpoint TCP 443 access from that SG were verified. The temporary administrative EC2 instance is `i-00cc4d6dba6a41161`, using SG `sg-086e8423d7e043154` and instance profile `ec2-ssm`; its additional RDS and endpoint ingress rules were subsequently verified. These Console-managed administration resources are not part of the CloudFormation templates.
+
+Backend readiness remained unsuccessful after migration. The diagnostic image reported `DatabaseNotReachable` with hostname `base`. A credential-safe format check confirmed leading whitespace in the stored backend `DATABASE_URL`; a local reproduction with the installed node-postgres URL parser demonstrated that a leading space selects fallback host `base`. Remove leading whitespace and start a fresh ECS deployment. No secret values are documented. Successful backend readiness after this correction remains pending.
+
 ### Runtime database TLS configuration
 
 The public Frankfurt RDS CA bundle is versioned in `backend/certs/eu-central-1-bundle.pem` and copied into both production and migration images. It contains CA certificates, not private keys or application credentials. Update it from the [official RDS certificate bundles](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html) when required for certificate rotation.
@@ -388,9 +536,9 @@ The EC2/Multi-AZ variant is the advanced reference architecture for demonstratin
 
 The Fargate endpoint template defines six interface endpoints in `AppSubnetAz1Id` and one S3 gateway on `AppRouteTableId`. Name tags use `fit-track-prod-vpce-{ecr-api,ecr-dkr,logs,secretsmanager,ssm,ssmmessages,s3}-eu-central-1`; the SG Name tag is `fit-track-prod-vpc-endpoints-sg-eu-central-1`. Private DNS is enabled on each interface endpoint. The gateway policy allows only regional ECR image-layer downloads. Endpoint IDs and the endpoint SG ID are exported with the existing `fit-track-prod-endpoints-` prefix. SSM and SSM Messages endpoints and outputs support the planned temporary administration instance, using SSM Agent 3.3.40.0 or newer. ECS and legacy EC2 Messages endpoints remain absent. The administration instance needs an SSM instance profile, endpoint HTTPS access, and temporary RDS TCP 5432 ingress; these resources and rules are not yet configured. S3 access for agent updates or downloaded scripts is outside the current ECR-only gateway policy. The service template owns TCP 443 ingress from the Fargate task SG and makes the backend service depend on that rule; network exports match the imports. Local template validation passes; no deployed IDs or AWS connectivity results are recorded. Exact template contracts belong in the [variant README](../infra/fargate-single-az/README.md#implemented-templates).
 
-The Fargate network template defines logical resource `Vpc` with CIDR `10.20.0.0/20`, public subnets `10.20.0.0/24` and `10.20.1.0/24`, one private app subnet `10.20.2.0/24`, and DB subnets `10.20.4.0/24` and `10.20.5.0/24`. AZ IDs are `euc1-az1` and `euc1-az2`; app tasks and endpoints use the first AZ. `AvailabilityZoneAz1Name` exports the account-specific name from `DbSubnetAz1.AvailabilityZone` for RDS placement. DNS support and hostnames are enabled. Public routes use the internet gateway; private routes have no NAT. `MapPublicIpOnLaunch=false` applies to all subnets and does not prevent an internet-facing ALB from managing its public addresses. Names and exports follow the existing production conventions; no deployed IDs or network connectivity results are recorded.
+The Fargate network template defines logical resource `Vpc` with CIDR `10.20.0.0/20`, public subnets `10.20.0.0/24` and `10.20.1.0/24`, one private app subnet `10.20.2.0/24`, and DB subnets `10.20.4.0/24` and `10.20.5.0/24`. AZ IDs are `euc1-az1` and `euc1-az2`; app tasks and endpoints use the first AZ. `AvailabilityZoneAz1Name` exports the account-specific name from `DbSubnetAz1.AvailabilityZone` as an optional network output; the database no longer imports it. DNS support and hostnames are enabled. Public routes use the internet gateway; private routes have no NAT. `MapPublicIpOnLaunch=false` applies to all subnets and does not prevent an internet-facing ALB from managing its public addresses. Names and exports follow the existing production conventions; no deployed IDs or network connectivity results are recorded.
 
-The Fargate database template defines `fit-track-prod-rds-eu-central-1` with `MultiAZ=false`, `AvailabilityZone` imported from `network-AvailabilityZoneAz1Name` to match the application AZ, private access, required PostgreSQL TLS, default engine `17.11`, and default class `db.t4g.micro`. Engine/class availability and account eligibility have not been verified. Storage is encrypted 20 GiB gp3, backups retain seven days, automated backups are retained on deletion, and deletion/replacement create snapshots. Deletion protection is enabled. RDS manages the `fittrack_admin` secret; application users and runtime secret values remain external setup steps. The two-AZ subnet group does not create a standby. TCP 5432 ingress imports the service task SG, so deploy service with zero tasks before database. Network and database contracts are detailed in the [variant README](../infra/fargate-single-az/README.md#implemented-templates). Local template validation passes; no database creation, TLS connection, user provisioning, or backup restore has been AWS-verified.
+The Fargate database template defines `fit-track-prod-rds-eu-central-1` with `MultiAZ=false`, no explicit `AvailabilityZone` so RDS selects an available AZ from the DB subnet group, private access, required PostgreSQL TLS, default engine `17.11`, and default class `db.t4g.micro`. Engine/class availability and account eligibility have not been verified. Storage is encrypted 20 GiB gp3, backups retain one day, automated backups are retained on deletion, and deletion/replacement create snapshots. Deletion protection is enabled. RDS manages the `fittrack_admin` secret; application users and runtime secret values remain external setup steps. The two-AZ subnet group does not create a standby. TCP 5432 ingress imports the service task SG, so deploy service with zero tasks before database. Network and database contracts are detailed in the [variant README](../infra/fargate-single-az/README.md#implemented-templates). Local template validation passes; no database creation, TLS connection, user provisioning, or backup restore has been AWS-verified.
 
 The Fargate compute template defines cluster `fit-track-prod-ecs-cluster-eu-central-1`, with matching Name tag and `Environment=prod`, `Project=fit-track`, and `Component=compute`. It associates the built-in `FARGATE` capacity provider and sets it as the default strategy with weight 1. `EcsClusterName` and `EcsClusterArn` are exported under `fit-track-prod-compute-` for service and migration consumers. The stack has no cross-stack imports, EC2 capacity, ASG bootstrap, ECS Exec configuration, or Container Insights enablement. Cluster creation does not launch tasks or determine their subnets; those belong to service and RunTask configuration. Local template validation passes; cluster creation and Fargate task execution remain AWS-unverified.
 
@@ -503,4 +651,22 @@ The runtime secrets are manually managed in Secrets Manager, outside CloudFormat
 
 Each execution role grants `secretsmanager:GetSecretValue` only on its respective full secret ARN. Task `ValueFrom` appends `:<JSON-key>::` to select the current secret version's key. Backend uses the application database user; migration uses its dedicated database user. The backend key is spelled `DATABASE_URL`. Both secrets have no custom KMS key or enabled automatic rotation reported in metadata; the current execution-role configuration assumes the default Secrets Manager key.
 
-Secret values were not read or recorded. JSON key existence, database credentials, TLS connections, and ECS retrieval remain unverified. Populate valid database URLs before running migration or backend tasks; first deploy service with zero tasks. Local infrastructure formatting and cfn-lint pass after completing all five IAM/task secret references.
+Secret values are not recorded. Backend JSON key retrieval was verified by task startup; a later format-only check inspected the URL without exposing credentials. Migration exit code 0 and a local backend-user database query succeeded; final application readiness remains unverified. Populate valid database URLs before running migration or backend tasks; first deploy service with zero tasks. Local infrastructure formatting and cfn-lint pass after completing all five IAM/task secret references.
+
+## Fargate ingress change set
+
+On 2026-10-04, local cfn-lint passed for `infra/fargate-single-az/ingress.yaml`. AWS confirmed `fit-track-prod-network` is `CREATE_COMPLETE`, with VPC `vpc-0c5fb02e41871d1d5` and public ALB subnets `subnet-0e0d371037652b85c` and `subnet-0525e44a6d06236b8`.
+
+The ingress deploy command prepared change set `awscli-cloudformation-package-deploy-1791105468` for stack `fit-track-prod-ingress`, using `Environment=prod` and stack tags `Project=fit-track`, `Environment=prod`, `Component=ingress`. The command used `--no-execute-changeset` for review before execution. The change set adds the ALB SG, CloudFront TCP 80 ingress rule, internet-facing ALB in both public subnets, HTTP listener, and empty backend IP target group on TCP 3001. No backend tasks are required to create ingress.
+
+The change set was subsequently executed and the ingress stack reached `CREATE_COMPLETE`. ALB probes reached backend tasks on TCP 3001 and received readiness HTTP 503. End-to-end CloudFront API operation and runtime costs remain unverified.
+
+## Fargate database deployment verification
+
+On 2026-10-04, creation of `fit-track-prod-database` failed at `RdsDatabase` because the AWS Free plan rejected `BackupRetentionPeriod: 7`. CloudFormation reported `ROLLBACK_COMPLETE`. The Fargate template now sets one-day automated backup retention; the EC2 multi-AZ template retains seven days. Delete the failed stack before retrying creation. The revised retention setting passed local validation; subsequent RDS creation and bootstrap evidence are recorded in [PostgreSQL bootstrap verification](#bootstrap-verification).
+
+The next creation attempt failed because `eu-central-1c` had insufficient capacity for `db.t4g.micro` with gp3 storage. RDS reported `eu-central-1a` as an alternative at the time of failure. The failed stack was subsequently observed as `DELETE_COMPLETE`. The Fargate database template now omits `AvailabilityZone`, allowing RDS to select between the existing DB subnet group AZs. `MultiAZ` remains `false`; no standby is created. Database traffic may cross AZs if RDS selects a different AZ from the application, which can incur data transfer charges. The network AZ-name export is preserved. The revised template passes local validation. Subsequent creation succeeded; connectivity and remaining verification limits are recorded in [PostgreSQL bootstrap verification](#bootstrap-verification).
+
+## Backend readiness diagnostic image
+
+On 2026-10-04, the AMD64 backend image with structured database readiness failure logging was built with SBOM and provenance and pushed to `126571942046.dkr.ecr.eu-central-1.amazonaws.com/fit-track-prod-backend-eu-central-1:readiness-diagnostics`. ECR `describe-images` confirmed digest `sha256:7b5117eb0b8c56309e73b580df96f76bd30e97f7f37a717dfae21b9db1769e3e`. The image includes uncommitted readiness logging changes; its diagnostic tag is not a release or commit identifier. Local verification, isolated database integration tests, and the production container smoke check passed. ECS backend task definition revision `fit-track-prod-backend-eu-central-1:2` was subsequently verified to use this digest. Diagnostic logs exposed the URL whitespace issue described in [PostgreSQL bootstrap verification](#bootstrap-verification); successful readiness after correction remains pending.
