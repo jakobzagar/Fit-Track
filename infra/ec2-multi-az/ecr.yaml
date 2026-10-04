@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: "FitTrack production ECR repositories and image scanning configuration."
+Description: "FitTrack production ECR repositories."
 
 Parameters:
   Environment:
@@ -10,18 +10,6 @@ Parameters:
       - "prod"
 
 Resources:
-  EcrRegistryScanningConfiguration:
-    Type: "AWS::ECR::RegistryScanningConfiguration"
-    DeletionPolicy: "Delete"
-    UpdateReplacePolicy: "Delete"
-    Properties:
-      Rules:
-        - RepositoryFilters:
-            - Filter: !Sub "fit-track-${Environment}-*"
-              FilterType: "WILDCARD"
-          ScanFrequency: "SCAN_ON_PUSH"
-      ScanType: "BASIC"
-
   EcrBackendRepository:
     Type: "AWS::ECR::Repository"
     DeletionPolicy: "Retain"
@@ -111,7 +99,7 @@ Resources:
 Outputs:
   EcrRegistryId:
     Description: "AWS account ID for the regional private ECR registry."
-    Value: !GetAtt "EcrRegistryScanningConfiguration.RegistryId"
+    Value: !Ref "AWS::AccountId"
     Export:
       Name: !Sub "fit-track-${Environment}-ecr-EcrRegistryId"
 
