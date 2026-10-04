@@ -1,6 +1,6 @@
 # Architecture and design decisions
 
-This document explains how FitTrack's backend, persistence, delivery-facing runtime, and reference client are organized. It records implemented behavior and accepted trade-offs; proposed AWS infrastructure remains separate in the [deployment plan](aws-deployment-plan.md). For a concise portfolio overview, start with the [main README](../README.md); for canonical product terminology, see the [domain language](../CONTEXT.md).
+This document explains how FitTrack's backend, persistence, delivery-facing runtime, and reference client are organized. It records implemented behavior and accepted trade-offs; the hosted AWS infrastructure is described separately in [AWS deployment](aws-deployment.md). For a concise portfolio overview, start with the [main README](../README.md); for canonical product terminology, see the [domain language](../CONTEXT.md).
 
 ## Architectural priorities
 
@@ -13,7 +13,7 @@ FitTrack is intentionally backend-led. The React application proves the public H
 | Reject contract drift       | Validate input at the backend and parse real responses through shared strict Zod schemas                        |
 | Expose safe runtime signals | Separate process liveness from database readiness and shut down gracefully on termination                       |
 | Verify deployable artifacts | Build non-root runtime images, isolate migrations, and smoke-test exact image digests before promotion          |
-| Keep claims evidence-based  | Separate implemented application behavior from infrastructure templates and unverified AWS runtime behavior     |
+| Keep claims evidence-based  | Distinguish application tests, deployed cloud checks, and undeployed reference infrastructure                   |
 
 ## Workspace responsibilities
 
@@ -201,13 +201,13 @@ Authentication uses a signed JWT in an HTTP-only cookie. Production cookies are 
 
 The frontend treats `401 Unauthorized` from an authenticated request as an expired session, clears its local user state, and lets protected routing return the user to login. Public authentication requests such as login, registration, and the initial session check handle `401` as an expected response instead of emitting the global expiration signal.
 
-`CLIENT_ORIGIN` accepts only an HTTP or HTTPS origin. The configuration parser removes an optional trailing slash, then CORS and CSRF checks consume the same normalized value. `DATABASE_URL` must be a valid PostgreSQL URL with a host and database name. Production connections require `sslmode=require`, `verify-ca`, or `verify-full` unless a controlled production-like environment explicitly sets `DATABASE_TLS_MODE=allow-insecure`; the production smoke stack uses that escape hatch only for its temporary local PostgreSQL container. The backend adapter uses node-postgres, while Prisma CLI migrations use a separate connector with different TLS URL parameters. Both deployment images include the public RDS CA bundle; AWS connection examples and verification state belong in [the AWS deployment plan](aws-deployment-plan.md#runtime-database-tls-configuration).
+`CLIENT_ORIGIN` accepts only an HTTP or HTTPS origin. The configuration parser removes an optional trailing slash, then CORS and CSRF checks consume the same normalized value. `DATABASE_URL` must be a valid PostgreSQL URL with a host and database name. Production connections require `sslmode=require`, `verify-ca`, or `verify-full` unless a controlled production-like environment explicitly sets `DATABASE_TLS_MODE=allow-insecure`; the production smoke stack uses that escape hatch only for its temporary local PostgreSQL container. The backend adapter uses node-postgres, while Prisma CLI migrations use a separate connector with different TLS URL parameters. Both deployment images include the public RDS CA bundle; AWS connection examples and verification state belong in [the AWS deployment](aws-deployment.md#runtime-database-tls-configuration).
 
 The Express application also provides:
 
 - Helmet security headers;
 - credentialed CORS limited to `CLIENT_ORIGIN`;
-- `Cache-Control: no-store` on API responses that continue past CORS preflight handling so authenticated data, authentication results, and API errors carry an explicit non-retention directive; cloud error-caching exceptions are documented in the AWS plan;
+- `Cache-Control: no-store` on API responses that continue past CORS preflight handling so authenticated data, authentication results, and API errors carry an explicit non-retention directive; cloud error-caching exceptions are documented in the AWS deployment;
 - 100 KB JSON and form payload limits;
 - general, login, and registration rate limiters;
 - sanitized unexpected error responses;
@@ -242,7 +242,7 @@ Failure behavior is part of each module's interface rather than an afterthought 
 | Migration failure                   | The one-off migration process exits unsuccessfully; Compose does not start the dependent backend                         | Deployment must stop before application rollout              |
 | Container smoke failure             | The workflow does not promote the build digest to a moving or version tag                                                | Maintainer fixes the source or build configuration           |
 
-The repository implements the application and container behavior in this table. AWS templates define ALB health routing, ECS deployment rollback, and RDS backups. Their runtime behavior and restore procedures remain unverified; deployment automation and alarms are not implemented.
+The repository implements the application and container behavior in this table. The hosted Fargate deployment has verified ALB readiness routing and a completed ECS deployment, with rollback and RDS backups configured. Database restore and deliberate failed-deployment rollback are not exercised; AWS rollout automation and alarms are not implemented.
 
 ## Structured logging
 
@@ -328,10 +328,10 @@ The frontend requests relative `/api` paths. Vite forwards them to `API_PROXY_TA
 
 ## Known operational boundaries
 
-The repository's current production artifacts and planned AWS topology are summarized in the [AWS deployment plan](aws-deployment-plan.md).
+The hosted Fargate architecture and undeployed EC2 reference variant are distinguished in [AWS deployment](aws-deployment.md).
 
-- CloudFormation defines AWS infrastructure, including task log delivery, viewer HTTPS, secrets, and RDS backups; the stacks are not deployed or runtime-verified.
-- GitHub Actions publishes GHCR images; ECR publication, S3 uploads, and AWS rollout automation are not implemented.
+- Nine Fargate CloudFormation stacks are deployed. Public frontend serving, API readiness, task log delivery, and migration completion are verified; this does not establish high availability or disaster recovery.
+- GitHub Actions publishes GHCR images. ECR publication, S3 uploads, and AWS rollout are performed manually; workflow automation is not implemented.
 - Production containers are not started together by the normal fast verification command.
 - Metrics alarms, distributed tracing, and backup restore verification remain pending.
-- CloudFront-to-ALB HTTP is unencrypted; the AWS plan records this deployment boundary.
+- CloudFront-to-ALB HTTP is unencrypted; AWS deployment explains this boundary.

@@ -6,20 +6,20 @@
 
 FitTrack is a backend- and delivery-focused TypeScript system for planning and recording workouts. It demonstrates relational data modelling, authorization, transactional lifecycle invariants, PostgreSQL integration testing, containerized delivery, and release automation. A React application serves as the reference client for the complete API workflow.
 
-> **Current state:** the application and its production container artifacts are implemented and verified locally and in CI. Nine AWS CloudFormation templates are prepared; deployment and AWS runtime verification remain pending.
+> **Hosted architecture:** [FitTrack on AWS](https://d3avuxvegd3iy8.cloudfront.net) uses CloudFront, private S3, ECS Fargate, ECR, and private Single-AZ RDS. Nine CloudFormation stacks define the deployment; GitHub Actions verifies and publishes container artifacts. See [AWS deployment](docs/aws-deployment.md) for architecture and operational limits.
 
 ## What this project demonstrates
 
-| Focus               | Evidence                                                                                                                     |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Backend design      | Thin Express routes, authoritative domain services, centralized middleware, and Prisma persistence                           |
-| Data integrity      | Ownership-scoped queries, relational constraints, append-only migrations, serializable transactions, and retry handling      |
-| Security            | HTTP-only cookies, CSRF origin checks, credentialed CORS, payload limits, rate limiting, security headers, and log redaction |
-| Verification        | Contract, unit, PostgreSQL integration, concurrency, browser E2E, accessibility, release-tool, and final-container tests     |
-| Container delivery  | Non-root multi-stage images, a dedicated migration artifact, digest-pinned smoke tests, SBOM, and build provenance           |
-| Release engineering | Protected pull requests, coordinated product versions, exact-digest promotion, and Release Please                            |
-| Cloud direction     | Nine CloudFormation stacks with documented architecture, dependencies, and pending deployment verification                   |
-| Reference client    | A React interface that exercises authentication, lifecycle transitions, validation failures, and persisted state             |
+| Focus                | Evidence                                                                                                                     |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Backend design       | Thin Express routes, authoritative domain services, centralized middleware, and Prisma persistence                           |
+| Data integrity       | Ownership-scoped queries, relational constraints, append-only migrations, serializable transactions, and retry handling      |
+| Security             | HTTP-only cookies, CSRF origin checks, credentialed CORS, payload limits, rate limiting, security headers, and log redaction |
+| Verification         | Contract, unit, PostgreSQL integration, concurrency, browser E2E, accessibility, release-tool, and final-container tests     |
+| Container delivery   | Non-root multi-stage images, a dedicated migration artifact, digest-pinned smoke tests, SBOM, and build provenance           |
+| Release engineering  | Protected pull requests, coordinated product versions, exact-digest promotion, and Release Please                            |
+| Cloud infrastructure | Deployed private Fargate/RDS architecture, CloudFront/S3 delivery, scoped IAM, VPC endpoints, and nine CloudFormation stacks |
+| Reference client     | A React interface that exercises authentication, lifecycle transitions, validation failures, and persisted state             |
 
 ### Recommended technical review path
 
@@ -28,7 +28,7 @@ FitTrack is a backend- and delivery-focused TypeScript system for planning and r
 3. Review [nested ownership enforcement](backend/src/modules/workouts/workout-exercises/services/owned-workout-resource.loader.ts) and the [authorization integration tests](backend/src/modules/workouts/workout-exercises/tests/workout-exercise.integration.test.ts).
 4. Follow the [risk-to-evidence testing map](docs/testing.md#risk-to-evidence-map).
 5. Review the [container and release pipeline](docs/release-process.md#pipeline-overview).
-6. See the [AWS readiness gap](docs/aws-deployment-plan.md#production-readiness-gap) for work that is deliberately not claimed as complete.
+6. Review the [hosted AWS architecture](docs/aws-deployment.md#architecture-overview) and its [accepted limits](docs/aws-deployment.md#accepted-limits-and-deployment-portability).
 
 ## Engineering case studies
 
@@ -138,13 +138,13 @@ Pull requests additionally build and exercise the final backend, migration, and 
 
 ## Current operational limits
 
-- No public AWS deployment is verified. CloudFormation defines the network, runtime, database, and frontend, but the stacks remain undeployed.
-- CloudFront viewer HTTPS, runtime secrets, database backups, and task log delivery are defined in templates; AWS deployment automation and runtime verification remain pending.
-- The planned CloudFront-to-ALB connection uses unencrypted HTTP.
-- Rate-limit counters are process-local and are not global across backend replicas.
-- Structured logs are written to standard output. CloudWatch task log delivery is defined but not deployed; alarms are not configured.
+- Backend tasks and RDS use Single-AZ placement; the two-AZ ALB does not provide workload or database failover.
+- Viewer HTTPS terminates at CloudFront; the API origin path to ALB and backend uses HTTP.
+- Rate-limit counters are process-local. Service Auto Scaling, WAF, metrics alarms, and distributed tracing are not configured.
+- AWS deployments and frontend uploads are manual; GitHub Actions publishes GHCR artifacts without performing AWS rollout.
+- RDS backups and seven-day CloudWatch log retention are configured; backup restore procedures have not been exercised.
 
-These are documented gaps, not hidden production claims. The intended next phase is described in the [AWS deployment plan](docs/aws-deployment-plan.md).
+Architecture, runtime verification, and remaining configuration drift are documented in [AWS deployment](docs/aws-deployment.md).
 
 ## Documentation
 
@@ -153,7 +153,7 @@ These are documented gaps, not hidden production claims. The intended next phase
 - [Testing strategy](docs/testing.md)
 - [Dependency policy](docs/dependency-audit.md)
 - [Release and container process](docs/release-process.md)
-- [AWS deployment plan](docs/aws-deployment-plan.md)
+- [AWS deployment](docs/aws-deployment.md)
 - [EC2 / Multi-AZ infrastructure](infra/ec2-multi-az/README.md)
 - [Fargate / Single-AZ infrastructure](infra/fargate-single-az/README.md)
 
