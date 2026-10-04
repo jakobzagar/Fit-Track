@@ -76,7 +76,7 @@ Keep the body current when the scope or validation changes. Dependabot and Relea
 | `fit-track-frontend`  | `production`  | Static React assets served by unprivileged Nginx         |
 | `fit-track-migration` | `migration`   | Minimal Prisma CLI runtime and committed migrations      |
 
-The current registry is GHCR: `ghcr.io/jakobzagar/<image-name>`. The AWS ECR repositories are defined separately; no workflow currently authenticates to AWS or publishes to ECR. The AWS frontend will use the static build in S3 rather than the Nginx image; that upload pipeline is also pending.
+GitHub Actions publishes to GHCR: `ghcr.io/jakobzagar/<image-name>`. The hosted AWS deployment uses separate ECR backend and migration repositories, populated manually; no workflow authenticates to AWS or publishes to ECR. AWS serves the frontend static build from S3 and CloudFront, without the Nginx image. Image publication, static upload, and rollout commands belong in [AWS deployment](aws-deployment.md#deployment-procedure).
 
 Published backend, migration, and frontend images target only `linux/amd64`, matching the `X86_64` ECS task definitions and x86 EC2 capacity. Builds retain SBOM and provenance attestations. Both publishing workflows run on x86 GitHub runners and do not configure QEMU. Local Docker builds still use the host platform unless explicitly overridden; running published images on ARM hosts requires AMD64 emulation.
 
@@ -92,7 +92,7 @@ Successful release builds additionally publish:
 
 Workflows smoke-test exact digests returned by the builds before applying moving tags. Deployments and migrations should use digests; `main` and `latest` are convenience tags that move.
 
-This process publishes artifacts only. The current deployment boundary and planned AWS topology are documented in the [AWS deployment plan](aws-deployment-plan.md); container validation is documented in the [testing guide](testing.md).
+This process publishes artifacts only. The hosted architecture and manual AWS rollout are documented in the [AWS deployment](aws-deployment.md); container validation is documented in the [testing guide](testing.md).
 
 ## Migration ordering
 
@@ -102,7 +102,7 @@ Deploy each schema and application change in this order:
 2. smoke-test the exact image digests;
 3. run the migration image once with the target database connection;
 4. require a successful migration exit;
-5. deploy the matching backend and frontend digests for the container deployment; the planned AWS frontend instead publishes the matching static build to S3;
+5. deploy the matching backend and frontend digests for the container deployment; the hosted AWS frontend instead publishes the matching static build to S3;
 6. confirm backend readiness before routing traffic.
 
 Backend replicas never run migrations during startup. Changes that cannot tolerate old and new application revisions at the same time require an expand-and-contract migration across separate releases.

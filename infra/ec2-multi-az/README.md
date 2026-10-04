@@ -1,8 +1,8 @@
 # EC2 / Multi-AZ infrastructure
 
-CloudFormation templates are grouped by independently deployed stack and lifecycle. Each stack lives in its own `<stack-key>.yaml` file under `infra/ec2-multi-az/`; stack-specific parameters and resources stay together. AWS architecture, decisions, deployment state, and verification are tracked in [the AWS deployment plan](../../docs/aws-deployment-plan.md).
+CloudFormation templates are grouped by independently deployed stack and lifecycle. Each stack lives in its own `<stack-key>.yaml` file under `infra/ec2-multi-az/`; stack-specific parameters and resources stay together. AWS architecture, decisions, deployment state, and verification are tracked in [the AWS deployment](../../docs/aws-deployment.md).
 
-This is the advanced reference architecture, designed to demonstrate AWS infrastructure design through EC2-backed ECS capacity, capacity-provider scaling, private endpoint connectivity, and a Multi-AZ PostgreSQL database. It prioritizes availability and infrastructure depth over the constraints of the project's AWS free-plan account. It uses EC2-backed ECS capacity across two Availability Zones and a private Multi-AZ RDS instance. The separate [Fargate / Single-AZ variant](../fargate-single-az/README.md) is being prepared for actual application hosting on the project's AWS free-plan account. These directories are alternative architectures, not staging and production environments.
+This is the advanced reference architecture, designed to demonstrate AWS infrastructure design through EC2-backed ECS capacity, capacity-provider scaling, private endpoint connectivity, and a Multi-AZ PostgreSQL database. It prioritizes availability and infrastructure depth over the constraints of the project's AWS free-plan account. It uses EC2-backed ECS capacity across two Availability Zones and a private Multi-AZ RDS instance. The separate [Fargate / Single-AZ variant](../fargate-single-az/README.md) is deployed for application hosting on the project's AWS free-plan account. These directories are alternative architectures, not staging and production environments. The EC2 variant is locally validated but has not been deployed.
 
 ## Stack boundaries
 
@@ -24,21 +24,21 @@ A valid creation order is:
 
 1. `network`, `ecr`, and `logs` (independent stacks).
 2. `endpoints` and `ingress` after `network`.
-3. `compute` after `endpoints`, created with `CapacityMode=bootstrap`; `frontend` after `ingress`. Activate the completed compute stack with `CapacityMode=active` and verify instance registration before running tasks, following the linked AWS bootstrap procedure.
+3. `compute` after `endpoints`, created with `CapacityMode=bootstrap`; `frontend` after `ingress`. Activate the completed compute stack with `CapacityMode=active` and verify instance registration before running tasks, using a reviewed compute update.
 4. `service` after `network`, `compute`, `ingress`, `ecr`, and `logs`, initially with `BackendDesiredCount=0`.
 5. `database` after `service`, because its security group imports the service task security group.
 
-The [AWS bootstrap procedure](../../docs/aws-deployment-plan.md#backend-service-scheduling-and-deployment) owns image digests, secrets, database setup, migration execution, and starting backend tasks. Set `ClientOrigin` to the frontend HTTPS URL. Stack creation order alone does not make the application ready.
+The [hosted deployment guide](../../docs/aws-deployment.md#deployment-procedure) explains image identity, database credentials, and rollout ordering for Fargate. For this EC2 reference variant, use its own capacity provider and both application subnets in RunTask requests, and populate the CloudFormation-created secrets rather than copying Fargate secret ARNs. Set `ClientOrigin` to the frontend HTTPS URL. Stack creation order alone does not make the application ready.
 
 ### Initial database user setup
 
 After RDS creation and before running migrations or starting backend tasks, create separate PostgreSQL migration and backend users, grant their respective schema and data permissions, and set default privileges for future tables and sequences created by the migration user. Populate the existing migration and backend secrets outside CloudFormation. This preparation is performed once per new database; subsequent releases run migrations using the existing users.
 
-For manual setup, use Session Manager port forwarding through an existing ECS EC2 instance and connect with a local PostgreSQL client using the master credentials and verified RDS TLS. Compute already supplies the SSM instance role and endpoint HTTPS ingress. Temporarily allow RDS TCP 5432 ingress from the EC2 instance SG, since the current database SG permits only the task SG; remove that administration rule after setup. No inbound SSH rule or public database access is required. Database-user provisioning and this temporary administration path remain unimplemented and AWS-unverified; deployment prerequisites are recorded in the [AWS review](../../docs/aws-deployment-plan.md#before-deployment).
+For manual setup, use Session Manager port forwarding through an existing ECS EC2 instance and connect with a local PostgreSQL client using the master credentials and verified RDS TLS. Compute already supplies the SSM instance role and endpoint HTTPS ingress. Temporarily allow RDS TCP 5432 ingress from the EC2 instance SG, since the current database SG permits only the task SG; remove that administration rule after setup. No inbound SSH rule or public database access is required. This EC2 administration path has not been exercised on AWS. The shared [PostgreSQL bootstrap SQL](../../docs/aws-deployment.md#initial-roles-and-grants) defines the database roles and grants.
 
-Delete consumers before producers: `database` before `service`; `service` before `compute`, `ingress`, `ecr`, and `logs`; `frontend` before `ingress`; `compute` before `endpoints`; `ingress` and `endpoints` before `network`. Review retained data and deletion protection in the [AWS plan](../../docs/aws-deployment-plan.md#cost-and-lifecycle-direction) before teardown.
+Delete consumers before producers: `database` before `service`; `service` before `compute`, `ingress`, `ecr`, and `logs`; `frontend` before `ingress`; `compute` before `endpoints`; `ingress` and `endpoints` before `network`. Review retained data and deletion protection in the [AWS lifecycle guide](../../docs/aws-deployment.md#resource-lifecycle-and-cost) before teardown.
 
-Regional ECR scanning is configured separately through the AWS CLI, outside CloudFormation. BASIC scan-on-push selects `fit-track-prod-*`; the ECR stack manages only repositories. The command and verification belong in the [AWS deployment plan](../../docs/aws-deployment-plan.md#regional-ecr-scanning).
+Regional ECR scanning is configured separately through the AWS CLI, outside CloudFormation. BASIC scan-on-push selects `fit-track-prod-*`; the ECR stack manages only repositories. The command and verification belong in the [AWS deployment](../../docs/aws-deployment.md#regional-ecr-scanning).
 
 ## Cross-stack contracts
 
@@ -64,7 +64,7 @@ Each `AWS::EC2::SecurityGroup` owns its description, tags, and explicit allow-al
 
 ## Resource lifecycle
 
-Every resource explicitly declares deletion and replacement policies. S3 buckets, ECR repositories, log groups, and standalone secrets use `Retain`; RDS instances use `Snapshot`; all other resources use `Delete`. The [AWS lifecycle policy table](../../docs/aws-deployment-plan.md#resource-deletion-and-replacement-policies) records the rationale, cleanup requirements, and verification limits. Retained resources require deliberate cleanup or import before recreating stacks with the same names.
+Every resource explicitly declares deletion and replacement policies. S3 buckets, ECR repositories, log groups, and standalone secrets use `Retain`; RDS instances use `Snapshot`; all other resources use `Delete`. The [hosted lifecycle guide](../../docs/aws-deployment.md#resource-lifecycle-and-cost) explains retention and snapshot cleanup; this variant additionally retains its CloudFormation-created runtime secrets. Retained resources require deliberate cleanup or import before recreating stacks with the same names.
 
 ## YAML conventions
 
