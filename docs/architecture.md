@@ -222,7 +222,7 @@ The production frontend applies its browser security policy at the static-servin
 The backend exposes two health checks:
 
 - `GET /api/health/live` confirms that the process can answer HTTP requests;
-- `GET /api/health/ready` confirms that PostgreSQL is reachable and returns `503` otherwise.
+- `GET /api/health/ready` confirms that PostgreSQL is reachable and returns `503` otherwise. Failed database probes emit a structured Pino error through the existing credential-sanitizing error serializer; the HTTP response remains limited to the readiness status.
 
 On `SIGTERM` or `SIGINT`, the server stops accepting new connections, waits for HTTP connections to close, disconnects Prisma, and exits. A timeout force-closes remaining connections to prevent an indefinitely stuck shutdown.
 
