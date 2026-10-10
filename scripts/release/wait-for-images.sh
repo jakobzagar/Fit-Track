@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
-
-: "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
-: "${GITHUB_SHA:?GITHUB_SHA is required}"
-: "${GITHUB_REPOSITORY_OWNER:?GITHUB_REPOSITORY_OWNER is required}"
-: "${REGISTRY:?REGISTRY is required}"
-: "${GITHUB_OUTPUT:?GITHUB_OUTPUT is required}"
+set -euo pipefail
 
 # Release tags and the main publication can start concurrently.
 for attempt in {1..90}; do
     runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/build-push.yaml/runs?head_sha=$GITHUB_SHA&branch=main&per_page=100")"
-    state="$(jq -r '[.workflow_runs[] | select(.head_sha == env.GITHUB_SHA)] | first | if . == null then "pending" elif .status != "completed" then "pending" else .conclusion end' <<< "$runs")"
+    state="$(echo "$runs" | jq -r '
+        [.workflow_runs[] | select(.head_sha == env.GITHUB_SHA)] | first
+        | if . == null or .status != "completed" then "pending"
+          else .conclusion end
+    ')"
     if [[ "$state" == "success" ]]; then
         break
     fi
@@ -26,9 +24,14 @@ for attempt in {1..90}; do
     sleep 20
 done
 
+owner="$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+
 for component in backend frontend migration; do
-    image="$REGISTRY/$(printf %s "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')/fit-track-$component"
+    image="$REGISTRY/$owner/fit-track-$component"
     digest="$(docker buildx imagetools inspect "$image:sha-$GITHUB_SHA" | awk '/^Digest:/ {print $2; exit}')"
-    [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+    if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+        echo "Could not resolve image digest: $image" >&2
+        exit 1
+    fi
     echo "$component-digest=$digest" >> "$GITHUB_OUTPUT"
 done
