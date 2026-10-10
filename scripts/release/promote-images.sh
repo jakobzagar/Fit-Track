@@ -9,7 +9,6 @@ fi
 
 version="$1"
 shift
-source_refs=("$@")
 
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo "Version must use the MAJOR.MINOR.PATCH format" >&2
@@ -20,14 +19,14 @@ resolve_digest() {
     docker buildx imagetools inspect "$1" | awk '/^Digest:/ {print $2; exit}'
 }
 
-for source_ref in "${source_refs[@]}"; do
+for source_ref in "$@"; do
     if [[ ! "$source_ref" =~ ^([^[:space:]@]+)@(sha256:[0-9a-f]{64})$ ]]; then
         echo "Image must use an exact sha256 digest: $source_ref" >&2
         exit 1
     fi
 
-    image="${BASH_REMATCH[1]}"
-    source_digest="${BASH_REMATCH[2]}"
+    image="${source_ref%@*}"
+    source_digest="${source_ref#*@}"
     release_ref="$image:$version"
 
     if release_digest="$(resolve_digest "$release_ref" 2>/dev/null)" && \
@@ -37,7 +36,7 @@ for source_ref in "${source_refs[@]}"; do
     fi
 done
 
-for source_ref in "${source_refs[@]}"; do
+for source_ref in "$@"; do
     image="${source_ref%@*}"
     source_digest="${source_ref#*@}"
     release_ref="$image:$version"

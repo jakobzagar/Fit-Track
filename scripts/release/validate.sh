@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
+set -euo pipefail
 
 release_tag="${1:-}"
 release_root="${RELEASE_ROOT:-$PWD}"
@@ -17,15 +17,13 @@ const {readFileSync} = require("node:fs");
 const {join} = require("node:path");
 
 const [root, expectedVersion] = process.argv.slice(2);
-const failures = [];
 const readJson = (relativePath) =>
     JSON.parse(readFileSync(join(root, relativePath), "utf8"));
 
 const checkVersion = (label, actualVersion) => {
     if (actualVersion !== expectedVersion) {
-        failures.push(
-            `${label} is ${JSON.stringify(actualVersion)}, expected ${JSON.stringify(expectedVersion)}`,
-        );
+        console.error(`${label} is ${JSON.stringify(actualVersion)}, expected ${JSON.stringify(expectedVersion)}`);
+        process.exit(1);
     }
 };
 
@@ -50,11 +48,6 @@ for (const workspace of ["", "backend", "frontend", "shared"]) {
 const manifest = readJson(".github/release-please/manifest.json");
 checkVersion(".github/release-please/manifest.json entry for .", manifest["."]);
 
-if (failures.length > 0) {
-    console.error(`Release artifacts do not match version ${expectedVersion}:`);
-    for (const failure of failures) console.error(`- ${failure}`);
-    process.exit(1);
-}
 NODE
 
 printf 'version=%s\n' "$version"
