@@ -1,6 +1,6 @@
 import axe from "axe-core";
 import {render, screen} from "@testing-library/react";
-import {http, HttpResponse} from "msw";
+import {http, HttpResponse} from "msw/http";
 import {createMemoryRouter, RouterProvider} from "react-router";
 import {describe, expect, test} from "vitest";
 import {AppProviders} from "../app/providers/providers";

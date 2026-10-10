@@ -1,6 +1,6 @@
 import {useEffect} from "react";
 import {act, render, waitFor} from "@testing-library/react";
-import {http, HttpResponse} from "msw";
+import {http, HttpResponse} from "msw/http";
 import {createMemoryRouter, RouterProvider, useNavigate, useParams} from "react-router";
 import {describe, expect, test, vi} from "vitest";
 import {AppProviders} from "../../../app/providers/providers";

@@ -22,7 +22,7 @@ Object.defineProperty(globalThis, "localStorage", {
     value: localStorageMock,
 });
 
-beforeAll(() => server.listen({onUnhandledRequest: "error"}));
+beforeAll(() => server.listen({onUnhandledFrame: "error"}));
 
 afterEach(() => {
     cleanup();
