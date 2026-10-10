@@ -19,9 +19,9 @@ flowchart LR
 Every pull request runs the complete quality gate. A push to `main` has two independent effects:
 
 - Release Please creates or updates one release pull request from Conventional Commits;
-- after the `Test` workflow succeeds for a source or configuration change, the image workflow builds all three production images, smoke-tests their exact digests, and publishes the `main` tags. Markdown-only pushes do not rebuild images.
+- after the `Test` workflow succeeds for a source or configuration change, the image workflow builds all three production images, publishes all three images to GHCR, smoke-tests their exact digests, and publishes the GHCR `main` tags. Markdown-only pushes do not rebuild images.
 
-Merging the Release Please pull request is the explicit release action. Release Please then creates the `vMAJOR.MINOR.PATCH` tag and GitHub Release. The tag starts the release-image workflow, which rebuilds that revision, smoke-tests the returned digests, and publishes the version and `latest` image tags.
+Merging the Release Please pull request is the explicit release action. Release Please then creates the `vMAJOR.MINOR.PATCH` tag and GitHub Release. The tag starts the release-image workflow, which waits for successful main image publication for the exact tagged commit, resolves its `sha-<commit>` image digests, smoke-tests them, and copies backend and migration OCI indexes to ECR under the version tag without rebuilding. Only after both ECR digests are verified does it publish the version and `latest` tags in GHCR.
 
 ## Protected main workflow
 
@@ -76,21 +76,23 @@ Keep the body current when the scope or validation changes. Dependabot and Relea
 | `fit-track-frontend`  | `production`  | Static React assets served by unprivileged Nginx         |
 | `fit-track-migration` | `migration`   | Minimal Prisma CLI runtime and committed migrations      |
 
-GitHub Actions publishes to GHCR: `ghcr.io/jakobzagar/<image-name>`. The hosted AWS deployment uses separate ECR backend and migration repositories, populated manually; no workflow authenticates to AWS or publishes to ECR. AWS serves the frontend static build from S3 and CloudFront, without the Nginx image. Image publication, static upload, and rollout commands belong in [AWS deployment](aws-deployment.md#deployment-procedure).
+GitHub Actions builds all three images once on `main` and publishes them to GHCR: `ghcr.io/jakobzagar/<image-name>`. The release workflow copies backend and migration to ECR using GitHub OIDC, verifies their digests, and then promotes those exact images in GHCR. Frontend remains GHCR-only; AWS serves its static build from S3 and CloudFront. A successful GitHub-hosted run is required to verify AWS authentication and cross-registry publication. AWS authentication requirements and rollout commands belong in [AWS deployment](aws-deployment.md#deployment-procedure).
 
-Published backend, migration, and frontend images target only `linux/amd64`, matching the `X86_64` ECS task definitions and x86 EC2 capacity. Builds retain SBOM and provenance attestations. Both publishing workflows run on x86 GitHub runners and do not configure QEMU. Local Docker builds still use the host platform unless explicitly overridden; running published images on ARM hosts requires AMD64 emulation.
+Published backend, migration, and frontend images target only `linux/amd64`, matching the `X86_64` ECS task definitions and x86 EC2 capacity. Builds retain SBOM and provenance attestations and use `pull: true` to resolve the current base images while retaining layer caches. Both image workflows run on x86 GitHub runners and do not configure QEMU. Local Docker builds still use the host platform unless explicitly overridden; running published images on ARM hosts requires AMD64 emulation.
 
 Successful `main` builds publish:
 
 - `sha-<commit>`;
-- `main`.
+- `main` in GHCR.
 
-Successful release builds additionally publish:
+ECR receives only release version tags, such as `0.2.0`; main publication does not access AWS. Release copying preserves the complete OCI index, including SBOM and provenance manifests, and verifies the destination digest against its GHCR source. Existing ECR version tags are accepted only when their digest matches, making retries safe without replacing immutable tags. Digest references are recorded in the run summary and step outputs. GHCR release promotion runs only after both ECR copies succeed. Registry publication is not transactional: a failed copy can leave one ECR image published, and a failed GHCR promotion can leave some tags updated. Rerun the same release workflow to complete publication; matching immutable tags are reused, and conflicting version tags fail. The GitHub Release created by Release Please is not rolled back by an image-publication failure.
+
+Successful releases additionally publish:
 
 - the exact version without the `v` prefix, for example `0.2.0`;
 - `latest`.
 
-Workflows smoke-test exact digests returned by the builds before applying moving tags. Deployments and migrations should use digests; `main` and `latest` are convenience tags that move.
+Workflows smoke-test exact source image digests before applying moving tags. Deployments and migrations should use digests; `main` and `latest` are convenience tags that move.
 
 This process publishes artifacts only. The hosted architecture and manual AWS rollout are documented in the [AWS deployment](aws-deployment.md); container validation is documented in the [testing guide](testing.md).
 
@@ -122,7 +124,7 @@ The recorded initial release is `v0.0.1`. The manifest records `0.0.1`, and subs
 
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. This token allows Release Please-created pull requests and tags to trigger the repository workflows.
 
-Before building release images, `scripts/release/validate.sh` requires the exact `vMAJOR.MINOR.PATCH` tag format and matching package, lockfile, and Release Please manifest versions. After the exact build digests pass the production smoke test, `scripts/release/promote-images.sh` accepts only digest references and refuses to move an existing version tag to different content. `npm run test:release-tools` covers these critical rules, including alignment between the Release Please tag configuration and release workflow trigger.
+Before promoting release images, `scripts/release/validate.sh` requires the exact `vMAJOR.MINOR.PATCH` tag format and matching package, lockfile, and Release Please manifest versions. After the exact source digests pass the production smoke test, `scripts/release/promote-images.sh` accepts only digest references and refuses to move an existing version tag to different content. `npm run test:release-tools` covers these critical rules, including alignment between the Release Please tag configuration and release workflow trigger.
 
 ## Workflow validation
 
@@ -133,3 +135,5 @@ npm run actions:lint
 ```
 
 They must also pass the repository's required pull-request checks. See the [testing guide](testing.md) for the complete validation matrix.
+
+The release workflow waits up to 30 minutes for successful main publication of the exact release commit and fails if that run fails, is cancelled, or does not finish in time. It never substitutes the moving `main` tag or images from an older commit. If the matching build was skipped or cancelled, rerun the main publication for that revision before retrying the release workflow.
