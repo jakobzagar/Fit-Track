@@ -268,4 +268,6 @@ for scenario in aws-error copy-error; do
 done
 [[ ! -f "$temporary_directory/conflict.copies" ]] || fail "Conflicting tags must not be overwritten"
 
+node --test "$repository_root/scripts/deploy/tests/deploy-tools.test.mjs"
+
 echo "Release tool tests passed"

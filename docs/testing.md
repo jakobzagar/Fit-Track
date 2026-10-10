@@ -37,17 +37,17 @@ Fast checks protect developer feedback time. PostgreSQL tests own relational and
 
 ## Test layers
 
-| Layer               | Location                                  | Primary responsibility                                                                     |
-| ------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Shared contract     | Domain `tests/` directories               | Validation matrices, normalization, strict request and response shapes                     |
-| Backend unit        | Owning area `tests/` directories          | Environment parsing, logging, middleware, cookies, proxy trust, retries, shutdown          |
-| Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency                      |
-| Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions                |
-| Browser E2E         | `frontend/e2e/`                           | Critical cross-application journeys in Chromium against isolated PostgreSQL                |
-| Code scanning       | GitHub CodeQL default setup               | JavaScript and TypeScript security queries on repository changes                           |
-| Dependency review   | `Test` workflow pull-request job          | Added and updated dependencies compared with the pull-request base                         |
-| Release tools       | `scripts/release/tests/`                  | Version validation, main publication polling, ECR copying/retries, and immutable promotion |
-| Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy                |
+| Layer               | Location                                  | Primary responsibility                                                                    |
+| ------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Shared contract     | Domain `tests/` directories               | Validation matrices, normalization, strict request and response shapes                    |
+| Backend unit        | Owning area `tests/` directories          | Environment parsing, logging, middleware, cookies, proxy trust, retries, shutdown         |
+| Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency                     |
+| Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions               |
+| Browser E2E         | `frontend/e2e/`                           | Critical cross-application journeys in Chromium against isolated PostgreSQL               |
+| Code scanning       | GitHub CodeQL default setup               | JavaScript and TypeScript security queries on repository changes                          |
+| Dependency review   | `Test` workflow pull-request job          | Added and updated dependencies compared with the pull-request base                        |
+| Release tools       | `scripts/release/tests/`                  | Version validation, image publication/promotion, and mocked backend deployment boundaries |
+| Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy               |
 
 ## Fast verification
 
@@ -59,17 +59,17 @@ This command generates the Prisma client, then runs linting, type checking, form
 
 Useful narrower commands are:
 
-| Command                      | Purpose                                                                        |
-| ---------------------------- | ------------------------------------------------------------------------------ |
-| `npm test`                   | Run fast workspace and release-tool tests                                      |
-| `npm run test:application`   | Run all fast workspace tests                                                   |
-| `npm run test:release-tools` | Test release validation, publication polling, ECR copying, and promotion rules |
-| `npm run verify:application` | Check, test, and build application workspaces                                  |
-| `npm run check`              | Run lint, type checking, and formatting checks                                 |
-| `npm run verify:shared`      | Verify the shared package                                                      |
-| `npm run verify:backend`     | Verify backend unit tests, compilation, and static checks                      |
-| `npm run verify:frontend`    | Verify frontend checks, tests, and build                                       |
-| `npm run test:e2e`           | Run isolated critical Chromium journeys                                        |
+| Command                      | Purpose                                                                |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| `npm test`                   | Run fast workspace and release-tool tests                              |
+| `npm run test:application`   | Run all fast workspace tests                                           |
+| `npm run test:release-tools` | Test release validation, publication/promotion, and backend CD scripts |
+| `npm run verify:application` | Check, test, and build application workspaces                          |
+| `npm run check`              | Run lint, type checking, and formatting checks                         |
+| `npm run verify:shared`      | Verify the shared package                                              |
+| `npm run verify:backend`     | Verify backend unit tests, compilation, and static checks              |
+| `npm run verify:frontend`    | Verify frontend checks, tests, and build                               |
+| `npm run test:e2e`           | Run isolated critical Chromium journeys                                |
 
 ## Infrastructure validation
 
@@ -228,3 +228,5 @@ The protected `main` branch requires these exact GitHub Actions job names as sta
 The ruleset separately enforces the CodeQL result through its dedicated code-scanning rule.
 
 The complete merge policy, correction flow, and repository ruleset belong in the [release and container process](release-process.md#protected-main-workflow).
+
+The release-tools command also runs `scripts/deploy/tests/deploy-tools.test.mjs` against a stateful fake AWS CLI. It checks parameter preservation, capacity drift, no-op retries, stack update failures, migration launch/exit failures, and rejection of stable backend rollbacks. These tests use no AWS credentials or live database and do not establish production deployment success.

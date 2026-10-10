@@ -242,7 +242,7 @@ Failure behavior is part of each module's interface rather than an afterthought 
 | Migration failure                   | The one-off migration process exits unsuccessfully; Compose does not start the dependent backend                         | Deployment must stop before application rollout              |
 | Container smoke failure             | The workflow does not promote the build digest to a moving or version tag                                                | Maintainer fixes the source or build configuration           |
 
-The repository implements the application and container behavior in this table. The hosted Fargate deployment has verified ALB readiness routing and a completed ECS deployment, with rollback and RDS backups configured. Database restore and deliberate failed-deployment rollback are not exercised; AWS rollout automation and alarms are not implemented.
+The repository implements the application and container behavior in this table. The hosted Fargate deployment has verified ALB readiness routing and a completed ECS deployment, with rollback and RDS backups configured. Database restore and deliberate failed-deployment rollback are not exercised. Release backend CD is implemented with mocked validation; its production verification scope belongs in [AWS deployment](aws-deployment.md#release-backend-cd). Alarms remain unimplemented.
 
 ## Structured logging
 
@@ -331,7 +331,7 @@ The frontend requests relative `/api` paths. Vite forwards them to `API_PROXY_TA
 The hosted Fargate architecture and undeployed EC2 reference variant are distinguished in [AWS deployment](aws-deployment.md).
 
 - Nine Fargate CloudFormation stacks are deployed. Public frontend serving, API readiness, task log delivery, and migration completion are verified; this does not establish high availability or disaster recovery.
-- GitHub Actions publishes GHCR images. ECR publication, S3 uploads, and AWS rollout are performed manually; workflow automation is not implemented.
+- GitHub Actions builds GHCR images, copies release images to ECR, and implements migration-first backend rollout through CloudFormation. The new backend CD path requires production verification; infrastructure changes and S3 frontend publication remain manual.
 - Production containers are not started together by the normal fast verification command.
 - Metrics alarms, distributed tracing, and backup restore verification remain pending.
 - CloudFront-to-ALB HTTP is unencrypted; AWS deployment explains this boundary.

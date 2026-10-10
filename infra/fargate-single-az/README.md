@@ -47,3 +47,5 @@ Every resource explicitly declares deletion and replacement policies. S3 buckets
 ## YAML conventions
 
 String values use double quotes, including resource types, policy values, names, descriptions, and scalar arguments to `!Ref`, `!Sub`, and `!GetAtt`. Mapping keys remain unquoted. Numbers and booleans retain their native YAML types; numeric strings required by AWS schemas remain quoted. Multiline JSON, scripts, and function code use block scalars (`|`) without wrapping the content in quotes.
+
+Release backend CD reuses the deployed `service` template and changes only its image digest parameters. Provisioning, template changes, and frontend publication remain separate operations. See [release backend CD](../../docs/aws-deployment.md#release-backend-cd) for role configuration, capacity prerequisites, and verification limits.
