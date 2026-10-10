@@ -22,7 +22,7 @@ The endpoint stack imports `VpcId`, `AppSubnetAz1Id`, and `AppRouteTableId` from
 
 ## Verification scope
 
-All nine stacks completed creation or update. The deployment serves the public frontend and database-backed API readiness endpoint; ECS has a completed deployment with a healthy ALB target, and the migration task exited successfully. The [verification table](../../docs/aws-deployment.md#logging-and-verification) distinguishes these checks from untested recovery, availability, and load behavior. The stored zero-task bootstrap parameter differs from the live one-task service and requires reconciliation.
+All nine stacks completed creation or update. The deployment serves the public frontend and database-backed API readiness endpoint; ECS has a completed deployment with a healthy ALB target, and the migration task exited successfully. The [verification table](../../docs/aws-deployment.md#logging-and-verification) distinguishes these checks from untested recovery, availability, and load behavior. Before release CD, ensure the stored `BackendDesiredCount` is positive and matches the live service desired count; the scripts reject bootstrap capacity and drift.
 
 ## Deployment and validation
 

@@ -12,8 +12,12 @@ flowchart LR
     Main --> Images[Build and smoke images]
     Images --> MainTags[SHA and main tags]
     RP -->|merge| Release[Version tag and GitHub Release]
-    Release --> ReleaseImages[Build and smoke release images]
-    ReleaseImages --> VersionTags[Version and latest tags]
+    Release --> ReleaseImages[Resolve and smoke verified main images]
+    MainTags --> ReleaseImages
+    ReleaseImages --> ECR[Copy backend and migration to ECR]
+    ECR --> VersionTags[Promote GHCR version and latest tags]
+    VersionTags --> Migration[Run production migration]
+    Migration --> Backend[Deploy and verify backend]
 ```
 
 Every pull request runs the complete quality gate. A push to `main` has two independent effects:
@@ -120,11 +124,11 @@ Release Please treats the monorepo as one versioned product. Conventional Commit
 
 The release pull request coordinates the root, backend, frontend, and shared package versions. Release Please owns the product versions, root lockfile entries, manifest, changelog, version tag, and GitHub Release. Do not edit those release artifacts manually during ordinary development.
 
-The recorded initial release is `v0.0.1`. The manifest records `0.0.1`, and subsequent proposals follow Conventional Commits normally. Release Please omits the component from Git tags so the tag consumed by the release-image workflow remains `vMAJOR.MINOR.PATCH`.
+The release manifest is the authoritative record of the product version; subsequent proposals follow Conventional Commits normally. Release Please omits the component from Git tags so the tag consumed by the release-image workflow remains `vMAJOR.MINOR.PATCH`.
 
 Configure `RELEASE_PLEASE_TOKEN` as a fine-grained repository token with read/write access to contents, pull requests, and issues. This token allows Release Please-created pull requests and tags to trigger the repository workflows.
 
-Before promoting release images, `scripts/release/validate.sh` requires the exact `vMAJOR.MINOR.PATCH` tag format and matching package, lockfile, and Release Please manifest versions. After the exact source digests pass the production smoke test, `scripts/release/promote-images.sh` accepts only digest references and refuses to move an existing version tag to different content. `scripts/release/wait-for-images.sh` waits for the exact commit publication and resolves GHCR digests; `scripts/release/copy-images-to-ecr.sh` copies and verifies the ECR indexes. The workflow owns registry authentication, environment configuration, and step order. `npm run test:release-tools` covers validation, polling failures and timeouts, digest resolution, ECR copy failures and retries, and immutable promotion rules, including alignment between the Release Please tag configuration and release workflow trigger.
+Before promoting release images, `scripts/release/validate.sh` requires the exact `vMAJOR.MINOR.PATCH` tag format and matching package, lockfile, and Release Please manifest versions, stopping at the first mismatch. After the exact source digests pass the production smoke test, `scripts/release/promote-images.sh` accepts only digest references and refuses to move an existing version tag to different content. `scripts/release/wait-for-images.sh` waits for the exact commit publication and resolves GHCR digests; `scripts/release/copy-images-to-ecr.sh` copies and verifies the ECR indexes. The workflow owns registry authentication, environment configuration, and step order. `npm run test:release-tools` covers validation, polling failures and timeouts, digest resolution, ECR copy failures and retries, and immutable promotion rules, including alignment between the Release Please tag configuration and release workflow trigger.
 
 ## Workflow validation
 
