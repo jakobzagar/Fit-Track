@@ -379,9 +379,9 @@ Use the RDS DNS endpoint, not an IP address or custom alias. URL-encode credenti
 
 ## Container registry and image identity
 
-AWS runs two ECR artifacts: `fit-track-prod-backend-eu-central-1` and `fit-track-prod-migration-eu-central-1`. Both repositories use AES256 encryption and immutable tags, with mutable exceptions for `main` and `latest`. ECS references `repository-uri@sha256:...` through `BackendImageDigest` and `MigrationImageDigest`; a commit identifies source, while a digest identifies registry content.
+The release workflow targets two ECR artifacts: `fit-track-prod-backend-eu-central-1` and `fit-track-prod-migration-eu-central-1`. Both repositories use AES256 encryption and immutable tags, with mutable exceptions for `main` and `latest`. ECS references `repository-uri@sha256:...` through `BackendImageDigest` and `MigrationImageDigest`; a commit identifies source, while a digest identifies registry content.
 
-Build from the repository root for `linux/amd64`, matching task definitions. The backend Dockerfile supplies the `production` and `migration` targets. SBOM and provenance attestations can produce additional manifest entries alongside the runnable image; their presence does not mean ECS runs multiple containers. The static frontend is uploaded separately and does not require an ECR repository.
+Build from the repository root for `linux/amd64`, matching task definitions. The backend Dockerfile supplies the `production` and `migration` targets. SBOM and provenance attestations can produce additional manifest entries alongside the runnable image; their presence does not mean ECS runs multiple containers. The static frontend is uploaded separately and does not require an ECR repository. The main workflow builds and smoke-tests images in GHCR. The release workflow waits for successful publication of the exact tagged commit, smoke-tests its images, and copies the backend and migration OCI indexes to ECR without rebuilding. ECR tags use `MAJOR.MINOR.PATCH`; destination digests must equal the source digests, preserving the runnable image and its SBOM/provenance manifests. A matching existing version tag is reused on retries; conflicting content fails publication. A GitHub-hosted run is still required to verify automated ECR publication. See [Docker index copying](https://docs.docker.com/reference/cli/docker/buildx/imagetools/create/). The following commands remain available for manual publication:
 
 ```bash
 aws ecr get-login-password --region eu-central-1 --no-cli-auto-prompt \
@@ -421,7 +421,15 @@ Review scan findings for the pushed images before deployment. Successful image p
 
 ## Deployment procedure
 
-AWS deployment is currently operated through the AWS CLI and Console. GitHub Actions verifies source, builds and publishes GHCR images, and runs Release Please; it does not deploy CloudFormation, publish to ECR, upload S3 content, or update ECS. GitHub OIDC deployment roles are not part of the implemented pipeline. Use an authenticated local AWS profile and specify `eu-central-1` explicitly; credentials never belong in the repository.
+AWS deployment is currently operated through the AWS CLI and Console. GitHub Actions verifies source, builds and publishes GHCR images, and runs Release Please; the release workflow additionally includes OIDC authentication and backend/migration copying to ECR. It does not deploy CloudFormation, upload S3 content, run production migrations, or update ECS. Production deployment roles are not yet integrated. Use an authenticated local AWS profile for manual deployment and specify `eu-central-1` explicitly; credentials never belong in the repository.
+
+### GitHub Actions AWS authentication
+
+The release image job grants `id-token: write` and uses `aws-actions/configure-aws-credentials` to obtain temporary credentials through `sts:AssumeRoleWithWebIdentity`. The GitHub `production` environment variables supply `AWS_ECR_PUBLISH_ROLE_ARN` (`arn:aws:iam::126571942046:role/fit-track-gha-ecr-publish`) and `AWS_REGION` (`eu-central-1`). The action verifies the expected account is `126571942046`, requests a one-hour session, and identifies it with `fit-track-ecr-<run-id>`. `aws-actions/amazon-ecr-login` then authenticates Docker to ECR. Both AWS actions are pinned to commit SHAs.
+
+The release job declares `environment: production`. The role must trust the GitHub OIDC provider using `StringEquals` for both audience `sts.amazonaws.com` and subject `repo:jakobzagar/Fit-Track:environment:production`. In the GitHub environment settings, select **Selected branches and tags** and allow only a **Tag** rule matching `v*.*.*`; do not add a branch rule for `main`. GitHub enforces the tag restriction because the environment-based OIDC subject does not contain the Git ref. Any configured environment approval applies before the job starts. Image publication permissions are scoped to the backend and migration ECR repositories, with registry authentication requiring `ecr:GetAuthorizationToken` on `*`. IAM and GitHub environment configuration must match the workflow before publication can succeed; repository changes do not create or update these external settings. A later deployment role should have separate permissions for application rollout.
+
+OIDC and ECR login failures stop release publication to ECR. No stored AWS access keys are required. The workflow copies backend and migration from GHCR to ECR and verifies their registry digests. A successful GitHub-hosted run is required to verify federation, registry login, and publication. Vulnerability scan verification and application deployment remain separate implementation steps. ECR immutable version tags are reused only when they already match the source digest; conflicting content fails rather than replacing a release.
 
 ### Planned AWS infrastructure CD
 
@@ -429,7 +437,7 @@ The next implementation step is a GitHub Actions CD pipeline for the deployed `i
 
 The pipeline will validate templates, prepare change sets in stack dependency order, expose the proposed changes for review, and require approval before execution. Execution must use the reviewed change set, wait for stack completion, and report failures and deployment verification results. GitHub OIDC and scoped IAM roles will provide temporary AWS credentials without stored AWS access keys.
 
-Infrastructure deployment must preserve application image digests, runtime parameters, and intended service capacity. Database bootstrap and secret values remain outside the pipeline's template artifacts. ECR publication, migration execution, ECS application rollout, and S3 frontend publication require explicit coordination with infrastructure changes; the existing GHCR publication workflows do not provide these AWS deployment steps.
+Infrastructure deployment must preserve application image digests, runtime parameters, and intended service capacity. Database bootstrap and secret values remain outside the pipeline's template artifacts. ECR publication, migration execution, ECS application rollout, and S3 frontend publication require explicit coordination with infrastructure changes. The release image workflow provides the ECR publication configuration; production migration execution, ECS rollout, S3 publication, and scan gating are not yet implemented in GitHub Actions.
 
 ### First deployment
 

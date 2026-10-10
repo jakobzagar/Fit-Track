@@ -14,13 +14,16 @@ concurrency:
 
 jobs:
   release-images:
-    name: Build and publish release images
+    name: Promote and publish release images
+    environment: production
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     permissions:
       contents: read
+      actions: read
       packages: write
+      id-token: write
 
     env:
       REGISTRY: ghcr.io
@@ -47,11 +50,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push production images
+      - name: Wait for verified main images
         id: images
-        uses: ./.github/actions/build-production-images
-        with:
-          revision: ${{ github.sha }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+
+          # Release tags and the main publication can start concurrently.
+          for attempt in {1..90}; do
+            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/build-push.yaml/runs?head_sha=$GITHUB_SHA&branch=main&per_page=100")"
+            state="$(jq -r '[.workflow_runs[] | select(.head_sha == env.GITHUB_SHA)] | first | if . == null then "pending" elif .status != "completed" then "pending" else .conclusion end' <<< "$runs")"
+            if [[ "$state" == "success" ]]; then
+              break
+            fi
+            if [[ "$state" != "pending" ]]; then
+              echo "Main image publication did not succeed for $GITHUB_SHA: $state" >&2
+              exit 1
+            fi
+            if [[ "$attempt" == "90" ]]; then
+              echo "Timed out waiting for main image publication for $GITHUB_SHA" >&2
+              exit 1
+            fi
+            sleep 20
+          done
+
+          for component in backend frontend migration; do
+            image="$REGISTRY/$(printf %s "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')/fit-track-$component"
+            digest="$(docker buildx imagetools inspect "$image:sha-$GITHUB_SHA" | awk '/^Digest:/ {print $2; exit}')"
+            [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+            echo "$component-digest=$digest" >> "$GITHUB_OUTPUT"
+          done
 
       - name: Smoke test release images
         env:
@@ -59,6 +89,56 @@ jobs:
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}@${{ steps.images.outputs.frontend-digest }}
           MIGRATION_IMAGE: ${{ env.REGISTRY }}/${{ env.MIGRATION_IMAGE }}@${{ steps.images.outputs.migration-digest }}
         run: bash scripts/smoke/production-containers.sh
+
+      - name: Assume AWS ECR publish role
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ECR_PUBLISH_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: "126571942046"
+          role-session-name: fit-track-ecr-${{ github.run_id }}
+
+      - name: Log in to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
+
+      - name: Copy release images to ECR
+        id: ecr-images
+        shell: bash
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          VERSION: ${{ steps.release.outputs.version }}
+          BACKEND_DIGEST: ${{ steps.images.outputs.backend-digest }}
+          MIGRATION_DIGEST: ${{ steps.images.outputs.migration-digest }}
+        run: |
+          set -Eeuo pipefail
+
+          for component in backend migration; do
+            repository="fit-track-prod-$component-$AWS_REGION"
+            digest="$BACKEND_DIGEST"
+            if [[ "$component" == "migration" ]]; then
+              digest="$MIGRATION_DIGEST"
+            fi
+            destination="$ECR_REGISTRY/$repository:$VERSION"
+            source="$REGISTRY/$(printf %s "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')/fit-track-$component@$digest"
+            existing="$(aws ecr describe-images --repository-name "$repository" \
+              --query "imageDetails[?contains(imageTags || \`[]\`, \`\"$VERSION\"\`)].imageDigest | [0]" \
+              --output text --no-cli-auto-prompt --no-cli-pager)"
+            if [[ "$existing" == "None" ]]; then
+              docker buildx imagetools create --tag "$destination" "$source"
+            elif [[ "$existing" != "$digest" ]]; then
+              echo "ECR release tag already points to different content: $destination" >&2
+              exit 1
+            fi
+            actual="$(aws ecr describe-images --repository-name "$repository" \
+              --image-ids "imageTag=$VERSION" --query 'imageDetails[0].imageDigest' \
+              --output text --no-cli-auto-prompt --no-cli-pager)"
+            [[ "$actual" == "$digest" ]] || { echo "ECR digest mismatch: $destination" >&2; exit 1; }
+            reference="$ECR_REGISTRY/$repository@$actual"
+            echo "$component-ref=$reference" >> "$GITHUB_OUTPUT"
+            echo "- $component: \`$reference\`" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Promote release images
         shell: bash
