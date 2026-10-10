@@ -1,4 +1,4 @@
-import {http, HttpResponse} from "msw";
+import {http, HttpResponse} from "msw/http";
 import {describe, expect, test, vi} from "vitest";
 import {onSessionExpired} from "../../../lib/auth/session-expiration";
 import {API_URL} from "../../../test/constants";

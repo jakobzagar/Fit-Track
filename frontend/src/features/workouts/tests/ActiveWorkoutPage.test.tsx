@@ -1,4 +1,4 @@
-import {http, HttpResponse} from "msw";
+import {http, HttpResponse} from "msw/http";
 import {createMemoryRouter, RouterProvider} from "react-router";
 import {render, screen, within} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

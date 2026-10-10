@@ -1,4 +1,4 @@
-import {http, HttpResponse} from "msw";
+import {http, HttpResponse} from "msw/http";
 import {Route, Routes} from "react-router";
 import {screen, waitFor} from "@testing-library/react";
 import {describe, expect, test} from "vitest";

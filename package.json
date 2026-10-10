@@ -65,7 +65,6 @@
         "@prisma/engines@7.10.0": true,
         "esbuild@0.28.1": true,
         "fsevents@2.3.3": true,
-        "msw@2.15.0": true,
         "prisma@7.10.0": true
     }
 }

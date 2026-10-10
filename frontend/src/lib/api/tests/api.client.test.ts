@@ -1,4 +1,4 @@
-import {http, HttpResponse} from "msw";
+import {http, HttpResponse} from "msw/http";
 import {z} from "zod";
 import {describe, expect, test, vi} from "vitest";
 import {ApiError} from "../../../common/errors/api.error";
@@ -11,18 +11,26 @@ const responseSchema = z.object({value: z.string()});
 
 describe("apiRequest", () => {
     test("sends JSON with credentials and validates the response", async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch");
         server.use(
             http.post(`${API_URL}/example`, async ({request}) => {
-                expect(request.credentials).toBe("include");
                 expect(request.headers.get("content-type")).toBe("application/json");
                 expect(await request.json()).toEqual({name: "FitTrack"});
                 return HttpResponse.json({value: "created"});
             }),
         );
 
-        await expect(
-            apiRequest("/example", responseSchema, {method: "POST", body: {name: "FitTrack"}}),
-        ).resolves.toEqual({value: "created"});
+        try {
+            await expect(
+                apiRequest("/example", responseSchema, {method: "POST", body: {name: "FitTrack"}}),
+            ).resolves.toEqual({value: "created"});
+            expect(fetchSpy).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.objectContaining({credentials: "include"}),
+            );
+        } finally {
+            fetchSpy.mockRestore();
+        }
     });
 
     test("uses a server error message when available", async () => {

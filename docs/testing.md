@@ -182,7 +182,9 @@ Integration files remain sequential because they share one test database. Parall
 
 ## Frontend test infrastructure
 
-Frontend tests run in jsdom. `renderWithProviders` supplies application providers and routing. MSW owns the HTTP boundary, resets handlers after every test, and treats unhandled requests as failures.
+Frontend tests run in jsdom. `renderWithProviders` supplies application providers and routing. MSW v3 owns the HTTP boundary through `msw/http` handlers and `setupServer` from `msw/node`. It resets handlers after every test and rejects unhandled network frames with `onUnhandledFrame: "error"`.
+
+The API client test verifies `credentials: "include"` on the actual `fetch` call while retaining MSW assertions for the transmitted JSON body and headers. The intercepted Node request does not reliably preserve that Fetch option. MSW is test-only and is not bundled into the production frontend. See the [MSW v3 migration guide](https://mswjs.io/docs/migrations/2.x-to-3.x) for entrypoints and unhandled-frame configuration.
 
 Testing Library queries use accessible roles and labels. `user-event` is preferred for realistic interaction. axe-core provides accessibility smoke coverage for representative pages and dialogs.
 

@@ -19,6 +19,7 @@ The manifests define supported ranges; committed lockfiles record resolved npm v
 | Vite                | `8.x`           | Frontend build and development                |
 | Tailwind CSS        | `4.x`           | Frontend styling and Vite integration         |
 | Vitest              | `5.x`           | Fast unit and component tests                 |
+| MSW                 | `3.x`           | Frontend HTTP-boundary mocks                  |
 | Playwright          | `1.x`           | Browser end-to-end tests                      |
 | PostgreSQL          | `17.x`          | Application and integration-test database     |
 
