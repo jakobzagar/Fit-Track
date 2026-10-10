@@ -540,17 +540,17 @@ Pino writes structured JSON to stdout/stderr in production. Request logs carry a
 
 The ECS `awslogs` driver sends backend output to `/fit-track/prod/backend` and migration output to `/fit-track/prod/migration`, with separate stream prefixes and seven-day retention. Log groups use AWS-managed encryption rather than a customer-managed KMS key. Retain policies preserve the groups during stack deletion; they do not override event expiry. Container Insights, application alarms, distributed tracing, ALB access logs, and CloudFront access logs are not configured.
 
-| Verification surface | Observed result                                                                             | Scope                                                           |
-| -------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| CloudFormation       | All nine stacks completed creation or update                                                | Confirms stack operations, not every application behavior       |
-| Private endpoints    | Required endpoints available with expected subnet and DNS configuration                     | No arbitrary internet egress tested or provided                 |
-| ECS backend          | One running task; deployment completed; ALB target healthy                                  | Live desired count differs from stored zero bootstrap parameter |
-| Migration            | Essential container completed with exit code 0                                              | Confirms migration task completion                              |
-| Public frontend      | CloudFront HTTPS response 200 with frontend security and cache headers                      | Does not independently prove every browser journey              |
-| Public readiness     | `/api/health/ready` returned 200 and `status=ready`                                         | Confirms API routing and database connectivity                  |
-| RDS                  | Private encrypted Single-AZ instance available; backups enabled and restorable time present | Restore and TLS negative tests not exercised                    |
-| Logs                 | Both task log groups configured with seven-day retention                                    | Delivery observed; no alerting pipeline                         |
-| Local validation     | Formatting and cfn-lint cover both template variants                                        | Does not prove reference variant deployability                  |
+| Verification surface | Observed result                                                                             | Scope                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| CloudFormation       | All nine stacks completed creation or update                                                | Confirms stack operations, not every application behavior    |
+| Private endpoints    | Required endpoints available with expected subnet and DNS configuration                     | No arbitrary internet egress tested or provided              |
+| ECS backend          | One running task; deployment completed; ALB target healthy                                  | Recorded capacity drift must be reconciled before release CD |
+| Migration            | Essential container completed with exit code 0                                              | Confirms migration task completion                           |
+| Public frontend      | CloudFront HTTPS response 200 with frontend security and cache headers                      | Does not independently prove every browser journey           |
+| Public readiness     | `/api/health/ready` returned 200 and `status=ready`                                         | Confirms API routing and database connectivity               |
+| RDS                  | Private encrypted Single-AZ instance available; backups enabled and restorable time present | Restore and TLS negative tests not exercised                 |
+| Logs                 | Both task log groups configured with seven-day retention                                    | Delivery observed; no alerting pipeline                      |
+| Local validation     | Formatting and cfn-lint cover both template variants                                        | Does not prove reference variant deployability               |
 
 Useful read-only checks:
 
