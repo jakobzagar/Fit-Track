@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
+set -euo pipefail
 
 if [[ "$#" -lt 2 ]]; then
     echo "Usage: promote-images.sh VERSION IMAGE@DIGEST [IMAGE@DIGEST ...]" >&2
@@ -38,9 +38,8 @@ for source_ref in "${source_refs[@]}"; do
 done
 
 for source_ref in "${source_refs[@]}"; do
-    [[ "$source_ref" =~ ^([^[:space:]@]+)@(sha256:[0-9a-f]{64})$ ]]
-    image="${BASH_REMATCH[1]}"
-    source_digest="${BASH_REMATCH[2]}"
+    image="${source_ref%@*}"
+    source_digest="${source_ref#*@}"
     release_ref="$image:$version"
 
     docker buildx imagetools create \
