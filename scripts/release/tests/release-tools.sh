@@ -167,4 +167,105 @@ expect_failure \
     "ghcr.io/example/migration@$digest"
 [[ ! -s "$preflight_state" ]] || fail "Promotion started before every image passed preflight"
 
+# Exercise registry operations without accessing GitHub, Docker, or AWS.
+registry_bin="$temporary_directory/registry-bin"
+mkdir -p "$registry_bin"
+cat >"$registry_bin/gh" <<'GH'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+[[ "$*" == *"head_sha=$GITHUB_SHA&branch=main"* ]] || exit 1
+case "$SCENARIO" in
+    timeout) echo '{"workflow_runs":[]}' ;;
+    failed) printf '{"workflow_runs":[{"head_sha":"%s","status":"completed","conclusion":"failure"}]}' "$GITHUB_SHA" ;;
+    cancelled) printf '{"workflow_runs":[{"head_sha":"%s","status":"completed","conclusion":"cancelled"}]}' "$GITHUB_SHA" ;;
+    api-error) exit 1 ;;
+    *)
+        if [[ ! -f "$POLL_STATE" ]]; then
+            touch "$POLL_STATE"
+            echo '{"workflow_runs":[{"head_sha":"other-commit","status":"completed","conclusion":"success"}]}'
+        else
+            printf '{"workflow_runs":[{"head_sha":"%s","status":"completed","conclusion":"success"}]}' "$GITHUB_SHA"
+        fi
+        ;;
+esac
+GH
+cat >"$registry_bin/sleep" <<'SLEEP'
+#!/usr/bin/env bash
+exit 0
+SLEEP
+cat >"$registry_bin/docker" <<'DOCKER'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+if [[ "$*" == *inspect* ]]; then
+    [[ "$*" == *":sha-$GITHUB_SHA"* ]] || exit 1
+    [[ "$SCENARIO" != missing-image ]] || exit 1
+    if [[ "$SCENARIO" == invalid-digest ]]; then
+        echo 'Digest: invalid'
+    else
+        echo "Digest: $BACKEND_DIGEST"
+    fi
+else
+    [[ "$SCENARIO" != copy-error ]] || exit 1
+    echo "$*" >> "$COPY_LOG"
+fi
+DOCKER
+cat >"$registry_bin/aws" <<'AWS'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+[[ "$SCENARIO" != aws-error ]] || exit 1
+if [[ "$*" == *backend* ]]; then digest="$BACKEND_DIGEST"; else digest="$MIGRATION_DIGEST"; fi
+if [[ "$*" == *--image-ids* ]]; then
+    if [[ "$SCENARIO" == mismatch ]]; then echo sha256:bad; else echo "$digest"; fi
+else
+    case "$SCENARIO" in
+        retry) echo "$digest" ;;
+        conflict) echo sha256:bad ;;
+        *) echo None ;;
+    esac
+fi
+AWS
+chmod +x "$registry_bin/gh" "$registry_bin/sleep" "$registry_bin/docker" "$registry_bin/aws"
+
+run_registry_script() {
+    local scenario="$1" script="$2"
+    env PATH="$registry_bin:$PATH" SCENARIO="$scenario" \
+        GITHUB_REPOSITORY=example/project GITHUB_SHA=release-commit \
+        GITHUB_REPOSITORY_OWNER=Example REGISTRY=ghcr.io \
+        AWS_REGION=eu-central-1 ECR_REGISTRY=example.ecr VERSION=1.2.3 \
+        BACKEND_DIGEST="$digest" MIGRATION_DIGEST="sha256:$(printf 'b%.0s' {1..64})" \
+        GITHUB_OUTPUT="$temporary_directory/$scenario.outputs" \
+        GITHUB_STEP_SUMMARY="$temporary_directory/$scenario.summary" \
+        POLL_STATE="$temporary_directory/$scenario.poll" COPY_LOG="$temporary_directory/$scenario.copies" \
+        bash "$repository_root/scripts/release/$script"
+}
+
+run_registry_script success wait-for-images.sh
+[[ "$(wc -l <"$temporary_directory/success.outputs")" -eq 3 ]] || fail "Expected all three image digests"
+grep -Fq "frontend-digest=$digest" "$temporary_directory/success.outputs"
+for scenario in failed cancelled; do
+    expect_failure "Main image publication did not succeed" run_registry_script "$scenario" wait-for-images.sh
+done
+expect_failure "Timed out waiting" run_registry_script timeout wait-for-images.sh
+for scenario in api-error missing-image invalid-digest; do
+    if run_registry_script "$scenario" wait-for-images.sh >/dev/null 2>&1; then
+        fail "Expected digest resolution to fail: $scenario"
+    fi
+done
+
+run_registry_script fresh copy-images-to-ecr.sh
+[[ "$(wc -l <"$temporary_directory/fresh.copies")" -eq 2 ]] || fail "Expected backend and migration copies"
+grep -Fq "backend-ref=example.ecr/fit-track-prod-backend-eu-central-1@$digest" "$temporary_directory/fresh.outputs"
+grep -Fq "migration-ref=" "$temporary_directory/fresh.outputs"
+run_registry_script retry copy-images-to-ecr.sh
+[[ ! -f "$temporary_directory/retry.copies" ]] || fail "Matching immutable tags must not be recopied"
+expect_failure "already points to different content" run_registry_script conflict copy-images-to-ecr.sh
+expect_failure "ECR digest mismatch" run_registry_script mismatch copy-images-to-ecr.sh
+for scenario in aws-error copy-error; do
+    if run_registry_script "$scenario" copy-images-to-ecr.sh >/dev/null 2>&1; then
+        fail "Expected ECR publication to fail: $scenario"
+    fi
+    [[ ! -s "$temporary_directory/$scenario.outputs" ]] || fail "Failed publication emitted a reference"
+done
+[[ ! -f "$temporary_directory/conflict.copies" ]] || fail "Conflicting tags must not be overwritten"
+
 echo "Release tool tests passed"
