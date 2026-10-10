@@ -1,6 +1,6 @@
 # Testing strategy
 
-FitTrack treats tests as evidence for backend, persistence, security, and delivery risks rather than as a single coverage number. Each layer owns a distinct failure class so a failing check identifies the responsible layer. The suite uses Vitest throughout, Supertest with migrated PostgreSQL for backend integration, Playwright for complete browser journeys, and final-image smoke tests for runtime artifacts.
+FitTrack treats tests as evidence for backend, persistence, security, and delivery risks rather than as a single coverage number. Each layer owns a distinct failure class so a failing check identifies the responsible layer. Application unit and integration suites use Vitest, with Supertest against migrated PostgreSQL for backend integration. Playwright covers complete browser journeys, and final-image smoke tests verify runtime artifacts.
 
 ## Risk-to-evidence map
 
@@ -16,7 +16,7 @@ FitTrack treats tests as evidence for backend, persistence, security, and delive
 | Static security flaws               | GitHub-managed CodeQL analysis for JavaScript and TypeScript data flows                                          |
 | Vulnerable dependency introduction  | Pull-request dependency review for high and critical runtime advisories                                          |
 | Artifact/runtime drift              | Final backend, migration, and Nginx images exercised together by the production-container smoke suite            |
-| Invalid release input               | Focused shell tests for version consistency and digest-only image promotion                                      |
+| Invalid release input               | CLI-boundary tests for version consistency and digest-only image promotion                                       |
 
 Tests cross the same interface used by production callers wherever practical. This keeps the test surface aligned with observable behavior and avoids coupling assertions to private implementation details.
 
@@ -71,6 +71,12 @@ Useful narrower commands are:
 | `npm run verify:frontend`    | Verify frontend checks, tests, and build                               |
 | `npm run test:e2e`           | Run isolated critical Chromium journeys                                |
 
+### Release and deployment script tests
+
+`npm run test:release-tools` uses Node’s built-in test runner for release and backend CD tests under `scripts/release/tests/` and `scripts/deploy/tests/`. The tests execute the Bash scripts against fake CLI commands. No additional test framework is required.
+
+The release-tools command also runs `scripts/deploy/tests/deploy-tools.test.mjs` against a stateful fake AWS CLI. It checks parameter preservation, capacity drift, no-op retries, stack update failures, migration launch/exit failures, and rejection of stable backend rollbacks. These tests use no AWS credentials or live database and do not establish production deployment success.
+
 ## Infrastructure validation
 
 ```bash
@@ -106,7 +112,7 @@ Never point integration tests at development or production data. Destructive tes
 
 Pull requests run a production container smoke job after fast verification succeeds. It builds the final backend, migration, and frontend targets for the runner platform and rejects Dockerfile, migration startup, health-check, static-serving, or proxy regressions before merge. The job runs for every pull request, including documentation-only changes, so the protected-branch checks are always reported and cannot remain pending because a workflow was skipped by a path filter.
 
-After a merge to `main`, the image-publishing workflow repeats the runtime checks against the exact Linux AMD64 content digests returned by the GHCR build before promoting them to `main`. A release-tag workflow independently builds the tagged revision and runs the same suite before assigning the exact version and `latest` tags to its build digests. A rerun may replace a Git-addressed SHA tag, but neither workflow uses that movable tag as its promotion input. The pull-request gate checks proposed source; the registry runs prove that the published deployment artifacts work. Production smoke complements rather than replaces browser E2E and PostgreSQL integration tests.
+After a merge to `main`, the image-publishing workflow repeats the runtime checks against the exact Linux AMD64 content digests returned by the GHCR build before promoting them to `main`. The release-tag workflow waits for successful main publication of the exact tagged commit, resolves its SHA-tag digests, and runs the same suite without rebuilding. It verifies backend and migration copies in ECR before promoting those source digests to GHCR version and `latest` tags. A rerun may replace a Git-addressed SHA tag, but neither workflow uses that movable tag as its promotion input. The pull-request gate checks proposed source; the registry runs prove that the published deployment artifacts work. Production smoke complements rather than replaces browser E2E and PostgreSQL integration tests.
 
 The temporary stack starts PostgreSQL on `tmpfs`, applies committed migrations using the final migration image, then starts the final backend and Nginx images. It verifies the Nginx health endpoint, backend liveness and readiness directly, the same requests through Nginx `/api`, the SPA entry document and external theme initializer, frontend security headers, static revalidation policy, and API `no-store` behavior.
 
@@ -228,5 +234,3 @@ The protected `main` branch requires these exact GitHub Actions job names as sta
 The ruleset separately enforces the CodeQL result through its dedicated code-scanning rule.
 
 The complete merge policy, correction flow, and repository ruleset belong in the [release and container process](release-process.md#protected-main-workflow).
-
-The release-tools command also runs `scripts/deploy/tests/deploy-tools.test.mjs` against a stateful fake AWS CLI. It checks parameter preservation, capacity drift, no-op retries, stack update failures, migration launch/exit failures, and rejection of stable backend rollbacks. These tests use no AWS credentials or live database and do not establish production deployment success.

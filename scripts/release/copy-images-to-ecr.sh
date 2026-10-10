@@ -12,9 +12,13 @@ for component in backend migration; do
     fi
     destination="$ECR_REGISTRY/$repository:$VERSION"
     source="$REGISTRY/$owner/fit-track-$component@$digest"
-    existing="$(aws ecr describe-images --repository-name "$repository" \
-        --query "imageDetails[?contains(imageTags || \`[]\`, \`\"$VERSION\"\`)].imageDigest | [0]" \
-        --output text --no-cli-auto-prompt --no-cli-pager)"
+    # List tags so a missing release is not confused with an AWS API error.
+    images="$(aws ecr describe-images --repository-name "$repository" \
+        --output json --no-cli-auto-prompt --no-cli-pager)"
+    existing="$(echo "$images" | jq -r --arg tag "$VERSION" '
+        [.imageDetails[] | select((.imageTags // []) | index($tag))]
+        | first | .imageDigest // "None"
+    ')"
     if [[ "$existing" == "None" ]]; then
         docker buildx imagetools create --tag "$destination" "$source"
     elif [[ "$existing" != "$digest" ]]; then
