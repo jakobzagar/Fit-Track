@@ -28,7 +28,7 @@ inputs:
 
 outputs:
   digest:
-    description: Published Linux AMD64 image digest
+    description: Published OCI image index digest for the Linux AMD64 image and attestations
     value: ${{ steps.build.outputs.digest }}
 
 runs:
@@ -51,6 +51,7 @@ runs:
         file: ${{ inputs.dockerfile }}
         target: ${{ inputs.target }}
         platforms: linux/amd64
+        pull: true
         push: true
         sbom: true
         provenance: mode=max
