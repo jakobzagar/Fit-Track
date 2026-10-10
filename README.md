@@ -141,7 +141,7 @@ Pull requests additionally build and exercise the final backend, migration, and 
 - Backend tasks and RDS use Single-AZ placement; the two-AZ ALB does not provide workload or database failover.
 - Viewer HTTPS terminates at CloudFront; the API origin path to ALB and backend uses HTTP.
 - Rate-limit counters are process-local. Service Auto Scaling, WAF, metrics alarms, and distributed tracing are not configured.
-- AWS deployments and frontend uploads are manual; GitHub Actions publishes GHCR artifacts without performing AWS rollout.
+- GitHub Actions publishes GHCR/ECR release artifacts and implements migration-first backend CD through CloudFormation. Backend CD requires production verification; infrastructure provisioning and frontend S3 publication remain manual.
 - RDS backups and seven-day CloudWatch log retention are configured; backup restore procedures have not been exercised.
 
 Architecture, runtime verification, and remaining configuration drift are documented in [AWS deployment](docs/aws-deployment.md).

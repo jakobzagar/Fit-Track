@@ -94,7 +94,7 @@ Successful releases additionally publish:
 
 Workflows smoke-test exact source image digests before applying moving tags. Deployments and migrations should use digests; `main` and `latest` are convenience tags that move.
 
-This process publishes artifacts only. The hosted architecture and manual AWS rollout are documented in the [AWS deployment](aws-deployment.md); container validation is documented in the [testing guide](testing.md).
+After image publication, the release workflow runs a separate production backend deployment job. It updates the migration digest through CloudFormation, requires a successful migration task, then updates the backend digest and verifies the requested ECS revision. General infrastructure changes and frontend S3 publication remain manual. IAM setup, parameter preservation, retry behavior, and deployment verification limits belong in [AWS deployment](aws-deployment.md#release-backend-cd); container validation belongs in the [testing guide](testing.md).
 
 ## Migration ordering
 
