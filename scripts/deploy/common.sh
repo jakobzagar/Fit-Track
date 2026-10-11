@@ -5,6 +5,7 @@ set -euo pipefail
 # Stack names can be overridden when running these scripts locally.
 SERVICE_STACK="${SERVICE_STACK:-fit-track-prod-service}"
 COMPUTE_STACK="${COMPUTE_STACK:-fit-track-prod-compute}"
+FRONTEND_STACK="${FRONTEND_STACK:-fit-track-prod-frontend}"
 
 fail() {
     echo "$1" >&2
