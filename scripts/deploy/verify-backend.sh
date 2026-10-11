@@ -5,7 +5,7 @@ set -euo pipefail
 source "$(dirname "$0")/common.sh"
 
 # Resolve the backend revision that CloudFormation should have deployed.
-service_stack="$(read_stack "$SERVICE_STACK")"
+service_stack="$(aws_cli cloudformation describe-stacks --stack-name "$SERVICE_STACK")"
 current_digest="$(get_stack_parameter "$service_stack" BackendImageDigest)"
 if [ "$current_digest" != "$BACKEND_DIGEST" ]; then
     fail "Backend stack digest does not match this release"
@@ -13,7 +13,7 @@ fi
 
 expected_task_definition="$(get_stack_output "$service_stack" BackendTaskDefinitionArn)"
 service_arn="$(get_stack_output "$service_stack" BackendServiceArn)"
-compute_stack="$(read_stack "$COMPUTE_STACK")"
+compute_stack="$(aws_cli cloudformation describe-stacks --stack-name "$COMPUTE_STACK")"
 cluster_arn="$(get_stack_output "$compute_stack" EcsClusterArn)"
 
 # AWS waits for a single deployment with the desired number of running tasks.

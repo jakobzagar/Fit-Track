@@ -95,28 +95,32 @@ function fixture(t, scenario = "success") {
         tags: () => JSON.parse(read("tags.json") || "{}"),
         calls: () => read("calls.jsonl").trim().split("\n").filter(Boolean).map(JSON.parse),
         run: (script, ...args) =>
-            spawnSync("bash", [join(repository, "scripts/release", script), ...args], {
-                cwd: root,
-                encoding: "utf8",
-                env: {
-                    ...process.env,
-                    PATH: `${bin}:${process.env.PATH}`,
-                    FIXTURE: root,
-                    SCENARIO: scenario,
-                    RELEASE_ROOT: root,
-                    GITHUB_REPOSITORY: "example/project",
-                    GITHUB_SHA: "release-commit",
-                    GITHUB_REPOSITORY_OWNER: "Example",
-                    REGISTRY: "ghcr.io",
-                    AWS_REGION: "eu-central-1",
-                    ECR_REGISTRY: "example.ecr",
-                    VERSION: "1.2.3",
-                    BACKEND_DIGEST: backendDigest,
-                    MIGRATION_DIGEST: migrationDigest,
-                    GITHUB_OUTPUT: join(root, "outputs"),
-                    GITHUB_STEP_SUMMARY: join(root, "summary"),
+            spawnSync(
+                script.endsWith(".mjs") ? "node" : "bash",
+                [join(repository, "scripts/release", script), ...args],
+                {
+                    cwd: root,
+                    encoding: "utf8",
+                    env: {
+                        ...process.env,
+                        PATH: `${bin}:${process.env.PATH}`,
+                        FIXTURE: root,
+                        SCENARIO: scenario,
+                        RELEASE_ROOT: root,
+                        GITHUB_REPOSITORY: "example/project",
+                        GITHUB_SHA: "release-commit",
+                        GITHUB_REPOSITORY_OWNER: "Example",
+                        REGISTRY: "ghcr.io",
+                        AWS_REGION: "eu-central-1",
+                        ECR_REGISTRY: "example.ecr",
+                        VERSION: "1.2.3",
+                        BACKEND_DIGEST: backendDigest,
+                        MIGRATION_DIGEST: migrationDigest,
+                        GITHUB_OUTPUT: join(root, "outputs"),
+                        GITHUB_STEP_SUMMARY: join(root, "summary"),
+                    },
                 },
-            }),
+            ),
     };
 }
 
@@ -129,7 +133,7 @@ const copies = (f) =>
     f.calls().filter((call) => call.tool === "docker" && call.args[2] === "create");
 
 test("validates coordinated release versions", (t) => {
-    const result = fixture(t).run("validate.sh", "v1.2.3");
+    const result = fixture(t).run("validate.mjs", "v1.2.3");
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stdout, "version=1.2.3\n");
 });
@@ -137,7 +141,7 @@ test("validates coordinated release versions", (t) => {
 for (const tag of ["1.2.3", "fit-track-v1.2.3"]) {
     test(`rejects invalid release tag ${tag}`, (t) => {
         failed(
-            fixture(t).run("validate.sh", tag),
+            fixture(t).run("validate.mjs", tag),
             "Release tag must use the vMAJOR.MINOR.PATCH format",
         );
     });
@@ -159,7 +163,7 @@ for (const [name, value, message] of [
     test(`rejects version mismatch in ${name}`, (t) => {
         const f = fixture(t);
         f.writeJson(name, value);
-        failed(f.run("validate.sh", "v1.2.3"), message);
+        failed(f.run("validate.mjs", "v1.2.3"), message);
     });
 }
 
@@ -247,8 +251,8 @@ test("copies backend and migration to ECR and records exact references", (t) => 
     assert.equal(result.status, 0, result.stderr);
     assert.equal(copies(f).length, 2);
     assert.equal(
-        f.read("outputs"),
-        `backend-ref=example.ecr/fit-track-prod-backend-eu-central-1@${backendDigest}\nmigration-ref=example.ecr/fit-track-prod-migration-eu-central-1@${migrationDigest}\n`,
+        f.read("summary"),
+        `- backend: \`example.ecr/fit-track-prod-backend-eu-central-1@${backendDigest}\`\n- migration: \`example.ecr/fit-track-prod-migration-eu-central-1@${migrationDigest}\`\n`,
     );
 });
 
@@ -269,7 +273,7 @@ for (const scenario of ["conflict", "mismatch", "aws-error", "copy-error"]) {
                   ? "ECR digest mismatch"
                   : undefined;
         failed(f.run("copy-images-to-ecr.sh"), message);
-        assert.equal(f.read("outputs"), "");
+        assert.equal(f.read("summary"), "");
         if (scenario === "conflict") assert.equal(copies(f).length, 0);
     });
 }
