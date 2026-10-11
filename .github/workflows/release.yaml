@@ -144,3 +144,39 @@ jobs:
 
       - name: Verify backend deployment
         run: bash scripts/deploy/verify-backend.sh
+
+  deploy-frontend:
+    name: Deploy production frontend
+    needs: deploy-backend
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      VITE_API_BASE_PATH: /api
+
+    steps:
+      - name: Checkout release
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node workspace
+        uses: ./.github/actions/setup-node-workspace
+
+      - name: Build frontend
+        run: npm run build:frontend
+
+      - name: Assume AWS deployment role
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: "126571942046"
+          role-session-name: fit-track-frontend-${{ github.run_id }}
+
+      - name: Publish frontend and invalidate CloudFront
+        run: bash scripts/deploy/deploy-frontend.sh

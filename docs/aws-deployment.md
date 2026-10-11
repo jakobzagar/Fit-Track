@@ -421,7 +421,7 @@ Review scan findings for the pushed images before deployment. Successful image p
 
 ## Deployment procedure
 
-Initial infrastructure provisioning and frontend publication use the AWS CLI and Console. The release workflow publishes images and then runs backend CD: two image-only CloudFormation service-stack updates, a dedicated migration task, and verification of the requested backend revision. It does not provision infrastructure stacks, upload frontend files, or perform vulnerability scan gating. Backend CD has local mocked regression coverage; a successful production workflow is still required to verify its IAM permissions and AWS runtime behavior. Use an authenticated local AWS profile for manual operations and specify `eu-central-1` explicitly; credentials never belong in the repository.
+Initial infrastructure provisioning and template changes use the AWS CLI and Console. The release workflow publishes images, runs migration-first backend CD through two image-only service-stack updates, and builds the frontend from the checked-out release revision and publishes it to S3 after backend verification. It does not provision infrastructure stacks or perform vulnerability scan gating. Backend and frontend CD have local mocked regression coverage; successful production workflows are still required to verify IAM permissions and AWS runtime behavior. Use an authenticated local AWS profile for manual operations and specify `eu-central-1` explicitly; credentials never belong in the repository.
 
 ### GitHub Actions AWS authentication
 
@@ -433,7 +433,7 @@ OIDC and ECR login failures stop release publication to ECR. No stored AWS acces
 
 ### Release backend CD
 
-The `deploy-backend` job in `.github/workflows/release.yaml` depends on successful `release-images` publication and receives its backend and migration OCI index digests through job outputs. It uses `environment: production`; configured environment approval occurs before the job starts. One workflow-level concurrency group serializes image publication and backend deployment together; running releases are not cancelled by a newer release. GitHub concurrency does not guarantee FIFO processing of pending releases.
+The `deploy-backend` job in `.github/workflows/release.yaml` depends on successful `release-images` publication and receives its backend and migration OCI index digests through job outputs. It uses `environment: production`; configured environment approval occurs before the job starts. One workflow-level concurrency group serializes image publication, backend deployment, and frontend publication together; running releases are not cancelled by a newer release. GitHub concurrency does not guarantee FIFO processing of pending releases.
 
 Configure these additional variables in the `production` environment:
 
@@ -456,11 +456,59 @@ AWS validates and executes the change set after environment approval; the job do
 
 If the stable stack already stores the requested digest, the update is skipped before a change set is created. Otherwise, AWS CLI waiters handle preparation and execution failures. Retries can therefore resume image updates; Prisma `migrate deploy` handles already applied migrations. A migration failure prevents the backend update, but completed schema changes are not automatically rolled back. Keep migrations compatible with the previous backend revision. The backend circuit breaker can roll back the application; it cannot undo database changes.
 
-The job has a 55-minute timeout within the default one-hour AWS session. A cancelled/timed-out job does not undo an accepted CloudFormation operation or stop a running migration task. Inspect the stack and migration task before retrying if their terminal status was not observed. Verification covers ECS deployment completion and configured task/ALB health checks; it does not perform public CloudFront health requests, authenticated browser journeys, or a frontend rollout. Frontend S3 publication and CloudFront invalidation remain manual.
+The job has a 55-minute timeout within the default one-hour AWS session. A cancelled/timed-out job does not undo an accepted CloudFormation operation or stop a running migration task. Inspect the stack and migration task before retrying if their terminal status was not observed. Verification covers ECS deployment completion and configured task/ALB health checks; it does not perform public CloudFront health requests, authenticated browser journeys, or a frontend rollout. Frontend publication runs in the following job, described below.
 
-### Planned infrastructure and frontend CD
+### Release frontend CD
 
-Initial stack provisioning and template changes still require reviewed change sets outside the release image rollout. Future CD can add explicit human review between infrastructure change-set preparation and execution, frontend publication from the matching release revision to S3, CloudFront invalidation, and scan gating. Database bootstrap, runtime secret values, and infrastructure lifecycle operations remain separate from application releases.
+The `deploy-frontend` job depends on successful `deploy-backend`. It uses the same `production` environment and `AWS_DEPLOY_ROLE_ARN`; it does not use the CloudFormation execution role or authenticate to GHCR.
+
+Each job has a fresh runner. After checking out the release revision, the existing Node workspace action installs Node.js and runs `npm ci` from the committed lockfile. `npm run build:frontend` builds shared contracts and creates `frontend/dist`, with `VITE_API_BASE_PATH=/api`. This is a separate static build of the release source; it is not extracted from the smoke-tested GHCR image.
+
+`deploy-frontend.sh` reads `FrontendBucketName` and `CfDistributionId` from `fit-track-prod-frontend`. It uploads the local `frontend/dist` without Docker, Nginx, or an image digest.
+
+The script uploads all files except `index.html`, then uploads the entry document last. `aws s3 sync` uploads new or changed files using its normal size/time comparison; `index.html` is copied explicitly after sync succeeds. No S3 delete operation is requested, so earlier hashed assets remain available to open browsers and rollback. CloudFront cache and response header policies remain authoritative; upload commands add no cache-control override. It creates one `/*` invalidation, covering SPA paths and cached errors, and waits for completion. See [S3 sync](https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html) and [CloudFront invalidation](https://docs.aws.amazon.com/cli/latest/reference/cloudfront/create-invalidation.html).
+
+Add an inline policy named `fit-track-prod-frontend-publish` to the existing GitHub deployment role:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ReadFrontendStack",
+            "Effect": "Allow",
+            "Action": "cloudformation:DescribeStacks",
+            "Resource": "arn:aws:cloudformation:eu-central-1:126571942046:stack/fit-track-prod-frontend/*"
+        },
+        {
+            "Sid": "ListFrontendObjects",
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::fit-track-prod-frontend-126571942046-eu-central-1"
+        },
+        {
+            "Sid": "UploadFrontendObjects",
+            "Effect": "Allow",
+            "Action": ["s3:PutObject", "s3:AbortMultipartUpload"],
+            "Resource": "arn:aws:s3:::fit-track-prod-frontend-126571942046-eu-central-1/*"
+        },
+        {
+            "Sid": "InvalidateFrontendCache",
+            "Effect": "Allow",
+            "Action": ["cloudfront:CreateInvalidation", "cloudfront:GetInvalidation"],
+            "Resource": "arn:aws:cloudfront::126571942046:distribution/E1Z2XZC6U9O5IJ"
+        }
+    ]
+}
+```
+
+The existing OIDC trust and environment variables are unchanged. This policy grants bucket listing, object uploads, and invalidations without bucket-policy changes, public access, object deletion, or runtime secret access. Repository changes do not install this Console-managed policy.
+
+Uploads are not transactional: failure can leave some new files present. The entry document is not replaced if dependency upload fails. A later invalidation failure leaves the new entry document uploaded; retry frontend publication to complete propagation. Backend rollout is not automatically undone by a frontend failure. Keep the current and previous frontend compatible with the deployed API. To restore a frontend revision, check out that revision, install its locked dependencies, rebuild with `VITE_API_BASE_PATH=/api`, and rerun publication; preserve its referenced assets. The 25-minute job timeout can end while an accepted invalidation continues. Invalidation completion does not prove authenticated browser behavior or clear browser caches; those checks remain separate.
+
+### Planned infrastructure CD
+
+Initial stack provisioning and template changes still require reviewed change sets outside the release image rollout. Future CD can add explicit human review between infrastructure change-set preparation and execution, and scan gating. Database bootstrap, runtime secret values, and infrastructure lifecycle operations remain separate from application releases.
 
 ### First deployment
 
@@ -507,7 +555,7 @@ Inspect response `failures`, capture the returned task ARN, wait for `STOPPED`, 
 
 ### Static frontend publication
 
-Build with a same-origin API configuration; do not bake localhost API addresses into the production frontend. Review untracked `frontend/.env` values before building. Publish hashed assets before the HTML that references them:
+Release CD builds the checked-out release revision as described above. For initial publication or a deliberate local upload, build with a same-origin API configuration; do not bake localhost API addresses into the production frontend. Review untracked `frontend/.env` values before building. Publish hashed assets before the HTML that references them:
 
 ```bash
 npm run build:frontend
@@ -522,7 +570,7 @@ aws s3 cp frontend/dist/index.html \
 
 aws cloudfront create-invalidation \
   --distribution-id E1Z2XZC6U9O5IJ \
-  --paths /index.html /theme-init.js '/brand/*' \
+  --paths '/*' \
   --no-cli-auto-prompt
 ```
 
@@ -592,7 +640,7 @@ Scaling the backend to zero pauses the API but leaves RDS, ALB, endpoint ENIs, s
 - API origin traffic uses HTTP. The CloudFront prefix list permits other distributions, with no distribution-specific origin authentication.
 - Process-local rate limiting, one task, and no Service Auto Scaling limit scaling guarantees.
 - Backup configuration is present, but restore execution and recovery objectives are not validated. One-day retention is a cost-oriented setting.
-- Backend release CD is implemented with mocked local validation; successful production execution is not yet recorded. Infrastructure provisioning, template changes, and frontend publication remain manual. Environment approval is separate from reviewing a prepared change set; migrations have no automatic rollback.
+- Backend and frontend release CD are implemented with mocked local validation; successful production execution is not yet recorded. Infrastructure provisioning and template changes remain manual. Environment approval is separate from reviewing a prepared change set; migrations have no automatic rollback.
 - Runtime secret rotation, WAF, metrics alarms, and tracing are not implemented. Temporary administration rules and desired-count drift require reconciliation.
 - Names use Region substitution, but AZ IDs, the CloudFront prefix list, CA bundle, and runtime secret ARNs bind the templates to this deployment. Review them before using another account or Region.
 

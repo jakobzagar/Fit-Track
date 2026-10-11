@@ -18,6 +18,8 @@ flowchart LR
     ECR --> VersionTags[Promote GHCR version and latest tags]
     VersionTags --> Migration[Run production migration]
     Migration --> Backend[Deploy and verify backend]
+    Backend --> Frontend[Build release frontend and sync to S3]
+    Frontend --> CDN[Invalidate CloudFront and wait]
 ```
 
 Every pull request runs the complete quality gate. A push to `main` has two independent effects:
@@ -98,7 +100,7 @@ Successful releases additionally publish:
 
 Workflows smoke-test exact source image digests before applying moving tags. Deployments and migrations should use digests; `main` and `latest` are convenience tags that move.
 
-After image publication, the release workflow runs a separate production backend deployment job. It updates the migration digest through CloudFormation, requires a successful migration task, then updates the backend digest and verifies the requested ECS revision. General infrastructure changes and frontend S3 publication remain manual. IAM setup, parameter preservation, retry behavior, and deployment verification limits belong in [AWS deployment](aws-deployment.md#release-backend-cd); container validation belongs in the [testing guide](testing.md).
+After image publication, the release workflow runs a separate production backend deployment job. It updates the migration digest through CloudFormation, requires a successful migration task, then updates the backend digest and verifies the requested ECS revision. After backend verification, a frontend job installs locked dependencies and builds `frontend/dist` from the same release revision, uploads dependencies before `index.html`, and waits for CloudFront invalidation. General infrastructure changes remain manual. IAM setup, parameter preservation, retry behavior, and deployment verification limits belong in [AWS deployment](aws-deployment.md#release-backend-cd); container validation belongs in the [testing guide](testing.md).
 
 ## Migration ordering
 

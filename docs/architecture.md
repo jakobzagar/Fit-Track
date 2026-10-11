@@ -331,7 +331,7 @@ The frontend requests relative `/api` paths. Vite forwards them to `API_PROXY_TA
 The hosted Fargate architecture and undeployed EC2 reference variant are distinguished in [AWS deployment](aws-deployment.md).
 
 - Nine Fargate CloudFormation stacks are deployed. Public frontend serving, API readiness, task log delivery, and migration completion are verified; this does not establish high availability or disaster recovery.
-- GitHub Actions builds GHCR images, copies release images to ECR, and implements migration-first backend rollout through CloudFormation. The new backend CD path requires production verification; infrastructure changes and S3 frontend publication remain manual.
+- GitHub Actions builds GHCR images, copies release images to ECR, and implements migration-first backend rollout through CloudFormation. After backend verification, frontend CD builds the release revision with locked dependencies and publishes its static files and invalidates CloudFront. Both CD paths require production verification; infrastructure changes remain manual.
 - Production containers are not started together by the normal fast verification command.
 - Metrics alarms, distributed tracing, and backup restore verification remain pending.
 - CloudFront-to-ALB HTTP is unencrypted; AWS deployment explains this boundary.
