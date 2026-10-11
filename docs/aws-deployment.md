@@ -132,7 +132,7 @@ Fargate does not require customer-managed ECS agent endpoints. ECS Exec is disab
 
 Each SG declares allow-all outbound IPv4 traffic. Private route tables still prevent arbitrary internet egress. Inbound rules are standalone CloudFormation resources; consumer stacks own cross-stack rules to keep imports one-way. Backend and migration tasks share the task SG, but use separate database users and execution roles.
 
-Temporary database administration adds TCP 443 to the endpoint SG and TCP 5432 to the RDS SG from a dedicated EC2 SG. The administrative instance has been terminated; additional rules referencing `sg-086e8423d7e043154` remain outside the templates and require cleanup. They must not replace the task SG rules.
+Temporary database administration adds TCP 443 to the endpoint SG and TCP 5432 to the RDS SG from a dedicated EC2 SG. The temporary administrative instance has been terminated. The endpoint and RDS security groups now allow only the task SG; no additional administrative ingress rules remain. Preserve those task rules during any future bootstrap session.
 
 The CloudFront prefix list covers all CloudFront distributions. It restricts network sources but does not authenticate this distribution. The ALB has no distribution-specific origin header check. This is an explicit origin-access limitation.
 
@@ -419,9 +419,57 @@ aws ecr get-registry-scanning-configuration \
 
 Review scan findings for the pushed images before deployment. Successful image publication or configured scanning does not establish that an image has no vulnerabilities. Changing regional rules must account for other repositories; deleting the project stack does not remove this configuration.
 
+## Manually managed AWS resources
+
+The GitHub identity provider, release/deployment IAM roles, and application runtime secrets were created manually in AWS. They are outside the nine CloudFormation stacks and are not adopted by those stacks. The service stack owns the backend and migration task execution roles; RDS owns its managed administrator secret. Manual resources require separate maintenance and cleanup.
+
+### GitHub OIDC provider
+
+| Setting             | Configured value                                                              |
+| ------------------- | ----------------------------------------------------------------------------- |
+| Provider ARN        | `arn:aws:iam::126571942046:oidc-provider/token.actions.githubusercontent.com` |
+| Provider URL        | `token.actions.githubusercontent.com`                                         |
+| Configured audience | `sts.amazon.com`                                                              |
+| Required audience   | `sts.amazonaws.com`                                                           |
+| Tags                | `Project=fit-track`, `Component=ci-cd`, `Name=fit-track-githuv-OIDC`          |
+
+Both GitHub roles trust this provider with `sts:AssumeRoleWithWebIdentity`, audience `sts.amazonaws.com`, and subject `repo:jakobzagar/Fit-Track:environment:production`. The provider's configured audience does not match that trust or the credentials action. Correct the provider audience before release execution. The Name tag also contains a spelling error; use `fit-track-github-oidc` for consistent metadata. Provider tags do not affect authentication.
+
+### Release and deployment roles
+
+All three manually created roles have a maximum session duration of 3600 seconds and tags `Project=fit-track`, `Environment=prod`, `Component=ci-cd`, and `Name=<role-name>`. They use inline policies and have no attached managed policies.
+
+| Role name                    | Trusted principal                   | Inline policy name                 | Responsibility                                                                                              |
+| ---------------------------- | ----------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `fit-track-gha-ecr-publish`  | GitHub OIDC, production environment | `fit-track-gha-ecr-publishPolicy`  | ECR authentication and image publication/read access to the backend and migration repositories.             |
+| `fit-track-gha-deploy`       | GitHub OIDC, production environment | `fit-track-gha-deployPolicy`       | Service change sets, stack reads, migration RunTask, task/service monitoring, and restricted PassRole.      |
+| `fit-track-prod-service-cfn` | `cloudformation.amazonaws.com`      | `fit-track-prod-service-cfnPolicy` | Task definition registration, service updates, ECS tags, and passing/reading existing task execution roles. |
+
+Role ARNs use `arn:aws:iam::126571942046:role/<role-name>`. The deploy role's existing `cloudformation:RoleArn` condition and CloudFormation `iam:PassRole` resource currently name `fit-track-prod-service-cfn-role`, which does not exist. Both must reference `arn:aws:iam::126571942046:role/fit-track-prod-service-cfn`. The current deploy policy also lacks frontend stack reads, S3 upload, and CloudFront invalidation permissions; add the [frontend publication policy](#release-frontend-cd) before enabling that job. Reading policies verifies their configuration, not successful execution or complete runtime authorization.
+
+GitHub environment variables must match the names consumed by the workflow:
+
+| Existing production variable | Required workflow variable | Value                                                       |
+| ---------------------------- | -------------------------- | ----------------------------------------------------------- |
+| `AWS_ECR_PUBLISH_ROLE_ARN`   | `AWS_ECR_PUBLISH_ROLE_ARN` | `arn:aws:iam::126571942046:role/fit-track-gha-ecr-publish`  |
+| `AWS_GHA_DEPLOY_ARN`         | `AWS_DEPLOY_ROLE_ARN`      | `arn:aws:iam::126571942046:role/fit-track-gha-deploy`       |
+| `AWS_SERVICE_CFN_ARN`        | `AWS_CFN_SERVICE_ROLE_ARN` | `arn:aws:iam::126571942046:role/fit-track-prod-service-cfn` |
+| `AWS_REGION`                 | `AWS_REGION`               | `eu-central-1`                                              |
+
+Rename the two mismatched variables or add the required names before running deployment. These values are resource metadata, not credentials.
+
+### Application runtime secrets
+
+| Secret name                | Full ARN                                                                                  | JSON keys consumed by ECS    |
+| -------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------- |
+| `fit-track/prod/backend`   | `arn:aws:secretsmanager:eu-central-1:126571942046:secret:fit-track/prod/backend-Gx6WEn`   | `DATABASE_URL`, `JWT_SECRET` |
+| `fit-track/prod/migration` | `arn:aws:secretsmanager:eu-central-1:126571942046:secret:fit-track/prod/migration-PBCTqX` | `DATABASE_URL`               |
+
+Both secrets have tags `Project=fit-track`, `Environment=prod`, `Component=service`, and `Name=<secret-name>`. The backend description is “FitTrack production backend credentials: application database connection URL and JWT signing secret.” The migration description is “FitTrack production migration credentials: database connection URL for Prisma schema migrations.” Automatic rotation is not enabled. The service template references these externally managed ARNs; it neither creates their values nor changes PostgreSQL passwords. Secret values were not read for this inventory. Credential provisioning and TLS formats belong in [database bootstrap](#postgresql-bootstrap-and-runtime-credentials).
+
 ## Deployment procedure
 
-Initial infrastructure provisioning and template changes use the AWS CLI and Console. The release workflow publishes images, runs migration-first backend CD through two image-only service-stack updates, and builds the frontend from the checked-out release revision and publishes it to S3 after backend verification. It does not provision infrastructure stacks or perform vulnerability scan gating. Backend and frontend CD have local mocked regression coverage; successful production workflows are still required to verify IAM permissions and AWS runtime behavior. Use an authenticated local AWS profile for manual operations and specify `eu-central-1` explicitly; credentials never belong in the repository.
+Initial infrastructure provisioning and template changes use the AWS CLI and Console. The release workflow publishes images, runs migration-first backend CD through two image-only service-stack updates, and builds the frontend from the checked-out release revision and publishes it to S3 after backend verification. It does not provision infrastructure stacks or perform vulnerability scan gating. Backend and frontend CD have local mocked regression coverage. The verified production release run completed image publication only; it did not contain the backend or frontend deployment jobs added on this branch. Successful execution of those jobs is still required to verify deployment IAM permissions and AWS runtime behavior. Use an authenticated local AWS profile for manual operations and specify `eu-central-1` explicitly; credentials never belong in the repository.
 
 ### GitHub Actions AWS authentication
 
@@ -437,10 +485,10 @@ The `deploy-backend` job in `.github/workflows/release.yaml` depends on successf
 
 Configure these additional variables in the `production` environment:
 
-| Variable                   | Value                                                            |
-| -------------------------- | ---------------------------------------------------------------- |
-| `AWS_DEPLOY_ROLE_ARN`      | `arn:aws:iam::126571942046:role/fit-track-gha-deploy`            |
-| `AWS_CFN_SERVICE_ROLE_ARN` | `arn:aws:iam::126571942046:role/fit-track-prod-service-cfn-role` |
+| Variable                   | Value                                                       |
+| -------------------------- | ----------------------------------------------------------- |
+| `AWS_DEPLOY_ROLE_ARN`      | `arn:aws:iam::126571942046:role/fit-track-gha-deploy`       |
+| `AWS_CFN_SERVICE_ROLE_ARN` | `arn:aws:iam::126571942046:role/fit-track-prod-service-cfn` |
 
 The GitHub deployment role prepares, describes, executes, and deletes change sets for `fit-track-prod-service`, reads the service/compute stack outputs, runs the migration task in the production cluster, and monitors tasks and the backend service. Its `iam:PassRole` permissions cover only the CloudFormation execution role and migration task execution role, restricted to their receiving AWS services. The CloudFormation execution role trusts `cloudformation.amazonaws.com` and registers application task definitions, passes their existing execution roles to ECS, updates the existing backend service, manages ECS tags, and deregisters replaced definitions. These roles do not retrieve runtime secret values. Their Console-managed policies must be configured before the job runs; the workflow does not create IAM roles.
 
@@ -558,7 +606,7 @@ Inspect response `failures`, capture the returned task ARN, wait for `STOPPED`, 
 Release CD builds the checked-out release revision as described above. For initial publication or a deliberate local upload, build with a same-origin API configuration; do not bake localhost API addresses into the production frontend. Review untracked `frontend/.env` values before building. Publish hashed assets before the HTML that references them:
 
 ```bash
-npm run build:frontend
+VITE_API_BASE_PATH=/api npm run build:frontend
 
 aws s3 sync frontend/dist/ \
   s3://fit-track-prod-frontend-126571942046-eu-central-1/ \
@@ -588,17 +636,17 @@ Pino writes structured JSON to stdout/stderr in production. Request logs carry a
 
 The ECS `awslogs` driver sends backend output to `/fit-track/prod/backend` and migration output to `/fit-track/prod/migration`, with separate stream prefixes and seven-day retention. Log groups use AWS-managed encryption rather than a customer-managed KMS key. Retain policies preserve the groups during stack deletion; they do not override event expiry. Container Insights, application alarms, distributed tracing, ALB access logs, and CloudFront access logs are not configured.
 
-| Verification surface | Observed result                                                                             | Scope                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| CloudFormation       | All nine stacks completed creation or update                                                | Confirms stack operations, not every application behavior    |
-| Private endpoints    | Required endpoints available with expected subnet and DNS configuration                     | No arbitrary internet egress tested or provided              |
-| ECS backend          | One running task; deployment completed; ALB target healthy                                  | Recorded capacity drift must be reconciled before release CD |
-| Migration            | Essential container completed with exit code 0                                              | Confirms migration task completion                           |
-| Public frontend      | CloudFront HTTPS response 200 with frontend security and cache headers                      | Does not independently prove every browser journey           |
-| Public readiness     | `/api/health/ready` returned 200 and `status=ready`                                         | Confirms API routing and database connectivity               |
-| RDS                  | Private encrypted Single-AZ instance available; backups enabled and restorable time present | Restore and TLS negative tests not exercised                 |
-| Logs                 | Both task log groups configured with seven-day retention                                    | Delivery observed; no alerting pipeline                      |
-| Local validation     | Formatting and cfn-lint cover both template variants                                        | Does not prove reference variant deployability               |
+| Verification surface | Observed result                                                                             | Scope                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| CloudFormation       | All nine stacks completed creation or update                                                | Confirms stack operations, not every application behavior |
+| Private endpoints    | Required endpoints available with expected subnet and DNS configuration                     | No arbitrary internet egress tested or provided           |
+| ECS backend          | One running task; deployment completed; ALB target healthy                                  | Stored and live desired counts both equal one             |
+| Migration            | Essential container completed with exit code 0                                              | Confirms migration task completion                        |
+| Public frontend      | CloudFront HTTPS response 200 with frontend security and cache headers                      | Does not independently prove every browser journey        |
+| Public readiness     | `/api/health/ready` returned 200 and `status=ready`                                         | Confirms API routing and database connectivity            |
+| RDS                  | Private encrypted Single-AZ instance available; backups enabled and restorable time present | Restore and TLS negative tests not exercised              |
+| Logs                 | Both task log groups configured with seven-day retention                                    | Delivery observed; no alerting pipeline                   |
+| Local validation     | Formatting and cfn-lint cover both template variants                                        | Does not prove reference variant deployability            |
 
 Useful read-only checks:
 
@@ -641,7 +689,7 @@ Scaling the backend to zero pauses the API but leaves RDS, ALB, endpoint ENIs, s
 - Process-local rate limiting, one task, and no Service Auto Scaling limit scaling guarantees.
 - Backup configuration is present, but restore execution and recovery objectives are not validated. One-day retention is a cost-oriented setting.
 - Backend and frontend release CD are implemented with mocked local validation; successful production execution is not yet recorded. Infrastructure provisioning and template changes remain manual. Environment approval is separate from reviewing a prepared change set; migrations have no automatic rollback.
-- Runtime secret rotation, WAF, metrics alarms, and tracing are not implemented. Temporary administration rules and desired-count drift require reconciliation.
+- Runtime secret rotation, WAF, metrics alarms, and tracing are not implemented. Temporary administration rules have been removed, and stored and live desired counts are reconciled.
 - Names use Region substitution, but AZ IDs, the CloudFront prefix list, CA bundle, and runtime secret ARNs bind the templates to this deployment. Review them before using another account or Region.
 
 These limits define the hosted portfolio deployment. The EC2 / Multi-AZ templates demonstrate a different availability and capacity model without claiming that those resources or failover procedures have been exercised on AWS.
