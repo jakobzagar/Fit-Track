@@ -37,17 +37,17 @@ Fast checks protect developer feedback time. PostgreSQL tests own relational and
 
 ## Test layers
 
-| Layer               | Location                                  | Primary responsibility                                                                             |
-| ------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Shared contract     | Domain `tests/` directories               | Validation matrices, normalization, strict request and response shapes                             |
-| Backend unit        | Owning area `tests/` directories          | Environment parsing, logging, middleware, cookies, proxy trust, retries, shutdown                  |
-| Backend integration | Module `tests/` directories               | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency                              |
-| Frontend            | Feature or component `tests/` directories | User interaction, error feedback, routing, accessibility, state transitions                        |
-| Browser E2E         | `frontend/e2e/`                           | Critical cross-application journeys in Chromium against isolated PostgreSQL                        |
-| Code scanning       | GitHub CodeQL default setup               | JavaScript and TypeScript security queries on repository changes                                   |
-| Dependency review   | `Test` workflow pull-request job          | Added and updated dependencies compared with the pull-request base                                 |
-| Release tools       | `scripts/release/tests/`                  | Version validation, image publication/promotion, and mocked backend/frontend deployment boundaries |
-| Production smoke    | `compose.production-smoke.yaml`           | Final images, migrations, health checks, Nginx static serving and API proxy                        |
+| Layer               | Location                                          | Primary responsibility                                                                             |
+| ------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Shared contract     | Domain `tests/` directories                       | Validation matrices, normalization, strict request and response shapes                             |
+| Backend unit        | Owning area `tests/` directories                  | Environment parsing, logging, middleware, cookies, proxy trust, retries, shutdown                  |
+| Backend integration | Module `tests/` directories                       | HTTP, PostgreSQL, ownership, nested resources, lifecycle, concurrency                              |
+| Frontend            | Feature or component `tests/` directories         | User interaction, error feedback, routing, accessibility, state transitions                        |
+| Browser E2E         | `frontend/e2e/`                                   | Critical cross-application journeys in Chromium against isolated PostgreSQL                        |
+| Code scanning       | GitHub CodeQL default setup                       | JavaScript and TypeScript security queries on repository changes                                   |
+| Dependency review   | `Test` workflow pull-request job                  | Added and updated dependencies compared with the pull-request base                                 |
+| Release tools       | `scripts/release/tests/`, `scripts/deploy/tests/` | Version validation, image publication/promotion, and mocked backend/frontend deployment boundaries |
+| Production smoke    | `compose.production-smoke.yaml`                   | Final images, migrations, health checks, Nginx static serving and API proxy                        |
 
 ## Fast verification
 

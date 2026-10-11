@@ -107,7 +107,7 @@ erDiagram
         text id PK
         text userId FK
         text name
-        text normalizedName UK
+        text normalizedName
         text muscleGroup
         text equipment "NULL"
         boolean isArchived

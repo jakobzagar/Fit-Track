@@ -144,7 +144,7 @@ Pull requests additionally build and exercise the final backend, migration, and 
 - GitHub Actions publishes GHCR/ECR release artifacts and implements migration-first backend CD through CloudFormation. It then builds and publishes the release frontend to S3 and invalidates CloudFront. Release CD requires production verification; infrastructure provisioning and template changes remain manual.
 - RDS backups and seven-day CloudWatch log retention are configured; backup restore procedures have not been exercised.
 
-Architecture, runtime verification, and remaining configuration drift are documented in [AWS deployment](docs/aws-deployment.md).
+Architecture, runtime verification, and deployment prerequisites are documented in [AWS deployment](docs/aws-deployment.md).
 
 ## Documentation
 
