@@ -21,18 +21,17 @@ for component in backend migration; do
     ')"
     if [[ "$existing" == "None" ]]; then
         docker buildx imagetools create --tag "$destination" "$source"
+        actual="$(aws ecr describe-images --repository-name "$repository" \
+            --image-ids "imageTag=$VERSION" --query 'imageDetails[0].imageDigest' \
+            --output text --no-cli-auto-prompt --no-cli-pager)"
+        if [[ "$actual" != "$digest" ]]; then
+            echo "ECR digest mismatch: $destination" >&2
+            exit 1
+        fi
     elif [[ "$existing" != "$digest" ]]; then
         echo "ECR release tag already points to different content: $destination" >&2
         exit 1
     fi
-    actual="$(aws ecr describe-images --repository-name "$repository" \
-        --image-ids "imageTag=$VERSION" --query 'imageDetails[0].imageDigest' \
-        --output text --no-cli-auto-prompt --no-cli-pager)"
-    if [[ "$actual" != "$digest" ]]; then
-        echo "ECR digest mismatch: $destination" >&2
-        exit 1
-    fi
-    reference="$ECR_REGISTRY/$repository@$actual"
-    echo "$component-ref=$reference" >> "$GITHUB_OUTPUT"
+    reference="$ECR_REGISTRY/$repository@$digest"
     echo "- $component: \`$reference\`" >> "$GITHUB_STEP_SUMMARY"
 done

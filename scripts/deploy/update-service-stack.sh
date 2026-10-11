@@ -4,23 +4,22 @@ set -euo pipefail
 # shellcheck source=scripts/deploy/common.sh
 source "$(dirname "$0")/common.sh"
 
-# Choose which image parameter to update.
-if [ "$#" -ne 1 ]; then
-    fail "Usage: update-service-stack.sh migration|backend"
-fi
-component="$1"
-if [ "$component" = "migration" ]; then
-    parameter_name="MigrationImageDigest"
-    image_digest="$MIGRATION_DIGEST"
-elif [ "$component" = "backend" ]; then
-    parameter_name="BackendImageDigest"
-    image_digest="$BACKEND_DIGEST"
-else
-    fail "Usage: update-service-stack.sh migration|backend"
-fi
+# Choose the image parameter for this step.
+component="${1:-}"
+case "$component" in
+    migration)
+        parameter_name="MigrationImageDigest"
+        image_digest="$MIGRATION_DIGEST"
+        ;;
+    backend)
+        parameter_name="BackendImageDigest"
+        image_digest="$BACKEND_DIGEST"
+        ;;
+    *) fail "Usage: update-service-stack.sh migration|backend" ;;
+esac
 
 # AWS rejects updates when the stack is not ready.
-service_stack="$(read_stack "$SERVICE_STACK")"
+service_stack="$(aws_cli cloudformation describe-stacks --stack-name "$SERVICE_STACK")"
 
 # Preserve capacity. An old bootstrap value must not turn the API off.
 desired_count="$(get_stack_parameter "$service_stack" BackendDesiredCount)"
@@ -28,7 +27,7 @@ if [ "$desired_count" -lt 1 ]; then
     fail "Set BackendDesiredCount to a positive value in CloudFormation before CD"
 fi
 
-compute_stack="$(read_stack "$COMPUTE_STACK")"
+compute_stack="$(aws_cli cloudformation describe-stacks --stack-name "$COMPUTE_STACK")"
 cluster_arn="$(get_stack_output "$compute_stack" EcsClusterArn)"
 service_arn="$(get_stack_output "$service_stack" BackendServiceArn)"
 service_json="$(aws_cli ecs describe-services --cluster "$cluster_arn" --services "$service_arn")"
@@ -70,12 +69,6 @@ aws_cli cloudformation create-change-set \
 aws_cli cloudformation wait change-set-create-complete \
     --stack-name "$SERVICE_STACK" \
     --change-set-name "$change_set_name"
-
-# Print a short resource summary, then execute the prepared change set.
-aws_cli cloudformation describe-change-set \
-    --stack-name "$SERVICE_STACK" \
-    --change-set-name "$change_set_name" \
-    | jq '[.Changes[].ResourceChange | {LogicalResourceId, Action, Replacement}]'
 
 aws_cli cloudformation execute-change-set \
     --stack-name "$SERVICE_STACK" \

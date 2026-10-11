@@ -1,28 +1,21 @@
-#!/usr/bin/env bash
+import {readFileSync} from "node:fs";
+import {join} from "node:path";
 
-set -euo pipefail
+const releaseTag = process.argv[2] ?? "";
+if (!/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(releaseTag)) {
+    console.error("Release tag must use the vMAJOR.MINOR.PATCH format");
+    process.exit(1);
+}
 
-release_tag="${1:-}"
-release_root="${RELEASE_ROOT:-$PWD}"
-
-if [[ ! "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "Release tag must use the vMAJOR.MINOR.PATCH format" >&2
-    exit 1
-fi
-
-version="${release_tag#v}"
-
-node - "$release_root" "$version" <<'NODE'
-const {readFileSync} = require("node:fs");
-const {join} = require("node:path");
-
-const [root, expectedVersion] = process.argv.slice(2);
-const readJson = (relativePath) =>
-    JSON.parse(readFileSync(join(root, relativePath), "utf8"));
+const root = process.env.RELEASE_ROOT ?? process.cwd();
+const expectedVersion = releaseTag.slice(1);
+const readJson = (relativePath) => JSON.parse(readFileSync(join(root, relativePath), "utf8"));
 
 const checkVersion = (label, actualVersion) => {
     if (actualVersion !== expectedVersion) {
-        console.error(`${label} is ${JSON.stringify(actualVersion)}, expected ${JSON.stringify(expectedVersion)}`);
+        console.error(
+            `${label} is ${JSON.stringify(actualVersion)}, expected ${JSON.stringify(expectedVersion)}`,
+        );
         process.exit(1);
     }
 };
@@ -48,6 +41,4 @@ for (const workspace of ["", "backend", "frontend", "shared"]) {
 const manifest = readJson(".github/release-please/manifest.json");
 checkVersion(".github/release-please/manifest.json entry for .", manifest["."]);
 
-NODE
-
-printf 'version=%s\n' "$version"
+console.log(`version=${expectedVersion}`);

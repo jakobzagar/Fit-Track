@@ -73,7 +73,7 @@ Useful narrower commands are:
 
 ### Release and deployment script tests
 
-`npm run test:release-tools` uses Node’s built-in test runner for release and backend CD tests under `scripts/release/tests/` and `scripts/deploy/tests/`. The tests execute the Bash scripts against fake CLI commands. No additional test framework is required.
+`npm run test:release-tools` uses Node’s built-in test runner for release and backend CD tests under `scripts/release/tests/` and `scripts/deploy/tests/`. The tests run the Node release validator against temporary JSON fixtures and the Bash scripts against fake CLI commands. No additional test framework is required.
 
 The release-tools command also runs `scripts/deploy/tests/deploy-tools.test.mjs` against a stateful fake AWS CLI. It checks parameter preservation, capacity drift, no-op retries, stack update failures, migration launch/exit failures, and rejection of stable backend rollbacks. These tests use no AWS credentials or live database and do not establish production deployment success.
 

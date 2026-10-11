@@ -16,10 +16,6 @@ aws_cli() {
     aws "$@" --region "$AWS_REGION" --output json --no-cli-auto-prompt --no-cli-pager
 }
 
-read_stack() {
-    aws_cli cloudformation describe-stacks --stack-name "$1"
-}
-
 # Extract one named output from a describe-stacks JSON response.
 get_stack_output() {
     local stack_json="$1"
