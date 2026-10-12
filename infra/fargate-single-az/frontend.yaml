@@ -215,6 +215,34 @@ Resources:
           return request;
         }
 
+  BlockPublicHealthFunction:
+    Type: "AWS::CloudFront::Function"
+    DeletionPolicy: "Delete"
+    UpdateReplacePolicy: "Delete"
+    Properties:
+      Name: !Sub "fit-track-${Environment}-block-public-health"
+      AutoPublish: true
+      FunctionConfig:
+        Comment: "Reject public health requests while preserving direct ALB readiness checks."
+        Runtime: "cloudfront-js-2.0"
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var uri = request.uri;
+
+          if (uri === "/api/health" || uri.indexOf("/api/health/") === 0) {
+            return {
+              statusCode: 403,
+              statusDescription: "Forbidden",
+              headers: {
+                "cache-control": { value: "no-store" }
+              }
+            };
+          }
+
+          return request;
+        }
+
   CfDistribution:
     Type: "AWS::CloudFront::Distribution"
     DeletionPolicy: "Delete"
@@ -280,6 +308,9 @@ Resources:
             Compress: true
             CachePolicyId: "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # AWS-managed CachingDisabled: normal cache TTLs are zero.
             OriginRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3" # AWS-managed AllViewer: forward all viewer headers, cookies, and query strings.
+            FunctionAssociations:
+              - EventType: "viewer-request"
+                FunctionARN: !GetAtt "BlockPublicHealthFunction.FunctionARN"
           - PathPattern: "/assets/*"
             TargetOriginId: "frontend-s3"
             ViewerProtocolPolicy: "redirect-to-https"
