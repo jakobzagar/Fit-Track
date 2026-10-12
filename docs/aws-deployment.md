@@ -158,6 +158,12 @@ A viewer-request CloudFront Function uses the `cloudfront-js-2.0` JavaScript run
 
 Frontend and asset response header policies enforce CSP, `nosniff`, framing restrictions, referrer policy, HSTS, permissions policy, and cross-origin opener/resource policy. CSP restricts scripts and API requests to the same origin; `theme-init.js` is an external static script. The two policies override browser `Cache-Control` values. CloudFront cache policies separately control edge TTLs, so this deployment does not require setting S3 object `Cache-Control` metadata during upload. API responses use the backend's Helmet and no-store headers, without a frontend response header policy.
 
+### Public health-route protection
+
+The frontend template attaches a viewer-request function to `/api/*` that returns HTTP 403 with `Cache-Control: no-store` for `/api/health` and `/api/health/*`. Other API requests pass through. Container liveness and direct ALB readiness probes bypass CloudFront and remain available. This protects this distribution's health routes; it does not authenticate the distribution to the ALB.
+
+The function is not deployed in the verified distribution. Apply a reviewed frontend stack change set to activate it; release frontend uploads do not update the stack. After deployment, require public health requests to return 403 and ALB targets to remain healthy. Use ALB target health to verify database readiness after the public route is blocked.
+
 ### Private S3 origin
 
 The frontend bucket blocks public access, uses bucket-owner-enforced ownership without ACLs, and encrypts objects with SSE-S3 (`AES256`). Versioning is enabled; noncurrent versions expire after 30 days, while current versions have no automatic expiry.
@@ -389,12 +395,12 @@ aws ecr get-login-password --region eu-central-1 --no-cli-auto-prompt \
 
 IMAGE_TAG="$(git rev-parse HEAD)"
 
-docker buildx build --platform linux/amd64 \
+docker buildx build --platform linux/amd64 --pull \
   --file backend/Dockerfile --target production \
   --tag "126571942046.dkr.ecr.eu-central-1.amazonaws.com/fit-track-prod-backend-eu-central-1:$IMAGE_TAG" \
   --sbom=true --provenance=mode=max --push .
 
-docker buildx build --platform linux/amd64 \
+docker buildx build --platform linux/amd64 --pull \
   --file backend/Dockerfile --target migration \
   --tag "126571942046.dkr.ecr.eu-central-1.amazonaws.com/fit-track-prod-migration-eu-central-1:$IMAGE_TAG" \
   --sbom=true --provenance=mode=max --push .
@@ -407,6 +413,8 @@ aws ecr describe-images --region eu-central-1 \
 ```
 
 Query the migration repository identically for its digest. Use a new tag for changed content; immutable tags reject replacement. Each repository expires images beyond the ten most recently pushed images. This lifecycle rule does not check ECS references, so preserve current and rollback content before relying on retention during frequent builds. Retaining the repository does not prevent lifecycle expiration.
+
+Base-image updates require rebuilding both backend and migration targets. `--pull` resolves the current base for its tag; it does not patch existing images or tasks. For a rebuild of the same commit, use a new immutable tag such as `<commit>-base-refresh-1`, smoke-test the new images, inspect their runnable AMD64 scan findings, and deploy the new digests. A base refresh alone does not require reapplying completed migrations.
 
 ### Regional ECR scanning
 
@@ -659,9 +667,11 @@ aws ecs describe-services --region eu-central-1 \
 aws cloudformation describe-stacks --region eu-central-1 \
   --stack-name fit-track-prod-service --no-cli-auto-prompt
 
-curl --fail --silent --show-error \
+curl --silent --show-error --output /dev/null --write-out '%{http_code}\n' \
   https://d3avuxvegd3iy8.cloudfront.net/api/health/ready
 ```
+
+The public readiness request returns 200 before the health-blocking template update and must return 403 after it. ALB readiness remains available in both cases.
 
 The deployment has verified serving and database connectivity. It does not establish high availability, load capacity, disaster recovery, complete cloud browser regression coverage, or distribution-exclusive ALB access.
 
