@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1](https://github.com/jakobzagar/Fit-Track/compare/v0.1.0...v0.1.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* preserve CloudFront health protection and refresh guidance ([3443fe6](https://github.com/jakobzagar/Fit-Track/commit/3443fe6cde11d5ce91f9add11a80f6064f6ad6c2))
+* update vulnerable transitive dependencies ([bc0c5ce](https://github.com/jakobzagar/Fit-Track/commit/bc0c5ced4284da95ba2e5781d4b49980f5249c53))
+
 ## [0.1.0](https://github.com/jakobzagar/Fit-Track/compare/v0.0.1...v0.1.0) (2026-10-04)
 
 
